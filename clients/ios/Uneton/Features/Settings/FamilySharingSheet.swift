@@ -1,3 +1,4 @@
+import CoreImage.CIFilterBuiltins
 import SwiftUI
 
 struct FamilySharingSheet: View {
@@ -19,6 +20,9 @@ struct FamilySharingSheet: View {
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
                 if let inviteURL {
+                    QRCodeImage(value: inviteURL.absoluteString)
+                        .frame(width: 180, height: 180)
+                        .accessibilityLabel("Family invitation QR code")
                     ShareLink(item: inviteURL, subject: Text("Join our Uneton family")) {
                         Label("Share invitation", systemImage: "square.and.arrow.up")
                             .frame(maxWidth: .infinity)
@@ -100,5 +104,29 @@ struct FamilySharingSheet: View {
 
     private func deleteAccountButtonTapped() async {
         if await session.deleteAccount() { dismiss() }
+    }
+}
+
+private struct QRCodeImage: View {
+    let value: String
+    private let context = CIContext()
+    private let filter = CIFilter.qrCodeGenerator()
+
+    var body: some View {
+        if let image = image {
+            Image(uiImage: image)
+                .interpolation(.none)
+                .resizable()
+                .scaledToFit()
+        }
+    }
+
+    private var image: UIImage? {
+        filter.message = Data(value.utf8)
+        filter.correctionLevel = "M"
+        guard let output = filter.outputImage?.transformed(by: CGAffineTransform(scaleX: 12, y: 12)),
+              let cgImage = context.createCGImage(output, from: output.extent)
+        else { return nil }
+        return UIImage(cgImage: cgImage)
     }
 }

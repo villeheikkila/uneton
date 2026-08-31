@@ -45,6 +45,7 @@ public struct Child: Identifiable, Codable, Equatable, Sendable {
   public var quietHoursStartMinutes: Int
   public var quietHoursEndMinutes: Int
   public var timeZone: String
+  public var growthReference: String
   public var revision: Int
   public var updatedAt: Date
 
@@ -58,6 +59,7 @@ public struct Child: Identifiable, Codable, Equatable, Sendable {
     quietHoursStartMinutes: Int = 1_200,
     quietHoursEndMinutes: Int = 360,
     timeZone: String = TimeZone.current.identifier,
+    growthReference: String = "none",
     revision: Int = 0,
     updatedAt: Date
   ) {
@@ -70,6 +72,7 @@ public struct Child: Identifiable, Codable, Equatable, Sendable {
     self.quietHoursStartMinutes = quietHoursStartMinutes
     self.quietHoursEndMinutes = quietHoursEndMinutes
     self.timeZone = timeZone
+    self.growthReference = growthReference
     self.revision = revision
     self.updatedAt = updatedAt
   }
@@ -134,6 +137,54 @@ public struct SleepSession: Identifiable, Codable, Equatable, Sendable {
     self.updatedAt = updatedAt
     self.deletedAt = deletedAt
     self.pendingCommandID = pendingCommandID
+  }
+}
+
+@Table
+public struct GrowthMeasurement: Identifiable, Codable, Equatable, Sendable {
+  public let id: UUID
+  public var familyID: Family.ID
+  public var childID: Child.ID
+  public var measuredAt: Date
+  public var weightGrams: Int?
+  public var heightMillimeters: Int?
+  public var note: String
+  public var revision: Int
+  public var updatedAt: Date
+  public var deletedAt: Date?
+  public var pendingCommandID: UUID?
+
+  public init(id: UUID, familyID: Family.ID, childID: Child.ID, measuredAt: Date, weightGrams: Int? = nil, heightMillimeters: Int? = nil, note: String = "", revision: Int = 0, updatedAt: Date, deletedAt: Date? = nil, pendingCommandID: UUID? = nil) {
+    self.id = id
+    self.familyID = familyID
+    self.childID = childID
+    self.measuredAt = measuredAt
+    self.weightGrams = weightGrams
+    self.heightMillimeters = heightMillimeters
+    self.note = note
+    self.revision = revision
+    self.updatedAt = updatedAt
+    self.deletedAt = deletedAt
+    self.pendingCommandID = pendingCommandID
+  }
+}
+
+@Table("growthReferencePoints")
+public struct GrowthReferencePoint: Identifiable, Codable, Equatable, Sendable {
+  public let id: String
+  public var reference: String
+  public var metric: String
+  public var ageMonths: Int
+  public var sd: Int
+  public var value: Int
+
+  public init(reference: String, metric: String, ageMonths: Int, sd: Int, value: Int) {
+    self.id = "\(reference):\(metric):\(ageMonths):\(sd)"
+    self.reference = reference
+    self.metric = metric
+    self.ageMonths = ageMonths
+    self.sd = sd
+    self.value = value
   }
 }
 
@@ -304,6 +355,7 @@ extension DependencyValues {
           "quietHoursStartMinutes" INTEGER NOT NULL DEFAULT 1200,
           "quietHoursEndMinutes" INTEGER NOT NULL DEFAULT 360,
           "timeZone" TEXT NOT NULL DEFAULT 'Europe/Helsinki',
+          "growthReference" TEXT NOT NULL DEFAULT 'none',
           "revision" INTEGER NOT NULL DEFAULT 0,
           "updatedAt" TEXT NOT NULL
         ) STRICT
@@ -336,6 +388,35 @@ extension DependencyValues {
       try #sql("""
         CREATE INDEX "index_sleepSessions_on_childID_startedAt"
         ON "sleepSessions"("childID", "startedAt" DESC)
+        """).execute(database)
+      try #sql("""
+        CREATE TABLE "growthMeasurements" (
+          "id" TEXT PRIMARY KEY NOT NULL ON CONFLICT REPLACE DEFAULT (uuid()),
+          "familyID" TEXT NOT NULL REFERENCES "families"("id") ON DELETE CASCADE,
+          "childID" TEXT NOT NULL REFERENCES "children"("id") ON DELETE CASCADE,
+          "measuredAt" TEXT NOT NULL,
+          "weightGrams" INTEGER,
+          "heightMillimeters" INTEGER,
+          "note" TEXT NOT NULL DEFAULT '',
+          "revision" INTEGER NOT NULL DEFAULT 0,
+          "updatedAt" TEXT NOT NULL,
+          "deletedAt" TEXT,
+          "pendingCommandID" TEXT
+        ) STRICT
+        """).execute(database)
+      try #sql("""
+        CREATE INDEX "index_growthMeasurements_on_childID_measuredAt"
+        ON "growthMeasurements"("childID", "measuredAt" DESC)
+        """).execute(database)
+      try #sql("""
+        CREATE TABLE IF NOT EXISTS "growthReferencePoints" (
+          "id" TEXT PRIMARY KEY NOT NULL,
+          "reference" TEXT NOT NULL,
+          "metric" TEXT NOT NULL,
+          "ageMonths" INTEGER NOT NULL,
+          "sd" INTEGER NOT NULL,
+          "value" INTEGER NOT NULL
+        ) STRICT
         """).execute(database)
       try #sql("""
         CREATE TABLE "authoritativeRecords" (
@@ -395,6 +476,18 @@ extension DependencyValues {
       try #sql("""
         ALTER TABLE "pendingCommands"
         ADD COLUMN "rebaseAttempt" INTEGER NOT NULL DEFAULT 0
+        """).execute(database)
+    }
+    migrator.registerMigration("Cache growth reference bootstrap") { database in
+      try #sql("""
+        CREATE TABLE IF NOT EXISTS "growthReferencePoints" (
+          "id" TEXT PRIMARY KEY NOT NULL,
+          "reference" TEXT NOT NULL,
+          "metric" TEXT NOT NULL,
+          "ageMonths" INTEGER NOT NULL,
+          "sd" INTEGER NOT NULL,
+          "value" INTEGER NOT NULL
+        ) STRICT
         """).execute(database)
     }
     migrator.registerMigration("Add snapshot recovery journal") { database in

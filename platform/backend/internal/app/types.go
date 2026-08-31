@@ -86,17 +86,26 @@ type SleepForecast struct {
 	NextSleepIsProvisional bool        `json:"nextSleepIsProvisional"`
 }
 
+type GrowthReferencePoint struct {
+	Reference string `json:"reference"`
+	Metric    string `json:"metric"`
+	AgeMonths int    `json:"ageMonths"`
+	SD        int    `json:"sd"`
+	Value     int    `json:"value"`
+}
+
 type SyncResponse struct {
-	CommandResults    []CommandResult `json:"commandResults"`
-	Events            []Event         `json:"events"`
-	NextCursor        int64           `json:"nextCursor"`
-	HasMore           bool            `json:"hasMore"`
-	NextSleepEstimate *Prediction     `json:"nextSleepEstimate,omitempty"`
-	ServerTime        time.Time       `json:"serverTime"`
-	SleepForecast     *SleepForecast  `json:"sleepForecast,omitempty"`
-	Generation        string          `json:"generation"`
-	Snapshot          *FamilySnapshot `json:"snapshot,omitempty"`
-	ResetRequired     bool            `json:"resetRequired"`
+	CommandResults        []CommandResult        `json:"commandResults"`
+	Events                []Event                `json:"events"`
+	NextCursor            int64                  `json:"nextCursor"`
+	HasMore               bool                   `json:"hasMore"`
+	NextSleepEstimate     *Prediction            `json:"nextSleepEstimate,omitempty"`
+	ServerTime            time.Time              `json:"serverTime"`
+	SleepForecast         *SleepForecast         `json:"sleepForecast,omitempty"`
+	Generation            string                 `json:"generation"`
+	Snapshot              *FamilySnapshot        `json:"snapshot,omitempty"`
+	ResetRequired         bool                   `json:"resetRequired"`
+	GrowthReferencePoints []GrowthReferencePoint `json:"growthReferencePoints"`
 }
 
 type principal struct {

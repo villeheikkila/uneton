@@ -497,6 +497,12 @@ func syncRequestFromProto(request *unetonv1.SyncRequest) (SyncRequest, map[strin
 			command.Kind, payload = "deleteSleep", struct {
 				ID string `json:"id"`
 			}{ID: item.DeleteSleep.GetId()}
+		case *unetonv1.Command_UpsertGrowthMeasurement:
+			command.Kind, payload = "upsertGrowthMeasurement", growthMeasurementPayloadFromProto(item.UpsertGrowthMeasurement.GetMeasurement())
+		case *unetonv1.Command_DeleteGrowthMeasurement:
+			command.Kind, payload = "deleteGrowthMeasurement", struct {
+				ID string `json:"id"`
+			}{ID: item.DeleteGrowthMeasurement.GetId()}
 		default:
 			return SyncRequest{}, nil, errors.New("command payload is required")
 		}
@@ -520,7 +526,7 @@ func childPayloadFromProto(value *unetonv1.ChildInput) childPayload {
 		item := int(value.GetManualIntervalMinutes())
 		manual = &item
 	}
-	return childPayload{ID: value.GetId(), Nickname: value.GetNickname(), BirthDate: value.GetBirthDate(), PredictionMode: value.GetPredictionMode(), ManualIntervalMinutes: manual, QuietHoursStartMinutes: int(value.GetQuietHoursStartMinutes()), QuietHoursEndMinutes: int(value.GetQuietHoursEndMinutes()), TimeZone: value.GetTimeZone()}
+	return childPayload{ID: value.GetId(), Nickname: value.GetNickname(), BirthDate: value.GetBirthDate(), PredictionMode: value.GetPredictionMode(), ManualIntervalMinutes: manual, QuietHoursStartMinutes: int(value.GetQuietHoursStartMinutes()), QuietHoursEndMinutes: int(value.GetQuietHoursEndMinutes()), TimeZone: value.GetTimeZone(), GrowthReference: value.GetGrowthReference()}
 }
 
 func sleepPayloadFromProto(value *unetonv1.SleepInput) sleepPayload {
@@ -528,6 +534,22 @@ func sleepPayloadFromProto(value *unetonv1.SleepInput) sleepPayload {
 		return sleepPayload{}
 	}
 	return sleepPayload{ID: value.GetId(), ChildID: value.GetChildId(), StartedAt: value.GetStartedAt().AsTime(), EndedAt: timeFromProto(value.GetEndedAt()), Source: value.GetSource(), StartCondition: value.GetStartCondition(), SleepLocation: value.GetSleepLocation(), EndCondition: value.GetEndCondition(), WakeMood: value.GetWakeMood(), WakeReason: value.GetWakeReason(), CaregiverIntervened: value.CaregiverIntervened}
+}
+
+func growthMeasurementPayloadFromProto(value *unetonv1.GrowthMeasurementInput) growthMeasurementPayload {
+	if value == nil {
+		return growthMeasurementPayload{}
+	}
+	var weight, height *int
+	if value.WeightGrams != nil {
+		item := int(value.GetWeightGrams())
+		weight = &item
+	}
+	if value.HeightMillimeters != nil {
+		item := int(value.GetHeightMillimeters())
+		height = &item
+	}
+	return growthMeasurementPayload{ID: value.GetId(), ChildID: value.GetChildId(), MeasuredAt: value.GetMeasuredAt().AsTime(), WeightGrams: weight, HeightMillimeters: height, Note: value.GetNote()}
 }
 
 func timeFromProto(value *timestamppb.Timestamp) *time.Time {
@@ -563,6 +585,9 @@ func syncResponseToProto(response SyncResponse, commandKinds map[string]string) 
 		forecast := response.SleepForecast
 		result.SleepForecast = &unetonv1.SleepForecast{ChildId: forecast.ChildID, ActiveSleepId: forecast.ActiveSleepID, WakeEstimate: predictionToProto(forecast.WakeEstimate), NextSleepEstimate: predictionToProto(forecast.NextSleepEstimate), NextSleepIsProvisional: forecast.NextSleepIsProvisional}
 	}
+	for _, point := range response.GrowthReferencePoints {
+		result.GrowthReferencePoints = append(result.GrowthReferencePoints, &unetonv1.GrowthReferencePoint{Reference: point.Reference, Metric: point.Metric, AgeMonths: int32(point.AgeMonths), Sd: int32(point.SD), Value: int32(point.Value)})
+	}
 	return result
 }
 
@@ -577,6 +602,9 @@ func commandEntityType(kind string) string {
 	if strings.Contains(kind, "Child") || kind == "updatePredictionSettings" {
 		return "child"
 	}
+	if strings.Contains(kind, "GrowthMeasurement") {
+		return "growthMeasurement"
+	}
 	return "sleepSession"
 }
 
@@ -590,6 +618,12 @@ func entityFromJSON(entityType string, payload []byte) *unetonv1.Entity {
 			return nil
 		}
 		return &unetonv1.Entity{Value: &unetonv1.Entity_Child{Child: value.proto()}}
+	}
+	if entityType == "growthMeasurement" {
+		var value growthMeasurementRecord
+		if json.Unmarshal(payload, &value) == nil && value.ChildID != "" {
+			return &unetonv1.Entity{Value: &unetonv1.Entity_GrowthMeasurement{GrowthMeasurement: growthMeasurementRecordToProto(value)}}
+		}
 	}
 	var value sleepRecord
 	if json.Unmarshal(payload, &value) == nil && value.ChildID != "" {
@@ -614,12 +648,13 @@ type childWire struct {
 	QuietHoursStartMinutes int       `json:"quietHoursStartMinutes"`
 	QuietHoursEndMinutes   int       `json:"quietHoursEndMinutes"`
 	TimeZone               string    `json:"timeZone"`
+	GrowthReference        string    `json:"growthReference"`
 	Revision               int       `json:"revision"`
 	UpdatedAt              time.Time `json:"updatedAt"`
 }
 
 func (value childWire) proto() *unetonv1.Child {
-	result := &unetonv1.Child{Id: value.ID, FamilyId: value.FamilyID, Nickname: value.Nickname, BirthDate: value.BirthDate, PredictionMode: value.PredictionMode, QuietHoursStartMinutes: int32(value.QuietHoursStartMinutes), QuietHoursEndMinutes: int32(value.QuietHoursEndMinutes), TimeZone: value.TimeZone, Revision: int64(value.Revision), UpdatedAt: timestamppb.New(value.UpdatedAt)}
+	result := &unetonv1.Child{Id: value.ID, FamilyId: value.FamilyID, Nickname: value.Nickname, BirthDate: value.BirthDate, PredictionMode: value.PredictionMode, QuietHoursStartMinutes: int32(value.QuietHoursStartMinutes), QuietHoursEndMinutes: int32(value.QuietHoursEndMinutes), TimeZone: value.TimeZone, GrowthReference: value.GrowthReference, Revision: int64(value.Revision), UpdatedAt: timestamppb.New(value.UpdatedAt)}
 	if value.ManualIntervalMinutes != nil {
 		item := int32(*value.ManualIntervalMinutes)
 		result.ManualIntervalMinutes = &item
@@ -641,9 +676,28 @@ func sleepRecordToProto(value sleepRecord) *unetonv1.SleepSession {
 	return result
 }
 
+func growthMeasurementRecordToProto(value growthMeasurementRecord) *unetonv1.GrowthMeasurement {
+	result := &unetonv1.GrowthMeasurement{Id: value.ID, FamilyId: value.FamilyID, ChildId: value.ChildID, MeasuredAt: timestamppb.New(value.MeasuredAt), Note: value.Note, Revision: int64(value.Revision), UpdatedAt: timestamppb.New(value.UpdatedAt)}
+	if value.WeightGrams != nil {
+		item := int32(*value.WeightGrams)
+		result.WeightGrams = &item
+	}
+	if value.HeightMillimeters != nil {
+		item := int32(*value.HeightMillimeters)
+		result.HeightMillimeters = &item
+	}
+	if value.DeletedAt != nil {
+		result.DeletedAt = timestamppb.New(*value.DeletedAt)
+	}
+	return result
+}
+
 func entityTypeToProto(value string) unetonv1.EntityType {
 	if value == "child" {
 		return unetonv1.EntityType_ENTITY_TYPE_CHILD
+	}
+	if value == "growthMeasurement" {
+		return unetonv1.EntityType_ENTITY_TYPE_GROWTH_MEASUREMENT
 	}
 	return unetonv1.EntityType_ENTITY_TYPE_SLEEP_SESSION
 }

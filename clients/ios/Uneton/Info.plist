@@ -35,6 +35,8 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Scan a caregiver’s Uneton family invitation QR code.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>NSSupportsLiveActivitiesFrequentUpdates</key>

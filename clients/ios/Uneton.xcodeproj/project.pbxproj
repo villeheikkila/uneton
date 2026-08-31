@@ -22,6 +22,7 @@
 		503C1297883A78D0B857765E /* UnetonApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D31FE1C3ACB3CB882029856B /* UnetonApp.swift */; };
 		505EBAA33B21B2743A28CAD7 /* CredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0009D16CB7EAFD3C94AEB10 /* CredentialStore.swift */; };
 		53891DFA9A38D347B1623FF7 /* UnetonActivity in Frameworks */ = {isa = PBXBuildFile; productRef = 23C61FE5E1FD5C9379CAB8CF /* UnetonActivity */; };
+		6BE5A0933930424F970CB942 /* FamilySetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB9FA0F058D5FF590B3D101D /* FamilySetupView.swift */; };
 		776E41E259D54BB9647721BB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57CD1A2D27F650526FE3F833 /* Assets.xcassets */; };
 		7B0AC7E48D6CA990D4C033C3 /* LiveActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95FC0EB3F083AB0587264171 /* LiveActivityController.swift */; };
 		936F390DF0F0C05C34C2AB43 /* TrendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAB609F8585FE0509A18A8E8 /* TrendsView.swift */; };
@@ -106,6 +107,7 @@
 		E06D055826E7198BFF94D002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E1E26C7A93F782F73A9718C3 /* Uneton.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Uneton.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E559806C9EB49DB6CD0CB7B2 /* UnetonWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = UnetonWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		EB9FA0F058D5FF590B3D101D /* FamilySetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilySetupView.swift; sourceTree = "<group>"; };
 		F3F15C777BE34447380DD7B9 /* FamilySharingSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilySharingSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -233,6 +235,7 @@
 		C8DD159053CA3EABCC814290 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				EB9FA0F058D5FF590B3D101D /* FamilySetupView.swift */,
 				F3F15C777BE34447380DD7B9 /* FamilySharingSheet.swift */,
 				23D3449DAAACCCD6BDCA5AE5 /* OnboardingView.swift */,
 				C28EBBEE5AD3C626F6DD8B6E /* SyncConflictsSheet.swift */,
@@ -392,6 +395,7 @@
 				EC01897EBECD1DE0DD1AE199 /* AppleCredentialMonitor.swift in Sources */,
 				93BC36FF9698B9C2384B8700 /* ContentView.swift in Sources */,
 				505EBAA33B21B2743A28CAD7 /* CredentialStore.swift in Sources */,
+				6BE5A0933930424F970CB942 /* FamilySetupView.swift in Sources */,
 				3B7DAE732B26801D11C1CFA1 /* FamilySharingSheet.swift in Sources */,
 				7B0AC7E48D6CA990D4C033C3 /* LiveActivityController.swift in Sources */,
 				111F9270D99C39C292AFEF73 /* OnboardingView.swift in Sources */,

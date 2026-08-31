@@ -22,6 +22,7 @@ type childPayload struct {
 	QuietHoursStartMinutes int    `json:"quietHoursStartMinutes,omitempty"`
 	QuietHoursEndMinutes   int    `json:"quietHoursEndMinutes,omitempty"`
 	TimeZone               string `json:"timeZone,omitempty"`
+	GrowthReference        string `json:"growthReference,omitempty"`
 }
 
 type sleepPayload struct {
@@ -56,6 +57,28 @@ type sleepRecord struct {
 	SupersededByID      *string    `json:"supersededByID,omitempty"`
 	UpdatedAt           time.Time  `json:"updatedAt"`
 	DeletedAt           *time.Time `json:"deletedAt,omitempty"`
+}
+
+type growthMeasurementPayload struct {
+	ID                string    `json:"id"`
+	ChildID           string    `json:"childID"`
+	MeasuredAt        time.Time `json:"measuredAt"`
+	WeightGrams       *int      `json:"weightGrams,omitempty"`
+	HeightMillimeters *int      `json:"heightMillimeters,omitempty"`
+	Note              string    `json:"note,omitempty"`
+}
+
+type growthMeasurementRecord struct {
+	ID                string     `json:"id"`
+	FamilyID          string     `json:"familyID"`
+	ChildID           string     `json:"childID"`
+	MeasuredAt        time.Time  `json:"measuredAt"`
+	WeightGrams       *int       `json:"weightGrams,omitempty"`
+	HeightMillimeters *int       `json:"heightMillimeters,omitempty"`
+	Note              string     `json:"note,omitempty"`
+	Revision          int        `json:"revision"`
+	UpdatedAt         time.Time  `json:"updatedAt"`
+	DeletedAt         *time.Time `json:"deletedAt,omitempty"`
 }
 
 type activityDelivery struct {
@@ -172,6 +195,14 @@ func (s *Server) syncResponse(ctx context.Context, familyID string, results []Co
 	if response.SleepForecast != nil {
 		response.NextSleepEstimate = response.SleepForecast.NextSleepEstimate
 	}
+	if rows, err := s.store.Queries.GrowthReferencePoints(ctx); err == nil {
+		response.GrowthReferencePoints = make([]GrowthReferencePoint, 0, len(rows))
+		for _, row := range rows {
+			response.GrowthReferencePoints = append(response.GrowthReferencePoints, GrowthReferencePoint{
+				Reference: row.Reference, Metric: row.Metric, AgeMonths: int(row.AgeMonths), SD: int(row.Sd), Value: int(row.Value),
+			})
+		}
+	}
 	return response
 }
 
@@ -190,6 +221,11 @@ func currentCommandEntity(ctx context.Context, tx *sql.Tx, familyID string, comm
 		}
 	case "startSleep", "endSleep", "upsertSleep", "deleteSleep":
 		payload, _, err := sleepJSON(ctx, tx, familyID, identity.ID)
+		if err == nil {
+			return identity.ID, payload
+		}
+	case "upsertGrowthMeasurement", "deleteGrowthMeasurement":
+		payload, _, err := growthMeasurementJSON(ctx, tx, familyID, identity.ID)
 		if err == nil {
 			return identity.ID, payload
 		}
@@ -226,6 +262,10 @@ func (s *Server) applyCommand(ctx context.Context, tx *sql.Tx, familyID, userID,
 		return s.upsertSleep(ctx, tx, familyID, userID, command)
 	case "deleteSleep":
 		return s.deleteSleep(ctx, tx, familyID, command)
+	case "upsertGrowthMeasurement":
+		return s.upsertGrowthMeasurement(ctx, tx, familyID, command)
+	case "deleteGrowthMeasurement":
+		return s.deleteGrowthMeasurement(ctx, tx, familyID, command)
 	default:
 		return CommandResult{ID: command.ID}, fmt.Errorf("unsupported command %q", command.Kind)
 	}
@@ -248,12 +288,18 @@ func (s *Server) createChild(ctx context.Context, tx *sql.Tx, familyID string, c
 	if payload.TimeZone == "" {
 		payload.TimeZone = "Europe/Helsinki"
 	}
+	if payload.GrowthReference == "" {
+		payload.GrowthReference = "none"
+	}
+	if !validGrowthReference(payload.GrowthReference) {
+		return CommandResult{ID: command.ID}, errors.New("invalid growth reference")
+	}
 	if _, err := time.LoadLocation(payload.TimeZone); err != nil {
 		return CommandResult{ID: command.ID}, errors.New("invalid timezone")
 	}
 	now := formatTime(s.now().UTC())
 	q := s.store.Queries.WithTx(tx)
-	err := q.CreateChild(ctx, storedb.CreateChildParams{ID: payload.ID, FamilyID: familyID, Nickname: payload.Nickname, BirthDate: payload.BirthDate, PredictionMode: payload.PredictionMode, ManualIntervalMinutes: nullableInt(payload.ManualIntervalMinutes), QuietHoursStartMinutes: int64(payload.QuietHoursStartMinutes), QuietHoursEndMinutes: int64(payload.QuietHoursEndMinutes), TimeZone: payload.TimeZone, UpdatedAt: now})
+	err := q.CreateChild(ctx, storedb.CreateChildParams{ID: payload.ID, FamilyID: familyID, Nickname: payload.Nickname, BirthDate: payload.BirthDate, PredictionMode: payload.PredictionMode, ManualIntervalMinutes: nullableInt(payload.ManualIntervalMinutes), QuietHoursStartMinutes: int64(payload.QuietHoursStartMinutes), QuietHoursEndMinutes: int64(payload.QuietHoursEndMinutes), TimeZone: payload.TimeZone, GrowthReference: payload.GrowthReference, UpdatedAt: now})
 	if err != nil {
 		return CommandResult{ID: command.ID}, fmt.Errorf("create child: %w", err)
 	}
@@ -280,13 +326,16 @@ func (s *Server) updateChild(ctx context.Context, tx *sql.Tx, familyID string, c
 	if payload.PredictionMode == "" {
 		payload.PredictionMode = "adaptive"
 	}
+	if payload.GrowthReference != "" && !validGrowthReference(payload.GrowthReference) {
+		return CommandResult{ID: command.ID}, errors.New("invalid growth reference")
+	}
 	if payload.TimeZone != "" {
 		if _, err := time.LoadLocation(payload.TimeZone); err != nil {
 			return CommandResult{ID: command.ID}, errors.New("invalid timezone")
 		}
 	}
 	now := formatTime(s.now().UTC())
-	err = q.UpdateChild(ctx, storedb.UpdateChildParams{Nickname: payload.Nickname, BirthDate: payload.BirthDate, PredictionMode: payload.PredictionMode, ManualIntervalMinutes: nullableInt(payload.ManualIntervalMinutes), QuietHoursStartMinutes: int64(payload.QuietHoursStartMinutes), QuietHoursEndMinutes: int64(payload.QuietHoursEndMinutes), TimeZone: payload.TimeZone, UpdatedAt: now, ID: payload.ID, FamilyID: familyID})
+	err = q.UpdateChild(ctx, storedb.UpdateChildParams{Nickname: payload.Nickname, BirthDate: payload.BirthDate, PredictionMode: payload.PredictionMode, ManualIntervalMinutes: nullableInt(payload.ManualIntervalMinutes), QuietHoursStartMinutes: int64(payload.QuietHoursStartMinutes), QuietHoursEndMinutes: int64(payload.QuietHoursEndMinutes), TimeZone: payload.TimeZone, GrowthReference: payload.GrowthReference, UpdatedAt: now, ID: payload.ID, FamilyID: familyID})
 	if err != nil {
 		return CommandResult{ID: command.ID}, err
 	}
@@ -442,6 +491,62 @@ func (s *Server) deleteSleep(ctx context.Context, tx *sql.Tx, familyID string, c
 	return CommandResult{ID: command.ID, Status: "accepted", EntityID: payload.ID, Payload: encoded}, nil
 }
 
+func (s *Server) upsertGrowthMeasurement(ctx context.Context, tx *sql.Tx, familyID string, command Command) (CommandResult, error) {
+	var payload growthMeasurementPayload
+	if json.Unmarshal(command.Payload, &payload) != nil || payload.ID == "" || payload.ChildID == "" || payload.MeasuredAt.IsZero() || !validGrowthMeasurement(payload) {
+		return CommandResult{ID: command.ID}, errors.New("invalid growth measurement")
+	}
+	q := s.store.Queries.WithTx(tx)
+	if _, err := q.ChildRevision(ctx, storedb.ChildRevisionParams{ID: payload.ChildID, FamilyID: familyID}); err != nil {
+		return CommandResult{ID: command.ID}, errors.New("child not found")
+	}
+	revision, err := q.GrowthMeasurementRevision(ctx, storedb.GrowthMeasurementRevisionParams{ID: payload.ID, FamilyID: familyID})
+	now := formatTime(s.now().UTC())
+	if errors.Is(err, sql.ErrNoRows) {
+		err = q.CreateGrowthMeasurement(ctx, storedb.CreateGrowthMeasurementParams{ID: payload.ID, FamilyID: familyID, ChildID: payload.ChildID, MeasuredAt: formatTime(payload.MeasuredAt), WeightGrams: nullableInt(payload.WeightGrams), HeightMillimeters: nullableInt(payload.HeightMillimeters), Note: payload.Note, UpdatedAt: now})
+	} else if err == nil {
+		if command.ExpectedRevision != nil && *command.ExpectedRevision != int(revision) {
+			return CommandResult{ID: command.ID}, errors.New("stale revision")
+		}
+		err = q.UpdateGrowthMeasurement(ctx, storedb.UpdateGrowthMeasurementParams{MeasuredAt: formatTime(payload.MeasuredAt), WeightGrams: nullableInt(payload.WeightGrams), HeightMillimeters: nullableInt(payload.HeightMillimeters), Note: payload.Note, UpdatedAt: now, ID: payload.ID, FamilyID: familyID})
+	}
+	if err != nil {
+		return CommandResult{ID: command.ID}, err
+	}
+	encoded, currentRevision, err := growthMeasurementJSON(ctx, tx, familyID, payload.ID)
+	if err == nil {
+		err = appendEvent(ctx, q, familyID, "growthMeasurement", payload.ID, "upsert", currentRevision, encoded, now)
+	}
+	return CommandResult{ID: command.ID, Status: "accepted", EntityID: payload.ID, Payload: encoded}, err
+}
+
+func (s *Server) deleteGrowthMeasurement(ctx context.Context, tx *sql.Tx, familyID string, command Command) (CommandResult, error) {
+	var payload struct {
+		ID string `json:"id"`
+	}
+	if json.Unmarshal(command.Payload, &payload) != nil || payload.ID == "" {
+		return CommandResult{ID: command.ID}, errors.New("invalid growth measurement id")
+	}
+	q := s.store.Queries.WithTx(tx)
+	revision, err := q.ExistingGrowthMeasurementRevision(ctx, storedb.ExistingGrowthMeasurementRevisionParams{ID: payload.ID, FamilyID: familyID})
+	if err != nil {
+		return CommandResult{ID: command.ID}, errors.New("growth measurement not found")
+	}
+	if command.ExpectedRevision != nil && *command.ExpectedRevision != int(revision) {
+		return CommandResult{ID: command.ID}, errors.New("stale revision")
+	}
+	now := formatTime(s.now().UTC())
+	revision++
+	if err := q.DeleteGrowthMeasurement(ctx, storedb.DeleteGrowthMeasurementParams{DeletedAt: nullString(now), Revision: revision, UpdatedAt: now, ID: payload.ID, FamilyID: familyID}); err != nil {
+		return CommandResult{ID: command.ID}, err
+	}
+	encoded := json.RawMessage(`{"id":"` + payload.ID + `"}`)
+	if err := appendEvent(ctx, q, familyID, "growthMeasurement", payload.ID, "delete", int(revision), encoded, now); err != nil {
+		return CommandResult{ID: command.ID}, err
+	}
+	return CommandResult{ID: command.ID, Status: "accepted", EntityID: payload.ID, Payload: encoded}, nil
+}
+
 func (s *Server) mergeOverlaps(ctx context.Context, tx *sql.Tx, familyID, childID string) error {
 	q := s.store.Queries.WithTx(tx)
 	rows, err := q.SleepIntervals(ctx, storedb.SleepIntervalsParams{FamilyID: familyID, ChildID: childID})
@@ -512,7 +617,7 @@ func childJSON(ctx context.Context, tx *sql.Tx, familyID, id string) (json.RawMe
 	if err != nil {
 		return nil, 0, err
 	}
-	value := map[string]any{"id": row.ID, "familyID": row.FamilyID, "nickname": row.Nickname, "birthDate": row.BirthDate, "predictionMode": row.PredictionMode, "quietHoursStartMinutes": row.QuietHoursStartMinutes, "quietHoursEndMinutes": row.QuietHoursEndMinutes, "timeZone": row.TimeZone, "revision": row.Revision, "updatedAt": row.UpdatedAt}
+	value := map[string]any{"id": row.ID, "familyID": row.FamilyID, "nickname": row.Nickname, "birthDate": row.BirthDate, "predictionMode": row.PredictionMode, "quietHoursStartMinutes": row.QuietHoursStartMinutes, "quietHoursEndMinutes": row.QuietHoursEndMinutes, "timeZone": row.TimeZone, "growthReference": row.GrowthReference, "revision": row.Revision, "updatedAt": row.UpdatedAt}
 	if row.ManualIntervalMinutes.Valid {
 		value["manualIntervalMinutes"] = row.ManualIntervalMinutes.Int64
 	}
@@ -545,6 +650,44 @@ func sleepJSON(ctx context.Context, tx *sql.Tx, familyID, id string) (json.RawMe
 	}
 	encoded, err := json.Marshal(value)
 	return encoded, value.Revision, err
+}
+
+func growthMeasurementJSON(ctx context.Context, tx *sql.Tx, familyID, id string) (json.RawMessage, int, error) {
+	row, err := storedb.New(tx).GrowthMeasurementRecord(ctx, storedb.GrowthMeasurementRecordParams{ID: id, FamilyID: familyID})
+	if err != nil {
+		return nil, 0, err
+	}
+	value := growthMeasurementRecord{ID: row.ID, FamilyID: row.FamilyID, ChildID: row.ChildID, Note: row.Note, Revision: int(row.Revision)}
+	value.MeasuredAt, _ = parseTime(row.MeasuredAt)
+	value.UpdatedAt, _ = parseTime(row.UpdatedAt)
+	if row.WeightGrams.Valid {
+		item := int(row.WeightGrams.Int64)
+		value.WeightGrams = &item
+	}
+	if row.HeightMillimeters.Valid {
+		item := int(row.HeightMillimeters.Int64)
+		value.HeightMillimeters = &item
+	}
+	if row.DeletedAt.Valid {
+		item, _ := parseTime(row.DeletedAt.String)
+		value.DeletedAt = &item
+	}
+	encoded, err := json.Marshal(value)
+	return encoded, value.Revision, err
+}
+
+func validGrowthMeasurement(value growthMeasurementPayload) bool {
+	if value.WeightGrams == nil && value.HeightMillimeters == nil {
+		return false
+	}
+	if value.WeightGrams != nil && (*value.WeightGrams < 100 || *value.WeightGrams > 100000) {
+		return false
+	}
+	return value.HeightMillimeters == nil || (*value.HeightMillimeters >= 100 && *value.HeightMillimeters <= 2500)
+}
+
+func validGrowthReference(value string) bool {
+	return value == "none" || value == "girl" || value == "boy"
 }
 
 func appendEvent(ctx context.Context, q *storedb.Queries, familyID, entityType, entityID, operation string, revision int, payload []byte, createdAt string) error {

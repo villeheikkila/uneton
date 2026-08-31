@@ -63,6 +63,7 @@ public nonisolated enum Uneton_V1_EntityType: SwiftProtobuf.Enum, Swift.CaseIter
   case unspecified // = 0
   case child // = 1
   case sleepSession // = 2
+  case growthMeasurement // = 3
   case UNRECOGNIZED(Int)
 
   public init() {
@@ -74,6 +75,7 @@ public nonisolated enum Uneton_V1_EntityType: SwiftProtobuf.Enum, Swift.CaseIter
     case 0: self = .unspecified
     case 1: self = .child
     case 2: self = .sleepSession
+    case 3: self = .growthMeasurement
     default: self = .UNRECOGNIZED(rawValue)
     }
   }
@@ -83,6 +85,7 @@ public nonisolated enum Uneton_V1_EntityType: SwiftProtobuf.Enum, Swift.CaseIter
     case .unspecified: return 0
     case .child: return 1
     case .sleepSession: return 2
+    case .growthMeasurement: return 3
     case .UNRECOGNIZED(let i): return i
     }
   }
@@ -92,6 +95,7 @@ public nonisolated enum Uneton_V1_EntityType: SwiftProtobuf.Enum, Swift.CaseIter
     .unspecified,
     .child,
     .sleepSession,
+    .growthMeasurement,
   ]
 
 }
@@ -622,6 +626,22 @@ public nonisolated struct Uneton_V1_Command: Sendable {
     set {payload = .deleteSleep(newValue)}
   }
 
+  public var upsertGrowthMeasurement: Uneton_V1_UpsertGrowthMeasurement {
+    get {
+      if case .upsertGrowthMeasurement(let v)? = payload {return v}
+      return Uneton_V1_UpsertGrowthMeasurement()
+    }
+    set {payload = .upsertGrowthMeasurement(newValue)}
+  }
+
+  public var deleteGrowthMeasurement: Uneton_V1_DeleteGrowthMeasurement {
+    get {
+      if case .deleteGrowthMeasurement(let v)? = payload {return v}
+      return Uneton_V1_DeleteGrowthMeasurement()
+    }
+    set {payload = .deleteGrowthMeasurement(newValue)}
+  }
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public nonisolated enum OneOf_Payload: Equatable, Sendable {
@@ -631,6 +651,8 @@ public nonisolated struct Uneton_V1_Command: Sendable {
     case endSleep(Uneton_V1_EndSleep)
     case upsertSleep(Uneton_V1_UpsertSleep)
     case deleteSleep(Uneton_V1_DeleteSleep)
+    case upsertGrowthMeasurement(Uneton_V1_UpsertGrowthMeasurement)
+    case deleteGrowthMeasurement(Uneton_V1_DeleteGrowthMeasurement)
 
   }
 
@@ -708,6 +730,8 @@ public nonisolated struct Uneton_V1_ChildInput: Sendable {
   public var quietHoursEndMinutes: Int32 = 0
 
   public var timeZone: String = String()
+
+  public var growthReference: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -809,6 +833,86 @@ public nonisolated struct Uneton_V1_DeleteSleep: Sendable {
   public init() {}
 }
 
+public nonisolated struct Uneton_V1_UpsertGrowthMeasurement: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var measurement: Uneton_V1_GrowthMeasurementInput {
+    get {_measurement ?? Uneton_V1_GrowthMeasurementInput()}
+    set {_measurement = newValue}
+  }
+  /// Returns true if `measurement` has been explicitly set.
+  public var hasMeasurement: Bool {self._measurement != nil}
+  /// Clears the value of `measurement`. Subsequent reads from it will return its default value.
+  public mutating func clearMeasurement() {self._measurement = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _measurement: Uneton_V1_GrowthMeasurementInput? = nil
+}
+
+public nonisolated struct Uneton_V1_DeleteGrowthMeasurement: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var id: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+public nonisolated struct Uneton_V1_GrowthMeasurementInput: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var id: String = String()
+
+  public var childID: String = String()
+
+  public var measuredAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_measuredAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_measuredAt = newValue}
+  }
+  /// Returns true if `measuredAt` has been explicitly set.
+  public var hasMeasuredAt: Bool {self._measuredAt != nil}
+  /// Clears the value of `measuredAt`. Subsequent reads from it will return its default value.
+  public mutating func clearMeasuredAt() {self._measuredAt = nil}
+
+  public var weightGrams: Int32 {
+    get {_weightGrams ?? 0}
+    set {_weightGrams = newValue}
+  }
+  /// Returns true if `weightGrams` has been explicitly set.
+  public var hasWeightGrams: Bool {self._weightGrams != nil}
+  /// Clears the value of `weightGrams`. Subsequent reads from it will return its default value.
+  public mutating func clearWeightGrams() {self._weightGrams = nil}
+
+  public var heightMillimeters: Int32 {
+    get {_heightMillimeters ?? 0}
+    set {_heightMillimeters = newValue}
+  }
+  /// Returns true if `heightMillimeters` has been explicitly set.
+  public var hasHeightMillimeters: Bool {self._heightMillimeters != nil}
+  /// Clears the value of `heightMillimeters`. Subsequent reads from it will return its default value.
+  public mutating func clearHeightMillimeters() {self._heightMillimeters = nil}
+
+  public var note: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _measuredAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+  fileprivate var _weightGrams: Int32? = nil
+  fileprivate var _heightMillimeters: Int32? = nil
+}
+
 public nonisolated struct Uneton_V1_SleepInput: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -866,33 +970,45 @@ public nonisolated struct Uneton_V1_SleepInput: Sendable {
   fileprivate var _caregiverIntervened: Bool? = nil
 }
 
-public nonisolated struct Uneton_V1_CommandResult: Sendable {
+public nonisolated struct Uneton_V1_CommandResult: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
   // methods supported on all messages.
 
-  public var id: String = String()
+  public var id: String {
+    get {_storage._id}
+    set {_uniqueStorage()._id = newValue}
+  }
 
-  public var status: Uneton_V1_CommandStatus = .unspecified
+  public var status: Uneton_V1_CommandStatus {
+    get {_storage._status}
+    set {_uniqueStorage()._status = newValue}
+  }
 
-  public var error: String = String()
+  public var error: String {
+    get {_storage._error}
+    set {_uniqueStorage()._error = newValue}
+  }
 
-  public var entityID: String = String()
+  public var entityID: String {
+    get {_storage._entityID}
+    set {_uniqueStorage()._entityID = newValue}
+  }
 
   public var entity: Uneton_V1_Entity {
-    get {_entity ?? Uneton_V1_Entity()}
-    set {_entity = newValue}
+    get {_storage._entity ?? Uneton_V1_Entity()}
+    set {_uniqueStorage()._entity = newValue}
   }
   /// Returns true if `entity` has been explicitly set.
-  public var hasEntity: Bool {self._entity != nil}
+  public var hasEntity: Bool {_storage._entity != nil}
   /// Clears the value of `entity`. Subsequent reads from it will return its default value.
-  public mutating func clearEntity() {self._entity = nil}
+  public mutating func clearEntity() {_uniqueStorage()._entity = nil}
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
 
-  fileprivate var _entity: Uneton_V1_Entity? = nil
+  fileprivate var _storage = _StorageClass.defaultInstance
 }
 
 public nonisolated struct Uneton_V1_Entity: Sendable {
@@ -926,12 +1042,21 @@ public nonisolated struct Uneton_V1_Entity: Sendable {
     set {value = .deleted(newValue)}
   }
 
+  public var growthMeasurement: Uneton_V1_GrowthMeasurement {
+    get {
+      if case .growthMeasurement(let v)? = value {return v}
+      return Uneton_V1_GrowthMeasurement()
+    }
+    set {value = .growthMeasurement(newValue)}
+  }
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public nonisolated enum OneOf_Value: Equatable, Sendable {
     case child(Uneton_V1_Child)
     case sleepSession(Uneton_V1_SleepSession)
     case deleted(Uneton_V1_DeletedEntity)
+    case growthMeasurement(Uneton_V1_GrowthMeasurement)
 
   }
 
@@ -990,6 +1115,8 @@ public nonisolated struct Uneton_V1_Child: Sendable {
   public mutating func clearUpdatedAt() {self._updatedAt = nil}
 
   public var timeZone: String = String()
+
+  public var growthReference: String = String()
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -1118,6 +1245,77 @@ public nonisolated struct Uneton_V1_SleepSession: @unchecked Sendable {
   public init() {}
 
   fileprivate var _storage = _StorageClass.defaultInstance
+}
+
+public nonisolated struct Uneton_V1_GrowthMeasurement: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var id: String = String()
+
+  public var familyID: String = String()
+
+  public var childID: String = String()
+
+  public var measuredAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_measuredAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_measuredAt = newValue}
+  }
+  /// Returns true if `measuredAt` has been explicitly set.
+  public var hasMeasuredAt: Bool {self._measuredAt != nil}
+  /// Clears the value of `measuredAt`. Subsequent reads from it will return its default value.
+  public mutating func clearMeasuredAt() {self._measuredAt = nil}
+
+  public var weightGrams: Int32 {
+    get {_weightGrams ?? 0}
+    set {_weightGrams = newValue}
+  }
+  /// Returns true if `weightGrams` has been explicitly set.
+  public var hasWeightGrams: Bool {self._weightGrams != nil}
+  /// Clears the value of `weightGrams`. Subsequent reads from it will return its default value.
+  public mutating func clearWeightGrams() {self._weightGrams = nil}
+
+  public var heightMillimeters: Int32 {
+    get {_heightMillimeters ?? 0}
+    set {_heightMillimeters = newValue}
+  }
+  /// Returns true if `heightMillimeters` has been explicitly set.
+  public var hasHeightMillimeters: Bool {self._heightMillimeters != nil}
+  /// Clears the value of `heightMillimeters`. Subsequent reads from it will return its default value.
+  public mutating func clearHeightMillimeters() {self._heightMillimeters = nil}
+
+  public var note: String = String()
+
+  public var revision: Int64 = 0
+
+  public var updatedAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_updatedAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_updatedAt = newValue}
+  }
+  /// Returns true if `updatedAt` has been explicitly set.
+  public var hasUpdatedAt: Bool {self._updatedAt != nil}
+  /// Clears the value of `updatedAt`. Subsequent reads from it will return its default value.
+  public mutating func clearUpdatedAt() {self._updatedAt = nil}
+
+  public var deletedAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_deletedAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_deletedAt = newValue}
+  }
+  /// Returns true if `deletedAt` has been explicitly set.
+  public var hasDeletedAt: Bool {self._deletedAt != nil}
+  /// Clears the value of `deletedAt`. Subsequent reads from it will return its default value.
+  public mutating func clearDeletedAt() {self._deletedAt = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _measuredAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+  fileprivate var _weightGrams: Int32? = nil
+  fileprivate var _heightMillimeters: Int32? = nil
+  fileprivate var _updatedAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+  fileprivate var _deletedAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
 }
 
 public nonisolated struct Uneton_V1_SyncEvent: @unchecked Sendable {
@@ -1327,6 +1525,26 @@ public nonisolated struct Uneton_V1_SleepForecast: @unchecked Sendable {
   fileprivate var _storage = _StorageClass.defaultInstance
 }
 
+public nonisolated struct Uneton_V1_GrowthReferencePoint: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var reference: String = String()
+
+  public var metric: String = String()
+
+  public var ageMonths: Int32 = 0
+
+  public var sd: Int32 = 0
+
+  public var value: Int32 = 0
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
 public nonisolated struct Uneton_V1_SyncResponse: @unchecked Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -1398,6 +1616,11 @@ public nonisolated struct Uneton_V1_SyncResponse: @unchecked Sendable {
     set {_uniqueStorage()._resetRequired = newValue}
   }
 
+  public var growthReferencePoints: [Uneton_V1_GrowthReferencePoint] {
+    get {_storage._growthReferencePoints}
+    set {_uniqueStorage()._growthReferencePoints = newValue}
+  }
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -1446,7 +1669,7 @@ nonisolated extension Uneton_V1_CommandStatus: SwiftProtobuf._ProtoNameProviding
 }
 
 nonisolated extension Uneton_V1_EntityType: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0ENTITY_TYPE_UNSPECIFIED\0\u{1}ENTITY_TYPE_CHILD\0\u{1}ENTITY_TYPE_SLEEP_SESSION\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0ENTITY_TYPE_UNSPECIFIED\0\u{1}ENTITY_TYPE_CHILD\0\u{1}ENTITY_TYPE_SLEEP_SESSION\0\u{1}ENTITY_TYPE_GROWTH_MEASUREMENT\0")
 }
 
 nonisolated extension Uneton_V1_EventOperation: SwiftProtobuf._ProtoNameProviding {
@@ -2289,7 +2512,7 @@ nonisolated extension Uneton_V1_SyncRequest: SwiftProtobuf.Message, SwiftProtobu
 
 nonisolated extension Uneton_V1_Command: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Command"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{3}expected_revision\0\u{4}\u{8}create_child\0\u{3}update_child\0\u{3}start_sleep\0\u{3}end_sleep\0\u{3}upsert_sleep\0\u{3}delete_sleep\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{3}expected_revision\0\u{4}\u{8}create_child\0\u{3}update_child\0\u{3}start_sleep\0\u{3}end_sleep\0\u{3}upsert_sleep\0\u{3}delete_sleep\0\u{3}upsert_growth_measurement\0\u{3}delete_growth_measurement\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2377,6 +2600,32 @@ nonisolated extension Uneton_V1_Command: SwiftProtobuf.Message, SwiftProtobuf._M
           self.payload = .deleteSleep(v)
         }
       }()
+      case 16: try {
+        var v: Uneton_V1_UpsertGrowthMeasurement?
+        var hadOneofValue = false
+        if let current = self.payload {
+          hadOneofValue = true
+          if case .upsertGrowthMeasurement(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.payload = .upsertGrowthMeasurement(v)
+        }
+      }()
+      case 17: try {
+        var v: Uneton_V1_DeleteGrowthMeasurement?
+        var hadOneofValue = false
+        if let current = self.payload {
+          hadOneofValue = true
+          if case .deleteGrowthMeasurement(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.payload = .deleteGrowthMeasurement(v)
+        }
+      }()
       default: break
       }
     }
@@ -2417,6 +2666,14 @@ nonisolated extension Uneton_V1_Command: SwiftProtobuf.Message, SwiftProtobuf._M
     case .deleteSleep?: try {
       guard case .deleteSleep(let v)? = self.payload else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 15)
+    }()
+    case .upsertGrowthMeasurement?: try {
+      guard case .upsertGrowthMeasurement(let v)? = self.payload else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 16)
+    }()
+    case .deleteGrowthMeasurement?: try {
+      guard case .deleteGrowthMeasurement(let v)? = self.payload else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 17)
     }()
     case nil: break
     }
@@ -2502,7 +2759,7 @@ nonisolated extension Uneton_V1_UpdateChild: SwiftProtobuf.Message, SwiftProtobu
 
 nonisolated extension Uneton_V1_ChildInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".ChildInput"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{1}nickname\0\u{3}birth_date\0\u{3}prediction_mode\0\u{3}manual_interval_minutes\0\u{3}quiet_hours_start_minutes\0\u{3}quiet_hours_end_minutes\0\u{3}time_zone\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{1}nickname\0\u{3}birth_date\0\u{3}prediction_mode\0\u{3}manual_interval_minutes\0\u{3}quiet_hours_start_minutes\0\u{3}quiet_hours_end_minutes\0\u{3}time_zone\0\u{3}growth_reference\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2518,6 +2775,7 @@ nonisolated extension Uneton_V1_ChildInput: SwiftProtobuf.Message, SwiftProtobuf
       case 6: try { try decoder.decodeSingularInt32Field(value: &self.quietHoursStartMinutes) }()
       case 7: try { try decoder.decodeSingularInt32Field(value: &self.quietHoursEndMinutes) }()
       case 8: try { try decoder.decodeSingularStringField(value: &self.timeZone) }()
+      case 9: try { try decoder.decodeSingularStringField(value: &self.growthReference) }()
       default: break
       }
     }
@@ -2552,6 +2810,9 @@ nonisolated extension Uneton_V1_ChildInput: SwiftProtobuf.Message, SwiftProtobuf
     if !self.timeZone.isEmpty {
       try visitor.visitSingularStringField(value: self.timeZone, fieldNumber: 8)
     }
+    if !self.growthReference.isEmpty {
+      try visitor.visitSingularStringField(value: self.growthReference, fieldNumber: 9)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -2564,6 +2825,7 @@ nonisolated extension Uneton_V1_ChildInput: SwiftProtobuf.Message, SwiftProtobuf
     if lhs.quietHoursStartMinutes != rhs.quietHoursStartMinutes {return false}
     if lhs.quietHoursEndMinutes != rhs.quietHoursEndMinutes {return false}
     if lhs.timeZone != rhs.timeZone {return false}
+    if lhs.growthReference != rhs.growthReference {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -2726,6 +2988,129 @@ nonisolated extension Uneton_V1_DeleteSleep: SwiftProtobuf.Message, SwiftProtobu
   }
 }
 
+nonisolated extension Uneton_V1_UpsertGrowthMeasurement: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".UpsertGrowthMeasurement"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}measurement\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._measurement) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._measurement {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Uneton_V1_UpsertGrowthMeasurement, rhs: Uneton_V1_UpsertGrowthMeasurement) -> Bool {
+    if lhs._measurement != rhs._measurement {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Uneton_V1_DeleteGrowthMeasurement: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".DeleteGrowthMeasurement"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.id) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.id.isEmpty {
+      try visitor.visitSingularStringField(value: self.id, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Uneton_V1_DeleteGrowthMeasurement, rhs: Uneton_V1_DeleteGrowthMeasurement) -> Bool {
+    if lhs.id != rhs.id {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Uneton_V1_GrowthMeasurementInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GrowthMeasurementInput"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{3}child_id\0\u{3}measured_at\0\u{3}weight_grams\0\u{3}height_millimeters\0\u{1}note\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.id) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.childID) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._measuredAt) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self._weightGrams) }()
+      case 5: try { try decoder.decodeSingularInt32Field(value: &self._heightMillimeters) }()
+      case 6: try { try decoder.decodeSingularStringField(value: &self.note) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.id.isEmpty {
+      try visitor.visitSingularStringField(value: self.id, fieldNumber: 1)
+    }
+    if !self.childID.isEmpty {
+      try visitor.visitSingularStringField(value: self.childID, fieldNumber: 2)
+    }
+    try { if let v = self._measuredAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    } }()
+    try { if let v = self._weightGrams {
+      try visitor.visitSingularInt32Field(value: v, fieldNumber: 4)
+    } }()
+    try { if let v = self._heightMillimeters {
+      try visitor.visitSingularInt32Field(value: v, fieldNumber: 5)
+    } }()
+    if !self.note.isEmpty {
+      try visitor.visitSingularStringField(value: self.note, fieldNumber: 6)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Uneton_V1_GrowthMeasurementInput, rhs: Uneton_V1_GrowthMeasurementInput) -> Bool {
+    if lhs.id != rhs.id {return false}
+    if lhs.childID != rhs.childID {return false}
+    if lhs._measuredAt != rhs._measuredAt {return false}
+    if lhs._weightGrams != rhs._weightGrams {return false}
+    if lhs._heightMillimeters != rhs._heightMillimeters {return false}
+    if lhs.note != rhs.note {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
 nonisolated extension Uneton_V1_SleepInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SleepInput"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{3}child_id\0\u{3}started_at\0\u{3}ended_at\0\u{1}source\0\u{3}start_condition\0\u{3}sleep_location\0\u{3}end_condition\0\u{3}wake_mood\0\u{3}wake_reason\0\u{3}caregiver_intervened\0")
@@ -2814,51 +3199,95 @@ nonisolated extension Uneton_V1_CommandResult: SwiftProtobuf.Message, SwiftProto
   public static let protoMessageName: String = _protobuf_package + ".CommandResult"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{1}status\0\u{1}error\0\u{3}entity_id\0\u{1}entity\0")
 
+  fileprivate class _StorageClass {
+    var _id: String = String()
+    var _status: Uneton_V1_CommandStatus = .unspecified
+    var _error: String = String()
+    var _entityID: String = String()
+    var _entity: Uneton_V1_Entity? = nil
+
+      // This property is used as the initial default value for new instances of the type.
+      // The type itself is protecting the reference to its storage via CoW semantics.
+      // This will force a copy to be made of this reference when the first mutation occurs;
+      // hence, it is safe to mark this as `nonisolated(unsafe)`.
+      static nonisolated(unsafe) let defaultInstance = _StorageClass()
+
+    private init() {}
+
+    init(copying source: _StorageClass) {
+      _id = source._id
+      _status = source._status
+      _error = source._error
+      _entityID = source._entityID
+      _entity = source._entity
+    }
+  }
+
+  fileprivate mutating func _uniqueStorage() -> _StorageClass {
+    if !isKnownUniquelyReferenced(&_storage) {
+      _storage = _StorageClass(copying: _storage)
+    }
+    return _storage
+  }
+
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularStringField(value: &self.id) }()
-      case 2: try { try decoder.decodeSingularEnumField(value: &self.status) }()
-      case 3: try { try decoder.decodeSingularStringField(value: &self.error) }()
-      case 4: try { try decoder.decodeSingularStringField(value: &self.entityID) }()
-      case 5: try { try decoder.decodeSingularMessageField(value: &self._entity) }()
-      default: break
+    _ = _uniqueStorage()
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      while let fieldNumber = try decoder.nextFieldNumber() {
+        // The use of inline closures is to circumvent an issue where the compiler
+        // allocates stack space for every case branch when no optimizations are
+        // enabled. https://github.com/apple/swift-protobuf/issues/1034
+        switch fieldNumber {
+        case 1: try { try decoder.decodeSingularStringField(value: &_storage._id) }()
+        case 2: try { try decoder.decodeSingularEnumField(value: &_storage._status) }()
+        case 3: try { try decoder.decodeSingularStringField(value: &_storage._error) }()
+        case 4: try { try decoder.decodeSingularStringField(value: &_storage._entityID) }()
+        case 5: try { try decoder.decodeSingularMessageField(value: &_storage._entity) }()
+        default: break
+        }
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    // The use of inline closures is to circumvent an issue where the compiler
-    // allocates stack space for every if/case branch local when no optimizations
-    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-    // https://github.com/apple/swift-protobuf/issues/1182
-    if !self.id.isEmpty {
-      try visitor.visitSingularStringField(value: self.id, fieldNumber: 1)
+    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every if/case branch local when no optimizations
+      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+      // https://github.com/apple/swift-protobuf/issues/1182
+      if !_storage._id.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._id, fieldNumber: 1)
+      }
+      if _storage._status != .unspecified {
+        try visitor.visitSingularEnumField(value: _storage._status, fieldNumber: 2)
+      }
+      if !_storage._error.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._error, fieldNumber: 3)
+      }
+      if !_storage._entityID.isEmpty {
+        try visitor.visitSingularStringField(value: _storage._entityID, fieldNumber: 4)
+      }
+      try { if let v = _storage._entity {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
+      } }()
     }
-    if self.status != .unspecified {
-      try visitor.visitSingularEnumField(value: self.status, fieldNumber: 2)
-    }
-    if !self.error.isEmpty {
-      try visitor.visitSingularStringField(value: self.error, fieldNumber: 3)
-    }
-    if !self.entityID.isEmpty {
-      try visitor.visitSingularStringField(value: self.entityID, fieldNumber: 4)
-    }
-    try { if let v = self._entity {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
-    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Uneton_V1_CommandResult, rhs: Uneton_V1_CommandResult) -> Bool {
-    if lhs.id != rhs.id {return false}
-    if lhs.status != rhs.status {return false}
-    if lhs.error != rhs.error {return false}
-    if lhs.entityID != rhs.entityID {return false}
-    if lhs._entity != rhs._entity {return false}
+    if lhs._storage !== rhs._storage {
+      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
+        let _storage = _args.0
+        let rhs_storage = _args.1
+        if _storage._id != rhs_storage._id {return false}
+        if _storage._status != rhs_storage._status {return false}
+        if _storage._error != rhs_storage._error {return false}
+        if _storage._entityID != rhs_storage._entityID {return false}
+        if _storage._entity != rhs_storage._entity {return false}
+        return true
+      }
+      if !storagesAreEqual {return false}
+    }
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -2866,7 +3295,7 @@ nonisolated extension Uneton_V1_CommandResult: SwiftProtobuf.Message, SwiftProto
 
 nonisolated extension Uneton_V1_Entity: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Entity"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}child\0\u{3}sleep_session\0\u{1}deleted\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}child\0\u{3}sleep_session\0\u{1}deleted\0\u{3}growth_measurement\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2913,6 +3342,19 @@ nonisolated extension Uneton_V1_Entity: SwiftProtobuf.Message, SwiftProtobuf._Me
           self.value = .deleted(v)
         }
       }()
+      case 4: try {
+        var v: Uneton_V1_GrowthMeasurement?
+        var hadOneofValue = false
+        if let current = self.value {
+          hadOneofValue = true
+          if case .growthMeasurement(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.value = .growthMeasurement(v)
+        }
+      }()
       default: break
       }
     }
@@ -2935,6 +3377,10 @@ nonisolated extension Uneton_V1_Entity: SwiftProtobuf.Message, SwiftProtobuf._Me
     case .deleted?: try {
       guard case .deleted(let v)? = self.value else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    }()
+    case .growthMeasurement?: try {
+      guard case .growthMeasurement(let v)? = self.value else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
     }()
     case nil: break
     }
@@ -2980,7 +3426,7 @@ nonisolated extension Uneton_V1_DeletedEntity: SwiftProtobuf.Message, SwiftProto
 
 nonisolated extension Uneton_V1_Child: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Child"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{3}family_id\0\u{1}nickname\0\u{3}birth_date\0\u{3}prediction_mode\0\u{3}manual_interval_minutes\0\u{3}quiet_hours_start_minutes\0\u{3}quiet_hours_end_minutes\0\u{1}revision\0\u{3}updated_at\0\u{3}time_zone\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{3}family_id\0\u{1}nickname\0\u{3}birth_date\0\u{3}prediction_mode\0\u{3}manual_interval_minutes\0\u{3}quiet_hours_start_minutes\0\u{3}quiet_hours_end_minutes\0\u{1}revision\0\u{3}updated_at\0\u{3}time_zone\0\u{3}growth_reference\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2999,6 +3445,7 @@ nonisolated extension Uneton_V1_Child: SwiftProtobuf.Message, SwiftProtobuf._Mes
       case 9: try { try decoder.decodeSingularInt64Field(value: &self.revision) }()
       case 10: try { try decoder.decodeSingularMessageField(value: &self._updatedAt) }()
       case 11: try { try decoder.decodeSingularStringField(value: &self.timeZone) }()
+      case 12: try { try decoder.decodeSingularStringField(value: &self.growthReference) }()
       default: break
       }
     }
@@ -3042,6 +3489,9 @@ nonisolated extension Uneton_V1_Child: SwiftProtobuf.Message, SwiftProtobuf._Mes
     if !self.timeZone.isEmpty {
       try visitor.visitSingularStringField(value: self.timeZone, fieldNumber: 11)
     }
+    if !self.growthReference.isEmpty {
+      try visitor.visitSingularStringField(value: self.growthReference, fieldNumber: 12)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -3057,6 +3507,7 @@ nonisolated extension Uneton_V1_Child: SwiftProtobuf.Message, SwiftProtobuf._Mes
     if lhs.revision != rhs.revision {return false}
     if lhs._updatedAt != rhs._updatedAt {return false}
     if lhs.timeZone != rhs.timeZone {return false}
+    if lhs.growthReference != rhs.growthReference {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -3239,6 +3690,85 @@ nonisolated extension Uneton_V1_SleepSession: SwiftProtobuf.Message, SwiftProtob
       }
       if !storagesAreEqual {return false}
     }
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Uneton_V1_GrowthMeasurement: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GrowthMeasurement"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{3}family_id\0\u{3}child_id\0\u{3}measured_at\0\u{3}weight_grams\0\u{3}height_millimeters\0\u{1}note\0\u{1}revision\0\u{3}updated_at\0\u{3}deleted_at\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.id) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.familyID) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.childID) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._measuredAt) }()
+      case 5: try { try decoder.decodeSingularInt32Field(value: &self._weightGrams) }()
+      case 6: try { try decoder.decodeSingularInt32Field(value: &self._heightMillimeters) }()
+      case 7: try { try decoder.decodeSingularStringField(value: &self.note) }()
+      case 8: try { try decoder.decodeSingularInt64Field(value: &self.revision) }()
+      case 9: try { try decoder.decodeSingularMessageField(value: &self._updatedAt) }()
+      case 10: try { try decoder.decodeSingularMessageField(value: &self._deletedAt) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.id.isEmpty {
+      try visitor.visitSingularStringField(value: self.id, fieldNumber: 1)
+    }
+    if !self.familyID.isEmpty {
+      try visitor.visitSingularStringField(value: self.familyID, fieldNumber: 2)
+    }
+    if !self.childID.isEmpty {
+      try visitor.visitSingularStringField(value: self.childID, fieldNumber: 3)
+    }
+    try { if let v = self._measuredAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
+    try { if let v = self._weightGrams {
+      try visitor.visitSingularInt32Field(value: v, fieldNumber: 5)
+    } }()
+    try { if let v = self._heightMillimeters {
+      try visitor.visitSingularInt32Field(value: v, fieldNumber: 6)
+    } }()
+    if !self.note.isEmpty {
+      try visitor.visitSingularStringField(value: self.note, fieldNumber: 7)
+    }
+    if self.revision != 0 {
+      try visitor.visitSingularInt64Field(value: self.revision, fieldNumber: 8)
+    }
+    try { if let v = self._updatedAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
+    } }()
+    try { if let v = self._deletedAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 10)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Uneton_V1_GrowthMeasurement, rhs: Uneton_V1_GrowthMeasurement) -> Bool {
+    if lhs.id != rhs.id {return false}
+    if lhs.familyID != rhs.familyID {return false}
+    if lhs.childID != rhs.childID {return false}
+    if lhs._measuredAt != rhs._measuredAt {return false}
+    if lhs._weightGrams != rhs._weightGrams {return false}
+    if lhs._heightMillimeters != rhs._heightMillimeters {return false}
+    if lhs.note != rhs.note {return false}
+    if lhs.revision != rhs.revision {return false}
+    if lhs._updatedAt != rhs._updatedAt {return false}
+    if lhs._deletedAt != rhs._deletedAt {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -3616,9 +4146,59 @@ nonisolated extension Uneton_V1_SleepForecast: SwiftProtobuf.Message, SwiftProto
   }
 }
 
+nonisolated extension Uneton_V1_GrowthReferencePoint: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".GrowthReferencePoint"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}reference\0\u{1}metric\0\u{3}age_months\0\u{1}sd\0\u{1}value\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.reference) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.metric) }()
+      case 3: try { try decoder.decodeSingularInt32Field(value: &self.ageMonths) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.sd) }()
+      case 5: try { try decoder.decodeSingularInt32Field(value: &self.value) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.reference.isEmpty {
+      try visitor.visitSingularStringField(value: self.reference, fieldNumber: 1)
+    }
+    if !self.metric.isEmpty {
+      try visitor.visitSingularStringField(value: self.metric, fieldNumber: 2)
+    }
+    if self.ageMonths != 0 {
+      try visitor.visitSingularInt32Field(value: self.ageMonths, fieldNumber: 3)
+    }
+    if self.sd != 0 {
+      try visitor.visitSingularInt32Field(value: self.sd, fieldNumber: 4)
+    }
+    if self.value != 0 {
+      try visitor.visitSingularInt32Field(value: self.value, fieldNumber: 5)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Uneton_V1_GrowthReferencePoint, rhs: Uneton_V1_GrowthReferencePoint) -> Bool {
+    if lhs.reference != rhs.reference {return false}
+    if lhs.metric != rhs.metric {return false}
+    if lhs.ageMonths != rhs.ageMonths {return false}
+    if lhs.sd != rhs.sd {return false}
+    if lhs.value != rhs.value {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
 nonisolated extension Uneton_V1_SyncResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SyncResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}command_results\0\u{1}events\0\u{3}next_cursor\0\u{3}has_more\0\u{3}next_sleep_estimate\0\u{3}server_time\0\u{3}sleep_forecast\0\u{1}generation\0\u{1}snapshot\0\u{3}reset_required\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}command_results\0\u{1}events\0\u{3}next_cursor\0\u{3}has_more\0\u{3}next_sleep_estimate\0\u{3}server_time\0\u{3}sleep_forecast\0\u{1}generation\0\u{1}snapshot\0\u{3}reset_required\0\u{3}growth_reference_points\0")
 
   fileprivate class _StorageClass {
     var _commandResults: [Uneton_V1_CommandResult] = []
@@ -3631,6 +4211,7 @@ nonisolated extension Uneton_V1_SyncResponse: SwiftProtobuf.Message, SwiftProtob
     var _generation: String = String()
     var _snapshot: Uneton_V1_FamilySnapshot? = nil
     var _resetRequired: Bool = false
+    var _growthReferencePoints: [Uneton_V1_GrowthReferencePoint] = []
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -3651,6 +4232,7 @@ nonisolated extension Uneton_V1_SyncResponse: SwiftProtobuf.Message, SwiftProtob
       _generation = source._generation
       _snapshot = source._snapshot
       _resetRequired = source._resetRequired
+      _growthReferencePoints = source._growthReferencePoints
     }
   }
 
@@ -3679,6 +4261,7 @@ nonisolated extension Uneton_V1_SyncResponse: SwiftProtobuf.Message, SwiftProtob
         case 8: try { try decoder.decodeSingularStringField(value: &_storage._generation) }()
         case 9: try { try decoder.decodeSingularMessageField(value: &_storage._snapshot) }()
         case 10: try { try decoder.decodeSingularBoolField(value: &_storage._resetRequired) }()
+        case 11: try { try decoder.decodeRepeatedMessageField(value: &_storage._growthReferencePoints) }()
         default: break
         }
       }
@@ -3721,6 +4304,9 @@ nonisolated extension Uneton_V1_SyncResponse: SwiftProtobuf.Message, SwiftProtob
       if _storage._resetRequired != false {
         try visitor.visitSingularBoolField(value: _storage._resetRequired, fieldNumber: 10)
       }
+      if !_storage._growthReferencePoints.isEmpty {
+        try visitor.visitRepeatedMessageField(value: _storage._growthReferencePoints, fieldNumber: 11)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -3740,6 +4326,7 @@ nonisolated extension Uneton_V1_SyncResponse: SwiftProtobuf.Message, SwiftProtob
         if _storage._generation != rhs_storage._generation {return false}
         if _storage._snapshot != rhs_storage._snapshot {return false}
         if _storage._resetRequired != rhs_storage._resetRequired {return false}
+        if _storage._growthReferencePoints != rhs_storage._growthReferencePoints {return false}
         return true
       }
       if !storagesAreEqual {return false}

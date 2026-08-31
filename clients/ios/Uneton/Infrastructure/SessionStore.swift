@@ -104,23 +104,20 @@ final class SessionStore {
         credentials.value(for: Key.accessToken)
     }
 
-    func developmentOnboard(name: String, childName: String, birthDate: Date) async {
+    func developmentAuthenticate(name: String) async {
         await perform {
             let authentication = try await apiClient.developmentAuth(name, deviceID)
             save(authentication)
             await configurePushRegistration()
             if let familyID = try await restoreAuthenticatedFamily(authentication) {
                 await setPrediction(try await synchronizeWithRefresh(familyID: familyID))
-                return
             }
-            try await createInitialFamily(childName: childName, birthDate: birthDate)
+            await acceptPendingInviteIfPossible()
         }
     }
 
     func completeAppleAuthorization(
-        _ result: Result<ASAuthorization, any Error>,
-        childName: String,
-        birthDate: Date
+        _ result: Result<ASAuthorization, any Error>
     ) async {
         await perform {
             guard let nonce = pendingAppleNonce else { throw SessionError.missingAppleNonce }
@@ -138,9 +135,8 @@ final class SessionStore {
             await configurePushRegistration()
             if let familyID = try await restoreAuthenticatedFamily(authentication) {
                 await setPrediction(try await synchronizeWithRefresh(familyID: familyID))
-                return
             }
-            try await createInitialFamily(childName: childName, birthDate: birthDate)
+            await acceptPendingInviteIfPossible()
         }
     }
 
@@ -248,6 +244,41 @@ final class SessionStore {
         }
     }
 
+    func logGrowthMeasurement(
+        familyID: Family.ID,
+        childID: Child.ID,
+        measurementID: GrowthMeasurement.ID? = nil,
+        measuredAt: Date,
+        weightGrams: Int?,
+        heightMillimeters: Int?,
+        note: String = ""
+    ) async {
+        await perform {
+            try await coordinator.upsertGrowthMeasurement(
+                familyID: familyID, childID: childID, measurementID: measurementID,
+                measuredAt: measuredAt, weightGrams: weightGrams,
+                heightMillimeters: heightMillimeters, note: note
+            )
+            _ = try await synchronizeWithRefresh(familyID: familyID)
+        }
+    }
+
+    func deleteGrowthMeasurement(familyID: Family.ID, measurementID: GrowthMeasurement.ID) async {
+        await perform {
+            try await coordinator.deleteGrowthMeasurement(familyID: familyID, measurementID: measurementID)
+            _ = try await synchronizeWithRefresh(familyID: familyID)
+        }
+    }
+
+    func setGrowthReference(familyID: Family.ID, childID: Child.ID, growthReference: String) async {
+        await perform {
+            try await coordinator.updateGrowthReference(
+                familyID: familyID, childID: childID, growthReference: growthReference
+            )
+            _ = try await synchronizeWithRefresh(familyID: familyID)
+        }
+    }
+
     func synchronize(familyID: Family.ID) async {
         guard accessToken != nil else { return }
         await perform {
@@ -300,6 +331,18 @@ final class SessionStore {
               let sessionID = UUID(uuidString: sessionValue)
         else { return }
         await endSleep(familyID: familyID, sessionID: sessionID)
+    }
+
+    func acceptPendingInviteIfPossible() async {
+        guard let pendingInviteURL else { return }
+        self.pendingInviteURL = nil
+        await handle(url: pendingInviteURL)
+    }
+
+    func createChildFamily(childName: String, birthDate: Date) async {
+        await perform {
+            try await createInitialFamily(childName: childName, birthDate: birthDate)
+        }
     }
 
     func createInvite(familyID: UUID) async -> URL? {
@@ -451,6 +494,7 @@ final class SessionStore {
             try PendingCommand.delete().execute(database)
             try AuthoritativeRecord.delete().execute(database)
             try SleepSession.delete().execute(database)
+            try GrowthMeasurement.delete().execute(database)
             try Child.delete().execute(database)
             try FamilyMember.delete().execute(database)
             try SyncState.delete().execute(database)

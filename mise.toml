@@ -71,6 +71,11 @@ run = "xcodegen generate --spec project.yml"
 description = "Run realistic two-caregiver scenarios against a development API"
 run = "go run ./clients/loadtest"
 
+[tasks."backend:growth-reference:seed"]
+description = "Seed private digitized growth references from tmp/growth-reference.json into local SQLite"
+env.GOCACHE = "/tmp/uneton-go-cache"
+run = "env -u GOROOT go run ./platform/backend/cmd/seed-growth-reference"
+
 [tasks."infra:loadtest:prepare"]
 description = "Create and provision a 2-vCPU/4-GB/40-GB OrbStack load-test VM"
 run = "platform/infra/vps/operations/load-test.sh prepare"

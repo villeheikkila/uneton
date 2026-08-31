@@ -14,12 +14,16 @@ enum Projection {
       }
 
     try SleepSession.where { $0.familyID.eq(familyID) }.delete().execute(database)
+    try GrowthMeasurement.where { $0.familyID.eq(familyID) }.delete().execute(database)
     try Child.where { $0.familyID.eq(familyID) }.delete().execute(database)
 
     for record in records where record.operation != "delete" && record.entityType == "child" {
       try applyAuthoritative(record, familyID: familyID, database: database)
     }
     for record in records where record.operation != "delete" && record.entityType == "sleepSession" {
+      try applyAuthoritative(record, familyID: familyID, database: database)
+    }
+    for record in records where record.operation != "delete" && record.entityType == "growthMeasurement" {
       try applyAuthoritative(record, familyID: familyID, database: database)
     }
     for command in commands {
@@ -49,6 +53,7 @@ enum Projection {
           quietHoursStartMinutes: payload.quietHoursStartMinutes,
           quietHoursEndMinutes: payload.quietHoursEndMinutes,
           timeZone: payload.timeZone,
+          growthReference: payload.growthReference,
           revision: payload.revision,
           updatedAt: payload.updatedAt
         )
@@ -76,6 +81,16 @@ enum Projection {
           deletedAt: payload.deletedAt
         )
       }.execute(database)
+    case "growthMeasurement":
+      let payload = try JSONDecoder.uneton.decode(ServerGrowthMeasurementPayload.self, from: record.payloadJSON)
+      try GrowthMeasurement.upsert {
+        GrowthMeasurement(
+          id: payload.id, familyID: payload.familyID, childID: payload.childID,
+          measuredAt: payload.measuredAt, weightGrams: payload.weightGrams,
+          heightMillimeters: payload.heightMillimeters, note: payload.note,
+          revision: payload.revision, updatedAt: payload.updatedAt, deletedAt: payload.deletedAt
+        )
+      }.execute(database)
     default:
       break
     }
@@ -100,6 +115,7 @@ enum Projection {
           quietHoursStartMinutes: payload.quietHoursStartMinutes > 0 ? payload.quietHoursStartMinutes : current?.quietHoursStartMinutes ?? 1_200,
           quietHoursEndMinutes: payload.quietHoursEndMinutes > 0 ? payload.quietHoursEndMinutes : current?.quietHoursEndMinutes ?? 360,
           timeZone: payload.timeZone.isEmpty ? current?.timeZone ?? TimeZone.current.identifier : payload.timeZone,
+          growthReference: payload.growthReference.isEmpty ? current?.growthReference ?? "none" : payload.growthReference,
           revision: current?.revision ?? 0,
           updatedAt: command.createdAt
         )
@@ -132,6 +148,21 @@ enum Projection {
     case "deleteSleep":
       let payload = try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: command.payloadJSON)
       try SleepSession.find(payload.id).delete().execute(database)
+    case "upsertGrowthMeasurement":
+      let payload = try JSONDecoder.uneton.decode(GrowthMeasurementCommandPayload.self, from: command.payloadJSON)
+      let current = try GrowthMeasurement.find(payload.id).fetchOne(database)
+      try GrowthMeasurement.upsert {
+        GrowthMeasurement(
+          id: payload.id, familyID: command.familyID, childID: payload.childID,
+          measuredAt: payload.measuredAt, weightGrams: payload.weightGrams,
+          heightMillimeters: payload.heightMillimeters, note: payload.note,
+          revision: current?.revision ?? 0, updatedAt: command.createdAt,
+          pendingCommandID: command.id
+        )
+      }.execute(database)
+    case "deleteGrowthMeasurement":
+      let payload = try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: command.payloadJSON)
+      try GrowthMeasurement.find(payload.id).delete().execute(database)
     default:
       break
     }

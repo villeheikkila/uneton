@@ -118,7 +118,7 @@ func (q *Queries) AppendEvent(ctx context.Context, arg AppendEventParams) error 
 const childRecord = `-- name: ChildRecord :one
 select id, family_id, nickname, birth_date, prediction_mode,
   manual_interval_minutes, quiet_hours_start_minutes,
-  quiet_hours_end_minutes, time_zone, revision, updated_at
+  quiet_hours_end_minutes, time_zone, growth_reference, revision, updated_at
 from children
 where id=?1 and family_id=?2
 `
@@ -138,6 +138,7 @@ type ChildRecordRow struct {
 	QuietHoursStartMinutes int64         `json:"quiet_hours_start_minutes"`
 	QuietHoursEndMinutes   int64         `json:"quiet_hours_end_minutes"`
 	TimeZone               string        `json:"time_zone"`
+	GrowthReference        string        `json:"growth_reference"`
 	Revision               int64         `json:"revision"`
 	UpdatedAt              string        `json:"updated_at"`
 }
@@ -155,6 +156,7 @@ func (q *Queries) ChildRecord(ctx context.Context, arg ChildRecordParams) (Child
 		&i.QuietHoursStartMinutes,
 		&i.QuietHoursEndMinutes,
 		&i.TimeZone,
+		&i.GrowthReference,
 		&i.Revision,
 		&i.UpdatedAt,
 	)
@@ -248,12 +250,12 @@ const createChild = `-- name: CreateChild :exec
 insert into children(
   id, family_id, nickname, birth_date, prediction_mode,
   manual_interval_minutes, quiet_hours_start_minutes,
-  quiet_hours_end_minutes, time_zone, revision, updated_at
+  quiet_hours_end_minutes, time_zone, growth_reference, revision, updated_at
 ) values (
   ?1, ?2, ?3, ?4,
   ?5, ?6,
-  ?7, ?8, ?9, 1,
-  ?10
+  ?7, ?8, ?9, ?10, 1,
+  ?11
 )
 `
 
@@ -267,6 +269,7 @@ type CreateChildParams struct {
 	QuietHoursStartMinutes int64         `json:"quiet_hours_start_minutes"`
 	QuietHoursEndMinutes   int64         `json:"quiet_hours_end_minutes"`
 	TimeZone               string        `json:"time_zone"`
+	GrowthReference        string        `json:"growth_reference"`
 	UpdatedAt              string        `json:"updated_at"`
 }
 
@@ -281,7 +284,68 @@ func (q *Queries) CreateChild(ctx context.Context, arg CreateChildParams) error 
 		arg.QuietHoursStartMinutes,
 		arg.QuietHoursEndMinutes,
 		arg.TimeZone,
+		arg.GrowthReference,
 		arg.UpdatedAt,
+	)
+	return err
+}
+
+const createGrowthMeasurement = `-- name: CreateGrowthMeasurement :exec
+insert into growth_measurements(
+  id, family_id, child_id, measured_at, weight_grams, height_millimeters,
+  note, revision, updated_at
+) values (
+  ?1, ?2, ?3, ?4,
+  ?5, ?6, ?7, 1,
+  ?8
+)
+`
+
+type CreateGrowthMeasurementParams struct {
+	ID                string        `json:"id"`
+	FamilyID          string        `json:"family_id"`
+	ChildID           string        `json:"child_id"`
+	MeasuredAt        string        `json:"measured_at"`
+	WeightGrams       sql.NullInt64 `json:"weight_grams"`
+	HeightMillimeters sql.NullInt64 `json:"height_millimeters"`
+	Note              string        `json:"note"`
+	UpdatedAt         string        `json:"updated_at"`
+}
+
+func (q *Queries) CreateGrowthMeasurement(ctx context.Context, arg CreateGrowthMeasurementParams) error {
+	_, err := q.db.ExecContext(ctx, createGrowthMeasurement,
+		arg.ID,
+		arg.FamilyID,
+		arg.ChildID,
+		arg.MeasuredAt,
+		arg.WeightGrams,
+		arg.HeightMillimeters,
+		arg.Note,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const createGrowthReferencePoint = `-- name: CreateGrowthReferencePoint :exec
+insert into growth_reference_points(reference, metric, age_months, sd, value)
+values (?1, ?2, ?3, ?4, ?5)
+`
+
+type CreateGrowthReferencePointParams struct {
+	Reference string `json:"reference"`
+	Metric    string `json:"metric"`
+	AgeMonths int64  `json:"age_months"`
+	Sd        int64  `json:"sd"`
+	Value     int64  `json:"value"`
+}
+
+func (q *Queries) CreateGrowthReferencePoint(ctx context.Context, arg CreateGrowthReferencePointParams) error {
+	_, err := q.db.ExecContext(ctx, createGrowthReferencePoint,
+		arg.Reference,
+		arg.Metric,
+		arg.AgeMonths,
+		arg.Sd,
+		arg.Value,
 	)
 	return err
 }
@@ -349,6 +413,42 @@ type DeleteFamilyEventsThroughParams struct {
 
 func (q *Queries) DeleteFamilyEventsThrough(ctx context.Context, arg DeleteFamilyEventsThroughParams) error {
 	_, err := q.db.ExecContext(ctx, deleteFamilyEventsThrough, arg.FamilyID, arg.Cursor)
+	return err
+}
+
+const deleteGrowthMeasurement = `-- name: DeleteGrowthMeasurement :exec
+update growth_measurements set
+  deleted_at=?1,
+  revision=?2,
+  updated_at=?3
+where id=?4 and family_id=?5
+`
+
+type DeleteGrowthMeasurementParams struct {
+	DeletedAt sql.NullString `json:"deleted_at"`
+	Revision  int64          `json:"revision"`
+	UpdatedAt string         `json:"updated_at"`
+	ID        string         `json:"id"`
+	FamilyID  string         `json:"family_id"`
+}
+
+func (q *Queries) DeleteGrowthMeasurement(ctx context.Context, arg DeleteGrowthMeasurementParams) error {
+	_, err := q.db.ExecContext(ctx, deleteGrowthMeasurement,
+		arg.DeletedAt,
+		arg.Revision,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.FamilyID,
+	)
+	return err
+}
+
+const deleteGrowthReferencePoints = `-- name: DeleteGrowthReferencePoints :exec
+delete from growth_reference_points
+`
+
+func (q *Queries) DeleteGrowthReferencePoints(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteGrowthReferencePoints)
 	return err
 }
 
@@ -479,6 +579,23 @@ func (q *Queries) EndSleep(ctx context.Context, arg EndSleepParams) error {
 	return err
 }
 
+const existingGrowthMeasurementRevision = `-- name: ExistingGrowthMeasurementRevision :one
+select revision from growth_measurements
+where id=?1 and family_id=?2 and deleted_at is null
+`
+
+type ExistingGrowthMeasurementRevisionParams struct {
+	ID       string `json:"id"`
+	FamilyID string `json:"family_id"`
+}
+
+func (q *Queries) ExistingGrowthMeasurementRevision(ctx context.Context, arg ExistingGrowthMeasurementRevisionParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, existingGrowthMeasurementRevision, arg.ID, arg.FamilyID)
+	var revision int64
+	err := row.Scan(&revision)
+	return revision, err
+}
+
 const existingSleepRevision = `-- name: ExistingSleepRevision :one
 select revision from sleep_sessions
 where id=?1 and family_id=?2 and deleted_at is null
@@ -529,6 +646,88 @@ func (q *Queries) FamilySyncSnapshot(ctx context.Context, familyID string) (Fami
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const growthMeasurementRecord = `-- name: GrowthMeasurementRecord :one
+select id, family_id, child_id, measured_at, weight_grams, height_millimeters,
+  note, revision, updated_at, deleted_at
+from growth_measurements
+where id=?1 and family_id=?2
+`
+
+type GrowthMeasurementRecordParams struct {
+	ID       string `json:"id"`
+	FamilyID string `json:"family_id"`
+}
+
+func (q *Queries) GrowthMeasurementRecord(ctx context.Context, arg GrowthMeasurementRecordParams) (GrowthMeasurement, error) {
+	row := q.db.QueryRowContext(ctx, growthMeasurementRecord, arg.ID, arg.FamilyID)
+	var i GrowthMeasurement
+	err := row.Scan(
+		&i.ID,
+		&i.FamilyID,
+		&i.ChildID,
+		&i.MeasuredAt,
+		&i.WeightGrams,
+		&i.HeightMillimeters,
+		&i.Note,
+		&i.Revision,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const growthMeasurementRevision = `-- name: GrowthMeasurementRevision :one
+select revision from growth_measurements
+where id=?1 and family_id=?2
+`
+
+type GrowthMeasurementRevisionParams struct {
+	ID       string `json:"id"`
+	FamilyID string `json:"family_id"`
+}
+
+func (q *Queries) GrowthMeasurementRevision(ctx context.Context, arg GrowthMeasurementRevisionParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, growthMeasurementRevision, arg.ID, arg.FamilyID)
+	var revision int64
+	err := row.Scan(&revision)
+	return revision, err
+}
+
+const growthReferencePoints = `-- name: GrowthReferencePoints :many
+select reference, metric, age_months, sd, value
+from growth_reference_points
+order by reference, metric, age_months, sd
+`
+
+func (q *Queries) GrowthReferencePoints(ctx context.Context) ([]GrowthReferencePoint, error) {
+	rows, err := q.db.QueryContext(ctx, growthReferencePoints)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GrowthReferencePoint{}
+	for rows.Next() {
+		var i GrowthReferencePoint
+		if err := rows.Scan(
+			&i.Reference,
+			&i.Metric,
+			&i.AgeMonths,
+			&i.Sd,
+			&i.Value,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const latestFamilyCursor = `-- name: LatestFamilyCursor :one
@@ -998,9 +1197,10 @@ update children set
   quiet_hours_start_minutes=case when ?5>0 then ?5 else quiet_hours_start_minutes end,
   quiet_hours_end_minutes=case when ?6>0 then ?6 else quiet_hours_end_minutes end,
   time_zone=coalesce(nullif(?7, ''), time_zone),
+  growth_reference=case when sqlc.arg(growth_reference) in ('none', 'girl', 'boy') then ?8 else growth_reference end,
   revision=revision+1,
-  updated_at=?8
-where id=?9 and family_id=?10
+  updated_at=?9
+where id=?10 and family_id=?11
 `
 
 type UpdateChildParams struct {
@@ -1011,6 +1211,7 @@ type UpdateChildParams struct {
 	QuietHoursStartMinutes interface{}   `json:"quiet_hours_start_minutes"`
 	QuietHoursEndMinutes   interface{}   `json:"quiet_hours_end_minutes"`
 	TimeZone               interface{}   `json:"time_zone"`
+	GrowthReference        string        `json:"growth_reference"`
 	UpdatedAt              string        `json:"updated_at"`
 	ID                     string        `json:"id"`
 	FamilyID               string        `json:"family_id"`
@@ -1025,6 +1226,41 @@ func (q *Queries) UpdateChild(ctx context.Context, arg UpdateChildParams) error 
 		arg.QuietHoursStartMinutes,
 		arg.QuietHoursEndMinutes,
 		arg.TimeZone,
+		arg.GrowthReference,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.FamilyID,
+	)
+	return err
+}
+
+const updateGrowthMeasurement = `-- name: UpdateGrowthMeasurement :exec
+update growth_measurements set
+  measured_at=?1,
+  weight_grams=?2,
+  height_millimeters=?3,
+  note=?4,
+  revision=revision+1,
+  updated_at=?5
+where id=?6 and family_id=?7
+`
+
+type UpdateGrowthMeasurementParams struct {
+	MeasuredAt        string        `json:"measured_at"`
+	WeightGrams       sql.NullInt64 `json:"weight_grams"`
+	HeightMillimeters sql.NullInt64 `json:"height_millimeters"`
+	Note              string        `json:"note"`
+	UpdatedAt         string        `json:"updated_at"`
+	ID                string        `json:"id"`
+	FamilyID          string        `json:"family_id"`
+}
+
+func (q *Queries) UpdateGrowthMeasurement(ctx context.Context, arg UpdateGrowthMeasurementParams) error {
+	_, err := q.db.ExecContext(ctx, updateGrowthMeasurement,
+		arg.MeasuredAt,
+		arg.WeightGrams,
+		arg.HeightMillimeters,
+		arg.Note,
 		arg.UpdatedAt,
 		arg.ID,
 		arg.FamilyID,

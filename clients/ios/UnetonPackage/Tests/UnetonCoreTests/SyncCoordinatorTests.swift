@@ -145,6 +145,89 @@ struct SyncCoordinatorTests {
     #expect(state.2?.endedAt == date(3_600))
   }
 
+  @Test func growthMeasurementReplaysPendingOverlay() async throws {
+    let familyID = UUID(-21)
+    let childID = UUID(-22)
+    let measurementID = UUID(-23)
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    let authoritative = ServerGrowthMeasurementPayload(
+      id: measurementID, familyID: familyID, childID: childID, measuredAt: date(1_000),
+      weightGrams: 6_100, heightMillimeters: 620, note: "Neuvola", revision: 2,
+      updatedAt: date(1_000), deletedAt: nil
+    )
+    let pending = GrowthMeasurementCommandPayload(
+      id: measurementID, childID: childID, measuredAt: date(2_000),
+      weightGrams: 6_300, heightMillimeters: 630, note: "Home"
+    )
+    let authoritativeJSON = try JSONEncoder.uneton.encode(authoritative)
+    let pendingJSON = try JSONEncoder.uneton.encode(pending)
+    try await database.write { database in
+      try AuthoritativeRecord.insert {
+        AuthoritativeRecord(
+          id: "growthMeasurement:\(measurementID)", familyID: familyID,
+          entityType: "growthMeasurement", entityID: measurementID, revision: 2,
+          operation: "upsert", payloadJSON: authoritativeJSON
+        )
+      }.execute(database)
+      try PendingCommand.insert {
+        PendingCommand(
+          id: UUID(-24), familyID: familyID, kind: "upsertGrowthMeasurement",
+          expectedRevision: 2, payloadJSON: pendingJSON,
+          createdAt: date(3_000)
+        )
+      }.execute(database)
+      try Projection.rebuild(familyID: familyID, database: database)
+    }
+
+    let projected = try await database.read { try GrowthMeasurement.find(measurementID).fetchOne($0) }
+    #expect(projected?.measuredAt == date(2_000))
+    #expect(projected?.weightGrams == 6_300)
+    #expect(projected?.heightMillimeters == 630)
+    #expect(projected?.note == "Home")
+    #expect(projected?.revision == 2)
+    #expect(projected?.pendingCommandID == UUID(-24))
+  }
+
+  @Test func growthReferenceReplaysPendingChildUpdate() async throws {
+    let familyID = UUID(-61)
+    let childID = UUID(-62)
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+
+    try await SyncCoordinator(deviceID: UUID(-63), accessToken: { "token" })
+      .updateGrowthReference(familyID: familyID, childID: childID, growthReference: "girl")
+
+    let child = try await database.read { database in try Child.find(childID).fetchOne(database) }
+    #expect(child?.growthReference == "girl")
+    let pending = try await database.read { database in
+      try PendingCommand.where { $0.familyID.eq(familyID) }.fetchAll(database)
+    }
+    #expect(pending.count == 1)
+    #expect(pending.first?.kind == "updateChild")
+  }
+
+  @Test func growthReferenceBootstrapIsCachedOffline() async throws {
+    let familyID = UUID(-64)
+    let childID = UUID(-65)
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    var api = APIClient.testValue
+    api.sync = { _, _, request in
+      SyncResponse(
+        commandResults: [], events: [], nextCursor: request.cursor, hasMore: false,
+        serverTime: date(0),
+        growthReferencePoints: [
+          GrowthReferenceBootstrapPoint(reference: "girl", metric: "height", ageMonths: 6, sd: 0, value: 676)
+        ]
+      )
+    }
+    try await withDependencies { $0.apiClient = api } operation: {
+      _ = try await SyncCoordinator(deviceID: UUID(-66), accessToken: { "token" }).synchronize(familyID: familyID)
+    }
+    let point = try await database.read { database in
+      try GrowthReferencePoint.find("girl:height:6:0").fetchOne(database)
+    }
+    #expect(point?.value == 676)
+  }
+
   @Test func duplicateStartRemapsToCanonicalServerSession() async throws {
     let familyID = UUID(-1)
     let childID = UUID(-2)

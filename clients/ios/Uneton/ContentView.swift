@@ -10,12 +10,13 @@ struct ContentView: View {
 
     var body: some View {
         Group {
-            if session.accessToken != nil,
-               let family = families.first,
+            if session.accessToken == nil {
+                OnboardingView()
+            } else if let family = families.first,
                let child = children.first(where: { $0.familyID == family.id }) {
                 TimelineScreen(family: family, child: child)
             } else {
-                OnboardingView()
+                FamilySetupView()
             }
         }
         .onOpenURL { url in

@@ -153,6 +153,8 @@ message Command {
     EndSleep end_sleep = 13;
     UpsertSleep upsert_sleep = 14;
     DeleteSleep delete_sleep = 15;
+    UpsertGrowthMeasurement upsert_growth_measurement = 16;
+    DeleteGrowthMeasurement delete_growth_measurement = 17;
   }
 }
 
@@ -173,6 +175,7 @@ message ChildInput {
   int32 quiet_hours_start_minutes = 6;
   int32 quiet_hours_end_minutes = 7;
   string time_zone = 8;
+  string growth_reference = 9;
 }
 
 message StartSleep {
@@ -194,6 +197,23 @@ message UpsertSleep {
 
 message DeleteSleep {
   string id = 1;
+}
+
+message UpsertGrowthMeasurement {
+  GrowthMeasurementInput measurement = 1;
+}
+
+message DeleteGrowthMeasurement {
+  string id = 1;
+}
+
+message GrowthMeasurementInput {
+  string id = 1;
+  string child_id = 2;
+  google.protobuf.Timestamp measured_at = 3;
+  optional int32 weight_grams = 4;
+  optional int32 height_millimeters = 5;
+  string note = 6;
 }
 
 message SleepInput {
@@ -228,6 +248,7 @@ enum EntityType {
   ENTITY_TYPE_UNSPECIFIED = 0;
   ENTITY_TYPE_CHILD = 1;
   ENTITY_TYPE_SLEEP_SESSION = 2;
+  ENTITY_TYPE_GROWTH_MEASUREMENT = 3;
 }
 
 enum EventOperation {
@@ -241,6 +262,7 @@ message Entity {
     Child child = 1;
     SleepSession sleep_session = 2;
     DeletedEntity deleted = 3;
+    GrowthMeasurement growth_measurement = 4;
   }
 }
 
@@ -260,6 +282,7 @@ message Child {
   int64 revision = 9;
   google.protobuf.Timestamp updated_at = 10;
   string time_zone = 11;
+  string growth_reference = 12;
 }
 
 message SleepSession {
@@ -280,6 +303,19 @@ message SleepSession {
   string wake_mood = 15;
   string wake_reason = 16;
   optional bool caregiver_intervened = 17;
+}
+
+message GrowthMeasurement {
+  string id = 1;
+  string family_id = 2;
+  string child_id = 3;
+  google.protobuf.Timestamp measured_at = 4;
+  optional int32 weight_grams = 5;
+  optional int32 height_millimeters = 6;
+  string note = 7;
+  int64 revision = 8;
+  google.protobuf.Timestamp updated_at = 9;
+  optional google.protobuf.Timestamp deleted_at = 10;
 }
 
 message SyncEvent {
@@ -324,6 +360,14 @@ message SleepForecast {
   bool next_sleep_is_provisional = 5;
 }
 
+message GrowthReferencePoint {
+  string reference = 1;
+  string metric = 2;
+  int32 age_months = 3;
+  int32 sd = 4;
+  int32 value = 5;
+}
+
 message SyncResponse {
   repeated CommandResult command_results = 1;
   repeated SyncEvent events = 2;
@@ -335,6 +379,7 @@ message SyncResponse {
   string generation = 8;
   optional FamilySnapshot snapshot = 9;
   bool reset_required = 10;
+  repeated GrowthReferencePoint growth_reference_points = 11;
 }
 
 message WatchFamilyRequest {

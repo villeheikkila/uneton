@@ -15,6 +15,7 @@ import (
 	unetonv1 "solutions.bytesized/uneton/internal/gen/uneton/v1"
 	"solutions.bytesized/uneton/internal/gen/uneton/v1/unetonv1connect"
 	"solutions.bytesized/uneton/platform/backend/internal/store"
+	"solutions.bytesized/uneton/platform/backend/internal/store/storedb"
 )
 
 func TestFamilySyncAndInvite(t *testing.T) {
@@ -58,15 +59,24 @@ func TestFamilySyncAndInvite(t *testing.T) {
 
 	childID := "20000000-0000-4000-8000-000000000001"
 	sessionID := "30000000-0000-4000-8000-000000000001"
+	if err := database.Queries.CreateGrowthReferencePoint(ctx, storedb.CreateGrowthReferencePointParams{Reference: "girl", Metric: "height", AgeMonths: 6, Sd: 0, Value: 676}); err != nil {
+		t.Fatal(err)
+	}
 	first := syncFamily(t, ctx, client, owner.GetAccessToken(), &unetonv1.SyncRequest{
 		FamilyId: familyID,
 		Commands: []*unetonv1.Command{
-			{Id: "40000000-0000-4000-8000-000000000001", Payload: &unetonv1.Command_CreateChild{CreateChild: &unetonv1.CreateChild{Child: &unetonv1.ChildInput{Id: childID, Nickname: "Muru", BirthDate: "2026-02-23"}}}},
+			{Id: "40000000-0000-4000-8000-000000000001", Payload: &unetonv1.Command_CreateChild{CreateChild: &unetonv1.CreateChild{Child: &unetonv1.ChildInput{Id: childID, Nickname: "Muru", BirthDate: "2026-02-23", GrowthReference: "girl"}}}},
 			{Id: "40000000-0000-4000-8000-000000000002", Payload: &unetonv1.Command_StartSleep{StartSleep: &unetonv1.StartSleep{Sleep: sleepInput(sessionID, childID, time.Date(2026, 8, 23, 9, 0, 0, 0, time.UTC), nil, "phone")}}},
 		},
 	})
 	if len(first.GetEvents()) != 2 || first.GetNextCursor() == 0 {
 		t.Fatalf("unexpected first sync: %+v", first)
+	}
+	if first.GetEvents()[0].GetEntity().GetChild().GetGrowthReference() != "girl" {
+		t.Fatalf("child growth reference did not round-trip: %+v", first.GetEvents()[0].GetEntity().GetChild())
+	}
+	if len(first.GetGrowthReferencePoints()) != 1 || first.GetGrowthReferencePoints()[0].GetValue() != 676 {
+		t.Fatalf("growth reference bootstrap did not round-trip: %+v", first.GetGrowthReferencePoints())
 	}
 	if first.GetSleepForecast().GetActiveSleepId() != sessionID || first.GetSleepForecast().GetWakeEstimate() == nil || first.GetSleepForecast().GetNextSleepEstimate() == nil || !first.GetSleepForecast().GetNextSleepIsProvisional() {
 		t.Fatalf("active sleep forecast is incomplete: %+v", first.GetSleepForecast())
@@ -132,6 +142,38 @@ func TestFamilySyncAndInvite(t *testing.T) {
 		t.Fatalf("stale rejection missing authoritative entity: %+v", stale)
 	}
 
+	growthID := "30000000-0000-4000-8000-000000000002"
+	weight, height := int32(6_400), int32(640)
+	growthInput := &unetonv1.GrowthMeasurementInput{
+		Id: growthID, ChildId: childID, MeasuredAt: timestamppb.New(now),
+		WeightGrams: &weight, HeightMillimeters: &height, Note: "Neuvola",
+	}
+	growth := syncFamily(t, ctx, client, owner.GetAccessToken(), &unetonv1.SyncRequest{
+		FamilyId: familyID, Cursor: stale.GetNextCursor(),
+		Commands: []*unetonv1.Command{{
+			Id: "40000000-0000-4000-8000-000000000006",
+			Payload: &unetonv1.Command_UpsertGrowthMeasurement{
+				UpsertGrowthMeasurement: &unetonv1.UpsertGrowthMeasurement{Measurement: growthInput},
+			},
+		}},
+	})
+	if len(growth.GetEvents()) != 1 || growth.GetEvents()[0].GetEntityType() != unetonv1.EntityType_ENTITY_TYPE_GROWTH_MEASUREMENT || growth.GetEvents()[0].GetEntity().GetGrowthMeasurement().GetWeightGrams() != weight {
+		t.Fatalf("growth measurement was not synchronized: %+v", growth)
+	}
+	staleGrowthRevision := int64(0)
+	staleGrowth := syncFamily(t, ctx, client, owner.GetAccessToken(), &unetonv1.SyncRequest{
+		FamilyId: familyID, Cursor: growth.GetNextCursor(),
+		Commands: []*unetonv1.Command{{
+			Id: "40000000-0000-4000-8000-000000000007", ExpectedRevision: &staleGrowthRevision,
+			Payload: &unetonv1.Command_UpsertGrowthMeasurement{
+				UpsertGrowthMeasurement: &unetonv1.UpsertGrowthMeasurement{Measurement: &unetonv1.GrowthMeasurementInput{Id: growthID, ChildId: childID, MeasuredAt: timestamppb.New(now), WeightGrams: &weight}},
+			},
+		}},
+	})
+	if len(staleGrowth.GetCommandResults()) != 1 || staleGrowth.GetCommandResults()[0].GetStatus() != unetonv1.CommandStatus_COMMAND_STATUS_REJECTED || staleGrowth.GetCommandResults()[0].GetEntity().GetGrowthMeasurement().GetRevision() != 1 {
+		t.Fatalf("stale growth edit missing authoritative measurement: %+v", staleGrowth)
+	}
+
 	inviteRequest := connect.NewRequest(&unetonv1.CreateInviteRequest{FamilyId: familyID})
 	authorize(inviteRequest, owner.GetAccessToken())
 	invite, err := client.CreateInvite(ctx, inviteRequest)
@@ -148,7 +190,7 @@ func TestFamilySyncAndInvite(t *testing.T) {
 		t.Fatalf("idempotent invite retry failed: %v", err)
 	}
 	caregiverSync := syncFamily(t, ctx, client, caregiver.GetAccessToken(), &unetonv1.SyncRequest{FamilyId: familyID})
-	if len(caregiverSync.GetEvents()) != 3 {
+	if len(caregiverSync.GetEvents()) != 4 {
 		t.Fatalf("caregiver got %d events", len(caregiverSync.GetEvents()))
 	}
 }

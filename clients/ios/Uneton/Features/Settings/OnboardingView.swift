@@ -4,8 +4,6 @@ import SwiftUI
 struct OnboardingView: View {
     @Environment(SessionStore.self) private var session
     @State private var caregiverName = "Caregiver"
-    @State private var childName = ""
-    @State private var birthDate = Calendar.current.date(byAdding: .month, value: -6, to: .now) ?? .now
 
     var body: some View {
         @Bindable var session = session
@@ -30,35 +28,27 @@ struct OnboardingView: View {
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
-                VStack(spacing: 16) {
-                    TextField("Child’s name", text: $childName)
-                        .textFieldStyle(.roundedBorder)
-                    DatePicker("Birthday", selection: $birthDate, in: ...Date.now, displayedComponents: .date)
-                }
-                .padding(20)
-                .background(.background.secondary, in: .rect(cornerRadius: 24))
-
                 SignInWithAppleButton(.continue) { request in
                     session.prepareAppleAuthorization(request)
                 } onCompletion: { result in
                     Task {
-                        await session.completeAppleAuthorization(result, childName: childName, birthDate: birthDate)
+                        await session.completeAppleAuthorization(result)
                     }
                 }
                 .signInWithAppleButtonStyle(.black)
                 .frame(height: 52)
-                .disabled(childName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || session.isWorking)
+                .disabled(session.isWorking)
 
                 #if DEBUG
                 TextField("Local caregiver", text: $caregiverName)
                     .textFieldStyle(.roundedBorder)
                 Button("Use local server") {
                     Task {
-                        await session.developmentOnboard(name: caregiverName, childName: childName, birthDate: birthDate)
+                        await session.developmentAuthenticate(name: caregiverName)
                     }
                 }
                 .buttonStyle(.glass)
-                .disabled(childName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || session.isWorking)
+                .disabled(caregiverName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || session.isWorking)
                 #endif
 
                 if session.isWorking { ProgressView() }

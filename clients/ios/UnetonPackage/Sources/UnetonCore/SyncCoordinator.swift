@@ -34,7 +34,8 @@ public actor SyncCoordinator {
         manualIntervalMinutes: nil,
         quietHoursStartMinutes: 1_200,
         quietHoursEndMinutes: 360,
-        timeZone: TimeZone.current.identifier
+        timeZone: TimeZone.current.identifier,
+        growthReference: "none"
       )
     )
     let pending = try pendingCommand(id: commandID, familyID: familyID, kind: "createChild", payload: payload)
@@ -118,6 +119,78 @@ public actor SyncCoordinator {
     }
   }
 
+  public func upsertGrowthMeasurement(
+    familyID: Family.ID,
+    childID: Child.ID,
+    measurementID: GrowthMeasurement.ID? = nil,
+    measuredAt: Date,
+    weightGrams: Int?,
+    heightMillimeters: Int?,
+    note: String = ""
+  ) async throws {
+    guard weightGrams != nil || heightMillimeters != nil else { throw SyncError.invalidGrowthMeasurement }
+    guard weightGrams.map({ 100...100_000 ~= $0 }) ?? true,
+          heightMillimeters.map({ 100...2_500 ~= $0 }) ?? true
+    else { throw SyncError.invalidGrowthMeasurement }
+    let id = measurementID ?? uuid()
+    let existing = try await database.read { database in try GrowthMeasurement.find(id).fetchOne(database) }
+    let payload = try jsonValue(GrowthMeasurementCommandPayload(
+      id: id, childID: childID, measuredAt: measuredAt, weightGrams: weightGrams,
+      heightMillimeters: heightMillimeters, note: note
+    ))
+    let pending = try pendingCommand(
+      id: uuid(), familyID: familyID, kind: "upsertGrowthMeasurement",
+      expectedRevision: existing?.revision == 0 ? nil : existing?.revision, payload: payload
+    )
+    try await database.write { database in
+      try PendingCommand.insert { pending }.execute(database)
+      try Projection.rebuild(familyID: familyID, database: database)
+    }
+  }
+
+  public func deleteGrowthMeasurement(
+    familyID: Family.ID,
+    measurementID: GrowthMeasurement.ID
+  ) async throws {
+    let existing = try await database.read { database in try GrowthMeasurement.find(measurementID).fetchOne(database) }
+    guard let existing else { throw SyncError.missingGrowthMeasurement }
+    let payload = try jsonValue(DeleteCommandPayload(id: measurementID))
+    let pending = try pendingCommand(
+      id: uuid(), familyID: familyID, kind: "deleteGrowthMeasurement",
+      expectedRevision: existing.revision == 0 ? nil : existing.revision, payload: payload
+    )
+    try await database.write { database in
+      try PendingCommand.insert { pending }.execute(database)
+      try Projection.rebuild(familyID: familyID, database: database)
+    }
+  }
+
+  public func updateGrowthReference(
+    familyID: Family.ID,
+    childID: Child.ID,
+    growthReference: String
+  ) async throws {
+    guard ["none", "girl", "boy"].contains(growthReference) else { throw SyncError.invalidGrowthReference }
+    let child = try await database.read { database in try Child.find(childID).fetchOne(database) }
+    guard let child else { throw SyncError.missingChild }
+    let payload = try jsonValue(ChildCommandPayload(
+      id: child.id, nickname: child.nickname,
+      birthDate: SyncPayload.birthDateFormatter.string(from: child.birthDate),
+      predictionMode: child.predictionMode, manualIntervalMinutes: child.manualIntervalMinutes,
+      quietHoursStartMinutes: child.quietHoursStartMinutes,
+      quietHoursEndMinutes: child.quietHoursEndMinutes, timeZone: child.timeZone,
+      growthReference: growthReference
+    ))
+    let pending = try pendingCommand(
+      id: uuid(), familyID: familyID, kind: "updateChild",
+      expectedRevision: child.revision == 0 ? nil : child.revision, payload: payload
+    )
+    try await database.write { database in
+      try PendingCommand.insert { pending }.execute(database)
+      try Projection.rebuild(familyID: familyID, database: database)
+    }
+  }
+
   public func synchronize(familyID: Family.ID) async throws -> SleepForecast? {
     if let task = synchronizationTasks[familyID] {
       return try await task.value
@@ -191,6 +264,14 @@ public actor SyncCoordinator {
     let appliedAt = now
     let replacementIDs = Dictionary(uniqueKeysWithValues: response.commandResults.map { ($0.id, uuid()) })
     try await database.write { database in
+      if !response.growthReferencePoints.isEmpty {
+        try GrowthReferencePoint.delete().execute(database)
+        for point in response.growthReferencePoints {
+          try GrowthReferencePoint.upsert {
+            GrowthReferencePoint(reference: point.reference, metric: point.metric, ageMonths: point.ageMonths, sd: point.sd, value: point.value)
+          }.execute(database)
+        }
+      }
       let currentState = try SyncState.find(familyID).fetchOne(database)
       let currentCursor = currentState?.cursor ?? 0
       if let snapshot = response.snapshot {
@@ -408,6 +489,16 @@ public actor SyncCoordinator {
         createdAt: appliedAt,
         rebaseAttempt: 1
       ))
+    case "upsertGrowthMeasurement", "deleteGrowthMeasurement":
+      return .retry(PendingCommand(
+        id: replacementID,
+        familyID: command.familyID,
+        kind: command.kind,
+        expectedRevision: serverRevision,
+        payloadJSON: command.payloadJSON,
+        createdAt: appliedAt,
+        rebaseAttempt: 1
+      ))
     case "updateChild", "updatePredictionSettings":
       return .retry(PendingCommand(
         id: replacementID,
@@ -458,6 +549,10 @@ public actor SyncCoordinator {
       return ("sleepSession", try JSONDecoder.uneton.decode(SleepCommandPayload.self, from: command.payloadJSON).id)
     case "deleteSleep":
       return ("sleepSession", try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: command.payloadJSON).id)
+    case "upsertGrowthMeasurement":
+      return ("growthMeasurement", try JSONDecoder.uneton.decode(GrowthMeasurementCommandPayload.self, from: command.payloadJSON).id)
+    case "deleteGrowthMeasurement":
+      return ("growthMeasurement", try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: command.payloadJSON).id)
     default:
       throw SyncError.invalidServerPayload
     }
@@ -519,6 +614,10 @@ public enum SyncError: Error, Equatable {
   case missingSession
   case invalidInterval
   case invalidServerPayload
+  case invalidGrowthMeasurement
+  case missingGrowthMeasurement
+  case missingChild
+  case invalidGrowthReference
 }
 
 struct ChildCommandPayload: Codable {
@@ -530,6 +629,7 @@ struct ChildCommandPayload: Codable {
   var quietHoursStartMinutes: Int
   var quietHoursEndMinutes: Int
   var timeZone: String = TimeZone.current.identifier
+  var growthReference: String = "none"
 }
 
 struct SleepCommandPayload: Codable {
@@ -550,6 +650,15 @@ struct DeleteCommandPayload: Codable {
   var id: UUID
 }
 
+struct GrowthMeasurementCommandPayload: Codable {
+  var id: UUID
+  var childID: UUID
+  var measuredAt: Date
+  var weightGrams: Int?
+  var heightMillimeters: Int?
+  var note: String
+}
+
 struct ServerChildPayload: Codable {
   var id: UUID
   var nickname: String
@@ -559,6 +668,7 @@ struct ServerChildPayload: Codable {
   var quietHoursStartMinutes: Int
   var quietHoursEndMinutes: Int
   var timeZone: String = TimeZone.current.identifier
+  var growthReference: String = "none"
   var revision: Int
   var updatedAt: Date
 }
@@ -579,6 +689,19 @@ struct ServerSleepPayload: Codable {
   var wakeReason: String = "unknown"
   var caregiverIntervened: Bool?
   var supersededByID: UUID?
+  var updatedAt: Date
+  var deletedAt: Date?
+}
+
+struct ServerGrowthMeasurementPayload: Codable {
+  var id: UUID
+  var familyID: UUID
+  var childID: UUID
+  var measuredAt: Date
+  var weightGrams: Int?
+  var heightMillimeters: Int?
+  var note: String
+  var revision: Int
   var updatedAt: Date
   var deletedAt: Date?
 }

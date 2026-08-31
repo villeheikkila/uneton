@@ -1,5 +1,5 @@
 {
-  "originHash" : "c30454cee590239ec0b490731f4146103666126ee5a306d81e392b956edf4319",
+  "originHash" : "66ea7bbdd4372186af3f71c2c605ef1e614e121c57ed42fccce6b998d8d38410",
   "pins" : [
     {
       "identity" : "combine-schedulers",
@@ -101,6 +101,15 @@
       }
     },
     {
+      "identity" : "swift-issue-reporting",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-issue-reporting",
+      "state" : {
+        "revision" : "71c7c9a761d1ca6ed4ccb6ced040fe1c1a39e8e7",
+        "version" : "2.1.0"
+      }
+    },
+    {
       "identity" : "swift-nio",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio.git",
@@ -188,15 +197,6 @@
       "state" : {
         "revision" : "869129b7bf4ecc57b97d0193ad29690ca2134750",
         "version" : "1.8.1"
-      }
-    },
-    {
-      "identity" : "xctest-dynamic-overlay",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay",
-      "state" : {
-        "revision" : "d9308ad679143c26a30dec52daefe82f54af2b82",
-        "version" : "1.13.1"
       }
     }
   ],

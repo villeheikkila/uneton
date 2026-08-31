@@ -45,6 +45,7 @@ create table children (
   quiet_hours_start_minutes integer not null default 1200,
   quiet_hours_end_minutes integer not null default 360,
   time_zone text not null default 'Europe/Helsinki',
+  growth_reference text not null default 'none' check (growth_reference in ('none', 'girl', 'boy')),
   revision integer not null default 1,
   updated_at text not null,
   deleted_at text,
@@ -74,6 +75,35 @@ create table sleep_sessions (
 ) strict;
 create index sleep_sessions_child_time on sleep_sessions(child_id, started_at desc);
 create index sleep_sessions_active on sleep_sessions(child_id, ended_at, deleted_at, superseded_by_id);
+
+create table growth_measurements (
+  id text primary key not null,
+  family_id text not null references families(id) on delete cascade,
+  child_id text not null,
+  measured_at text not null,
+  weight_grams integer,
+  height_millimeters integer,
+  note text not null default '',
+  revision integer not null default 1,
+  updated_at text not null,
+  deleted_at text,
+  check (weight_grams is not null or height_millimeters is not null),
+  check (weight_grams is null or weight_grams between 100 and 100000),
+  check (height_millimeters is null or height_millimeters between 100 and 2500),
+  foreign key (family_id, child_id) references children(family_id, id) on delete cascade
+) strict;
+create index growth_measurements_child_time on growth_measurements(child_id, measured_at desc);
+
+-- Private, locally seeded reference data used to draw growth charts. It has no
+-- family ownership and is never emitted through the synchronization event log.
+create table growth_reference_points (
+  reference text not null check (reference in ('girl', 'boy')),
+  metric text not null check (metric in ('height', 'weight')),
+  age_months integer not null check (age_months between 0 and 240),
+  sd integer not null check (sd between -3 and 3),
+  value integer not null check (value > 0),
+  primary key (reference, metric, age_months, sd)
+) strict;
 
 create table devices (
   id text primary key not null,

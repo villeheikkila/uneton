@@ -1,3 +1,4 @@
+import Charts
 import UnetonCore
 import SQLiteData
 import SwiftUI
@@ -6,12 +7,14 @@ struct TimelineScreen: View {
     enum Mode: String, CaseIterable, Identifiable {
         case timeline = "Sleep"
         case trends = "Insights"
+        case growth = "Growth"
         var id: Self { self }
 
         var systemImage: String {
             switch self {
             case .timeline: "moon.stars.fill"
             case .trends: "chart.xyaxis.line"
+            case .growth: "ruler.fill"
             }
         }
     }
@@ -19,6 +22,8 @@ struct TimelineScreen: View {
     @Environment(SessionStore.self) private var session
     @Environment(\.scenePhase) private var scenePhase
     @FetchAll(SleepSession.order { $0.startedAt.desc() }) private var allSessions
+    @FetchAll(GrowthMeasurement.order { $0.measuredAt.desc() }) private var allGrowthMeasurements
+    @FetchAll(GrowthReferencePoint.order { $0.ageMonths }) private var allGrowthReferencePoints
     @FetchAll(SyncConflict.order { $0.createdAt.desc() }) private var allConflicts
     let family: Family
     let child: Child
@@ -28,6 +33,8 @@ struct TimelineScreen: View {
     @State private var isPresentingFamily = false
     @State private var isPresentingConflicts = false
     @State private var editingSession: SleepSession?
+    @State private var isPresentingGrowthEntry = false
+    @State private var editingGrowthMeasurement: GrowthMeasurement?
     @Namespace private var navigationNamespace
 
     private var conflicts: [SyncConflict] {
@@ -42,6 +49,10 @@ struct TimelineScreen: View {
 
     private var activeSession: SleepSession? {
         sessions.first { $0.endedAt == nil }
+    }
+
+    private var growthMeasurements: [GrowthMeasurement] {
+        allGrowthMeasurements.filter { $0.childID == child.id && $0.deletedAt == nil }
     }
 
     var body: some View {
@@ -61,6 +72,15 @@ struct TimelineScreen: View {
                         )
                     case .trends:
                         TrendsView(sessions: sessions)
+                    case .growth:
+                        GrowthCard(
+                            family: family,
+                            child: child,
+                            measurements: growthMeasurements,
+                            referencePoints: allGrowthReferencePoints,
+                            onAdd: { isPresentingGrowthEntry = true },
+                            onSelect: { editingGrowthMeasurement = $0 }
+                        )
                     }
                 }
                 .id(mode)
@@ -83,11 +103,11 @@ struct TimelineScreen: View {
                         .tint(.orange)
                     }
 
-                    Button(mode == .timeline ? "Show insights" : "Show timeline", systemImage: mode == .timeline ? "chart.xyaxis.line" : "moon.stars.fill") {
-                        withAnimation(.snappy) { mode = mode == .timeline ? .trends : .timeline }
+                    Button(nextModeLabel, systemImage: nextMode.systemImage) {
+                        withAnimation(.snappy) { mode = nextMode }
                     }
                     .contentTransition(.symbolEffect(.replace))
-                    .accessibilityValue(mode == .timeline ? "Timeline selected" : "Insights selected")
+                    .accessibilityValue("\(mode.rawValue) selected")
                 }
             }
             .safeAreaInset(edge: .bottom) {
@@ -115,6 +135,16 @@ struct TimelineScreen: View {
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
             }
+            .sheet(isPresented: $isPresentingGrowthEntry) {
+                GrowthEntrySheet(family: family, child: child)
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
+            }
+            .sheet(item: $editingGrowthMeasurement) { measurement in
+                GrowthEntrySheet(family: family, child: child, measurement: measurement)
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
+            }
             .task(id: scenePhase) {
                 guard scenePhase == .active else { return }
                 await session.observeChanges(familyID: family.id)
@@ -122,6 +152,22 @@ struct TimelineScreen: View {
             .refreshable {
                 await session.synchronize(familyID: family.id)
             }
+        }
+    }
+
+    private var nextMode: Mode {
+        switch mode {
+        case .timeline: .trends
+        case .trends: .growth
+        case .growth: .timeline
+        }
+    }
+
+    private var nextModeLabel: String {
+        switch nextMode {
+        case .timeline: "Show sleep"
+        case .trends: "Show insights"
+        case .growth: "Show growth"
         }
     }
 
@@ -343,6 +389,286 @@ private struct EmptySleepCard: View {
         .frame(maxWidth: .infinity)
         .padding(28)
         .glassEffect(.regular.tint(Color.sleepLavender.opacity(0.18)), in: .rect(cornerRadius: 28))
+    }
+}
+
+private struct GrowthCard: View {
+    @Environment(SessionStore.self) private var session
+
+    let family: Family
+    let child: Child
+    let measurements: [GrowthMeasurement]
+    let referencePoints: [GrowthReferencePoint]
+    let onAdd: () -> Void
+    let onSelect: (GrowthMeasurement) -> Void
+
+    var body: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("Growth card", systemImage: "ruler.fill")
+                        .font(.title2.weight(.bold))
+                    Text("A shared record of measured height and weight. It stores observations only and does not provide medical assessment or percentiles.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(18)
+                .glassEffect(.regular.tint(Color.sleepMoonlight.opacity(0.12)), in: .rect(cornerRadius: 24))
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Reference curves")
+                        .font(.headline)
+                    Picker("Reference curves", selection: Binding(
+                        get: { child.growthReference },
+                        set: { reference in
+                            Task {
+                                await session.setGrowthReference(
+                                    familyID: family.id,
+                                    childID: child.id,
+                                    growthReference: reference
+                                )
+                            }
+                        }
+                    )) {
+                        Text("Off").tag("none")
+                        Text("Girl").tag("girl")
+                        Text("Boy").tag("boy")
+                    }
+                    .pickerStyle(.segmented)
+                    Text("The selected Finnish reference is a visual guide only, not a medical assessment.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(18)
+                .glassEffect(.regular, in: .rect(cornerRadius: 24))
+
+                if child.growthReference != "none" {
+                    GrowthReferenceCharts(
+                        child: child,
+                        measurements: measurements,
+                        points: referencePoints.filter { $0.reference == child.growthReference }
+                    )
+                }
+
+                Button(action: onAdd) {
+                    Label("Add measurement", systemImage: "plus.circle.fill")
+                        .font(.headline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                }
+                .buttonStyle(.glassProminent)
+                .tint(Color.sleepIndigo)
+
+                if measurements.isEmpty {
+                    ContentUnavailableView(
+                        "No measurements yet",
+                        systemImage: "heart.text.square",
+                        description: Text("Add the measurements from a neuvola visit or home scale.")
+                    )
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 36)
+                } else {
+                    ForEach(measurements) { measurement in
+                        Button { onSelect(measurement) } label: {
+                            HStack(spacing: 14) {
+                                Image(systemName: "cross.case.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(Color.sleepIndigo)
+                                    .frame(width: 30)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(measurement.measuredAt, format: .dateTime.year().month(.wide).day())
+                                        .font(.headline)
+                                    Text(measurementValues(measurement))
+                                        .font(.subheadline.monospacedDigit())
+                                        .foregroundStyle(.secondary)
+                                    if !measurement.note.isEmpty {
+                                        Text(measurement.note)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(1)
+                                    }
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(16)
+                            .contentShape(.rect)
+                        }
+                        .buttonStyle(.plain)
+                        .glassEffect(.regular, in: .rect(cornerRadius: 20))
+                    }
+                }
+            }
+            .padding(20)
+            .padding(.bottom, 24)
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    private func measurementValues(_ measurement: GrowthMeasurement) -> String {
+        [
+            measurement.weightGrams.map { String(format: "%.2f kg", Double($0) / 1_000) },
+            measurement.heightMillimeters.map { String(format: "%.1f cm", Double($0) / 10) },
+        ]
+        .compactMap { $0 }
+        .joined(separator: " · ")
+    }
+}
+
+private struct GrowthReferenceCharts: View {
+    let child: Child
+    let measurements: [GrowthMeasurement]
+    let points: [GrowthReferencePoint]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Growth curves")
+                .font(.title3.weight(.bold))
+            GrowthReferenceChart(child: child, measurements: measurements, points: points, metric: "height")
+            GrowthReferenceChart(child: child, measurements: measurements, points: points, metric: "weight")
+        }
+        .padding(18)
+        .glassEffect(.regular.tint(Color.sleepMoonlight.opacity(0.08)), in: .rect(cornerRadius: 24))
+    }
+}
+
+private struct GrowthReferenceChart: View {
+    let child: Child
+    let measurements: [GrowthMeasurement]
+    let points: [GrowthReferencePoint]
+    let metric: String
+
+    private var isHeight: Bool { metric == "height" }
+    private var title: String { isHeight ? "Height for age" : "Weight for age" }
+    private var unit: String { isHeight ? "cm" : "kg" }
+    private var curvePoints: [GrowthReferencePoint] { points.filter { $0.metric == metric } }
+
+    private var measurementPoints: [(id: UUID, ageMonths: Double, value: Double)] {
+        let calendar = Calendar.current
+        return measurements.compactMap { measurement in
+            guard let raw = isHeight ? measurement.heightMillimeters : measurement.weightGrams else { return nil }
+            let months = max(0, calendar.dateComponents([.month], from: child.birthDate, to: measurement.measuredAt).month ?? 0)
+            return (measurement.id, Double(months), isHeight ? Double(raw) / 10 : Double(raw) / 1_000)
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title).font(.headline)
+            if curvePoints.isEmpty {
+                ContentUnavailableView("Reference is loading", systemImage: "arrow.triangle.2.circlepath")
+                    .frame(height: 170)
+            } else {
+                Chart {
+                    ForEach(curvePoints) { point in
+                        LineMark(
+                            x: .value("Age", point.ageMonths),
+                            y: .value(unit, isHeight ? Double(point.value) / 10 : Double(point.value) / 1_000)
+                        )
+                        .foregroundStyle(by: .value("SD", point.sd))
+                        .lineStyle(StrokeStyle(lineWidth: point.sd == 0 ? 2.5 : 1))
+                    }
+                    ForEach(measurementPoints, id: \.id) { measurement in
+                        PointMark(x: .value("Age", measurement.ageMonths), y: .value(unit, measurement.value))
+                            .foregroundStyle(Color.primary)
+                            .symbolSize(42)
+                    }
+                }
+                .chartXAxisLabel("Age (months)")
+                .chartYAxisLabel(unit)
+                .chartXScale(domain: 0...24)
+                .chartLegend(.hidden)
+                .frame(height: 190)
+            }
+        }
+    }
+
+}
+
+private struct GrowthEntrySheet: View {
+    @Environment(SessionStore.self) private var session
+    @Environment(\.dismiss) private var dismiss
+
+    let family: Family
+    let child: Child
+    let measurement: GrowthMeasurement?
+    @State private var measuredAt: Date
+    @State private var weight: String
+    @State private var height: String
+    @State private var note: String
+
+    init(family: Family, child: Child, measurement: GrowthMeasurement? = nil) {
+        self.family = family
+        self.child = child
+        self.measurement = measurement
+        _measuredAt = State(initialValue: measurement?.measuredAt ?? .now)
+        _weight = State(initialValue: measurement?.weightGrams.map { String(format: "%.2f", Double($0) / 1_000) } ?? "")
+        _height = State(initialValue: measurement?.heightMillimeters.map { String(format: "%.1f", Double($0) / 10) } ?? "")
+        _note = State(initialValue: measurement?.note ?? "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Measurement") {
+                    DatePicker("Date", selection: $measuredAt, displayedComponents: .date)
+                    TextField("Weight (kg)", text: $weight)
+                        .keyboardType(.decimalPad)
+                    TextField("Height (cm)", text: $height)
+                        .keyboardType(.decimalPad)
+                }
+                Section("Note") {
+                    TextField("Optional note", text: $note, axis: .vertical)
+                        .lineLimit(2...4)
+                }
+                Section {
+                    Text("Values are saved in a shared family record. They are not a medical assessment; contact your neuvola or healthcare professional with concerns.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                if measurement != nil {
+                    Section {
+                        Button("Delete measurement", role: .destructive) {
+                            Task {
+                                await session.deleteGrowthMeasurement(familyID: family.id, measurementID: measurement!.id)
+                                dismiss()
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle(measurement == nil ? "Add measurement" : "Edit measurement")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        Task {
+                            await session.logGrowthMeasurement(
+                                familyID: family.id, childID: child.id, measurementID: measurement?.id,
+                                measuredAt: measuredAt, weightGrams: grams, heightMillimeters: millimeters,
+                                note: note.trimmingCharacters(in: .whitespacesAndNewlines)
+                            )
+                            dismiss()
+                        }
+                    }
+                    .disabled(grams == nil && millimeters == nil)
+                }
+            }
+        }
+    }
+
+    private var grams: Int? { scaledValue(weight, multiplier: 1_000) }
+    private var millimeters: Int? { scaledValue(height, multiplier: 10) }
+
+    private func scaledValue(_ value: String, multiplier: Double) -> Int? {
+        let normalized = value.replacingOccurrences(of: ",", with: ".")
+        guard !normalized.isEmpty, let decimal = Double(normalized) else { return nil }
+        return Int((decimal * multiplier).rounded())
     }
 }
 

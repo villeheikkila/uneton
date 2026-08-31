@@ -29,12 +29,16 @@ type Querier interface {
 	CreateActiveSleep(ctx context.Context, arg CreateActiveSleepParams) error
 	CreateChild(ctx context.Context, arg CreateChildParams) error
 	CreateFamily(ctx context.Context, arg CreateFamilyParams) error
+	CreateGrowthMeasurement(ctx context.Context, arg CreateGrowthMeasurementParams) error
+	CreateGrowthReferencePoint(ctx context.Context, arg CreateGrowthReferencePointParams) error
 	CreateInvite(ctx context.Context, arg CreateInviteParams) error
 	CreateSleep(ctx context.Context, arg CreateSleepParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	DeleteDeviceForUser(ctx context.Context, arg DeleteDeviceForUserParams) (int64, error)
 	DeleteFamilyEventsThrough(ctx context.Context, arg DeleteFamilyEventsThroughParams) error
 	DeleteFamilyOwnedBy(ctx context.Context, arg DeleteFamilyOwnedByParams) (int64, error)
+	DeleteGrowthMeasurement(ctx context.Context, arg DeleteGrowthMeasurementParams) error
+	DeleteGrowthReferencePoints(ctx context.Context) error
 	DeleteLiveActivityToken(ctx context.Context, token string) error
 	DeleteLiveActivityTokens(ctx context.Context, sessionID string) error
 	DeletePushToStartToken(ctx context.Context, arg DeletePushToStartTokenParams) error
@@ -46,6 +50,7 @@ type Querier interface {
 	DeviceSession(ctx context.Context, id string) (DeviceSessionRow, error)
 	DueDeliveries(ctx context.Context, arg DueDeliveriesParams) ([]DueDeliveriesRow, error)
 	EndSleep(ctx context.Context, arg EndSleepParams) error
+	ExistingGrowthMeasurementRevision(ctx context.Context, arg ExistingGrowthMeasurementRevisionParams) (int64, error)
 	ExistingSleepRevision(ctx context.Context, arg ExistingSleepRevisionParams) (int64, error)
 	FamiliesForUser(ctx context.Context, userID string) ([]FamiliesForUserRow, error)
 	FamilyByID(ctx context.Context, id string) (FamilyByIDRow, error)
@@ -53,6 +58,9 @@ type Querier interface {
 	FamilyNotificationDevices(ctx context.Context, familyID string) ([]FamilyNotificationDevicesRow, error)
 	FamilyOwnershipSuccessor(ctx context.Context, arg FamilyOwnershipSuccessorParams) (string, error)
 	FamilySyncSnapshot(ctx context.Context, familyID string) (FamilySyncSnapshotRow, error)
+	GrowthMeasurementRecord(ctx context.Context, arg GrowthMeasurementRecordParams) (GrowthMeasurement, error)
+	GrowthMeasurementRevision(ctx context.Context, arg GrowthMeasurementRevisionParams) (int64, error)
+	GrowthReferencePoints(ctx context.Context) ([]GrowthReferencePoint, error)
 	HasFamilyRole(ctx context.Context, arg HasFamilyRoleParams) (bool, error)
 	ImportSleep(ctx context.Context, arg ImportSleepParams) (int64, error)
 	ImportSleepContext(ctx context.Context, arg ImportSleepContextParams) error
@@ -88,6 +96,7 @@ type Querier interface {
 	UpdateAppleRefreshToken(ctx context.Context, arg UpdateAppleRefreshTokenParams) error
 	UpdateChild(ctx context.Context, arg UpdateChildParams) error
 	UpdateDevicePushSettings(ctx context.Context, arg UpdateDevicePushSettingsParams) (int64, error)
+	UpdateGrowthMeasurement(ctx context.Context, arg UpdateGrowthMeasurementParams) error
 	UpdateSleep(ctx context.Context, arg UpdateSleepParams) error
 	UpsertDevice(ctx context.Context, arg UpsertDeviceParams) error
 	UpsertFamilySyncSnapshot(ctx context.Context, arg UpsertFamilySyncSnapshotParams) error

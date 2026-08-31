@@ -18,6 +18,7 @@ type Child struct {
 	QuietHoursStartMinutes int64          `json:"quiet_hours_start_minutes"`
 	QuietHoursEndMinutes   int64          `json:"quiet_hours_end_minutes"`
 	TimeZone               string         `json:"time_zone"`
+	GrowthReference        string         `json:"growth_reference"`
 	Revision               int64          `json:"revision"`
 	UpdatedAt              string         `json:"updated_at"`
 	DeletedAt              sql.NullString `json:"deleted_at"`
@@ -79,6 +80,27 @@ type FamilySyncSnapshot struct {
 	Cursor       int64  `json:"cursor"`
 	EntitiesJson []byte `json:"entities_json"`
 	CreatedAt    string `json:"created_at"`
+}
+
+type GrowthMeasurement struct {
+	ID                string         `json:"id"`
+	FamilyID          string         `json:"family_id"`
+	ChildID           string         `json:"child_id"`
+	MeasuredAt        string         `json:"measured_at"`
+	WeightGrams       sql.NullInt64  `json:"weight_grams"`
+	HeightMillimeters sql.NullInt64  `json:"height_millimeters"`
+	Note              string         `json:"note"`
+	Revision          int64          `json:"revision"`
+	UpdatedAt         string         `json:"updated_at"`
+	DeletedAt         sql.NullString `json:"deleted_at"`
+}
+
+type GrowthReferencePoint struct {
+	Reference string `json:"reference"`
+	Metric    string `json:"metric"`
+	AgeMonths int64  `json:"age_months"`
+	Sd        int64  `json:"sd"`
+	Value     int64  `json:"value"`
 }
 
 type Invite struct {

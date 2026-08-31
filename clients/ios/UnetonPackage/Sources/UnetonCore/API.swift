@@ -134,6 +134,14 @@ public struct SleepForecast: Codable, Equatable, Sendable {
   }
 }
 
+public struct GrowthReferenceBootstrapPoint: Codable, Equatable, Sendable {
+  public var reference: String
+  public var metric: String
+  public var ageMonths: Int
+  public var sd: Int
+  public var value: Int
+}
+
 public struct SyncResponse: Codable, Equatable, Sendable {
   public var commandResults: [APICommandResult]
   public var events: [SyncEvent]
@@ -145,6 +153,7 @@ public struct SyncResponse: Codable, Equatable, Sendable {
   public var generation: String = "test-generation"
   public var snapshot: FamilySnapshot? = nil
   public var resetRequired: Bool = false
+  public var growthReferencePoints: [GrowthReferenceBootstrapPoint] = []
 }
 
 public struct AuthenticationResponse: Codable, Equatable, Sendable {
@@ -447,6 +456,15 @@ private func protoCommand(_ command: APICommand) throws -> Uneton_V1_Command {
     var payload = Uneton_V1_DeleteSleep()
     payload.id = value.id.uuidString
     result.payload = .deleteSleep(payload)
+  case "upsertGrowthMeasurement":
+    var payload = Uneton_V1_UpsertGrowthMeasurement()
+    payload.measurement = try growthMeasurementInput(JSONDecoder.uneton.decode(GrowthMeasurementCommandPayload.self, from: data))
+    result.payload = .upsertGrowthMeasurement(payload)
+  case "deleteGrowthMeasurement":
+    let value = try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: data)
+    var payload = Uneton_V1_DeleteGrowthMeasurement()
+    payload.id = value.id.uuidString
+    result.payload = .deleteGrowthMeasurement(payload)
   default:
     throw APIError.invalidResponse("Unsupported command \(command.kind)")
   }
@@ -463,6 +481,7 @@ private func childInput(_ value: ChildCommandPayload) -> Uneton_V1_ChildInput {
   result.quietHoursStartMinutes = Int32(value.quietHoursStartMinutes)
   result.quietHoursEndMinutes = Int32(value.quietHoursEndMinutes)
   result.timeZone = value.timeZone
+  result.growthReference = value.growthReference
   return result
 }
 
@@ -482,6 +501,17 @@ private func sleepInput(_ value: SleepCommandPayload) -> Uneton_V1_SleepInput {
   return result
 }
 
+private func growthMeasurementInput(_ value: GrowthMeasurementCommandPayload) -> Uneton_V1_GrowthMeasurementInput {
+  var result = Uneton_V1_GrowthMeasurementInput()
+  result.id = value.id.uuidString
+  result.childID = value.childID.uuidString
+  result.measuredAt = .init(date: value.measuredAt)
+  if let weight = value.weightGrams { result.weightGrams = Int32(weight) }
+  if let height = value.heightMillimeters { result.heightMillimeters = Int32(height) }
+  result.note = value.note
+  return result
+}
+
 private func syncResponse(_ value: Uneton_V1_SyncResponse) throws -> SyncResponse {
   SyncResponse(
     commandResults: try value.commandResults.map { item in
@@ -498,7 +528,7 @@ private func syncResponse(_ value: Uneton_V1_SyncResponse) throws -> SyncRespons
       guard let entityID = UUID(uuidString: item.entityID) else { throw APIError.invalidResponse("Invalid event identifier") }
       return SyncEvent(
         cursor: item.cursor,
-        entityType: item.entityType == .child ? "child" : "sleepSession",
+        entityType: entityTypeName(item.entityType),
         entityID: entityID,
         operation: item.operation == .delete ? "delete" : "upsert",
         revision: Int(item.revision),
@@ -513,7 +543,10 @@ private func syncResponse(_ value: Uneton_V1_SyncResponse) throws -> SyncRespons
 	  sleepForecast: value.hasSleepForecast ? try sleepForecast(value.sleepForecast) : nil,
     generation: value.generation,
     snapshot: value.hasSnapshot ? try familySnapshot(value.snapshot) : nil,
-    resetRequired: value.resetRequired
+    resetRequired: value.resetRequired,
+    growthReferencePoints: value.growthReferencePoints.map {
+      GrowthReferenceBootstrapPoint(reference: $0.reference, metric: $0.metric, ageMonths: Int($0.ageMonths), sd: Int($0.sd), value: Int($0.value))
+    }
   )
 }
 
@@ -525,7 +558,7 @@ private func familySnapshot(_ value: Uneton_V1_FamilySnapshot) throws -> FamilyS
         throw APIError.invalidResponse("Invalid snapshot entity identifier")
       }
       return SnapshotEntity(
-        entityType: item.entityType == .child ? "child" : "sleepSession",
+        entityType: entityTypeName(item.entityType),
         entityID: entityID,
         revision: Int(item.revision),
         payload: entityJSON(item.entity)
@@ -568,6 +601,7 @@ private func entityJSON(_ entity: Uneton_V1_Entity) -> JSONValue {
       "quietHoursStartMinutes": .number(Double(value.quietHoursStartMinutes)),
       "quietHoursEndMinutes": .number(Double(value.quietHoursEndMinutes)),
       "timeZone": .string(value.timeZone),
+      "growthReference": .string(value.growthReference),
       "revision": .number(Double(value.revision)), "updatedAt": .string(dateString(value.updatedAt.date)),
     ]
     if value.hasManualIntervalMinutes { object["manualIntervalMinutes"] = .number(Double(value.manualIntervalMinutes)) }
@@ -587,10 +621,28 @@ private func entityJSON(_ entity: Uneton_V1_Entity) -> JSONValue {
     if value.hasDeletedAt { object["deletedAt"] = .string(dateString(value.deletedAt.date)) }
     if value.hasCaregiverIntervened { object["caregiverIntervened"] = .bool(value.caregiverIntervened) }
     return .object(object)
+  case let .growthMeasurement(value):
+    var object: [String: JSONValue] = [
+      "id": .string(value.id), "familyID": .string(value.familyID), "childID": .string(value.childID),
+      "measuredAt": .string(dateString(value.measuredAt.date)), "note": .string(value.note),
+      "revision": .number(Double(value.revision)), "updatedAt": .string(dateString(value.updatedAt.date)),
+    ]
+    if value.hasWeightGrams { object["weightGrams"] = .number(Double(value.weightGrams)) }
+    if value.hasHeightMillimeters { object["heightMillimeters"] = .number(Double(value.heightMillimeters)) }
+    if value.hasDeletedAt { object["deletedAt"] = .string(dateString(value.deletedAt.date)) }
+    return .object(object)
   case let .deleted(value):
     return .object(["id": .string(value.id)])
   case nil:
     return .null
+  }
+}
+
+private func entityTypeName(_ value: Uneton_V1_EntityType) -> String {
+  switch value {
+  case .child: "child"
+  case .growthMeasurement: "growthMeasurement"
+  default: "sleepSession"
   }
 }
 

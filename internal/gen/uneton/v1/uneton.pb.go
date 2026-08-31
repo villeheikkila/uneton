@@ -74,9 +74,10 @@ func (CommandStatus) EnumDescriptor() ([]byte, []int) {
 type EntityType int32
 
 const (
-	EntityType_ENTITY_TYPE_UNSPECIFIED   EntityType = 0
-	EntityType_ENTITY_TYPE_CHILD         EntityType = 1
-	EntityType_ENTITY_TYPE_SLEEP_SESSION EntityType = 2
+	EntityType_ENTITY_TYPE_UNSPECIFIED        EntityType = 0
+	EntityType_ENTITY_TYPE_CHILD              EntityType = 1
+	EntityType_ENTITY_TYPE_SLEEP_SESSION      EntityType = 2
+	EntityType_ENTITY_TYPE_GROWTH_MEASUREMENT EntityType = 3
 )
 
 // Enum value maps for EntityType.
@@ -85,11 +86,13 @@ var (
 		0: "ENTITY_TYPE_UNSPECIFIED",
 		1: "ENTITY_TYPE_CHILD",
 		2: "ENTITY_TYPE_SLEEP_SESSION",
+		3: "ENTITY_TYPE_GROWTH_MEASUREMENT",
 	}
 	EntityType_value = map[string]int32{
-		"ENTITY_TYPE_UNSPECIFIED":   0,
-		"ENTITY_TYPE_CHILD":         1,
-		"ENTITY_TYPE_SLEEP_SESSION": 2,
+		"ENTITY_TYPE_UNSPECIFIED":        0,
+		"ENTITY_TYPE_CHILD":              1,
+		"ENTITY_TYPE_SLEEP_SESSION":      2,
+		"ENTITY_TYPE_GROWTH_MEASUREMENT": 3,
 	}
 )
 
@@ -1429,6 +1432,8 @@ type Command struct {
 	//	*Command_EndSleep
 	//	*Command_UpsertSleep
 	//	*Command_DeleteSleep
+	//	*Command_UpsertGrowthMeasurement
+	//	*Command_DeleteGrowthMeasurement
 	Payload       isCommand_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1539,6 +1544,24 @@ func (x *Command) GetDeleteSleep() *DeleteSleep {
 	return nil
 }
 
+func (x *Command) GetUpsertGrowthMeasurement() *UpsertGrowthMeasurement {
+	if x != nil {
+		if x, ok := x.Payload.(*Command_UpsertGrowthMeasurement); ok {
+			return x.UpsertGrowthMeasurement
+		}
+	}
+	return nil
+}
+
+func (x *Command) GetDeleteGrowthMeasurement() *DeleteGrowthMeasurement {
+	if x != nil {
+		if x, ok := x.Payload.(*Command_DeleteGrowthMeasurement); ok {
+			return x.DeleteGrowthMeasurement
+		}
+	}
+	return nil
+}
+
 type isCommand_Payload interface {
 	isCommand_Payload()
 }
@@ -1567,6 +1590,14 @@ type Command_DeleteSleep struct {
 	DeleteSleep *DeleteSleep `protobuf:"bytes,15,opt,name=delete_sleep,json=deleteSleep,proto3,oneof"`
 }
 
+type Command_UpsertGrowthMeasurement struct {
+	UpsertGrowthMeasurement *UpsertGrowthMeasurement `protobuf:"bytes,16,opt,name=upsert_growth_measurement,json=upsertGrowthMeasurement,proto3,oneof"`
+}
+
+type Command_DeleteGrowthMeasurement struct {
+	DeleteGrowthMeasurement *DeleteGrowthMeasurement `protobuf:"bytes,17,opt,name=delete_growth_measurement,json=deleteGrowthMeasurement,proto3,oneof"`
+}
+
 func (*Command_CreateChild) isCommand_Payload() {}
 
 func (*Command_UpdateChild) isCommand_Payload() {}
@@ -1578,6 +1609,10 @@ func (*Command_EndSleep) isCommand_Payload() {}
 func (*Command_UpsertSleep) isCommand_Payload() {}
 
 func (*Command_DeleteSleep) isCommand_Payload() {}
+
+func (*Command_UpsertGrowthMeasurement) isCommand_Payload() {}
+
+func (*Command_DeleteGrowthMeasurement) isCommand_Payload() {}
 
 type CreateChild struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1677,6 +1712,7 @@ type ChildInput struct {
 	QuietHoursStartMinutes int32                  `protobuf:"varint,6,opt,name=quiet_hours_start_minutes,json=quietHoursStartMinutes,proto3" json:"quiet_hours_start_minutes,omitempty"`
 	QuietHoursEndMinutes   int32                  `protobuf:"varint,7,opt,name=quiet_hours_end_minutes,json=quietHoursEndMinutes,proto3" json:"quiet_hours_end_minutes,omitempty"`
 	TimeZone               string                 `protobuf:"bytes,8,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
+	GrowthReference        string                 `protobuf:"bytes,9,opt,name=growth_reference,json=growthReference,proto3" json:"growth_reference,omitempty"`
 	unknownFields          protoimpl.UnknownFields
 	sizeCache              protoimpl.SizeCache
 }
@@ -1763,6 +1799,13 @@ func (x *ChildInput) GetQuietHoursEndMinutes() int32 {
 func (x *ChildInput) GetTimeZone() string {
 	if x != nil {
 		return x.TimeZone
+	}
+	return ""
+}
+
+func (x *ChildInput) GetGrowthReference() string {
+	if x != nil {
+		return x.GrowthReference
 	}
 	return ""
 }
@@ -1983,6 +2026,178 @@ func (x *DeleteSleep) GetId() string {
 	return ""
 }
 
+type UpsertGrowthMeasurement struct {
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	Measurement   *GrowthMeasurementInput `protobuf:"bytes,1,opt,name=measurement,proto3" json:"measurement,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpsertGrowthMeasurement) Reset() {
+	*x = UpsertGrowthMeasurement{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpsertGrowthMeasurement) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpsertGrowthMeasurement) ProtoMessage() {}
+
+func (x *UpsertGrowthMeasurement) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpsertGrowthMeasurement.ProtoReflect.Descriptor instead.
+func (*UpsertGrowthMeasurement) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *UpsertGrowthMeasurement) GetMeasurement() *GrowthMeasurementInput {
+	if x != nil {
+		return x.Measurement
+	}
+	return nil
+}
+
+type DeleteGrowthMeasurement struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteGrowthMeasurement) Reset() {
+	*x = DeleteGrowthMeasurement{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteGrowthMeasurement) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteGrowthMeasurement) ProtoMessage() {}
+
+func (x *DeleteGrowthMeasurement) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteGrowthMeasurement.ProtoReflect.Descriptor instead.
+func (*DeleteGrowthMeasurement) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *DeleteGrowthMeasurement) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type GrowthMeasurementInput struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ChildId           string                 `protobuf:"bytes,2,opt,name=child_id,json=childId,proto3" json:"child_id,omitempty"`
+	MeasuredAt        *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=measured_at,json=measuredAt,proto3" json:"measured_at,omitempty"`
+	WeightGrams       *int32                 `protobuf:"varint,4,opt,name=weight_grams,json=weightGrams,proto3,oneof" json:"weight_grams,omitempty"`
+	HeightMillimeters *int32                 `protobuf:"varint,5,opt,name=height_millimeters,json=heightMillimeters,proto3,oneof" json:"height_millimeters,omitempty"`
+	Note              string                 `protobuf:"bytes,6,opt,name=note,proto3" json:"note,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *GrowthMeasurementInput) Reset() {
+	*x = GrowthMeasurementInput{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GrowthMeasurementInput) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GrowthMeasurementInput) ProtoMessage() {}
+
+func (x *GrowthMeasurementInput) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GrowthMeasurementInput.ProtoReflect.Descriptor instead.
+func (*GrowthMeasurementInput) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *GrowthMeasurementInput) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *GrowthMeasurementInput) GetChildId() string {
+	if x != nil {
+		return x.ChildId
+	}
+	return ""
+}
+
+func (x *GrowthMeasurementInput) GetMeasuredAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.MeasuredAt
+	}
+	return nil
+}
+
+func (x *GrowthMeasurementInput) GetWeightGrams() int32 {
+	if x != nil && x.WeightGrams != nil {
+		return *x.WeightGrams
+	}
+	return 0
+}
+
+func (x *GrowthMeasurementInput) GetHeightMillimeters() int32 {
+	if x != nil && x.HeightMillimeters != nil {
+		return *x.HeightMillimeters
+	}
+	return 0
+}
+
+func (x *GrowthMeasurementInput) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
 type SleepInput struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -2002,7 +2217,7 @@ type SleepInput struct {
 
 func (x *SleepInput) Reset() {
 	*x = SleepInput{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[32]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2014,7 +2229,7 @@ func (x *SleepInput) String() string {
 func (*SleepInput) ProtoMessage() {}
 
 func (x *SleepInput) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[32]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2027,7 +2242,7 @@ func (x *SleepInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SleepInput.ProtoReflect.Descriptor instead.
 func (*SleepInput) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{32}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *SleepInput) GetId() string {
@@ -2120,7 +2335,7 @@ type CommandResult struct {
 
 func (x *CommandResult) Reset() {
 	*x = CommandResult{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[33]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2132,7 +2347,7 @@ func (x *CommandResult) String() string {
 func (*CommandResult) ProtoMessage() {}
 
 func (x *CommandResult) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[33]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2145,7 +2360,7 @@ func (x *CommandResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommandResult.ProtoReflect.Descriptor instead.
 func (*CommandResult) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{33}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *CommandResult) GetId() string {
@@ -2190,6 +2405,7 @@ type Entity struct {
 	//	*Entity_Child
 	//	*Entity_SleepSession
 	//	*Entity_Deleted
+	//	*Entity_GrowthMeasurement
 	Value         isEntity_Value `protobuf_oneof:"value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2197,7 +2413,7 @@ type Entity struct {
 
 func (x *Entity) Reset() {
 	*x = Entity{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[34]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2209,7 +2425,7 @@ func (x *Entity) String() string {
 func (*Entity) ProtoMessage() {}
 
 func (x *Entity) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[34]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2222,7 +2438,7 @@ func (x *Entity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Entity.ProtoReflect.Descriptor instead.
 func (*Entity) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{34}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *Entity) GetValue() isEntity_Value {
@@ -2259,6 +2475,15 @@ func (x *Entity) GetDeleted() *DeletedEntity {
 	return nil
 }
 
+func (x *Entity) GetGrowthMeasurement() *GrowthMeasurement {
+	if x != nil {
+		if x, ok := x.Value.(*Entity_GrowthMeasurement); ok {
+			return x.GrowthMeasurement
+		}
+	}
+	return nil
+}
+
 type isEntity_Value interface {
 	isEntity_Value()
 }
@@ -2275,11 +2500,17 @@ type Entity_Deleted struct {
 	Deleted *DeletedEntity `protobuf:"bytes,3,opt,name=deleted,proto3,oneof"`
 }
 
+type Entity_GrowthMeasurement struct {
+	GrowthMeasurement *GrowthMeasurement `protobuf:"bytes,4,opt,name=growth_measurement,json=growthMeasurement,proto3,oneof"`
+}
+
 func (*Entity_Child) isEntity_Value() {}
 
 func (*Entity_SleepSession) isEntity_Value() {}
 
 func (*Entity_Deleted) isEntity_Value() {}
+
+func (*Entity_GrowthMeasurement) isEntity_Value() {}
 
 type DeletedEntity struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -2290,7 +2521,7 @@ type DeletedEntity struct {
 
 func (x *DeletedEntity) Reset() {
 	*x = DeletedEntity{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[35]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2302,7 +2533,7 @@ func (x *DeletedEntity) String() string {
 func (*DeletedEntity) ProtoMessage() {}
 
 func (x *DeletedEntity) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[35]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2315,7 +2546,7 @@ func (x *DeletedEntity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeletedEntity.ProtoReflect.Descriptor instead.
 func (*DeletedEntity) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{35}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *DeletedEntity) GetId() string {
@@ -2338,13 +2569,14 @@ type Child struct {
 	Revision               int64                  `protobuf:"varint,9,opt,name=revision,proto3" json:"revision,omitempty"`
 	UpdatedAt              *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	TimeZone               string                 `protobuf:"bytes,11,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
+	GrowthReference        string                 `protobuf:"bytes,12,opt,name=growth_reference,json=growthReference,proto3" json:"growth_reference,omitempty"`
 	unknownFields          protoimpl.UnknownFields
 	sizeCache              protoimpl.SizeCache
 }
 
 func (x *Child) Reset() {
 	*x = Child{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[36]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2356,7 +2588,7 @@ func (x *Child) String() string {
 func (*Child) ProtoMessage() {}
 
 func (x *Child) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[36]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2369,7 +2601,7 @@ func (x *Child) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Child.ProtoReflect.Descriptor instead.
 func (*Child) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{36}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *Child) GetId() string {
@@ -2449,6 +2681,13 @@ func (x *Child) GetTimeZone() string {
 	return ""
 }
 
+func (x *Child) GetGrowthReference() string {
+	if x != nil {
+		return x.GrowthReference
+	}
+	return ""
+}
+
 type SleepSession struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -2474,7 +2713,7 @@ type SleepSession struct {
 
 func (x *SleepSession) Reset() {
 	*x = SleepSession{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[37]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2486,7 +2725,7 @@ func (x *SleepSession) String() string {
 func (*SleepSession) ProtoMessage() {}
 
 func (x *SleepSession) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[37]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2499,7 +2738,7 @@ func (x *SleepSession) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SleepSession.ProtoReflect.Descriptor instead.
 func (*SleepSession) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{37}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *SleepSession) GetId() string {
@@ -2621,6 +2860,122 @@ func (x *SleepSession) GetCaregiverIntervened() bool {
 	return false
 }
 
+type GrowthMeasurement struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	FamilyId          string                 `protobuf:"bytes,2,opt,name=family_id,json=familyId,proto3" json:"family_id,omitempty"`
+	ChildId           string                 `protobuf:"bytes,3,opt,name=child_id,json=childId,proto3" json:"child_id,omitempty"`
+	MeasuredAt        *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=measured_at,json=measuredAt,proto3" json:"measured_at,omitempty"`
+	WeightGrams       *int32                 `protobuf:"varint,5,opt,name=weight_grams,json=weightGrams,proto3,oneof" json:"weight_grams,omitempty"`
+	HeightMillimeters *int32                 `protobuf:"varint,6,opt,name=height_millimeters,json=heightMillimeters,proto3,oneof" json:"height_millimeters,omitempty"`
+	Note              string                 `protobuf:"bytes,7,opt,name=note,proto3" json:"note,omitempty"`
+	Revision          int64                  `protobuf:"varint,8,opt,name=revision,proto3" json:"revision,omitempty"`
+	UpdatedAt         *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	DeletedAt         *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=deleted_at,json=deletedAt,proto3,oneof" json:"deleted_at,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *GrowthMeasurement) Reset() {
+	*x = GrowthMeasurement{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GrowthMeasurement) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GrowthMeasurement) ProtoMessage() {}
+
+func (x *GrowthMeasurement) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GrowthMeasurement.ProtoReflect.Descriptor instead.
+func (*GrowthMeasurement) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *GrowthMeasurement) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *GrowthMeasurement) GetFamilyId() string {
+	if x != nil {
+		return x.FamilyId
+	}
+	return ""
+}
+
+func (x *GrowthMeasurement) GetChildId() string {
+	if x != nil {
+		return x.ChildId
+	}
+	return ""
+}
+
+func (x *GrowthMeasurement) GetMeasuredAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.MeasuredAt
+	}
+	return nil
+}
+
+func (x *GrowthMeasurement) GetWeightGrams() int32 {
+	if x != nil && x.WeightGrams != nil {
+		return *x.WeightGrams
+	}
+	return 0
+}
+
+func (x *GrowthMeasurement) GetHeightMillimeters() int32 {
+	if x != nil && x.HeightMillimeters != nil {
+		return *x.HeightMillimeters
+	}
+	return 0
+}
+
+func (x *GrowthMeasurement) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *GrowthMeasurement) GetRevision() int64 {
+	if x != nil {
+		return x.Revision
+	}
+	return 0
+}
+
+func (x *GrowthMeasurement) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+func (x *GrowthMeasurement) GetDeletedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DeletedAt
+	}
+	return nil
+}
+
 type SyncEvent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Cursor        int64                  `protobuf:"varint,1,opt,name=cursor,proto3" json:"cursor,omitempty"`
@@ -2636,7 +2991,7 @@ type SyncEvent struct {
 
 func (x *SyncEvent) Reset() {
 	*x = SyncEvent{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[38]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2648,7 +3003,7 @@ func (x *SyncEvent) String() string {
 func (*SyncEvent) ProtoMessage() {}
 
 func (x *SyncEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[38]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2661,7 +3016,7 @@ func (x *SyncEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncEvent.ProtoReflect.Descriptor instead.
 func (*SyncEvent) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{38}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *SyncEvent) GetCursor() int64 {
@@ -2725,7 +3080,7 @@ type SnapshotEntity struct {
 
 func (x *SnapshotEntity) Reset() {
 	*x = SnapshotEntity{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[39]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2737,7 +3092,7 @@ func (x *SnapshotEntity) String() string {
 func (*SnapshotEntity) ProtoMessage() {}
 
 func (x *SnapshotEntity) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[39]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2750,7 +3105,7 @@ func (x *SnapshotEntity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotEntity.ProtoReflect.Descriptor instead.
 func (*SnapshotEntity) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{39}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *SnapshotEntity) GetEntityType() EntityType {
@@ -2792,7 +3147,7 @@ type FamilySnapshot struct {
 
 func (x *FamilySnapshot) Reset() {
 	*x = FamilySnapshot{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[40]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2804,7 +3159,7 @@ func (x *FamilySnapshot) String() string {
 func (*FamilySnapshot) ProtoMessage() {}
 
 func (x *FamilySnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[40]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2817,7 +3172,7 @@ func (x *FamilySnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FamilySnapshot.ProtoReflect.Descriptor instead.
 func (*FamilySnapshot) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{40}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *FamilySnapshot) GetCursor() int64 {
@@ -2857,7 +3212,7 @@ type SleepPrediction struct {
 
 func (x *SleepPrediction) Reset() {
 	*x = SleepPrediction{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[41]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2869,7 +3224,7 @@ func (x *SleepPrediction) String() string {
 func (*SleepPrediction) ProtoMessage() {}
 
 func (x *SleepPrediction) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[41]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2882,7 +3237,7 @@ func (x *SleepPrediction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SleepPrediction.ProtoReflect.Descriptor instead.
 func (*SleepPrediction) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{41}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *SleepPrediction) GetTargetAt() *timestamppb.Timestamp {
@@ -2954,7 +3309,7 @@ type SleepForecast struct {
 
 func (x *SleepForecast) Reset() {
 	*x = SleepForecast{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[42]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2966,7 +3321,7 @@ func (x *SleepForecast) String() string {
 func (*SleepForecast) ProtoMessage() {}
 
 func (x *SleepForecast) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[42]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2979,7 +3334,7 @@ func (x *SleepForecast) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SleepForecast.ProtoReflect.Descriptor instead.
 func (*SleepForecast) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{42}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *SleepForecast) GetChildId() string {
@@ -3017,25 +3372,102 @@ func (x *SleepForecast) GetNextSleepIsProvisional() bool {
 	return false
 }
 
+type GrowthReferencePoint struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Reference     string                 `protobuf:"bytes,1,opt,name=reference,proto3" json:"reference,omitempty"`
+	Metric        string                 `protobuf:"bytes,2,opt,name=metric,proto3" json:"metric,omitempty"`
+	AgeMonths     int32                  `protobuf:"varint,3,opt,name=age_months,json=ageMonths,proto3" json:"age_months,omitempty"`
+	Sd            int32                  `protobuf:"varint,4,opt,name=sd,proto3" json:"sd,omitempty"`
+	Value         int32                  `protobuf:"varint,5,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GrowthReferencePoint) Reset() {
+	*x = GrowthReferencePoint{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GrowthReferencePoint) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GrowthReferencePoint) ProtoMessage() {}
+
+func (x *GrowthReferencePoint) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GrowthReferencePoint.ProtoReflect.Descriptor instead.
+func (*GrowthReferencePoint) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *GrowthReferencePoint) GetReference() string {
+	if x != nil {
+		return x.Reference
+	}
+	return ""
+}
+
+func (x *GrowthReferencePoint) GetMetric() string {
+	if x != nil {
+		return x.Metric
+	}
+	return ""
+}
+
+func (x *GrowthReferencePoint) GetAgeMonths() int32 {
+	if x != nil {
+		return x.AgeMonths
+	}
+	return 0
+}
+
+func (x *GrowthReferencePoint) GetSd() int32 {
+	if x != nil {
+		return x.Sd
+	}
+	return 0
+}
+
+func (x *GrowthReferencePoint) GetValue() int32 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
 type SyncResponse struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	CommandResults    []*CommandResult       `protobuf:"bytes,1,rep,name=command_results,json=commandResults,proto3" json:"command_results,omitempty"`
-	Events            []*SyncEvent           `protobuf:"bytes,2,rep,name=events,proto3" json:"events,omitempty"`
-	NextCursor        int64                  `protobuf:"varint,3,opt,name=next_cursor,json=nextCursor,proto3" json:"next_cursor,omitempty"`
-	HasMore           bool                   `protobuf:"varint,4,opt,name=has_more,json=hasMore,proto3" json:"has_more,omitempty"`
-	NextSleepEstimate *SleepPrediction       `protobuf:"bytes,5,opt,name=next_sleep_estimate,json=nextSleepEstimate,proto3,oneof" json:"next_sleep_estimate,omitempty"`
-	ServerTime        *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=server_time,json=serverTime,proto3" json:"server_time,omitempty"`
-	SleepForecast     *SleepForecast         `protobuf:"bytes,7,opt,name=sleep_forecast,json=sleepForecast,proto3,oneof" json:"sleep_forecast,omitempty"`
-	Generation        string                 `protobuf:"bytes,8,opt,name=generation,proto3" json:"generation,omitempty"`
-	Snapshot          *FamilySnapshot        `protobuf:"bytes,9,opt,name=snapshot,proto3,oneof" json:"snapshot,omitempty"`
-	ResetRequired     bool                   `protobuf:"varint,10,opt,name=reset_required,json=resetRequired,proto3" json:"reset_required,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state                 protoimpl.MessageState  `protogen:"open.v1"`
+	CommandResults        []*CommandResult        `protobuf:"bytes,1,rep,name=command_results,json=commandResults,proto3" json:"command_results,omitempty"`
+	Events                []*SyncEvent            `protobuf:"bytes,2,rep,name=events,proto3" json:"events,omitempty"`
+	NextCursor            int64                   `protobuf:"varint,3,opt,name=next_cursor,json=nextCursor,proto3" json:"next_cursor,omitempty"`
+	HasMore               bool                    `protobuf:"varint,4,opt,name=has_more,json=hasMore,proto3" json:"has_more,omitempty"`
+	NextSleepEstimate     *SleepPrediction        `protobuf:"bytes,5,opt,name=next_sleep_estimate,json=nextSleepEstimate,proto3,oneof" json:"next_sleep_estimate,omitempty"`
+	ServerTime            *timestamppb.Timestamp  `protobuf:"bytes,6,opt,name=server_time,json=serverTime,proto3" json:"server_time,omitempty"`
+	SleepForecast         *SleepForecast          `protobuf:"bytes,7,opt,name=sleep_forecast,json=sleepForecast,proto3,oneof" json:"sleep_forecast,omitempty"`
+	Generation            string                  `protobuf:"bytes,8,opt,name=generation,proto3" json:"generation,omitempty"`
+	Snapshot              *FamilySnapshot         `protobuf:"bytes,9,opt,name=snapshot,proto3,oneof" json:"snapshot,omitempty"`
+	ResetRequired         bool                    `protobuf:"varint,10,opt,name=reset_required,json=resetRequired,proto3" json:"reset_required,omitempty"`
+	GrowthReferencePoints []*GrowthReferencePoint `protobuf:"bytes,11,rep,name=growth_reference_points,json=growthReferencePoints,proto3" json:"growth_reference_points,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *SyncResponse) Reset() {
 	*x = SyncResponse{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[43]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3047,7 +3479,7 @@ func (x *SyncResponse) String() string {
 func (*SyncResponse) ProtoMessage() {}
 
 func (x *SyncResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[43]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3060,7 +3492,7 @@ func (x *SyncResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncResponse.ProtoReflect.Descriptor instead.
 func (*SyncResponse) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{43}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *SyncResponse) GetCommandResults() []*CommandResult {
@@ -3133,6 +3565,13 @@ func (x *SyncResponse) GetResetRequired() bool {
 	return false
 }
 
+func (x *SyncResponse) GetGrowthReferencePoints() []*GrowthReferencePoint {
+	if x != nil {
+		return x.GrowthReferencePoints
+	}
+	return nil
+}
+
 type WatchFamilyRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FamilyId      string                 `protobuf:"bytes,1,opt,name=family_id,json=familyId,proto3" json:"family_id,omitempty"`
@@ -3144,7 +3583,7 @@ type WatchFamilyRequest struct {
 
 func (x *WatchFamilyRequest) Reset() {
 	*x = WatchFamilyRequest{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[44]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3156,7 +3595,7 @@ func (x *WatchFamilyRequest) String() string {
 func (*WatchFamilyRequest) ProtoMessage() {}
 
 func (x *WatchFamilyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[44]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3169,7 +3608,7 @@ func (x *WatchFamilyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchFamilyRequest.ProtoReflect.Descriptor instead.
 func (*WatchFamilyRequest) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{44}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *WatchFamilyRequest) GetFamilyId() string {
@@ -3204,7 +3643,7 @@ type WatchFamilyResponse struct {
 
 func (x *WatchFamilyResponse) Reset() {
 	*x = WatchFamilyResponse{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[45]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3216,7 +3655,7 @@ func (x *WatchFamilyResponse) String() string {
 func (*WatchFamilyResponse) ProtoMessage() {}
 
 func (x *WatchFamilyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[45]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3229,7 +3668,7 @@ func (x *WatchFamilyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchFamilyResponse.ProtoReflect.Descriptor instead.
 func (*WatchFamilyResponse) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{45}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *WatchFamilyResponse) GetCursor() int64 {
@@ -3340,7 +3779,7 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x05limit\x18\x05 \x01(\x05R\x05limit\x12\x1e\n" +
 	"\n" +
 	"generation\x18\x06 \x01(\tR\n" +
-	"generationJ\x04\b\x03\x10\x04R\tdevice_id\"\xce\x03\n" +
+	"generationJ\x04\b\x03\x10\x04R\tdevice_id\"\x92\x05\n" +
 	"\aCommand\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x120\n" +
 	"\x11expected_revision\x18\x02 \x01(\x03H\x01R\x10expectedRevision\x88\x01\x01\x12;\n" +
@@ -3351,13 +3790,15 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"startSleep\x122\n" +
 	"\tend_sleep\x18\r \x01(\v2\x13.uneton.v1.EndSleepH\x00R\bendSleep\x12;\n" +
 	"\fupsert_sleep\x18\x0e \x01(\v2\x16.uneton.v1.UpsertSleepH\x00R\vupsertSleep\x12;\n" +
-	"\fdelete_sleep\x18\x0f \x01(\v2\x16.uneton.v1.DeleteSleepH\x00R\vdeleteSleepB\t\n" +
+	"\fdelete_sleep\x18\x0f \x01(\v2\x16.uneton.v1.DeleteSleepH\x00R\vdeleteSleep\x12`\n" +
+	"\x19upsert_growth_measurement\x18\x10 \x01(\v2\".uneton.v1.UpsertGrowthMeasurementH\x00R\x17upsertGrowthMeasurement\x12`\n" +
+	"\x19delete_growth_measurement\x18\x11 \x01(\v2\".uneton.v1.DeleteGrowthMeasurementH\x00R\x17deleteGrowthMeasurementB\t\n" +
 	"\apayloadB\x14\n" +
 	"\x12_expected_revision\":\n" +
 	"\vCreateChild\x12+\n" +
 	"\x05child\x18\x01 \x01(\v2\x15.uneton.v1.ChildInputR\x05child\":\n" +
 	"\vUpdateChild\x12+\n" +
-	"\x05child\x18\x01 \x01(\v2\x15.uneton.v1.ChildInputR\x05child\"\xe8\x02\n" +
+	"\x05child\x18\x01 \x01(\v2\x15.uneton.v1.ChildInputR\x05child\"\x93\x03\n" +
 	"\n" +
 	"ChildInput\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
@@ -3368,7 +3809,8 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x17manual_interval_minutes\x18\x05 \x01(\x05H\x00R\x15manualIntervalMinutes\x88\x01\x01\x129\n" +
 	"\x19quiet_hours_start_minutes\x18\x06 \x01(\x05R\x16quietHoursStartMinutes\x125\n" +
 	"\x17quiet_hours_end_minutes\x18\a \x01(\x05R\x14quietHoursEndMinutes\x12\x1b\n" +
-	"\ttime_zone\x18\b \x01(\tR\btimeZoneB\x1a\n" +
+	"\ttime_zone\x18\b \x01(\tR\btimeZone\x12)\n" +
+	"\x10growth_reference\x18\t \x01(\tR\x0fgrowthReferenceB\x1a\n" +
 	"\x18_manual_interval_minutes\"9\n" +
 	"\n" +
 	"StartSleep\x12+\n" +
@@ -3385,7 +3827,21 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\vUpsertSleep\x12+\n" +
 	"\x05sleep\x18\x01 \x01(\v2\x15.uneton.v1.SleepInputR\x05sleep\"\x1d\n" +
 	"\vDeleteSleep\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\xd7\x03\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"^\n" +
+	"\x17UpsertGrowthMeasurement\x12C\n" +
+	"\vmeasurement\x18\x01 \x01(\v2!.uneton.v1.GrowthMeasurementInputR\vmeasurement\")\n" +
+	"\x17DeleteGrowthMeasurement\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x98\x02\n" +
+	"\x16GrowthMeasurementInput\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
+	"\bchild_id\x18\x02 \x01(\tR\achildId\x12;\n" +
+	"\vmeasured_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"measuredAt\x12&\n" +
+	"\fweight_grams\x18\x04 \x01(\x05H\x00R\vweightGrams\x88\x01\x01\x122\n" +
+	"\x12height_millimeters\x18\x05 \x01(\x05H\x01R\x11heightMillimeters\x88\x01\x01\x12\x12\n" +
+	"\x04note\x18\x06 \x01(\tR\x04noteB\x0f\n" +
+	"\r_weight_gramsB\x15\n" +
+	"\x13_height_millimeters\"\xd7\x03\n" +
 	"\n" +
 	"SleepInput\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
@@ -3409,14 +3865,15 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x06status\x18\x02 \x01(\x0e2\x18.uneton.v1.CommandStatusR\x06status\x12\x14\n" +
 	"\x05error\x18\x03 \x01(\tR\x05error\x12\x1b\n" +
 	"\tentity_id\x18\x04 \x01(\tR\bentityId\x12)\n" +
-	"\x06entity\x18\x05 \x01(\v2\x11.uneton.v1.EntityR\x06entity\"\xb1\x01\n" +
+	"\x06entity\x18\x05 \x01(\v2\x11.uneton.v1.EntityR\x06entity\"\x80\x02\n" +
 	"\x06Entity\x12(\n" +
 	"\x05child\x18\x01 \x01(\v2\x10.uneton.v1.ChildH\x00R\x05child\x12>\n" +
 	"\rsleep_session\x18\x02 \x01(\v2\x17.uneton.v1.SleepSessionH\x00R\fsleepSession\x124\n" +
-	"\adeleted\x18\x03 \x01(\v2\x18.uneton.v1.DeletedEntityH\x00R\adeletedB\a\n" +
+	"\adeleted\x18\x03 \x01(\v2\x18.uneton.v1.DeletedEntityH\x00R\adeleted\x12M\n" +
+	"\x12growth_measurement\x18\x04 \x01(\v2\x1c.uneton.v1.GrowthMeasurementH\x00R\x11growthMeasurementB\a\n" +
 	"\x05value\"\x1f\n" +
 	"\rDeletedEntity\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\xd7\x03\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x82\x04\n" +
 	"\x05Child\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tfamily_id\x18\x02 \x01(\tR\bfamilyId\x12\x1a\n" +
@@ -3431,7 +3888,8 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\n" +
 	"updated_at\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x1b\n" +
-	"\ttime_zone\x18\v \x01(\tR\btimeZoneB\x1a\n" +
+	"\ttime_zone\x18\v \x01(\tR\btimeZone\x12)\n" +
+	"\x10growth_reference\x18\f \x01(\tR\x0fgrowthReferenceB\x1a\n" +
 	"\x18_manual_interval_minutes\"\xfd\x05\n" +
 	"\fSleepSession\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
@@ -3459,7 +3917,25 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\t_ended_atB\x13\n" +
 	"\x11_superseded_by_idB\r\n" +
 	"\v_deleted_atB\x17\n" +
-	"\x15_caregiver_intervened\"\xb3\x02\n" +
+	"\x15_caregiver_intervened\"\xd6\x03\n" +
+	"\x11GrowthMeasurement\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
+	"\tfamily_id\x18\x02 \x01(\tR\bfamilyId\x12\x19\n" +
+	"\bchild_id\x18\x03 \x01(\tR\achildId\x12;\n" +
+	"\vmeasured_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"measuredAt\x12&\n" +
+	"\fweight_grams\x18\x05 \x01(\x05H\x00R\vweightGrams\x88\x01\x01\x122\n" +
+	"\x12height_millimeters\x18\x06 \x01(\x05H\x01R\x11heightMillimeters\x88\x01\x01\x12\x12\n" +
+	"\x04note\x18\a \x01(\tR\x04note\x12\x1a\n" +
+	"\brevision\x18\b \x01(\x03R\brevision\x129\n" +
+	"\n" +
+	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12>\n" +
+	"\n" +
+	"deleted_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampH\x02R\tdeletedAt\x88\x01\x01B\x0f\n" +
+	"\r_weight_gramsB\x15\n" +
+	"\x13_height_millimetersB\r\n" +
+	"\v_deleted_at\"\xb3\x02\n" +
 	"\tSyncEvent\x12\x16\n" +
 	"\x06cursor\x18\x01 \x01(\x03R\x06cursor\x126\n" +
 	"\ventity_type\x18\x02 \x01(\x0e2\x15.uneton.v1.EntityTypeR\n" +
@@ -3501,7 +3977,14 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x19next_sleep_is_provisional\x18\x05 \x01(\bR\x16nextSleepIsProvisionalB\x12\n" +
 	"\x10_active_sleep_idB\x10\n" +
 	"\x0e_wake_estimateB\x16\n" +
-	"\x14_next_sleep_estimate\"\xca\x04\n" +
+	"\x14_next_sleep_estimate\"\x91\x01\n" +
+	"\x14GrowthReferencePoint\x12\x1c\n" +
+	"\treference\x18\x01 \x01(\tR\treference\x12\x16\n" +
+	"\x06metric\x18\x02 \x01(\tR\x06metric\x12\x1d\n" +
+	"\n" +
+	"age_months\x18\x03 \x01(\x05R\tageMonths\x12\x0e\n" +
+	"\x02sd\x18\x04 \x01(\x05R\x02sd\x12\x14\n" +
+	"\x05value\x18\x05 \x01(\x05R\x05value\"\xa3\x05\n" +
 	"\fSyncResponse\x12A\n" +
 	"\x0fcommand_results\x18\x01 \x03(\v2\x18.uneton.v1.CommandResultR\x0ecommandResults\x12,\n" +
 	"\x06events\x18\x02 \x03(\v2\x14.uneton.v1.SyncEventR\x06events\x12\x1f\n" +
@@ -3517,7 +4000,8 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"generation\x12:\n" +
 	"\bsnapshot\x18\t \x01(\v2\x19.uneton.v1.FamilySnapshotH\x02R\bsnapshot\x88\x01\x01\x12%\n" +
 	"\x0ereset_required\x18\n" +
-	" \x01(\bR\rresetRequiredB\x16\n" +
+	" \x01(\bR\rresetRequired\x12W\n" +
+	"\x17growth_reference_points\x18\v \x03(\v2\x1f.uneton.v1.GrowthReferencePointR\x15growthReferencePointsB\x16\n" +
 	"\x14_next_sleep_estimateB\x11\n" +
 	"\x0f_sleep_forecastB\v\n" +
 	"\t_snapshot\"t\n" +
@@ -3536,12 +4020,13 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\rCommandStatus\x12\x1e\n" +
 	"\x1aCOMMAND_STATUS_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17COMMAND_STATUS_ACCEPTED\x10\x01\x12\x1b\n" +
-	"\x17COMMAND_STATUS_REJECTED\x10\x02*_\n" +
+	"\x17COMMAND_STATUS_REJECTED\x10\x02*\x83\x01\n" +
 	"\n" +
 	"EntityType\x12\x1b\n" +
 	"\x17ENTITY_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11ENTITY_TYPE_CHILD\x10\x01\x12\x1d\n" +
-	"\x19ENTITY_TYPE_SLEEP_SESSION\x10\x02*i\n" +
+	"\x19ENTITY_TYPE_SLEEP_SESSION\x10\x02\x12\"\n" +
+	"\x1eENTITY_TYPE_GROWTH_MEASUREMENT\x10\x03*i\n" +
 	"\x0eEventOperation\x12\x1f\n" +
 	"\x1bEVENT_OPERATION_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16EVENT_OPERATION_UPSERT\x10\x01\x12\x1a\n" +
@@ -3573,7 +4058,7 @@ func file_uneton_v1_uneton_proto_rawDescGZIP() []byte {
 }
 
 var file_uneton_v1_uneton_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_uneton_v1_uneton_proto_msgTypes = make([]protoimpl.MessageInfo, 46)
+var file_uneton_v1_uneton_proto_msgTypes = make([]protoimpl.MessageInfo, 51)
 var file_uneton_v1_uneton_proto_goTypes = []any{
 	(CommandStatus)(0),                       // 0: uneton.v1.CommandStatus
 	(EntityType)(0),                          // 1: uneton.v1.EntityType
@@ -3610,21 +4095,26 @@ var file_uneton_v1_uneton_proto_goTypes = []any{
 	(*EndSleep)(nil),                         // 32: uneton.v1.EndSleep
 	(*UpsertSleep)(nil),                      // 33: uneton.v1.UpsertSleep
 	(*DeleteSleep)(nil),                      // 34: uneton.v1.DeleteSleep
-	(*SleepInput)(nil),                       // 35: uneton.v1.SleepInput
-	(*CommandResult)(nil),                    // 36: uneton.v1.CommandResult
-	(*Entity)(nil),                           // 37: uneton.v1.Entity
-	(*DeletedEntity)(nil),                    // 38: uneton.v1.DeletedEntity
-	(*Child)(nil),                            // 39: uneton.v1.Child
-	(*SleepSession)(nil),                     // 40: uneton.v1.SleepSession
-	(*SyncEvent)(nil),                        // 41: uneton.v1.SyncEvent
-	(*SnapshotEntity)(nil),                   // 42: uneton.v1.SnapshotEntity
-	(*FamilySnapshot)(nil),                   // 43: uneton.v1.FamilySnapshot
-	(*SleepPrediction)(nil),                  // 44: uneton.v1.SleepPrediction
-	(*SleepForecast)(nil),                    // 45: uneton.v1.SleepForecast
-	(*SyncResponse)(nil),                     // 46: uneton.v1.SyncResponse
-	(*WatchFamilyRequest)(nil),               // 47: uneton.v1.WatchFamilyRequest
-	(*WatchFamilyResponse)(nil),              // 48: uneton.v1.WatchFamilyResponse
-	(*timestamppb.Timestamp)(nil),            // 49: google.protobuf.Timestamp
+	(*UpsertGrowthMeasurement)(nil),          // 35: uneton.v1.UpsertGrowthMeasurement
+	(*DeleteGrowthMeasurement)(nil),          // 36: uneton.v1.DeleteGrowthMeasurement
+	(*GrowthMeasurementInput)(nil),           // 37: uneton.v1.GrowthMeasurementInput
+	(*SleepInput)(nil),                       // 38: uneton.v1.SleepInput
+	(*CommandResult)(nil),                    // 39: uneton.v1.CommandResult
+	(*Entity)(nil),                           // 40: uneton.v1.Entity
+	(*DeletedEntity)(nil),                    // 41: uneton.v1.DeletedEntity
+	(*Child)(nil),                            // 42: uneton.v1.Child
+	(*SleepSession)(nil),                     // 43: uneton.v1.SleepSession
+	(*GrowthMeasurement)(nil),                // 44: uneton.v1.GrowthMeasurement
+	(*SyncEvent)(nil),                        // 45: uneton.v1.SyncEvent
+	(*SnapshotEntity)(nil),                   // 46: uneton.v1.SnapshotEntity
+	(*FamilySnapshot)(nil),                   // 47: uneton.v1.FamilySnapshot
+	(*SleepPrediction)(nil),                  // 48: uneton.v1.SleepPrediction
+	(*SleepForecast)(nil),                    // 49: uneton.v1.SleepForecast
+	(*GrowthReferencePoint)(nil),             // 50: uneton.v1.GrowthReferencePoint
+	(*SyncResponse)(nil),                     // 51: uneton.v1.SyncResponse
+	(*WatchFamilyRequest)(nil),               // 52: uneton.v1.WatchFamilyRequest
+	(*WatchFamilyResponse)(nil),              // 53: uneton.v1.WatchFamilyResponse
+	(*timestamppb.Timestamp)(nil),            // 54: google.protobuf.Timestamp
 }
 var file_uneton_v1_uneton_proto_depIdxs = []int32{
 	10, // 0: uneton.v1.UpdateDevicePushSettingsResponse.settings:type_name -> uneton.v1.DevicePushSettings
@@ -3632,7 +4122,7 @@ var file_uneton_v1_uneton_proto_depIdxs = []int32{
 	15, // 2: uneton.v1.DevelopmentAuthResponse.authentication:type_name -> uneton.v1.AuthenticationResponse
 	15, // 3: uneton.v1.AppleAuthResponse.authentication:type_name -> uneton.v1.AuthenticationResponse
 	15, // 4: uneton.v1.RefreshAuthResponse.authentication:type_name -> uneton.v1.AuthenticationResponse
-	49, // 5: uneton.v1.CreateInviteResponse.expires_at:type_name -> google.protobuf.Timestamp
+	54, // 5: uneton.v1.CreateInviteResponse.expires_at:type_name -> google.protobuf.Timestamp
 	27, // 6: uneton.v1.SyncRequest.commands:type_name -> uneton.v1.Command
 	28, // 7: uneton.v1.Command.create_child:type_name -> uneton.v1.CreateChild
 	29, // 8: uneton.v1.Command.update_child:type_name -> uneton.v1.UpdateChild
@@ -3640,71 +4130,80 @@ var file_uneton_v1_uneton_proto_depIdxs = []int32{
 	32, // 10: uneton.v1.Command.end_sleep:type_name -> uneton.v1.EndSleep
 	33, // 11: uneton.v1.Command.upsert_sleep:type_name -> uneton.v1.UpsertSleep
 	34, // 12: uneton.v1.Command.delete_sleep:type_name -> uneton.v1.DeleteSleep
-	30, // 13: uneton.v1.CreateChild.child:type_name -> uneton.v1.ChildInput
-	30, // 14: uneton.v1.UpdateChild.child:type_name -> uneton.v1.ChildInput
-	35, // 15: uneton.v1.StartSleep.sleep:type_name -> uneton.v1.SleepInput
-	49, // 16: uneton.v1.EndSleep.ended_at:type_name -> google.protobuf.Timestamp
-	35, // 17: uneton.v1.UpsertSleep.sleep:type_name -> uneton.v1.SleepInput
-	49, // 18: uneton.v1.SleepInput.started_at:type_name -> google.protobuf.Timestamp
-	49, // 19: uneton.v1.SleepInput.ended_at:type_name -> google.protobuf.Timestamp
-	0,  // 20: uneton.v1.CommandResult.status:type_name -> uneton.v1.CommandStatus
-	37, // 21: uneton.v1.CommandResult.entity:type_name -> uneton.v1.Entity
-	39, // 22: uneton.v1.Entity.child:type_name -> uneton.v1.Child
-	40, // 23: uneton.v1.Entity.sleep_session:type_name -> uneton.v1.SleepSession
-	38, // 24: uneton.v1.Entity.deleted:type_name -> uneton.v1.DeletedEntity
-	49, // 25: uneton.v1.Child.updated_at:type_name -> google.protobuf.Timestamp
-	49, // 26: uneton.v1.SleepSession.started_at:type_name -> google.protobuf.Timestamp
-	49, // 27: uneton.v1.SleepSession.ended_at:type_name -> google.protobuf.Timestamp
-	49, // 28: uneton.v1.SleepSession.updated_at:type_name -> google.protobuf.Timestamp
-	49, // 29: uneton.v1.SleepSession.deleted_at:type_name -> google.protobuf.Timestamp
-	1,  // 30: uneton.v1.SyncEvent.entity_type:type_name -> uneton.v1.EntityType
-	2,  // 31: uneton.v1.SyncEvent.operation:type_name -> uneton.v1.EventOperation
-	37, // 32: uneton.v1.SyncEvent.entity:type_name -> uneton.v1.Entity
-	49, // 33: uneton.v1.SyncEvent.created_at:type_name -> google.protobuf.Timestamp
-	1,  // 34: uneton.v1.SnapshotEntity.entity_type:type_name -> uneton.v1.EntityType
-	37, // 35: uneton.v1.SnapshotEntity.entity:type_name -> uneton.v1.Entity
-	42, // 36: uneton.v1.FamilySnapshot.entities:type_name -> uneton.v1.SnapshotEntity
-	49, // 37: uneton.v1.FamilySnapshot.created_at:type_name -> google.protobuf.Timestamp
-	49, // 38: uneton.v1.SleepPrediction.target_at:type_name -> google.protobuf.Timestamp
-	49, // 39: uneton.v1.SleepPrediction.range_start_at:type_name -> google.protobuf.Timestamp
-	49, // 40: uneton.v1.SleepPrediction.range_end_at:type_name -> google.protobuf.Timestamp
-	44, // 41: uneton.v1.SleepForecast.wake_estimate:type_name -> uneton.v1.SleepPrediction
-	44, // 42: uneton.v1.SleepForecast.next_sleep_estimate:type_name -> uneton.v1.SleepPrediction
-	36, // 43: uneton.v1.SyncResponse.command_results:type_name -> uneton.v1.CommandResult
-	41, // 44: uneton.v1.SyncResponse.events:type_name -> uneton.v1.SyncEvent
-	44, // 45: uneton.v1.SyncResponse.next_sleep_estimate:type_name -> uneton.v1.SleepPrediction
-	49, // 46: uneton.v1.SyncResponse.server_time:type_name -> google.protobuf.Timestamp
-	45, // 47: uneton.v1.SyncResponse.sleep_forecast:type_name -> uneton.v1.SleepForecast
-	43, // 48: uneton.v1.SyncResponse.snapshot:type_name -> uneton.v1.FamilySnapshot
-	3,  // 49: uneton.v1.UnetonService.DevelopmentAuth:input_type -> uneton.v1.DevelopmentAuthRequest
-	4,  // 50: uneton.v1.UnetonService.AppleAuth:input_type -> uneton.v1.AppleAuthRequest
-	5,  // 51: uneton.v1.UnetonService.RefreshAuth:input_type -> uneton.v1.RefreshAuthRequest
-	6,  // 52: uneton.v1.UnetonService.SignOut:input_type -> uneton.v1.SignOutRequest
-	8,  // 53: uneton.v1.UnetonService.DeleteAccount:input_type -> uneton.v1.DeleteAccountRequest
-	11, // 54: uneton.v1.UnetonService.UpdateDevicePushSettings:input_type -> uneton.v1.UpdateDevicePushSettingsRequest
-	13, // 55: uneton.v1.UnetonService.RegisterLiveActivity:input_type -> uneton.v1.RegisterLiveActivityRequest
-	20, // 56: uneton.v1.UnetonService.CreateFamily:input_type -> uneton.v1.CreateFamilyRequest
-	22, // 57: uneton.v1.UnetonService.CreateInvite:input_type -> uneton.v1.CreateInviteRequest
-	24, // 58: uneton.v1.UnetonService.AcceptInvite:input_type -> uneton.v1.AcceptInviteRequest
-	26, // 59: uneton.v1.UnetonService.Sync:input_type -> uneton.v1.SyncRequest
-	47, // 60: uneton.v1.UnetonService.WatchFamily:input_type -> uneton.v1.WatchFamilyRequest
-	17, // 61: uneton.v1.UnetonService.DevelopmentAuth:output_type -> uneton.v1.DevelopmentAuthResponse
-	18, // 62: uneton.v1.UnetonService.AppleAuth:output_type -> uneton.v1.AppleAuthResponse
-	19, // 63: uneton.v1.UnetonService.RefreshAuth:output_type -> uneton.v1.RefreshAuthResponse
-	7,  // 64: uneton.v1.UnetonService.SignOut:output_type -> uneton.v1.SignOutResponse
-	9,  // 65: uneton.v1.UnetonService.DeleteAccount:output_type -> uneton.v1.DeleteAccountResponse
-	12, // 66: uneton.v1.UnetonService.UpdateDevicePushSettings:output_type -> uneton.v1.UpdateDevicePushSettingsResponse
-	14, // 67: uneton.v1.UnetonService.RegisterLiveActivity:output_type -> uneton.v1.RegisterLiveActivityResponse
-	21, // 68: uneton.v1.UnetonService.CreateFamily:output_type -> uneton.v1.CreateFamilyResponse
-	23, // 69: uneton.v1.UnetonService.CreateInvite:output_type -> uneton.v1.CreateInviteResponse
-	25, // 70: uneton.v1.UnetonService.AcceptInvite:output_type -> uneton.v1.AcceptInviteResponse
-	46, // 71: uneton.v1.UnetonService.Sync:output_type -> uneton.v1.SyncResponse
-	48, // 72: uneton.v1.UnetonService.WatchFamily:output_type -> uneton.v1.WatchFamilyResponse
-	61, // [61:73] is the sub-list for method output_type
-	49, // [49:61] is the sub-list for method input_type
-	49, // [49:49] is the sub-list for extension type_name
-	49, // [49:49] is the sub-list for extension extendee
-	0,  // [0:49] is the sub-list for field type_name
+	35, // 13: uneton.v1.Command.upsert_growth_measurement:type_name -> uneton.v1.UpsertGrowthMeasurement
+	36, // 14: uneton.v1.Command.delete_growth_measurement:type_name -> uneton.v1.DeleteGrowthMeasurement
+	30, // 15: uneton.v1.CreateChild.child:type_name -> uneton.v1.ChildInput
+	30, // 16: uneton.v1.UpdateChild.child:type_name -> uneton.v1.ChildInput
+	38, // 17: uneton.v1.StartSleep.sleep:type_name -> uneton.v1.SleepInput
+	54, // 18: uneton.v1.EndSleep.ended_at:type_name -> google.protobuf.Timestamp
+	38, // 19: uneton.v1.UpsertSleep.sleep:type_name -> uneton.v1.SleepInput
+	37, // 20: uneton.v1.UpsertGrowthMeasurement.measurement:type_name -> uneton.v1.GrowthMeasurementInput
+	54, // 21: uneton.v1.GrowthMeasurementInput.measured_at:type_name -> google.protobuf.Timestamp
+	54, // 22: uneton.v1.SleepInput.started_at:type_name -> google.protobuf.Timestamp
+	54, // 23: uneton.v1.SleepInput.ended_at:type_name -> google.protobuf.Timestamp
+	0,  // 24: uneton.v1.CommandResult.status:type_name -> uneton.v1.CommandStatus
+	40, // 25: uneton.v1.CommandResult.entity:type_name -> uneton.v1.Entity
+	42, // 26: uneton.v1.Entity.child:type_name -> uneton.v1.Child
+	43, // 27: uneton.v1.Entity.sleep_session:type_name -> uneton.v1.SleepSession
+	41, // 28: uneton.v1.Entity.deleted:type_name -> uneton.v1.DeletedEntity
+	44, // 29: uneton.v1.Entity.growth_measurement:type_name -> uneton.v1.GrowthMeasurement
+	54, // 30: uneton.v1.Child.updated_at:type_name -> google.protobuf.Timestamp
+	54, // 31: uneton.v1.SleepSession.started_at:type_name -> google.protobuf.Timestamp
+	54, // 32: uneton.v1.SleepSession.ended_at:type_name -> google.protobuf.Timestamp
+	54, // 33: uneton.v1.SleepSession.updated_at:type_name -> google.protobuf.Timestamp
+	54, // 34: uneton.v1.SleepSession.deleted_at:type_name -> google.protobuf.Timestamp
+	54, // 35: uneton.v1.GrowthMeasurement.measured_at:type_name -> google.protobuf.Timestamp
+	54, // 36: uneton.v1.GrowthMeasurement.updated_at:type_name -> google.protobuf.Timestamp
+	54, // 37: uneton.v1.GrowthMeasurement.deleted_at:type_name -> google.protobuf.Timestamp
+	1,  // 38: uneton.v1.SyncEvent.entity_type:type_name -> uneton.v1.EntityType
+	2,  // 39: uneton.v1.SyncEvent.operation:type_name -> uneton.v1.EventOperation
+	40, // 40: uneton.v1.SyncEvent.entity:type_name -> uneton.v1.Entity
+	54, // 41: uneton.v1.SyncEvent.created_at:type_name -> google.protobuf.Timestamp
+	1,  // 42: uneton.v1.SnapshotEntity.entity_type:type_name -> uneton.v1.EntityType
+	40, // 43: uneton.v1.SnapshotEntity.entity:type_name -> uneton.v1.Entity
+	46, // 44: uneton.v1.FamilySnapshot.entities:type_name -> uneton.v1.SnapshotEntity
+	54, // 45: uneton.v1.FamilySnapshot.created_at:type_name -> google.protobuf.Timestamp
+	54, // 46: uneton.v1.SleepPrediction.target_at:type_name -> google.protobuf.Timestamp
+	54, // 47: uneton.v1.SleepPrediction.range_start_at:type_name -> google.protobuf.Timestamp
+	54, // 48: uneton.v1.SleepPrediction.range_end_at:type_name -> google.protobuf.Timestamp
+	48, // 49: uneton.v1.SleepForecast.wake_estimate:type_name -> uneton.v1.SleepPrediction
+	48, // 50: uneton.v1.SleepForecast.next_sleep_estimate:type_name -> uneton.v1.SleepPrediction
+	39, // 51: uneton.v1.SyncResponse.command_results:type_name -> uneton.v1.CommandResult
+	45, // 52: uneton.v1.SyncResponse.events:type_name -> uneton.v1.SyncEvent
+	48, // 53: uneton.v1.SyncResponse.next_sleep_estimate:type_name -> uneton.v1.SleepPrediction
+	54, // 54: uneton.v1.SyncResponse.server_time:type_name -> google.protobuf.Timestamp
+	49, // 55: uneton.v1.SyncResponse.sleep_forecast:type_name -> uneton.v1.SleepForecast
+	47, // 56: uneton.v1.SyncResponse.snapshot:type_name -> uneton.v1.FamilySnapshot
+	50, // 57: uneton.v1.SyncResponse.growth_reference_points:type_name -> uneton.v1.GrowthReferencePoint
+	3,  // 58: uneton.v1.UnetonService.DevelopmentAuth:input_type -> uneton.v1.DevelopmentAuthRequest
+	4,  // 59: uneton.v1.UnetonService.AppleAuth:input_type -> uneton.v1.AppleAuthRequest
+	5,  // 60: uneton.v1.UnetonService.RefreshAuth:input_type -> uneton.v1.RefreshAuthRequest
+	6,  // 61: uneton.v1.UnetonService.SignOut:input_type -> uneton.v1.SignOutRequest
+	8,  // 62: uneton.v1.UnetonService.DeleteAccount:input_type -> uneton.v1.DeleteAccountRequest
+	11, // 63: uneton.v1.UnetonService.UpdateDevicePushSettings:input_type -> uneton.v1.UpdateDevicePushSettingsRequest
+	13, // 64: uneton.v1.UnetonService.RegisterLiveActivity:input_type -> uneton.v1.RegisterLiveActivityRequest
+	20, // 65: uneton.v1.UnetonService.CreateFamily:input_type -> uneton.v1.CreateFamilyRequest
+	22, // 66: uneton.v1.UnetonService.CreateInvite:input_type -> uneton.v1.CreateInviteRequest
+	24, // 67: uneton.v1.UnetonService.AcceptInvite:input_type -> uneton.v1.AcceptInviteRequest
+	26, // 68: uneton.v1.UnetonService.Sync:input_type -> uneton.v1.SyncRequest
+	52, // 69: uneton.v1.UnetonService.WatchFamily:input_type -> uneton.v1.WatchFamilyRequest
+	17, // 70: uneton.v1.UnetonService.DevelopmentAuth:output_type -> uneton.v1.DevelopmentAuthResponse
+	18, // 71: uneton.v1.UnetonService.AppleAuth:output_type -> uneton.v1.AppleAuthResponse
+	19, // 72: uneton.v1.UnetonService.RefreshAuth:output_type -> uneton.v1.RefreshAuthResponse
+	7,  // 73: uneton.v1.UnetonService.SignOut:output_type -> uneton.v1.SignOutResponse
+	9,  // 74: uneton.v1.UnetonService.DeleteAccount:output_type -> uneton.v1.DeleteAccountResponse
+	12, // 75: uneton.v1.UnetonService.UpdateDevicePushSettings:output_type -> uneton.v1.UpdateDevicePushSettingsResponse
+	14, // 76: uneton.v1.UnetonService.RegisterLiveActivity:output_type -> uneton.v1.RegisterLiveActivityResponse
+	21, // 77: uneton.v1.UnetonService.CreateFamily:output_type -> uneton.v1.CreateFamilyResponse
+	23, // 78: uneton.v1.UnetonService.CreateInvite:output_type -> uneton.v1.CreateInviteResponse
+	25, // 79: uneton.v1.UnetonService.AcceptInvite:output_type -> uneton.v1.AcceptInviteResponse
+	51, // 80: uneton.v1.UnetonService.Sync:output_type -> uneton.v1.SyncResponse
+	53, // 81: uneton.v1.UnetonService.WatchFamily:output_type -> uneton.v1.WatchFamilyResponse
+	70, // [70:82] is the sub-list for method output_type
+	58, // [58:70] is the sub-list for method input_type
+	58, // [58:58] is the sub-list for extension type_name
+	58, // [58:58] is the sub-list for extension extendee
+	0,  // [0:58] is the sub-list for field type_name
 }
 
 func init() { file_uneton_v1_uneton_proto_init() }
@@ -3720,26 +4219,31 @@ func file_uneton_v1_uneton_proto_init() {
 		(*Command_EndSleep)(nil),
 		(*Command_UpsertSleep)(nil),
 		(*Command_DeleteSleep)(nil),
+		(*Command_UpsertGrowthMeasurement)(nil),
+		(*Command_DeleteGrowthMeasurement)(nil),
 	}
 	file_uneton_v1_uneton_proto_msgTypes[27].OneofWrappers = []any{}
 	file_uneton_v1_uneton_proto_msgTypes[29].OneofWrappers = []any{}
-	file_uneton_v1_uneton_proto_msgTypes[32].OneofWrappers = []any{}
-	file_uneton_v1_uneton_proto_msgTypes[34].OneofWrappers = []any{
+	file_uneton_v1_uneton_proto_msgTypes[34].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[35].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[37].OneofWrappers = []any{
 		(*Entity_Child)(nil),
 		(*Entity_SleepSession)(nil),
 		(*Entity_Deleted)(nil),
+		(*Entity_GrowthMeasurement)(nil),
 	}
-	file_uneton_v1_uneton_proto_msgTypes[36].OneofWrappers = []any{}
-	file_uneton_v1_uneton_proto_msgTypes[37].OneofWrappers = []any{}
-	file_uneton_v1_uneton_proto_msgTypes[42].OneofWrappers = []any{}
-	file_uneton_v1_uneton_proto_msgTypes[43].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[39].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[40].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[41].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[46].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[48].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_uneton_v1_uneton_proto_rawDesc), len(file_uneton_v1_uneton_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   46,
+			NumMessages:   51,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

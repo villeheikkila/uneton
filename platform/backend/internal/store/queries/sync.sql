@@ -2,6 +2,18 @@
 select result_json from commands
 where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
 
+-- name: DeleteGrowthReferencePoints :exec
+delete from growth_reference_points;
+
+-- name: CreateGrowthReferencePoint :exec
+insert into growth_reference_points(reference, metric, age_months, sd, value)
+values (sqlc.arg(reference), sqlc.arg(metric), sqlc.arg(age_months), sqlc.arg(sd), sqlc.arg(value));
+
+-- name: GrowthReferencePoints :many
+select reference, metric, age_months, sd, value
+from growth_reference_points
+order by reference, metric, age_months, sd;
+
 -- name: RecordCommand :exec
 insert into commands(id, family_id, user_id, kind, result_json, created_at)
 values (sqlc.arg(id), sqlc.arg(family_id), sqlc.arg(user_id), sqlc.arg(kind), sqlc.arg(result_json), sqlc.arg(created_at))
@@ -11,11 +23,11 @@ on conflict(family_id, id) do nothing;
 insert into children(
   id, family_id, nickname, birth_date, prediction_mode,
   manual_interval_minutes, quiet_hours_start_minutes,
-  quiet_hours_end_minutes, time_zone, revision, updated_at
+  quiet_hours_end_minutes, time_zone, growth_reference, revision, updated_at
 ) values (
   sqlc.arg(id), sqlc.arg(family_id), sqlc.arg(nickname), sqlc.arg(birth_date),
   sqlc.arg(prediction_mode), sqlc.narg(manual_interval_minutes),
-  sqlc.arg(quiet_hours_start_minutes), sqlc.arg(quiet_hours_end_minutes), sqlc.arg(time_zone), 1,
+  sqlc.arg(quiet_hours_start_minutes), sqlc.arg(quiet_hours_end_minutes), sqlc.arg(time_zone), sqlc.arg(growth_reference), 1,
   sqlc.arg(updated_at)
 );
 
@@ -32,6 +44,7 @@ update children set
   quiet_hours_start_minutes=case when sqlc.arg(quiet_hours_start_minutes)>0 then sqlc.arg(quiet_hours_start_minutes) else quiet_hours_start_minutes end,
   quiet_hours_end_minutes=case when sqlc.arg(quiet_hours_end_minutes)>0 then sqlc.arg(quiet_hours_end_minutes) else quiet_hours_end_minutes end,
   time_zone=coalesce(nullif(sqlc.arg(time_zone), ''), time_zone),
+  growth_reference=case when sqlc.arg(growth_reference) in ('none', 'girl', 'boy') then sqlc.arg(growth_reference) else growth_reference end,
   revision=revision+1,
   updated_at=sqlc.arg(updated_at)
 where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
@@ -39,7 +52,7 @@ where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
 -- name: ChildRecord :one
 select id, family_id, nickname, birth_date, prediction_mode,
   manual_interval_minutes, quiet_hours_start_minutes,
-  quiet_hours_end_minutes, time_zone, revision, updated_at
+  quiet_hours_end_minutes, time_zone, growth_reference, revision, updated_at
 from children
 where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
 
@@ -164,6 +177,47 @@ update sleep_sessions set
   revision=revision+1,
   updated_at=sqlc.arg(updated_at)
 where id=sqlc.arg(id);
+
+-- name: CreateGrowthMeasurement :exec
+insert into growth_measurements(
+  id, family_id, child_id, measured_at, weight_grams, height_millimeters,
+  note, revision, updated_at
+) values (
+  sqlc.arg(id), sqlc.arg(family_id), sqlc.arg(child_id), sqlc.arg(measured_at),
+  sqlc.narg(weight_grams), sqlc.narg(height_millimeters), sqlc.arg(note), 1,
+  sqlc.arg(updated_at)
+);
+
+-- name: GrowthMeasurementRevision :one
+select revision from growth_measurements
+where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
+
+-- name: ExistingGrowthMeasurementRevision :one
+select revision from growth_measurements
+where id=sqlc.arg(id) and family_id=sqlc.arg(family_id) and deleted_at is null;
+
+-- name: UpdateGrowthMeasurement :exec
+update growth_measurements set
+  measured_at=sqlc.arg(measured_at),
+  weight_grams=sqlc.narg(weight_grams),
+  height_millimeters=sqlc.narg(height_millimeters),
+  note=sqlc.arg(note),
+  revision=revision+1,
+  updated_at=sqlc.arg(updated_at)
+where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
+
+-- name: DeleteGrowthMeasurement :exec
+update growth_measurements set
+  deleted_at=sqlc.arg(deleted_at),
+  revision=sqlc.arg(revision),
+  updated_at=sqlc.arg(updated_at)
+where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
+
+-- name: GrowthMeasurementRecord :one
+select id, family_id, child_id, measured_at, weight_grams, height_millimeters,
+  note, revision, updated_at, deleted_at
+from growth_measurements
+where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
 
 -- name: AppendEvent :exec
 insert into sync_events(

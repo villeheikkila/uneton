@@ -32,6 +32,7 @@ targets:
         NSSupportsLiveActivities: true
         NSSupportsLiveActivitiesFrequentUpdates: true
         UIBackgroundModes: [fetch, remote-notification]
+        NSCameraUsageDescription: Scan a caregiver’s Uneton family invitation QR code.
         BGTaskSchedulerPermittedIdentifiers:
           - solutions.bytesized.uneton.refresh
         CFBundleURLTypes:
