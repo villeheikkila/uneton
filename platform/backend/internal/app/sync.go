@@ -813,14 +813,6 @@ func (s *Server) sleepForecast(ctx context.Context, familyID string) *SleepForec
 	return forecast
 }
 
-func (s *Server) nextPrediction(ctx context.Context, familyID string) *Prediction {
-	forecast := s.sleepForecast(ctx, familyID)
-	if forecast == nil {
-		return nil
-	}
-	return forecast.NextSleepEstimate
-}
-
 func predictionFromEstimate(estimate sweetspot.Estimate) Prediction {
 	return Prediction{TargetAt: estimate.Target, RangeStartAt: estimate.RangeStart, RangeEndAt: estimate.RangeEnd, Confidence: estimate.Confidence, Explanation: estimate.Explanation, AlgorithmVersion: sweetspot.AlgorithmVersion, Kind: estimate.Kind, SampleCount: estimate.SampleCount}
 }

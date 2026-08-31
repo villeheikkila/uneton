@@ -1,0 +1,19 @@
+Uneton licensing notice
+Copyright (c) 2026 Ville Heikkilä
+
+Unless an adjacent license file states otherwise, source code, tooling,
+documentation, and configuration in this repository are licensed under the GNU
+Affero General Public License, version 3.0 or (at your option) any later
+version. The full text is in the repository-root LICENSE file.
+
+The Apple client in clients/ios/, including its iPhone app, Watch app, widgets,
+and Swift package, is licensed under the GNU General Public License, version
+3.0 or (at your option) any later version. The full text is in
+clients/ios/LICENSE.
+
+The canonical protocol in platform/contracts/ and generated bindings in
+internal/gen/ and clients/ios/UnetonPackage/Sources/UnetonAPI/Generated/ are
+dual-licensed under either the AGPL-3.0-or-later or GPL-3.0-or-later terms.
+Choose the license matching the component in which those shared files are used.
+
+Dependencies are not relicensed by this notice and retain their own terms.

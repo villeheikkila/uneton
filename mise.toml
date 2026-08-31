@@ -48,6 +48,10 @@ env.CLANG_MODULE_CACHE_PATH = "/tmp/uneton-clang-cache"
 env.SWIFTPM_MODULECACHE_OVERRIDE = "/tmp/uneton-clang-cache"
 run = "swift test --package-path clients/ios/UnetonPackage"
 
+[tasks."ios:build"]
+description = "Build the iPhone, Watch, and widget targets for an iOS simulator"
+run = "xcodebuild -workspace clients/ios/UnetonWorkspace.xcworkspace -scheme Uneton -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/uneton-xcode-derived-data build"
+
 [tasks.generate]
 description = "Regenerate sqlc and ConnectRPC sources"
 depends = ["backend:generate", "contracts:generate"]

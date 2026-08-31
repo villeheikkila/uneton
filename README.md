@@ -17,7 +17,7 @@ Run all deterministic tests with `mise run test`. After editing SQL or `platform
 
 ## CI and release rehearsal
 
-GitHub Actions and local CI share the canonical Linux gate: `mise run ci:server:check`. It tests the backend and behavioral load client, regenerates and checks generated sources, validates the Ansible playbook syntax, and lints the workflows and CI scripts. Run the Linux GitHub job itself with `mise run ci:workflow:check`; this uses `act` and the checked-in workflow rather than a look-alike shell command. The Swift package remains a native macOS GitHub job and is covered locally by `mise run ios:test`.
+GitHub Actions and local CI share the canonical Linux gate: `mise run ci:server:check`. It tests the backend and behavioral load client, regenerates and checks generated sources, validates the Ansible playbook syntax, and lints the workflows and CI scripts. Run the Linux GitHub job itself with `mise run ci:workflow:check`; this uses `act` and the checked-in workflow rather than a look-alike shell command. The native macOS GitHub job runs both the shared Swift package tests (`mise run ios:test`) and a simulator build of the iPhone, Watch, and widget targets (`mise run ios:build`).
 
 Run `mise run ci:workflow:release` from a clean checkout before a release candidate. It invokes the manual release-rehearsal workflow through `act`, builds a commit-addressed Linux/ARM64 backend image into the local Docker engine, deploys that exact image to the disposable OrbStack VM, verifies it, and rehearses a Litestream restore. It never publishes an image or contacts a production server.
 
@@ -76,3 +76,7 @@ The canonical end-to-end design—including offline commands, authoritative even
 The RPC schema is the API contract. Buf generates the shared Go messages and Connect bindings into `internal/gen`, plus the Swift SDK into `clients/ios/UnetonPackage/Sources/UnetonAPI`. Static application SQL lives in `platform/backend/internal/store/queries` and `sqlc` generates its backend access layer. Only migrations, SQLite pragmas, and dynamic command savepoints remain handwritten.
 
 The prediction is deliberately described as an estimate rather than medical advice. It uses an age-banded wake-window prior, then adapts toward the child's recent intervals when enough clean observations exist. Manual reminder intervals remain available.
+
+## License
+
+The backend, load-test client, deployment tooling, and documentation are licensed under the GNU Affero General Public License v3.0 or later; see [LICENSE](LICENSE). The Apple app, Watch app, widgets, and Swift package in `clients/ios/` are licensed under the GNU General Public License v3.0 or later; see [clients/ios/LICENSE](clients/ios/LICENSE). The shared protocol and its generated bindings are dual-licensed under either license so they can be used by both components. Third-party dependencies remain under their own licenses.
