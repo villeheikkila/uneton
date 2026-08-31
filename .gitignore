@@ -1,0 +1,42 @@
+# macOS Finder metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Local secrets and developer overrides (commit explicit examples instead)
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+.mise.local.toml
+
+# Go build and coverage artifacts
+*.test
+*.prof
+coverage.out
+
+# Local backend state
+/platform/backend/var/
+/platform/backend/*.sqlite
+/platform/backend/*.sqlite-*
+
+# Swift Package Manager build state
+/clients/ios/UnetonPackage/.build/
+/clients/ios/UnetonPackage/.swiftpm/
+/clients/ios/.swiftpm/
+
+# Xcode user-specific and derived data
+/DerivedData/
+*.xcuserstate
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+xcuserdata/
+
+# Disposable local infrastructure state
+/platform/infra/vps/.orb/
+
+# Local research material; never commit this private journal export.
+/Journal ios Jun 2026/
