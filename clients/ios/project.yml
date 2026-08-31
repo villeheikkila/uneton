@@ -1,0 +1,116 @@
+name: Uneton
+options:
+  bundleIdPrefix: solutions.bytesized
+  deploymentTarget:
+    iOS: "26.0"
+    watchOS: "26.0"
+  xcodeVersion: "26.0"
+  createIntermediateGroups: true
+packages:
+  UnetonPackage:
+    path: UnetonPackage
+settings:
+  base:
+    DEVELOPMENT_TEAM: J9S7QG9SVR
+    SWIFT_VERSION: "6.0"
+    ENABLE_USER_SCRIPT_SANDBOXING: "YES"
+targets:
+  Uneton:
+    type: application
+    platform: iOS
+    sources:
+      - Uneton
+    entitlements:
+      path: Uneton/Uneton.entitlements
+      properties:
+        aps-environment: development
+    info:
+      path: Uneton/Info.plist
+      properties:
+        CFBundleDisplayName: Uneton
+        UILaunchScreen: {}
+        NSSupportsLiveActivities: true
+        NSSupportsLiveActivitiesFrequentUpdates: true
+        UIBackgroundModes: [fetch, remote-notification]
+        BGTaskSchedulerPermittedIdentifiers:
+          - solutions.bytesized.uneton.refresh
+        CFBundleURLTypes:
+          - CFBundleURLName: solutions.bytesized.uneton
+            CFBundleURLSchemes: [uneton]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: solutions.bytesized.uneton
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    dependencies:
+      - package: UnetonPackage
+        product: UnetonCore
+      - package: UnetonPackage
+        product: UnetonActivity
+      - target: UnetonWidgets
+        embed: true
+      - target: UnetonWatch
+        embed: true
+  UnetonWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - UnetonWidgets
+    entitlements:
+      path: UnetonWidgets/UnetonWidgets.entitlements
+    info:
+      path: UnetonWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Uneton
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: solutions.bytesized.uneton.widgets
+        SKIP_INSTALL: "YES"
+    dependencies:
+      - package: UnetonPackage
+        product: UnetonCore
+      - package: UnetonPackage
+        product: UnetonActivity
+  UnetonWatch:
+    type: application
+    platform: watchOS
+    sources:
+      - UnetonWatch
+    entitlements:
+      path: UnetonWatch/UnetonWatch.entitlements
+    info:
+      path: UnetonWatch/Info.plist
+      properties:
+        CFBundleDisplayName: Uneton
+        WKCompanionAppBundleIdentifier: solutions.bytesized.uneton
+        WKApplication: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: solutions.bytesized.uneton.watchkitapp
+        SDKROOT: watchos
+        TARGETED_DEVICE_FAMILY: "4"
+    dependencies:
+      - package: UnetonPackage
+        product: UnetonCore
+schemes:
+  Uneton:
+    build:
+      targets:
+        Uneton: all
+    run:
+      config: Debug
+  UnetonWidgets:
+    build:
+      targets:
+        UnetonWidgets: all
+    test:
+      config: Debug
+  UnetonWatch:
+    build:
+      targets:
+        UnetonWatch: all
+    run:
+      config: Debug

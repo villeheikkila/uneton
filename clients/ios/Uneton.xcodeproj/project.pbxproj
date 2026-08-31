@@ -1,0 +1,734 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0A06F55AFB50A5C4EC40A0C9 /* UnetonWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B939DDA8AE5699557A5FA6B3 /* UnetonWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		0BA2287994E4486BC0EA1A4D /* ReminderController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B794393108E5A174E3327F /* ReminderController.swift */; };
+		111F9270D99C39C292AFEF73 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23D3449DAAACCCD6BDCA5AE5 /* OnboardingView.swift */; };
+		1FE1E4D54037C47A74F5F7C3 /* UnetonWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E559806C9EB49DB6CD0CB7B2 /* UnetonWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		277371375578159F4D765AAE /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93442058261D164D125FE85A /* SessionStore.swift */; };
+		316D502577DE587D9F1B1F0D /* PhoneWatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD9758664132AB21584A96AC /* PhoneWatchBridge.swift */; };
+		358CD8F31FC926F168F67669 /* TimelineScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16F8A18EB8BF393F83693600 /* TimelineScreen.swift */; };
+		387D39CFB57884849BB0630C /* UnetonCore in Frameworks */ = {isa = PBXBuildFile; productRef = C84A1DF20438133E612C8513 /* UnetonCore */; };
+		3B0FF6F63F8DD2BA7F462439 /* SleepClouds.metal in Sources */ = {isa = PBXBuildFile; fileRef = 710F730A2622DB5804A7817C /* SleepClouds.metal */; };
+		3B7DAE732B26801D11C1CFA1 /* FamilySharingSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3F15C777BE34447380DD7B9 /* FamilySharingSheet.swift */; };
+		3F67A8EC57D51FC25A4BE656 /* SleepEntrySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFF0F8EAD4BC4114DEFF87D /* SleepEntrySheet.swift */; };
+		49FEEF5C8775506127FB5745 /* UnetonActivity in Frameworks */ = {isa = PBXBuildFile; productRef = E8389CBA533E782935A9D730 /* UnetonActivity */; };
+		503C1297883A78D0B857765E /* UnetonApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D31FE1C3ACB3CB882029856B /* UnetonApp.swift */; };
+		505EBAA33B21B2743A28CAD7 /* CredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0009D16CB7EAFD3C94AEB10 /* CredentialStore.swift */; };
+		53891DFA9A38D347B1623FF7 /* UnetonActivity in Frameworks */ = {isa = PBXBuildFile; productRef = 23C61FE5E1FD5C9379CAB8CF /* UnetonActivity */; };
+		776E41E259D54BB9647721BB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57CD1A2D27F650526FE3F833 /* Assets.xcassets */; };
+		7B0AC7E48D6CA990D4C033C3 /* LiveActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95FC0EB3F083AB0587264171 /* LiveActivityController.swift */; };
+		936F390DF0F0C05C34C2AB43 /* TrendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAB609F8585FE0509A18A8E8 /* TrendsView.swift */; };
+		93BC36FF9698B9C2384B8700 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0355076EEF872FB482B7B4DA /* ContentView.swift */; };
+		968654C9314D6BA38D616C59 /* UnetonCore in Frameworks */ = {isa = PBXBuildFile; productRef = F7C4691974BB5222DB4FB72B /* UnetonCore */; };
+		9DE570FFDB97BFFA8D55A463 /* SyncConflictsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C28EBBEE5AD3C626F6DD8B6E /* SyncConflictsSheet.swift */; };
+		A7725E23F0EADF4E64BA85E6 /* PushRegistrationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B095ADAA98D2DA6DE3FD15CD /* PushRegistrationController.swift */; };
+		BEFE7CDE95F4D27ADACFCF67 /* UnetonWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15EA75C38B7B9913EFAF8D3C /* UnetonWatchApp.swift */; };
+		C5071F7322E5584706D06B10 /* UnetonWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBA9C6F0A3F7C533AFAA3988 /* UnetonWidgets.swift */; };
+		EC01897EBECD1DE0DD1AE199 /* AppleCredentialMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE597D474D61696F33CA8BF /* AppleCredentialMonitor.swift */; };
+		F0E5C061F7BB4C7A4AD21404 /* UnetonCore in Frameworks */ = {isa = PBXBuildFile; productRef = DA4F68CF578D30CB531BB6B4 /* UnetonCore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		72D65294BC9F6DBA27C3B899 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FC13656015A5F83334D609C9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 022A31759683A52F50E337E4;
+			remoteInfo = UnetonWatch;
+		};
+		7BC3C28C5BFE685781C3F0EA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FC13656015A5F83334D609C9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 85395317338525255851B68F;
+			remoteInfo = UnetonWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		02F5B8AB7351B03BDB49B407 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				1FE1E4D54037C47A74F5F7C3 /* UnetonWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2CE86642980997E3B549D61D /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				0A06F55AFB50A5C4EC40A0C9 /* UnetonWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0355076EEF872FB482B7B4DA /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		15EA75C38B7B9913EFAF8D3C /* UnetonWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnetonWatchApp.swift; sourceTree = "<group>"; };
+		16F8A18EB8BF393F83693600 /* TimelineScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineScreen.swift; sourceTree = "<group>"; };
+		23D3449DAAACCCD6BDCA5AE5 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		31B794393108E5A174E3327F /* ReminderController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderController.swift; sourceTree = "<group>"; };
+		3D896FB7D71440107A4ABABE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		45B1DF3CCB9251A6A1E1DBE6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		52E6E2D69BBCABC069653151 /* UnetonWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UnetonWatch.entitlements; sourceTree = "<group>"; };
+		57CD1A2D27F650526FE3F833 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		710F730A2622DB5804A7817C /* SleepClouds.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = SleepClouds.metal; sourceTree = "<group>"; };
+		72BE2CA6738C2540B65E4FB6 /* UnetonWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UnetonWidgets.entitlements; sourceTree = "<group>"; };
+		8BFF0F8EAD4BC4114DEFF87D /* SleepEntrySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepEntrySheet.swift; sourceTree = "<group>"; };
+		93442058261D164D125FE85A /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		95FC0EB3F083AB0587264171 /* LiveActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityController.swift; sourceTree = "<group>"; };
+		A0009D16CB7EAFD3C94AEB10 /* CredentialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialStore.swift; sourceTree = "<group>"; };
+		AD9758664132AB21584A96AC /* PhoneWatchBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneWatchBridge.swift; sourceTree = "<group>"; };
+		B095ADAA98D2DA6DE3FD15CD /* PushRegistrationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushRegistrationController.swift; sourceTree = "<group>"; };
+		B939DDA8AE5699557A5FA6B3 /* UnetonWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UnetonWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BAE597D474D61696F33CA8BF /* AppleCredentialMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleCredentialMonitor.swift; sourceTree = "<group>"; };
+		BBA9C6F0A3F7C533AFAA3988 /* UnetonWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnetonWidgets.swift; sourceTree = "<group>"; };
+		C28EBBEE5AD3C626F6DD8B6E /* SyncConflictsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncConflictsSheet.swift; sourceTree = "<group>"; };
+		D31FE1C3ACB3CB882029856B /* UnetonApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnetonApp.swift; sourceTree = "<group>"; };
+		D4F4ED37643D6B68949D2915 /* Uneton.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Uneton.entitlements; sourceTree = "<group>"; };
+		D6116CB0111CA4504A54DCFF /* UnetonPackage */ = {isa = PBXFileReference; lastKnownFileType = folder; name = UnetonPackage; path = UnetonPackage; sourceTree = SOURCE_ROOT; };
+		DAB609F8585FE0509A18A8E8 /* TrendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendsView.swift; sourceTree = "<group>"; };
+		E06D055826E7198BFF94D002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		E1E26C7A93F782F73A9718C3 /* Uneton.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Uneton.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E559806C9EB49DB6CD0CB7B2 /* UnetonWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = UnetonWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F3F15C777BE34447380DD7B9 /* FamilySharingSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilySharingSheet.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		96DB09F9F8745E7EBAF37132 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				387D39CFB57884849BB0630C /* UnetonCore in Frameworks */,
+				49FEEF5C8775506127FB5745 /* UnetonActivity in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ACA49C3F783879E806C3812F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F0E5C061F7BB4C7A4AD21404 /* UnetonCore in Frameworks */,
+				53891DFA9A38D347B1623FF7 /* UnetonActivity in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E096A435249EE8BC82884805 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				968654C9314D6BA38D616C59 /* UnetonCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		177076334083D6EDC6C555A6 /* UnetonWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				E06D055826E7198BFF94D002 /* Info.plist */,
+				72BE2CA6738C2540B65E4FB6 /* UnetonWidgets.entitlements */,
+				BBA9C6F0A3F7C533AFAA3988 /* UnetonWidgets.swift */,
+			);
+			path = UnetonWidgets;
+			sourceTree = "<group>";
+		};
+		2015CBE2F3D1B55447167A0E /* Infrastructure */ = {
+			isa = PBXGroup;
+			children = (
+				BAE597D474D61696F33CA8BF /* AppleCredentialMonitor.swift */,
+				A0009D16CB7EAFD3C94AEB10 /* CredentialStore.swift */,
+				95FC0EB3F083AB0587264171 /* LiveActivityController.swift */,
+				AD9758664132AB21584A96AC /* PhoneWatchBridge.swift */,
+				B095ADAA98D2DA6DE3FD15CD /* PushRegistrationController.swift */,
+				31B794393108E5A174E3327F /* ReminderController.swift */,
+				93442058261D164D125FE85A /* SessionStore.swift */,
+			);
+			path = Infrastructure;
+			sourceTree = "<group>";
+		};
+		25409B695ED232396BDAEFEB /* Timeline */ = {
+			isa = PBXGroup;
+			children = (
+				710F730A2622DB5804A7817C /* SleepClouds.metal */,
+				16F8A18EB8BF393F83693600 /* TimelineScreen.swift */,
+			);
+			path = Timeline;
+			sourceTree = "<group>";
+		};
+		5B0B41887D3F726D3B24095A /* UnetonWatch */ = {
+			isa = PBXGroup;
+			children = (
+				45B1DF3CCB9251A6A1E1DBE6 /* Info.plist */,
+				52E6E2D69BBCABC069653151 /* UnetonWatch.entitlements */,
+				15EA75C38B7B9913EFAF8D3C /* UnetonWatchApp.swift */,
+			);
+			path = UnetonWatch;
+			sourceTree = "<group>";
+		};
+		726C7DC21B4E8CCCB3278D53 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E1E26C7A93F782F73A9718C3 /* Uneton.app */,
+				B939DDA8AE5699557A5FA6B3 /* UnetonWatch.app */,
+				E559806C9EB49DB6CD0CB7B2 /* UnetonWidgets.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7386CE4A75BF937654A5036B /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				D6116CB0111CA4504A54DCFF /* UnetonPackage */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		8D900EB08E0A611C0EFED6A6 /* Uneton */ = {
+			isa = PBXGroup;
+			children = (
+				57CD1A2D27F650526FE3F833 /* Assets.xcassets */,
+				0355076EEF872FB482B7B4DA /* ContentView.swift */,
+				3D896FB7D71440107A4ABABE /* Info.plist */,
+				D4F4ED37643D6B68949D2915 /* Uneton.entitlements */,
+				D31FE1C3ACB3CB882029856B /* UnetonApp.swift */,
+				CBBD18411B96398030F20EFA /* Features */,
+				2015CBE2F3D1B55447167A0E /* Infrastructure */,
+			);
+			path = Uneton;
+			sourceTree = "<group>";
+		};
+		B226D0E540DA9F4EAFC05904 /* Trends */ = {
+			isa = PBXGroup;
+			children = (
+				DAB609F8585FE0509A18A8E8 /* TrendsView.swift */,
+			);
+			path = Trends;
+			sourceTree = "<group>";
+		};
+		B23594979E14249D43D345D8 /* Entry */ = {
+			isa = PBXGroup;
+			children = (
+				8BFF0F8EAD4BC4114DEFF87D /* SleepEntrySheet.swift */,
+			);
+			path = Entry;
+			sourceTree = "<group>";
+		};
+		C8DD159053CA3EABCC814290 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				F3F15C777BE34447380DD7B9 /* FamilySharingSheet.swift */,
+				23D3449DAAACCCD6BDCA5AE5 /* OnboardingView.swift */,
+				C28EBBEE5AD3C626F6DD8B6E /* SyncConflictsSheet.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		CA4BB0AEA357C3DF8337947D = {
+			isa = PBXGroup;
+			children = (
+				7386CE4A75BF937654A5036B /* Packages */,
+				8D900EB08E0A611C0EFED6A6 /* Uneton */,
+				5B0B41887D3F726D3B24095A /* UnetonWatch */,
+				177076334083D6EDC6C555A6 /* UnetonWidgets */,
+				726C7DC21B4E8CCCB3278D53 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		CBBD18411B96398030F20EFA /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				B23594979E14249D43D345D8 /* Entry */,
+				C8DD159053CA3EABCC814290 /* Settings */,
+				25409B695ED232396BDAEFEB /* Timeline */,
+				B226D0E540DA9F4EAFC05904 /* Trends */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		022A31759683A52F50E337E4 /* UnetonWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8EEB4B81F8302E468198EC10 /* Build configuration list for PBXNativeTarget "UnetonWatch" */;
+			buildPhases = (
+				A9C3932809207763D6232E72 /* Sources */,
+				E096A435249EE8BC82884805 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = UnetonWatch;
+			packageProductDependencies = (
+				F7C4691974BB5222DB4FB72B /* UnetonCore */,
+			);
+			productName = UnetonWatch;
+			productReference = B939DDA8AE5699557A5FA6B3 /* UnetonWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		85395317338525255851B68F /* UnetonWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 781A7F6A94896BA06564513C /* Build configuration list for PBXNativeTarget "UnetonWidgets" */;
+			buildPhases = (
+				683A35CE8C34B4677797767C /* Sources */,
+				ACA49C3F783879E806C3812F /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = UnetonWidgets;
+			packageProductDependencies = (
+				DA4F68CF578D30CB531BB6B4 /* UnetonCore */,
+				23C61FE5E1FD5C9379CAB8CF /* UnetonActivity */,
+			);
+			productName = UnetonWidgets;
+			productReference = E559806C9EB49DB6CD0CB7B2 /* UnetonWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		DB17E4CD9882CC55F866C16D /* Uneton */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 759A141996ECEECE11FE12A6 /* Build configuration list for PBXNativeTarget "Uneton" */;
+			buildPhases = (
+				525500DAAAE29AD687C9867E /* Sources */,
+				812D2D2A636EEE4BE884935D /* Resources */,
+				96DB09F9F8745E7EBAF37132 /* Frameworks */,
+				02F5B8AB7351B03BDB49B407 /* Embed Foundation Extensions */,
+				2CE86642980997E3B549D61D /* Embed Watch Content */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D0AFF57A226C149483FF9C91 /* PBXTargetDependency */,
+				AEFA513C22E2E8322150A27E /* PBXTargetDependency */,
+			);
+			name = Uneton;
+			packageProductDependencies = (
+				C84A1DF20438133E612C8513 /* UnetonCore */,
+				E8389CBA533E782935A9D730 /* UnetonActivity */,
+			);
+			productName = Uneton;
+			productReference = E1E26C7A93F782F73A9718C3 /* Uneton.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FC13656015A5F83334D609C9 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					022A31759683A52F50E337E4 = {
+						DevelopmentTeam = J9S7QG9SVR;
+					};
+					85395317338525255851B68F = {
+						DevelopmentTeam = J9S7QG9SVR;
+					};
+					DB17E4CD9882CC55F866C16D = {
+						DevelopmentTeam = J9S7QG9SVR;
+					};
+				};
+			};
+			buildConfigurationList = A58EF65BF78CCDCBD38BD168 /* Build configuration list for PBXProject "Uneton" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = CA4BB0AEA357C3DF8337947D;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1717CBBB2DC3216B9AD81D25 /* XCLocalSwiftPackageReference "UnetonPackage" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 726C7DC21B4E8CCCB3278D53 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DB17E4CD9882CC55F866C16D /* Uneton */,
+				85395317338525255851B68F /* UnetonWidgets */,
+				022A31759683A52F50E337E4 /* UnetonWatch */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		812D2D2A636EEE4BE884935D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				776E41E259D54BB9647721BB /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		525500DAAAE29AD687C9867E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EC01897EBECD1DE0DD1AE199 /* AppleCredentialMonitor.swift in Sources */,
+				93BC36FF9698B9C2384B8700 /* ContentView.swift in Sources */,
+				505EBAA33B21B2743A28CAD7 /* CredentialStore.swift in Sources */,
+				3B7DAE732B26801D11C1CFA1 /* FamilySharingSheet.swift in Sources */,
+				7B0AC7E48D6CA990D4C033C3 /* LiveActivityController.swift in Sources */,
+				111F9270D99C39C292AFEF73 /* OnboardingView.swift in Sources */,
+				316D502577DE587D9F1B1F0D /* PhoneWatchBridge.swift in Sources */,
+				A7725E23F0EADF4E64BA85E6 /* PushRegistrationController.swift in Sources */,
+				0BA2287994E4486BC0EA1A4D /* ReminderController.swift in Sources */,
+				277371375578159F4D765AAE /* SessionStore.swift in Sources */,
+				3B0FF6F63F8DD2BA7F462439 /* SleepClouds.metal in Sources */,
+				3F67A8EC57D51FC25A4BE656 /* SleepEntrySheet.swift in Sources */,
+				9DE570FFDB97BFFA8D55A463 /* SyncConflictsSheet.swift in Sources */,
+				358CD8F31FC926F168F67669 /* TimelineScreen.swift in Sources */,
+				936F390DF0F0C05C34C2AB43 /* TrendsView.swift in Sources */,
+				503C1297883A78D0B857765E /* UnetonApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		683A35CE8C34B4677797767C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C5071F7322E5584706D06B10 /* UnetonWidgets.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A9C3932809207763D6232E72 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BEFE7CDE95F4D27ADACFCF67 /* UnetonWatchApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AEFA513C22E2E8322150A27E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 022A31759683A52F50E337E4 /* UnetonWatch */;
+			targetProxy = 72D65294BC9F6DBA27C3B899 /* PBXContainerItemProxy */;
+		};
+		D0AFF57A226C149483FF9C91 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 85395317338525255851B68F /* UnetonWidgets */;
+			targetProxy = 7BC3C28C5BFE685781C3F0EA /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		44496114C2CCE0D3C839BC4F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = UnetonWidgets/UnetonWidgets.entitlements;
+				INFOPLIST_FILE = UnetonWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = solutions.bytesized.uneton.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		71679953B910A42780CE5422 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Uneton/Uneton.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Uneton/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = solutions.bytesized.uneton;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		8A22C924C3B25C02AB13A7DF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = UnetonWidgets/UnetonWidgets.entitlements;
+				INFOPLIST_FILE = UnetonWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = solutions.bytesized.uneton.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A8352C078A353790A47327AC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = UnetonWatch/UnetonWatch.entitlements;
+				INFOPLIST_FILE = UnetonWatch/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = solutions.bytesized.uneton.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
+		};
+		AD812418C56780B2C66C76CE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = UnetonWatch/UnetonWatch.entitlements;
+				INFOPLIST_FILE = UnetonWatch/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = solutions.bytesized.uneton.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Release;
+		};
+		B7457EB8D4E8C78D093E97CA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = J9S7QG9SVR;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
+		B8A68C6A1C0983BB465673C2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Uneton/Uneton.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Uneton/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = solutions.bytesized.uneton;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		D3650614C6B8EE9B8F93EDF9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = J9S7QG9SVR;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		759A141996ECEECE11FE12A6 /* Build configuration list for PBXNativeTarget "Uneton" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B8A68C6A1C0983BB465673C2 /* Debug */,
+				71679953B910A42780CE5422 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		781A7F6A94896BA06564513C /* Build configuration list for PBXNativeTarget "UnetonWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				44496114C2CCE0D3C839BC4F /* Debug */,
+				8A22C924C3B25C02AB13A7DF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8EEB4B81F8302E468198EC10 /* Build configuration list for PBXNativeTarget "UnetonWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A8352C078A353790A47327AC /* Debug */,
+				AD812418C56780B2C66C76CE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A58EF65BF78CCDCBD38BD168 /* Build configuration list for PBXProject "Uneton" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D3650614C6B8EE9B8F93EDF9 /* Debug */,
+				B7457EB8D4E8C78D093E97CA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		1717CBBB2DC3216B9AD81D25 /* XCLocalSwiftPackageReference "UnetonPackage" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = UnetonPackage;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		23C61FE5E1FD5C9379CAB8CF /* UnetonActivity */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = UnetonActivity;
+		};
+		C84A1DF20438133E612C8513 /* UnetonCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = UnetonCore;
+		};
+		DA4F68CF578D30CB531BB6B4 /* UnetonCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = UnetonCore;
+		};
+		E8389CBA533E782935A9D730 /* UnetonActivity */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = UnetonActivity;
+		};
+		F7C4691974BB5222DB4FB72B /* UnetonCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = UnetonCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = FC13656015A5F83334D609C9 /* Project object */;
+}
