@@ -205,6 +205,57 @@ struct SyncCoordinatorTests {
     #expect(pending.first?.kind == "updateChild")
   }
 
+  @Test func acceptedGrowthReferenceUpdatePersistsServerValue() async throws {
+    let familyID = UUID(-67)
+    let childID = UUID(-68)
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    var api = APIClient.testValue
+    api.sync = { _, _, request in
+      let command = try #require(request.commands.first)
+      let input = try JSONDecoder.uneton.decode(ChildCommandPayload.self, from: try JSONEncoder.uneton.encode(command.payload))
+      #expect(input.growthReference == "boy")
+      let child = ServerChildPayload(
+        id: childID,
+        nickname: "Muru",
+        birthDate: "2026-02-23",
+        predictionMode: "adaptive",
+        quietHoursStartMinutes: 1_200,
+        quietHoursEndMinutes: 360,
+        growthReference: "boy",
+        revision: 2,
+        updatedAt: date(1)
+      )
+      return SyncResponse(
+        commandResults: [
+          APICommandResult(
+            id: command.id,
+            status: "accepted",
+            entityID: childID,
+            payload: try jsonValue(child)
+          )
+        ],
+        events: [],
+        nextCursor: request.cursor,
+        hasMore: false,
+        serverTime: date(1)
+      )
+    }
+
+    try await withDependencies { $0.apiClient = api } operation: {
+      let coordinator = SyncCoordinator(deviceID: UUID(-69), accessToken: { "token" })
+      try await coordinator.updateGrowthReference(
+        familyID: familyID,
+        childID: childID,
+        growthReference: "boy"
+      )
+      _ = try await coordinator.synchronize(familyID: familyID)
+    }
+
+    let child = try await database.read { database in try Child.find(childID).fetchOne(database) }
+    #expect(child?.growthReference == "boy")
+    #expect(child?.revision == 2)
+  }
+
   @Test func growthReferenceBootstrapIsCachedOffline() async throws {
     let familyID = UUID(-64)
     let childID = UUID(-65)

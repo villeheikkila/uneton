@@ -21,8 +21,10 @@ public actor SyncCoordinator {
   public func createChild(
     familyID: Family.ID,
     nickname: String,
-    birthDate: Date
+    birthDate: Date,
+    growthReference: String = "none"
   ) async throws -> Child.ID {
+    guard ["none", "girl", "boy"].contains(growthReference) else { throw SyncError.invalidGrowthReference }
     let childID = uuid()
     let commandID = uuid()
     let payload = try jsonValue(
@@ -35,7 +37,7 @@ public actor SyncCoordinator {
         quietHoursStartMinutes: 1_200,
         quietHoursEndMinutes: 360,
         timeZone: TimeZone.current.identifier,
-        growthReference: "none"
+        growthReference: growthReference
       )
     )
     let pending = try pendingCommand(id: commandID, familyID: familyID, kind: "createChild", payload: payload)

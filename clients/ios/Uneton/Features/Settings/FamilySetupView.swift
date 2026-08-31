@@ -5,6 +5,7 @@ struct FamilySetupView: View {
     @Environment(SessionStore.self) private var session
     @State private var childName = ""
     @State private var birthDate = Calendar.current.date(byAdding: .month, value: -6, to: .now) ?? .now
+    @State private var growthReference: String?
     @State private var isScanning = false
 
     var body: some View {
@@ -19,15 +20,43 @@ struct FamilySetupView: View {
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
 
-                VStack(spacing: 14) {
-                    TextField("Child’s name", text: $childName)
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Your baby")
+                        .font(.headline)
+                    TextField("Baby’s name", text: $childName)
                         .textFieldStyle(.roundedBorder)
                     DatePicker("Birthday", selection: $birthDate, in: ...Date.now, displayedComponents: .date)
-                    Button("Create child") {
-                        Task { await session.createChildFamily(childName: childName, birthDate: birthDate) }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Gender")
+                            .font(.subheadline.weight(.medium))
+                        Picker("Gender", selection: $growthReference) {
+                            Text("Girl").tag(Optional("girl"))
+                            Text("Boy").tag(Optional("boy"))
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                        Text("This selects the Finnish growth reference curves. You can change or turn them off later.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Button("Create sleep diary") {
+                        guard let growthReference else { return }
+                        Task {
+                            await session.createChildFamily(
+                                childName: childName,
+                                birthDate: birthDate,
+                                growthReference: growthReference
+                            )
+                        }
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(childName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || session.isWorking)
+                    .disabled(
+                        childName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            || growthReference == nil
+                            || session.isWorking
+                    )
                 }
                 .padding(20)
                 .background(.background.secondary, in: .rect(cornerRadius: 24))
@@ -83,8 +112,14 @@ private final class ScannerController: UIViewController, AVCaptureMetadataOutput
         session.startRunning()
     }
 
-    func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+    nonisolated func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
         guard let value = (metadataObjects.first as? AVMetadataMachineReadableCodeObject)?.stringValue else { return }
+        Task { @MainActor [weak self, value] in
+            self?.handleScannedCode(value)
+        }
+    }
+
+    private func handleScannedCode(_ value: String) {
         session.stopRunning()
         onCode?(value)
     }

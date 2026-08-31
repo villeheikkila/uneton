@@ -174,6 +174,20 @@ func TestFamilySyncAndInvite(t *testing.T) {
 		t.Fatalf("stale growth edit missing authoritative measurement: %+v", staleGrowth)
 	}
 
+	childRevision := int64(1)
+	growthReferenceUpdate := syncFamily(t, ctx, client, owner.GetAccessToken(), &unetonv1.SyncRequest{
+		FamilyId: familyID, Cursor: staleGrowth.GetNextCursor(),
+		Commands: []*unetonv1.Command{{
+			Id: "40000000-0000-4000-8000-000000000008", ExpectedRevision: &childRevision,
+			Payload: &unetonv1.Command_UpdateChild{
+				UpdateChild: &unetonv1.UpdateChild{Child: &unetonv1.ChildInput{Id: childID, GrowthReference: "boy"}},
+			},
+		}},
+	})
+	if len(growthReferenceUpdate.GetCommandResults()) != 1 || growthReferenceUpdate.GetCommandResults()[0].GetStatus() != unetonv1.CommandStatus_COMMAND_STATUS_ACCEPTED || growthReferenceUpdate.GetCommandResults()[0].GetEntity().GetChild().GetGrowthReference() != "boy" {
+		t.Fatalf("growth reference update was not synchronized: %+v", growthReferenceUpdate)
+	}
+
 	inviteRequest := connect.NewRequest(&unetonv1.CreateInviteRequest{FamilyId: familyID})
 	authorize(inviteRequest, owner.GetAccessToken())
 	invite, err := client.CreateInvite(ctx, inviteRequest)
@@ -190,7 +204,7 @@ func TestFamilySyncAndInvite(t *testing.T) {
 		t.Fatalf("idempotent invite retry failed: %v", err)
 	}
 	caregiverSync := syncFamily(t, ctx, client, caregiver.GetAccessToken(), &unetonv1.SyncRequest{FamilyId: familyID})
-	if len(caregiverSync.GetEvents()) != 4 {
+	if len(caregiverSync.GetEvents()) != 5 {
 		t.Fatalf("caregiver got %d events", len(caregiverSync.GetEvents()))
 	}
 }

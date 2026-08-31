@@ -44,7 +44,7 @@ update children set
   quiet_hours_start_minutes=case when sqlc.arg(quiet_hours_start_minutes)>0 then sqlc.arg(quiet_hours_start_minutes) else quiet_hours_start_minutes end,
   quiet_hours_end_minutes=case when sqlc.arg(quiet_hours_end_minutes)>0 then sqlc.arg(quiet_hours_end_minutes) else quiet_hours_end_minutes end,
   time_zone=coalesce(nullif(sqlc.arg(time_zone), ''), time_zone),
-  growth_reference=case when sqlc.arg(growth_reference) in ('none', 'girl', 'boy') then sqlc.arg(growth_reference) else growth_reference end,
+  growth_reference=coalesce(nullif(sqlc.arg(growth_reference), ''), growth_reference),
   revision=revision+1,
   updated_at=sqlc.arg(updated_at)
 where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);

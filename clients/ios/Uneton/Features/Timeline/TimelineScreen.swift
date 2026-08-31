@@ -524,8 +524,17 @@ private struct GrowthReferenceCharts: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Growth curves")
-                .font(.title3.weight(.bold))
+            HStack(alignment: .firstTextBaseline) {
+                Label("Growth curves", systemImage: "chart.xyaxis.line")
+                    .font(.title3.weight(.bold))
+                Spacer()
+                Text("0–2 years")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+            }
+            Text("Finnish reference curves with your recorded measurements.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             GrowthReferenceChart(child: child, measurements: measurements, points: points, metric: "height")
             GrowthReferenceChart(child: child, measurements: measurements, points: points, metric: "weight")
         }
@@ -535,6 +544,12 @@ private struct GrowthReferenceCharts: View {
 }
 
 private struct GrowthReferenceChart: View {
+    private struct MeasurementPoint: Identifiable {
+        let id: UUID
+        let ageMonths: Double
+        let value: Double
+    }
+
     let child: Child
     let measurements: [GrowthMeasurement]
     let points: [GrowthReferencePoint]
@@ -544,43 +559,152 @@ private struct GrowthReferenceChart: View {
     private var title: String { isHeight ? "Height for age" : "Weight for age" }
     private var unit: String { isHeight ? "cm" : "kg" }
     private var curvePoints: [GrowthReferencePoint] { points.filter { $0.metric == metric } }
+    private var standardDeviations: [Int] { [-2, -1, 0, 1, 2] }
 
-    private var measurementPoints: [(id: UUID, ageMonths: Double, value: Double)] {
+    private var measurementPoints: [MeasurementPoint] {
         let calendar = Calendar.current
         return measurements.compactMap { measurement in
             guard let raw = isHeight ? measurement.heightMillimeters : measurement.weightGrams else { return nil }
             let months = max(0, calendar.dateComponents([.month], from: child.birthDate, to: measurement.measuredAt).month ?? 0)
-            return (measurement.id, Double(months), isHeight ? Double(raw) / 10 : Double(raw) / 1_000)
+            return MeasurementPoint(
+                id: measurement.id,
+                ageMonths: Double(months),
+                value: isHeight ? Double(raw) / 10 : Double(raw) / 1_000
+            )
         }
+        .sorted { $0.ageMonths < $1.ageMonths }
+    }
+
+    private var yDomain: ClosedRange<Double> {
+        let curveValues = curvePoints.map(displayValue)
+        let values = curveValues + measurementPoints.map(\.value)
+        guard let minimum = values.min(), let maximum = values.max() else { return 0...1 }
+        let padding = isHeight ? 2.5 : 0.75
+        let step = isHeight ? 5.0 : 1.0
+        let lower = floor((minimum - padding) / step) * step
+        let upper = ceil((maximum + padding) / step) * step
+        return lower...max(upper, lower + step)
+    }
+
+    private func points(for standardDeviation: Int) -> [GrowthReferencePoint] {
+        curvePoints
+            .filter { $0.sd == standardDeviation }
+            .sorted { $0.ageMonths < $1.ageMonths }
+    }
+
+    private func displayValue(_ point: GrowthReferencePoint) -> Double {
+        isHeight ? Double(point.value) / 10 : Double(point.value) / 1_000
+    }
+
+    private func curveColor(for standardDeviation: Int) -> Color {
+        standardDeviation == 0
+            ? Color(red: 0.88, green: 0.16, blue: 0.52)
+            : Color(red: 0.97, green: 0.35, blue: 0.66).opacity(0.72)
+    }
+
+    private func curveLabel(for standardDeviation: Int) -> String {
+        standardDeviation == 0 ? "0 SD" : "\(standardDeviation > 0 ? "+" : "")\(standardDeviation) SD"
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.headline)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(title)
+                    .font(.headline)
+                Spacer()
+                Text(unit)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.sleepIndigo)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.sleepMoonlight.opacity(0.16), in: .capsule)
+            }
             if curvePoints.isEmpty {
                 ContentUnavailableView("Reference is loading", systemImage: "arrow.triangle.2.circlepath")
                     .frame(height: 170)
             } else {
                 Chart {
-                    ForEach(curvePoints) { point in
-                        LineMark(
-                            x: .value("Age", point.ageMonths),
-                            y: .value(unit, isHeight ? Double(point.value) / 10 : Double(point.value) / 1_000)
-                        )
-                        .foregroundStyle(by: .value("SD", point.sd))
-                        .lineStyle(StrokeStyle(lineWidth: point.sd == 0 ? 2.5 : 1))
+                    ForEach(standardDeviations, id: \.self) { standardDeviation in
+                        ForEach(points(for: standardDeviation)) { point in
+                            LineMark(
+                                x: .value("Age", point.ageMonths),
+                                y: .value(unit, displayValue(point))
+                            )
+                            .foregroundStyle(by: .value("Series", curveLabel(for: standardDeviation)))
+                            .lineStyle(
+                                StrokeStyle(
+                                    lineWidth: standardDeviation == 0 ? 2.5 : 1.15,
+                                    dash: abs(standardDeviation) == 2 ? [3, 3] : []
+                                )
+                            )
+                            .interpolationMethod(.catmullRom)
+                        }
                     }
-                    ForEach(measurementPoints, id: \.id) { measurement in
+                    ForEach(measurementPoints) { measurement in
+                        LineMark(
+                            x: .value("Age", measurement.ageMonths),
+                            y: .value(unit, measurement.value)
+                        )
+                        .foregroundStyle(by: .value("Series", "Measurement"))
+                        .lineStyle(StrokeStyle(lineWidth: 1.5))
                         PointMark(x: .value("Age", measurement.ageMonths), y: .value(unit, measurement.value))
-                            .foregroundStyle(Color.primary)
-                            .symbolSize(42)
+                            .foregroundStyle(by: .value("Series", "Measurement"))
+                            .symbolSize(58)
                     }
                 }
                 .chartXAxisLabel("Age (months)")
-                .chartYAxisLabel(unit)
+                .chartYAxisLabel(isHeight ? "Height (cm)" : "Weight (kg)")
                 .chartXScale(domain: 0...24)
+                .chartYScale(domain: yDomain)
+                .chartForegroundStyleScale([
+                    curveLabel(for: -2): curveColor(for: -2),
+                    curveLabel(for: -1): curveColor(for: -1),
+                    curveLabel(for: 0): curveColor(for: 0),
+                    curveLabel(for: 1): curveColor(for: 1),
+                    curveLabel(for: 2): curveColor(for: 2),
+                    "Measurement": Color.sleepIndigo,
+                ])
+                .chartXAxis {
+                    AxisMarks(values: .stride(by: 3)) { value in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.8))
+                            .foregroundStyle(Color.sleepMoonlight.opacity(0.42))
+                        AxisTick(stroke: StrokeStyle(lineWidth: 0.8))
+                        AxisValueLabel {
+                            if let month = value.as(Int.self) {
+                                Text(month == 0 ? "Birth" : "\(month)m")
+                            }
+                        }
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading) { _ in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.8))
+                            .foregroundStyle(Color.sleepMoonlight.opacity(0.42))
+                        AxisTick(stroke: StrokeStyle(lineWidth: 0.8))
+                        AxisValueLabel()
+                    }
+                }
+                .chartPlotStyle { content in
+                    content
+                        .background(Color.sleepMoonlight.opacity(0.07))
+                        .border(Color.sleepMoonlight.opacity(0.55), width: 1)
+                }
                 .chartLegend(.hidden)
-                .frame(height: 190)
+                .frame(height: isHeight ? 245 : 205)
+
+                HStack(spacing: 10) {
+                    ForEach(standardDeviations, id: \.self) { standardDeviation in
+                        HStack(spacing: 4) {
+                            Capsule()
+                                .fill(curveColor(for: standardDeviation))
+                                .frame(width: 18, height: standardDeviation == 0 ? 3 : 1.5)
+                            Text(curveLabel(for: standardDeviation))
+                        }
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
             }
         }
     }

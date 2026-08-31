@@ -1197,7 +1197,7 @@ update children set
   quiet_hours_start_minutes=case when ?5>0 then ?5 else quiet_hours_start_minutes end,
   quiet_hours_end_minutes=case when ?6>0 then ?6 else quiet_hours_end_minutes end,
   time_zone=coalesce(nullif(?7, ''), time_zone),
-  growth_reference=case when sqlc.arg(growth_reference) in ('none', 'girl', 'boy') then ?8 else growth_reference end,
+  growth_reference=coalesce(nullif(?8, ''), growth_reference),
   revision=revision+1,
   updated_at=?9
 where id=?10 and family_id=?11
@@ -1211,7 +1211,7 @@ type UpdateChildParams struct {
 	QuietHoursStartMinutes interface{}   `json:"quiet_hours_start_minutes"`
 	QuietHoursEndMinutes   interface{}   `json:"quiet_hours_end_minutes"`
 	TimeZone               interface{}   `json:"time_zone"`
-	GrowthReference        string        `json:"growth_reference"`
+	GrowthReference        interface{}   `json:"growth_reference"`
 	UpdatedAt              string        `json:"updated_at"`
 	ID                     string        `json:"id"`
 	FamilyID               string        `json:"family_id"`

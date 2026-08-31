@@ -339,9 +339,13 @@ final class SessionStore {
         await handle(url: pendingInviteURL)
     }
 
-    func createChildFamily(childName: String, birthDate: Date) async {
+    func createChildFamily(childName: String, birthDate: Date, growthReference: String) async {
         await perform {
-            try await createInitialFamily(childName: childName, birthDate: birthDate)
+            try await createInitialFamily(
+                childName: childName,
+                birthDate: birthDate,
+                growthReference: growthReference
+            )
         }
     }
 
@@ -424,7 +428,11 @@ final class SessionStore {
         }
     }
 
-    private func createInitialFamily(childName: String, birthDate: Date) async throws {
+    private func createInitialFamily(
+        childName: String,
+        birthDate: Date,
+        growthReference: String
+    ) async throws {
         guard let accessToken else { throw SessionError.notAuthenticated }
         let familyID = try await database.read { database in
             try Family.order(by: { $0.updatedAt.desc() }).fetchOne(database)?.id
@@ -436,7 +444,12 @@ final class SessionStore {
         // Persist the client-generated identity before the network request. If the
         // response is lost, onboarding retries the same idempotent server operation.
         try await apiClient.createFamily(familyID, "Our family", accessToken)
-        _ = try await coordinator.createChild(familyID: familyID, nickname: childName, birthDate: birthDate)
+        _ = try await coordinator.createChild(
+            familyID: familyID,
+            nickname: childName,
+            birthDate: birthDate,
+            growthReference: growthReference
+        )
         await reminders.requestAuthorization()
         await setPrediction(try await synchronizeWithRefresh(familyID: familyID))
     }
