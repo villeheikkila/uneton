@@ -1,0 +1,42 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: platform/backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      UNETON_HTTP_LISTEN_ADDRESS: "0.0.0.0:8080"
+      UNETON_DATABASE_PATH: "/data/uneton.sqlite"
+      UNETON_AUTH_TOKEN_SECRET: "${UNETON_AUTH_TOKEN_SECRET:?UNETON_AUTH_TOKEN_SECRET is required}"
+      UNETON_RUNTIME_ENVIRONMENT: "production"
+      UNETON_LOG_FORMAT: "json"
+      UNETON_LOG_LEVEL: "info"
+      UNETON_RUNTIME_SHUTDOWN_TIMEOUT: "30s"
+      UNETON_AUTH_APPLE_CLIENT_ID: "${UNETON_AUTH_APPLE_CLIENT_ID:?UNETON_AUTH_APPLE_CLIENT_ID is required}"
+      UNETON_AUTH_APPLE_SERVER_NOTIFICATION_URL: "${UNETON_AUTH_APPLE_SERVER_NOTIFICATION_URL:?UNETON_AUTH_APPLE_SERVER_NOTIFICATION_URL is required}"
+      UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_ACTIVE_KEY_ID: "${UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_ACTIVE_KEY_ID:?UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_ACTIVE_KEY_ID is required}"
+      UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_KEYRING_JSON: "${UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_KEYRING_JSON:?UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_KEYRING_JSON is required}"
+      UNETON_INTEGRATION_APPLE_TEAM_ID: "${UNETON_INTEGRATION_APPLE_TEAM_ID:?UNETON_INTEGRATION_APPLE_TEAM_ID is required}"
+      UNETON_INTEGRATION_APPLE_PRIVATE_KEY_ID: "${UNETON_INTEGRATION_APPLE_PRIVATE_KEY_ID:?UNETON_INTEGRATION_APPLE_PRIVATE_KEY_ID is required}"
+      UNETON_INTEGRATION_APPLE_PRIVATE_KEY_PEM: "${UNETON_INTEGRATION_APPLE_PRIVATE_KEY_PEM:?UNETON_INTEGRATION_APPLE_PRIVATE_KEY_PEM is required}"
+    volumes:
+      - uneton-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/health/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+
+volumes:
+  uneton-data:

@@ -1,0 +1,4 @@
+dbs:
+  - path: /data/uneton.sqlite
+    replicas:
+      - url: ${LITESTREAM_REPLICA_URL}

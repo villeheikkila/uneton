@@ -1,0 +1,4 @@
+{$CADDY_PUBLIC_HOST:api.uneton.app} {
+    encode zstd gzip
+    reverse_proxy api:8080
+}
