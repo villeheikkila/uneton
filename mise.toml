@@ -102,8 +102,8 @@ description = "Lint GitHub Actions workflows"
 run = "actionlint"
 
 [tasks."lint:docker"]
-description = "Lint tracked Dockerfiles"
-run = "git ls-files -z '*Dockerfile*' | xargs -0 hadolint --config .hadolint.yaml"
+description = "Lint the backend Dockerfile"
+run = "hadolint --config platform/backend/.hadolint.yaml platform/backend/Dockerfile"
 
 [tasks."lint:shell"]
 description = "Lint tracked shell scripts"
@@ -115,7 +115,7 @@ run = "git ls-files -z '*.yaml' '*.yml' | xargs -0 yamllint --strict --config-fi
 
 [tasks."lint:sql"]
 description = "Lint handwritten SQLite migrations and queries"
-run = "sqlfluff lint --config .sqlfluff platform/backend/internal/store/migrations platform/backend/internal/store/queries"
+run = "sqlfluff lint --config platform/backend/.sqlfluff platform/backend/internal/store/migrations platform/backend/internal/store/queries"
 
 [tasks."go:fmt"]
 description = "Check hand-written Go formatting and imports"

@@ -33,11 +33,11 @@ To exercise realistic shared-family traffic, keep the development server running
 
 ## Production configuration
 
-Copy `.env.example` to the VPS secret store, use a random token secret, provide the Sign in with Apple values, mount the SQLite volume on durable storage, and terminate TLS with the included Caddy configuration. Back up the SQLite database with Litestream or a volume snapshot; WAL mode and a busy timeout are configured automatically.
+Copy `platform/backend/.env.example` to the VPS secret store, use a random token secret, provide the Sign in with Apple values, mount the SQLite volume on durable storage, and terminate TLS with the included Caddy configuration. Back up the SQLite database with Litestream or a volume snapshot; WAL mode and a busy timeout are configured automatically.
 
 Production startup fails unless Sign in with Apple, its HTTPS server-notification URL, and the refresh-token encryption keyring are complete. `UNETON_AUTH_APPLE_CLIENT_ID` is the native app bundle identifier; the team, key ID, and `.p8` values come from the Apple Developer account. Preserve literal `\n` escapes when the private key is stored on one line. The backend validates nonce-bound exchanged identity tokens, rotates encrypted refresh-token keys at startup, audits Apple credentials daily, and treats revocation as best effort before immediate local erasure.
 
-Push notifications and remote Live Activities use APNs provider credentials. The backend reuses the Apple integration key when no `UNETON_INTEGRATION_APNS_*` values are set; configure the four APNs variables in `.env.example` when using a dedicated APNs-enabled key. Device-scoped behavior and token lifecycles are documented in `docs/patterns/push-notifications.md`.
+Push notifications and remote Live Activities use APNs provider credentials. The backend reuses the Apple integration key when no `UNETON_INTEGRATION_APNS_*` values are set; configure the four APNs variables in `platform/backend/.env.example` when using a dedicated APNs-enabled key. Device-scoped behavior and token lifecycles are documented in `docs/patterns/push-notifications.md`.
 
 The main iOS target declares the Sign in with Apple entitlement. Enable Sign in with Apple for `solutions.bytesized.uneton` in the Apple Developer portal so automatic signing can create a matching provisioning profile. The Xcode targets also need the App Group, Push Notifications, and Live Activities capabilities provisioned for the bundle identifiers in `clients/ios/project.yml`.
 
