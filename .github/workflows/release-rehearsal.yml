@@ -1,0 +1,47 @@
+name: Local release rehearsal
+
+on:
+  workflow_dispatch:
+    inputs:
+      local_rehearsal:
+        description: Build into the local Docker engine; do not publish or deploy remotely
+        required: true
+        default: false
+        type: boolean
+      backend_image:
+        description: Local image reference to build for the OrbStack rehearsal
+        required: false
+        default: uneton-backend:rehearsal
+        type: string
+
+concurrency:
+  group: uneton-release-rehearsal
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+        with:
+          install: true
+      - name: Run canonical server gate
+        run: mise run ci:server:check
+
+  build-local-image:
+    needs: check
+    if: github.event_name == 'workflow_dispatch' && inputs.local_rehearsal
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      BACKEND_IMAGE: ${{ inputs.backend_image }}
+      DOCKER_DEFAULT_PLATFORM: linux/arm64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the immutable local rehearsal image
+        run: docker build --pull --platform "$DOCKER_DEFAULT_PLATFORM" -f platform/backend/Dockerfile -t "$BACKEND_IMAGE" .

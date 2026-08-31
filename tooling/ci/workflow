@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="${MISE_PROJECT_ROOT:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
+runner_image="${UNETON_ACT_RUNNER_IMAGE:-catthehacker/ubuntu:act-24.04}"
+architecture="${UNETON_ACT_ARCHITECTURE:-linux/arm64}"
+mode="${1:-}"
+
+require() {
+  command -v "$1" >/dev/null || {
+    echo "$1 is required; run mise install" >&2
+    exit 127
+  }
+}
+
+require act
+require docker
+
+require_clean_checkout() {
+  [[ -z "$(git -C "$repo_root" status --porcelain)" ]] || {
+    echo "Local release rehearsal requires a clean checkout so the image tag identifies its contents" >&2
+    exit 2
+  }
+}
+
+act_args=(
+  --bind
+  --platform "ubuntu-24.04=$runner_image"
+  --container-architecture "$architecture"
+  --env ACT=true
+)
+
+case "$mode" in
+  check)
+    act workflow_dispatch \
+      --workflows "$repo_root/.github/workflows/check.yml" \
+      --job server \
+      "${act_args[@]}"
+    ;;
+  release)
+    require_clean_checkout
+    revision="$(git -C "$repo_root" rev-parse HEAD)"
+    image="uneton-backend:rehearsal-$revision"
+    act workflow_dispatch \
+      --workflows "$repo_root/.github/workflows/release-rehearsal.yml" \
+      --input local_rehearsal=true \
+      --input backend_image="$image" \
+      "${act_args[@]}"
+
+    UNETON_ORB_BACKEND_IMAGE="$image" \
+      UNETON_ORB_USE_EXISTING_BACKEND_IMAGE=1 \
+      mise run infra:orb:rollout
+    mise run infra:orb:restore-test
+    ;;
+  *)
+    echo "usage: workflow {check|release}" >&2
+    exit 2
+    ;;
+esac

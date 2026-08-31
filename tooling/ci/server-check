@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="${MISE_PROJECT_ROOT:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
+cd "$repo_root"
+
+generated_paths=(
+  internal/gen
+  clients/ios/UnetonPackage/Sources/UnetonAPI/Generated
+)
+generated_backup="$(mktemp -d)"
+generation_in_progress=1
+tar -C "$repo_root" -cf "$generated_backup/bindings.tar" "${generated_paths[@]}"
+generated_before="$(git diff --binary HEAD -- "${generated_paths[@]}" | shasum -a 256)"
+
+restore_failed_generation() {
+  status=$?
+  trap - EXIT
+  if [[ "$status" -ne 0 && "$generation_in_progress" -eq 1 ]]; then
+    echo "Generation failed; restoring the checked-out bindings" >&2
+    rm -rf "${generated_paths[@]}"
+    tar -C "$repo_root" -xf "$generated_backup/bindings.tar"
+  fi
+  rm -rf "$generated_backup"
+  exit "$status"
+}
+trap restore_failed_generation EXIT
+
+echo "==> mise run generate"
+mise run generate
+generation_in_progress=0
+generated_after="$(git diff --binary HEAD -- "${generated_paths[@]}" | shasum -a 256)"
+if [[ "$generated_before" != "$generated_after" ]]; then
+  echo "Generation produced uncommitted bindings:" >&2
+  git diff -- "${generated_paths[@]}" >&2
+  exit 1
+fi
+echo "==> mise run backend:test"
+mise run backend:test
+echo "==> mise run loadtest:test"
+mise run loadtest:test
+echo "==> mise run infra:ansible:check"
+mise run infra:ansible:check
+echo "==> mise run lint:repo"
+mise run lint:repo
+echo "==> mise run go:fmt"
+mise run go:fmt
+echo "==> mise run go:fix:check"
+mise run go:fix:check
+echo "==> mise run go:lint"
+mise run go:lint
+echo "==> mise run go:deadcode"
+mise run go:deadcode
+echo "==> mise run go:vuln"
+mise run go:vuln
+echo "==> mise run go:tidy:check"
+mise run go:tidy:check
+echo "==> mise run go:vet"
+mise run go:vet
+
+echo "Canonical server CI gate passed"
