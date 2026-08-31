@@ -1,0 +1,11 @@
+extends: default
+
+ignore: |
+  .agents/
+  platform/infra/vps/.orb/
+
+rules:
+  document-start: disable
+  line-length: disable
+  truthy:
+    allowed-values: ["true", "false", "on", "off"]

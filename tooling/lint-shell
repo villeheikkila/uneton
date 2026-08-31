@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="${MISE_PROJECT_ROOT:-$(git -C "$(dirname "$0")" rev-parse --show-toplevel)}"
+files=()
+
+while IFS= read -r -d '' file; do
+  if [[ ! -f "$repo_root/$file" ]]; then
+    continue
+  fi
+  if [[ "$(head -n 1 "$repo_root/$file")" =~ ^#!.*(ba|z)?sh([[:space:]]|$) ]]; then
+    files+=("$file")
+  fi
+done < <(git -C "$repo_root" ls-files -z)
+
+((${#files[@]} > 0)) || {
+  echo "No tracked shell scripts found" >&2
+  exit 1
+}
+
+cd "$repo_root"
+shellcheck --external-sources --severity=warning "${files[@]}"

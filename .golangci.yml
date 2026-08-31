@@ -1,0 +1,51 @@
+version: "2"
+
+run:
+  timeout: 5m
+  relative-path-mode: gomod
+  modules-download-mode: readonly
+
+linters:
+  default: standard
+  enable:
+    - bidichk
+    - bodyclose
+    - containedctx
+    - copyloopvar
+    - durationcheck
+    - errorlint
+    - exptostd
+    - fatcontext
+    - gocheckcompilerdirectives
+    - loggercheck
+    - mirror
+    - modernize
+    - nilnesserr
+    - noctx
+    - nolintlint
+    - perfsprint
+    - predeclared
+    - reassign
+    - rowserrcheck
+    - sloglint
+    - sqlclosecheck
+    - usestdlibvars
+    - wastedassign
+
+  settings:
+    staticcheck:
+      checks:
+        - all
+        - -ST1000
+        - -ST1016
+        - -ST1020
+        - -ST1021
+        - -ST1022
+
+  exclusions:
+    generated: lax
+    rules:
+      - path: _test\.go
+        linters:
+          - noctx
+    warn-unused: true

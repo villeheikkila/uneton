@@ -1,0 +1,27 @@
+[sqlfluff]
+dialect = sqlite
+templater = raw
+max_line_length = 120
+large_file_skip_byte_limit = 0
+exclude_rules = aliasing.expression, layout.indent, layout.keyword_newline, layout.long_lines, layout.select_targets, layout.spacing, references.consistent, references.from, references.keywords, references.qualification
+
+[sqlfluff:indentation]
+tab_space_size = 2
+
+[sqlfluff:rules:capitalisation.keywords]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.identifiers]
+extended_capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.functions]
+extended_capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.literals]
+capitalisation_policy = lower
+
+[sqlfluff:rules:capitalisation.types]
+extended_capitalisation_policy = lower
+
+[sqlfluff:layout:type:comma]
+line_position = trailing

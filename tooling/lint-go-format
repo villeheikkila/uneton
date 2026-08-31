@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="${MISE_PROJECT_ROOT:-$(git -C "$(dirname "$0")" rev-parse --show-toplevel)}"
+mode="${1:-check}"
+files=()
+
+while IFS= read -r file; do
+  [[ "$file" == internal/gen/* ]] && continue
+  [[ -f "$repo_root/$file" ]] && files+=("$file")
+done < <(git -C "$repo_root" ls-files '*.go')
+
+((${#files[@]} > 0)) || {
+  echo "No hand-written Go files found" >&2
+  exit 1
+}
+
+cd "$repo_root"
+case "$mode" in
+  check)
+    unformatted="$(gofumpt -l "${files[@]}")"
+    if [[ -n "$unformatted" ]]; then
+      printf 'gofumpt needed:\n%s\n' "$unformatted" >&2
+      exit 1
+    fi
+    unformatted="$(goimports -l "${files[@]}")"
+    if [[ -n "$unformatted" ]]; then
+      printf 'goimports needed:\n%s\n' "$unformatted" >&2
+      exit 1
+    fi
+    ;;
+  fix)
+    goimports -w "${files[@]}"
+    gofumpt -w "${files[@]}"
+    ;;
+  *)
+    echo "usage: lint-go-format {check|fix}" >&2
+    exit 2
+    ;;
+esac
