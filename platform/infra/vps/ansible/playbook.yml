@@ -1,0 +1,49 @@
+- name: Provision the Uneton production rehearsal
+  hosts: orb
+  become: true
+  vars:
+    runtime_dir: /srv/uneton
+    runtime_env_file: ../.orb/runtime.env
+  tasks:
+    - name: Wait for the OrbStack guest
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+      tags: [bootstrap]
+
+    - name: Install Docker and Compose
+      ansible.builtin.apt:
+        name: [docker.io, docker-compose-v2]
+        state: present
+        update_cache: true
+      tags: [bootstrap]
+
+    - name: Enable Docker
+      ansible.builtin.service:
+        name: docker
+        enabled: true
+        state: started
+      tags: [bootstrap]
+
+    - name: Create runtime directory
+      ansible.builtin.file:
+        path: "{{ runtime_dir }}"
+        state: directory
+        mode: "0750"
+
+    - name: Copy immutable runtime definition
+      ansible.builtin.copy:
+        src: ../runtime/
+        dest: "{{ runtime_dir }}/"
+        mode: preserve
+
+    - name: Install rehearsal environment
+      ansible.builtin.copy:
+        src: "{{ runtime_env_file }}"
+        dest: "{{ runtime_dir }}/.env"
+        mode: "0600"
+
+    - name: Start production-shaped services
+      ansible.builtin.command:
+        cmd: docker compose up -d --remove-orphans
+        chdir: "{{ runtime_dir }}"
+      changed_when: true
