@@ -57,35 +57,56 @@ struct TimelineScreen: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                SleepBackground()
-
-                Group {
-                    switch mode {
-                    case .timeline:
-                        SleepTimeline(
-                            child: child,
-                            sessions: sessions,
-                            forecast: session.forecast?.childID == child.id ? session.forecast : nil,
-                            navigationNamespace: navigationNamespace,
-                            onSelectSession: { editingSession = $0 }
-                        )
-                    case .trends:
-                        TrendsView(sessions: sessions)
-                    case .growth:
-                        GrowthCard(
-                            family: family,
-                            child: child,
-                            measurements: growthMeasurements,
-                            referencePoints: allGrowthReferencePoints,
-                            onAdd: { isPresentingGrowthEntry = true },
-                            onSelect: { editingGrowthMeasurement = $0 }
-                        )
-                    }
+            TabView(selection: $mode) {
+                ZStack {
+                    SleepBackground()
+                    SleepTimeline(
+                        child: child,
+                        sessions: sessions,
+                        forecast: session.forecast?.childID == child.id ? session.forecast : nil,
+                        navigationNamespace: navigationNamespace,
+                        onSelectSession: { editingSession = $0 }
+                    )
                 }
-                .id(mode)
-                .transition(.blurReplace)
+                .tag(Mode.timeline)
+                .tabItem {
+                    Label(Mode.timeline.rawValue, systemImage: Mode.timeline.systemImage)
+                }
+
+                ZStack {
+                    SleepBackground()
+                    GrowthCard(
+                        family: family,
+                        child: child,
+                        measurements: growthMeasurements,
+                        referencePoints: allGrowthReferencePoints,
+                        onAdd: { isPresentingGrowthEntry = true },
+                        onSelect: { editingGrowthMeasurement = $0 }
+                    )
+                }
+                .tag(Mode.growth)
+                .tabItem {
+                    Label(Mode.growth.rawValue, systemImage: Mode.growth.systemImage)
+                }
+
+                ZStack {
+                    SleepBackground()
+                    TrendsView(sessions: sessions)
+                }
+                .tag(Mode.trends)
+                .tabItem {
+                    Label(Mode.trends.rawValue, systemImage: Mode.trends.systemImage)
+                }
             }
+            .tabViewBottomAccessory(isEnabled: mode == .timeline) {
+                HStack {
+                    Spacer(minLength: 44)
+                    bottomControl
+                    Spacer(minLength: 44)
+                }
+                .padding(.vertical, 8)
+            }
+            .tint(Color.sleepIndigo)
             .navigationTitle(child.nickname)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -95,28 +116,14 @@ struct TimelineScreen: View {
                     }
                 }
 
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    if !conflicts.isEmpty {
+                if !conflicts.isEmpty {
+                    ToolbarItem(placement: .topBarTrailing) {
                         Button("Sync conflicts", systemImage: "exclamationmark.triangle.fill") {
                             isPresentingConflicts = true
                         }
                         .tint(.orange)
                     }
-
-                    Button(nextModeLabel, systemImage: nextMode.systemImage) {
-                        withAnimation(.snappy) { mode = nextMode }
-                    }
-                    .contentTransition(.symbolEffect(.replace))
-                    .accessibilityValue("\(mode.rawValue) selected")
                 }
-            }
-            .safeAreaInset(edge: .bottom) {
-                HStack {
-                    Spacer(minLength: 44)
-                    bottomControl
-                    Spacer(minLength: 44)
-                }
-                .padding(.vertical, 8)
             }
             .sheet(isPresented: $isPresentingEntry) {
                 SleepEntrySheet(family: family, child: child)
@@ -152,22 +159,6 @@ struct TimelineScreen: View {
             .refreshable {
                 await session.synchronize(familyID: family.id)
             }
-        }
-    }
-
-    private var nextMode: Mode {
-        switch mode {
-        case .timeline: .trends
-        case .trends: .growth
-        case .growth: .timeline
-        }
-    }
-
-    private var nextModeLabel: String {
-        switch nextMode {
-        case .timeline: "Show sleep"
-        case .trends: "Show insights"
-        case .growth: "Show growth"
         }
     }
 

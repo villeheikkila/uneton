@@ -2,8 +2,8 @@ name: Uneton
 options:
   bundleIdPrefix: solutions.bytesized
   deploymentTarget:
-    iOS: "26.0"
-    watchOS: "26.0"
+    iOS: "26.1"
+    watchOS: "26.1"
   xcodeVersion: "26.0"
   createIntermediateGroups: true
 packages:
