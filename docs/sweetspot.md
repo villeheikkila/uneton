@@ -21,17 +21,19 @@ Primary sources:
 - [Infant signaling and self-soothing review](https://pmc.ncbi.nlm.nih.gov/articles/PMC10104392/)
 - [Physiological modelling of infant sleep regulation](https://pmc.ncbi.nlm.nih.gov/articles/PMC11527290/)
 
-## Algorithm version 2
+## Algorithm version 3
 
 For each completed sleep, the system considers the interval from its recorded end to the next recorded start. It rejects overlaps, gaps under five minutes, and gaps too long to distinguish from missing logging. It then:
 
 1. Classifies the wake by local clock phase: nighttime resettling, morning, daytime, or bedtime.
 2. Uses only earlier observations from the same phase, preventing nighttime feeds from distorting daytime nap estimates.
 3. Weights observations by recency (28-day half-life), circular clock-time similarity, and preceding sleep duration.
-4. Uses a weighted median as the target and weighted quartiles as the uncertainty range, with a minimum range width to avoid false precision.
-5. Falls back to a broad age-based estimate only when fewer than three comparable personal observations exist.
+4. Requires comparable observations on at least five separate local days before personal history can move the estimate. Multiple naps from one day do not count as repeated evidence.
+5. Uses a weighted median as the personal target and weighted quartiles as the uncertainty range, with a minimum range width to avoid false precision.
+6. Blends the personal distribution with an age-appropriate prior as repeated days accumulate, retaining at least 25% of the prior. Daytime predictions are constrained to that age range; overnight resettling remains separate because a recorded night gap is often an incomplete observation.
+7. Falls back to a broad age-based estimate until five comparable days are available.
 
-The 120-day history cap and recency weighting let the model follow rapid developmental change. Predictions are computed on demand from the server's current authoritative projection, so retries, offline commands, and reconnects do not create separate model state or conflict semantics.
+The 120-day history cap and recency weighting let the model follow rapid developmental change. Predictions are computed on demand from the server's current authoritative projection, so retries, offline commands, and reconnects do not create separate model state or conflict semantics. The version is returned with every estimate so evaluation can compare revisions without mixing their results.
 
 ## Optional context
 

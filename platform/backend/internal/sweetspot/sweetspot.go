@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const AlgorithmVersion = 2
+const AlgorithmVersion = 3
 
 type Session struct {
 	StartedAt           time.Time
@@ -68,7 +68,7 @@ func PredictWake(active Session, now time.Time, location *time.Location, history
 		clockWeight := clockDistance / 180
 		weight := math.Exp(-math.Ln2*ageDays/28) * math.Exp(-0.5*clockWeight*clockWeight)
 		if weight >= 0.025 {
-			values = append(values, weightedValue{value: duration, weight: weight})
+			values = append(values, weightedValue{value: duration, weight: weight, observedAt: session.StartedAt})
 		}
 	}
 	if len(values) < 3 {
@@ -129,7 +129,8 @@ func Predict(request Request) (Estimate, bool) {
 	observations := transitions(history, request.WokeAt, location)
 	kind := phase(request.WokeAt.In(location))
 	weighted := selectSamples(observations, request.WokeAt, request.Current, kind, location)
-	if len(weighted) < 3 {
+	days := distinctObservationDays(weighted, location)
+	if days < 5 {
 		return fallback(request, kind)
 	}
 
@@ -146,16 +147,25 @@ func Predict(request Request) (Estimate, bool) {
 		highMinutes += padding
 	}
 	lowMinutes = math.Max(10, lowMinutes)
+	if kind != "resettle" {
+		if prior, ok := agePrior(request.WokeAt, request.BirthDate, kind); ok {
+			personalWeight := math.Min(float64(days)/14, 0.75)
+			targetMinutes = blend(prior.target(), targetMinutes, personalWeight)
+			lowMinutes = blend(prior.low, lowMinutes, personalWeight)
+			highMinutes = blend(prior.high, highMinutes, personalWeight)
+			lowMinutes, targetMinutes, highMinutes = constrainInterval(lowMinutes, targetMinutes, highMinutes, prior.low, prior.high, minimumWidth)
+		}
+	}
 
 	confidence := "low"
-	if len(weighted) >= 18 && highMinutes-lowMinutes <= 75 {
+	if days >= 12 && len(weighted) >= 18 && highMinutes-lowMinutes <= 75 {
 		confidence = "high"
-	} else if len(weighted) >= 7 {
+	} else if days >= 7 {
 		confidence = "medium"
 	}
-	explanation := fmt.Sprintf("Based on %d similar wake periods from this child's recent history.", len(weighted))
+	explanation := fmt.Sprintf("Based on %d similar wake periods across %d days, blended with age-appropriate guidance.", len(weighted), days)
 	if kind == "resettle" {
-		explanation = fmt.Sprintf("Based on %d prior nighttime wakings; nighttime estimates are less certain because quiet wakings may not be recorded.", len(weighted))
+		explanation = fmt.Sprintf("Based on %d prior nighttime wakings across %d days; nighttime estimates are less certain because quiet wakings may not be recorded.", len(weighted), days)
 	}
 	return Estimate{
 		Target:      request.WokeAt.Add(minutes(targetMinutes)),
@@ -168,7 +178,10 @@ func Predict(request Request) (Estimate, bool) {
 	}, true
 }
 
-type weightedValue struct{ value, weight float64 }
+type weightedValue struct {
+	value, weight float64
+	observedAt    time.Time
+}
 
 func selectSamples(values []observation, wokeAt time.Time, current *Session, kind string, location *time.Location) []weightedValue {
 	result := make([]weightedValue, 0, len(values))
@@ -192,7 +205,7 @@ func selectSamples(values []observation, wokeAt time.Time, current *Session, kin
 			weight *= contextWeight(*current, value.context, values)
 		}
 		if weight >= 0.025 {
-			result = append(result, weightedValue{value: value.minutes, weight: weight})
+			result = append(result, weightedValue{value: value.minutes, weight: weight, observedAt: value.wokeAt})
 		}
 	}
 	return result
@@ -300,29 +313,39 @@ func phase(local time.Time) string {
 }
 
 func fallback(request Request, kind string) (Estimate, bool) {
-	ageMonths := (request.WokeAt.Year()-request.BirthDate.Year())*12 + int(request.WokeAt.Month()-request.BirthDate.Month())
-	var low, high float64
-	switch {
-	case ageMonths >= 2 && ageMonths <= 3:
-		low, high = 60, 120
-	case ageMonths <= 5:
-		low, high = 90, 150
-	case ageMonths <= 8:
-		low, high = 120, 210
-	case ageMonths <= 12:
-		low, high = 150, 240
-	case ageMonths <= 18:
-		low, high = 240, 330
-	case ageMonths <= 24:
-		low, high = 300, 360
-	default:
+	prior, ok := agePrior(request.WokeAt, request.BirthDate, kind)
+	if !ok {
 		return Estimate{}, false
 	}
+	target := prior.target()
+	return Estimate{Target: request.WokeAt.Add(minutes(target)), RangeStart: request.WokeAt.Add(minutes(prior.low)), RangeEnd: request.WokeAt.Add(minutes(prior.high)), Confidence: "low", Explanation: "A cautious starting estimate; repeated personal history across at least five days is needed.", Kind: kind}, true
+}
+
+type intervalPrior struct{ low, high float64 }
+
+func (value intervalPrior) target() float64 { return (value.low + value.high) / 2 }
+
+func agePrior(wokeAt, birthDate time.Time, kind string) (intervalPrior, bool) {
 	if kind == "resettle" {
-		low, high = 15, 120
+		return intervalPrior{low: 15, high: 120}, true
 	}
-	target := (low + high) / 2
-	return Estimate{Target: request.WokeAt.Add(minutes(target)), RangeStart: request.WokeAt.Add(minutes(low)), RangeEnd: request.WokeAt.Add(minutes(high)), Confidence: "low", Explanation: "A cautious starting estimate; more personal sleep history is needed.", Kind: kind}, true
+	ageMonths := (wokeAt.Year()-birthDate.Year())*12 + int(wokeAt.Month()-birthDate.Month())
+	switch {
+	case ageMonths >= 2 && ageMonths <= 3:
+		return intervalPrior{low: 60, high: 120}, true
+	case ageMonths <= 5:
+		return intervalPrior{low: 90, high: 150}, true
+	case ageMonths <= 8:
+		return intervalPrior{low: 120, high: 210}, true
+	case ageMonths <= 12:
+		return intervalPrior{low: 150, high: 240}, true
+	case ageMonths <= 18:
+		return intervalPrior{low: 240, high: 330}, true
+	case ageMonths <= 24:
+		return intervalPrior{low: 300, high: 360}, true
+	default:
+		return intervalPrior{}, false
+	}
 }
 
 func sleepKind(local time.Time) string {
@@ -366,6 +389,44 @@ func weightedQuantile(values []weightedValue, quantile float64) float64 {
 		}
 	}
 	return ordered[len(ordered)-1].value
+}
+
+func distinctObservationDays(values []weightedValue, location *time.Location) int {
+	days := make(map[string]struct{}, len(values))
+	for _, value := range values {
+		if value.observedAt.IsZero() {
+			continue
+		}
+		days[value.observedAt.In(location).Format(time.DateOnly)] = struct{}{}
+	}
+	return len(days)
+}
+
+func blend(prior, personal, personalWeight float64) float64 {
+	return prior*(1-personalWeight) + personal*personalWeight
+}
+
+func constrainInterval(low, target, high, minimum, maximum, minimumWidth float64) (float64, float64, float64) {
+	target = clamp(target, minimum, maximum)
+	low = clamp(low, minimum, target)
+	high = clamp(high, target, maximum)
+	if high-low >= minimumWidth {
+		return low, target, high
+	}
+	low = math.Max(minimum, target-minimumWidth/2)
+	high = math.Min(maximum, target+minimumWidth/2)
+	if high-low < minimumWidth {
+		if low == minimum {
+			high = math.Min(maximum, low+minimumWidth)
+		} else {
+			low = math.Max(minimum, high-minimumWidth)
+		}
+	}
+	return low, target, high
+}
+
+func clamp(value, minimum, maximum float64) float64 {
+	return math.Min(math.Max(value, minimum), maximum)
 }
 
 func circularMinutes(a, b time.Time) float64 {

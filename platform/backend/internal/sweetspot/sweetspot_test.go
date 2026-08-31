@@ -50,6 +50,59 @@ func TestPredictDoesNotUseFutureSessions(t *testing.T) {
 	}
 }
 
+func TestPredictNeedsFiveDistinctDaysBeforePersonalizing(t *testing.T) {
+	location := time.FixedZone("EEST", 3*60*60)
+	birth := time.Date(2026, 3, 1, 0, 0, 0, 0, location)
+	base := time.Date(2026, 7, 1, 7, 0, 0, 0, location)
+	var history []Session
+	for day := range 4 {
+		start := base.AddDate(0, 0, day)
+		history = append(history,
+			Session{StartedAt: start, EndedAt: start.Add(time.Hour)},
+			Session{StartedAt: start.Add(6 * time.Hour), EndedAt: start.Add(7 * time.Hour)},
+		)
+	}
+	wokeAt := base.AddDate(0, 0, 4).Add(time.Hour)
+	estimate, ok := Predict(Request{WokeAt: wokeAt, BirthDate: birth, Location: location, History: history})
+	if !ok {
+		t.Fatal("expected age-prior fallback")
+	}
+	if got, want := estimate.Target.Sub(wokeAt), 120*time.Minute; got != want {
+		t.Fatalf("target = %v, want cautious age prior %v", got, want)
+	}
+	if estimate.SampleCount != 0 {
+		t.Fatalf("fallback sample count = %d, want 0", estimate.SampleCount)
+	}
+}
+
+func TestPredictBlendsRepeatedHistoryWithAgeGuardrail(t *testing.T) {
+	location := time.FixedZone("EEST", 3*60*60)
+	birth := time.Date(2026, 1, 1, 0, 0, 0, 0, location)
+	base := time.Date(2026, 7, 1, 7, 0, 0, 0, location)
+	var history []Session
+	for day := range 5 {
+		start := base.AddDate(0, 0, day)
+		history = append(history,
+			Session{StartedAt: start, EndedAt: start.Add(time.Hour)},
+			Session{StartedAt: start.Add(4 * time.Hour), EndedAt: start.Add(5 * time.Hour)},
+		)
+	}
+	wokeAt := base.AddDate(0, 0, 5).Add(time.Hour)
+	estimate, ok := Predict(Request{WokeAt: wokeAt, BirthDate: birth, Location: location, History: history})
+	if !ok {
+		t.Fatal("expected personalized estimate")
+	}
+	if got, want := estimate.Target.Sub(wokeAt), 170*time.Minute; got != want {
+		t.Fatalf("target = %v, want blended estimate %v", got, want)
+	}
+	if estimate.RangeStart.Before(wokeAt.Add(120*time.Minute)) || estimate.RangeEnd.After(wokeAt.Add(210*time.Minute)) {
+		t.Fatalf("range = %v..%v, want six-month age guardrail", estimate.RangeStart, estimate.RangeEnd)
+	}
+	if got, want := estimate.SampleCount, 5; got != want {
+		t.Fatalf("sample count = %d, want %d", got, want)
+	}
+}
+
 func TestManualPredictionIsExact(t *testing.T) {
 	wokeAt := time.Date(2026, 8, 23, 7, 15, 0, 0, time.UTC)
 	interval := 105
