@@ -1,0 +1,219 @@
+[tools]
+go = "1.27.0"
+buf = "1.72.0"
+sqlc = "1.31.1"
+xcodegen = "2.46.0"
+act = "0.2.89"
+actionlint = "1.7.12"
+shellcheck = "0.11.0"
+hadolint = "latest"
+yamllint = "1.38.0"
+"pipx:ansible-core" = "2.21.3"
+"pipx:sqlfluff" = "4.3.0"
+"go:google.golang.org/protobuf/cmd/protoc-gen-go" = "1.36.12"
+"go:connectrpc.com/connect/cmd/protoc-gen-connect-go" = "1.20.0"
+"go:github.com/golangci/golangci-lint/v2/cmd/golangci-lint" = "2.13.2"
+"go:golang.org/x/tools/cmd/goimports" = "latest"
+"go:golang.org/x/tools/cmd/deadcode" = "0.49.1-0.20260825211923-d40fc7dde60f"
+"go:golang.org/x/vuln/cmd/govulncheck" = "latest"
+"go:mvdan.cc/gofumpt" = "latest"
+
+[tasks.dev]
+description = "Run the API locally with development sign-in"
+run = "go run ./platform/backend/cmd/server"
+
+[tasks.dev.env]
+UNETON_HTTP_LISTEN_ADDRESS = "127.0.0.1:8080"
+UNETON_DATABASE_PATH = "./platform/backend/var/uneton.sqlite"
+UNETON_AUTH_TOKEN_SECRET = "local-only-change-me-local-only-change-me"
+UNETON_RUNTIME_ENVIRONMENT = "development"
+UNETON_LOG_FORMAT = "pretty"
+UNETON_LOG_LEVEL = "debug"
+UNETON_RUNTIME_SHUTDOWN_TIMEOUT = "10s"
+
+[tasks.test]
+description = "Run backend, load-test client, and shared Swift tests"
+depends = ["backend:test", "loadtest:test", "ios:test"]
+
+[tasks."backend:test"]
+env.GOCACHE = "/tmp/uneton-go-cache"
+run = "env -u GOROOT go test ./platform/backend/..."
+
+[tasks."loadtest:test"]
+env.GOCACHE = "/tmp/uneton-go-cache"
+run = "env -u GOROOT go test ./clients/loadtest/..."
+
+[tasks."ios:test"]
+env.CLANG_MODULE_CACHE_PATH = "/tmp/uneton-clang-cache"
+env.SWIFTPM_MODULECACHE_OVERRIDE = "/tmp/uneton-clang-cache"
+run = "swift test --package-path clients/ios/UnetonPackage"
+
+[tasks.generate]
+description = "Regenerate sqlc and ConnectRPC sources"
+depends = ["backend:generate", "contracts:generate"]
+
+[tasks."backend:generate"]
+description = "Generate and vet SQLite queries"
+dir = "platform/backend"
+run = ["sqlc generate", "sqlc vet"]
+
+[tasks."contracts:generate"]
+description = "Lint the protobuf contract and generate Go and Swift Connect bindings"
+dir = "platform/contracts"
+run = ["buf lint", "buf generate"]
+
+[tasks.project]
+description = "Regenerate the iOS Xcode project"
+dir = "clients/ios"
+run = "xcodegen generate --spec project.yml"
+
+[tasks.loadtest]
+description = "Run realistic two-caregiver scenarios against a development API"
+run = "go run ./clients/loadtest"
+
+[tasks."infra:loadtest:prepare"]
+description = "Create and provision a 2-vCPU/4-GB/40-GB OrbStack load-test VM"
+run = "platform/infra/vps/operations/load-test.sh prepare"
+
+[tasks."loadtest:vm"]
+description = "Provision the constrained VM and ramp the behavioral API workload"
+run = "platform/infra/vps/operations/load-test.sh all"
+
+[tasks."loadtest:vm:run"]
+description = "Repeat the ramp against the already-provisioned constrained VM"
+run = "platform/infra/vps/operations/load-test.sh run"
+
+[tasks."ci:server:check"]
+description = "Run the canonical Linux server CI gate"
+run = "./tooling/ci/server-check"
+
+[tasks."lint:repo"]
+description = "Lint repository configuration, Dockerfiles, scripts, YAML, and SQL"
+depends = ["lint:actions", "lint:docker", "lint:shell", "lint:yaml", "lint:sql"]
+run = "true"
+
+[tasks."lint:actions"]
+description = "Lint GitHub Actions workflows"
+run = "actionlint"
+
+[tasks."lint:docker"]
+description = "Lint tracked Dockerfiles"
+run = "git ls-files -z '*Dockerfile*' | xargs -0 hadolint --config .hadolint.yaml"
+
+[tasks."lint:shell"]
+description = "Lint tracked shell scripts"
+run = "./tooling/lint-shell"
+
+[tasks."lint:yaml"]
+description = "Lint tracked YAML configuration"
+run = "git ls-files -z '*.yaml' '*.yml' | xargs -0 yamllint --strict --config-file .yamllint.yaml"
+
+[tasks."lint:sql"]
+description = "Lint handwritten SQLite migrations and queries"
+run = "sqlfluff lint --config .sqlfluff platform/backend/internal/store/migrations platform/backend/internal/store/queries"
+
+[tasks."go:fmt"]
+description = "Check hand-written Go formatting and imports"
+run = "./tooling/lint-go-format check"
+
+[tasks."go:fmt:fix"]
+description = "Apply hand-written Go formatting and import ordering"
+run = "./tooling/lint-go-format fix"
+
+[tasks."go:fix"]
+description = "Apply standard-library Go source modernization"
+run = "go fix ./..."
+
+[tasks."go:fix:check"]
+description = "Ensure go fix would not rewrite checked-in Go source"
+run = '''
+before="$(git diff --binary HEAD -- '*.go' | shasum -a 256)"
+go fix ./...
+after="$(git diff --binary HEAD -- '*.go' | shasum -a 256)"
+if [ "$before" != "$after" ]; then
+  git diff -- '*.go'
+  exit 1
+fi
+'''
+
+[tasks."go:lint"]
+description = "Run strict Go static analysis"
+env = { GOLANGCI_LINT_CACHE = "/tmp/uneton-golangci-cache", GOCACHE = "/tmp/uneton-go-cache", XDG_CACHE_HOME = "/tmp/uneton-xdg" }
+run = ["golangci-lint config verify", "golangci-lint run ./..."]
+
+[tasks."go:deadcode"]
+description = "Fail when production Go contains unreachable functions"
+env = { GOCACHE = "/tmp/uneton-go-cache", XDG_CACHE_HOME = "/tmp/uneton-xdg" }
+run = '''
+findings=$(deadcode -test ./...)
+if [ -n "$findings" ]; then
+  printf '%s\n' "$findings" >&2
+  exit 1
+fi
+'''
+
+[tasks."go:vuln"]
+description = "Check Go dependencies for known vulnerabilities"
+env = { GOCACHE = "/tmp/uneton-go-cache", XDG_CACHE_HOME = "/tmp/uneton-xdg" }
+run = "govulncheck ./..."
+
+[tasks."go:tidy:check"]
+description = "Ensure Go module files are tidy"
+run = '''
+before="$(git diff --binary HEAD -- go.mod go.sum | shasum -a 256)"
+go mod tidy
+after="$(git diff --binary HEAD -- go.mod go.sum | shasum -a 256)"
+if [ "$before" != "$after" ]; then
+  git diff -- go.mod go.sum
+  exit 1
+fi
+'''
+
+[tasks."go:vet"]
+description = "Run the standard Go vet analyzer suite"
+env.GOCACHE = "/tmp/uneton-go-cache"
+run = "go vet ./..."
+
+[tasks."ci:workflow:check"]
+description = "Run the Linux GitHub check job locally with act"
+run = "./tooling/ci/workflow check"
+
+[tasks."ci:workflow:release"]
+description = "Run the local release workflow with act and deploy its exact image to OrbStack"
+run = "./tooling/ci/workflow release"
+
+[tasks."docker:up"]
+description = "Run the production-shaped backend locally"
+run = "docker compose -f tooling/local-dev/compose.yaml up --build"
+
+[tasks."docker:down"]
+run = "docker compose -f tooling/local-dev/compose.yaml down"
+
+[tasks."infra:orb:create"]
+description = "Create the disposable OrbStack production-rehearsal VM"
+run = "platform/infra/vps/operations/orb-machine.sh create"
+
+[tasks."infra:orb:provision"]
+description = "Provision the OrbStack VM and deploy the production Compose stack"
+run = "platform/infra/vps/operations/orb-machine.sh provision"
+
+[tasks."infra:orb:verify"]
+description = "Verify API health, persistence, and Litestream backup in OrbStack"
+run = "platform/infra/vps/operations/orb-machine.sh verify"
+
+[tasks."infra:orb:restore-test"]
+description = "Destructively rehearse SQLite restore inside the disposable OrbStack VM"
+run = "platform/infra/vps/operations/orb-machine.sh restore-test"
+
+[tasks."infra:orb:rehearse"]
+description = "Create, provision, and verify the production-shaped OrbStack VM"
+run = "platform/infra/vps/operations/orb-machine.sh rehearse"
+
+[tasks."infra:orb:rollout"]
+description = "Deploy an already-built backend image to the disposable OrbStack VM"
+run = "platform/infra/vps/operations/orb-machine.sh rollout"
+
+[tasks."infra:ansible:check"]
+description = "Validate the production rehearsal playbook without contacting a VM"
+dir = "platform/infra/vps/ansible"
+run = "ansible-playbook --syntax-check -i inventory.orb.ini playbook.yml"

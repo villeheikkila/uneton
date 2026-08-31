@@ -1,0 +1,350 @@
+syntax = "proto3";
+
+package uneton.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "solutions.bytesized/uneton/internal/gen/uneton/v1;unetonv1";
+
+service UnetonService {
+  rpc DevelopmentAuth(DevelopmentAuthRequest) returns (DevelopmentAuthResponse);
+  rpc AppleAuth(AppleAuthRequest) returns (AppleAuthResponse);
+  rpc RefreshAuth(RefreshAuthRequest) returns (RefreshAuthResponse);
+  rpc SignOut(SignOutRequest) returns (SignOutResponse);
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+  rpc UpdateDevicePushSettings(UpdateDevicePushSettingsRequest) returns (UpdateDevicePushSettingsResponse);
+  rpc RegisterLiveActivity(RegisterLiveActivityRequest) returns (RegisterLiveActivityResponse);
+  rpc CreateFamily(CreateFamilyRequest) returns (CreateFamilyResponse);
+  rpc CreateInvite(CreateInviteRequest) returns (CreateInviteResponse);
+  rpc AcceptInvite(AcceptInviteRequest) returns (AcceptInviteResponse);
+  rpc Sync(SyncRequest) returns (SyncResponse);
+  rpc WatchFamily(WatchFamilyRequest) returns (stream WatchFamilyResponse);
+}
+
+message DevelopmentAuthRequest {
+  string name = 1;
+  string device_id = 2;
+}
+
+message AppleAuthRequest {
+  string authorization_code = 1;
+  reserved 2;
+  reserved "identity_token";
+  string display_name = 3;
+  string device_id = 4;
+  string nonce = 5;
+}
+
+message RefreshAuthRequest {
+  string device_id = 1;
+  string refresh_token = 2;
+}
+
+message SignOutRequest {
+  reserved 1;
+  reserved "device_id";
+}
+
+message SignOutResponse {}
+
+message DeleteAccountRequest {}
+
+message DeleteAccountResponse {}
+
+message DevicePushSettings {
+  bool notifications_enabled = 1;
+  bool live_activities_enabled = 2;
+  int32 reminder_lead_minutes = 3;
+}
+
+message UpdateDevicePushSettingsRequest {
+  optional string apns_token = 1;
+  optional string push_to_start_token = 2;
+  string apns_environment = 3;
+  optional bool notifications_enabled = 4;
+  optional bool live_activities_enabled = 5;
+  optional int32 reminder_lead_minutes = 6;
+}
+
+message UpdateDevicePushSettingsResponse {
+  DevicePushSettings settings = 1;
+}
+
+message RegisterLiveActivityRequest {
+  string session_id = 1;
+  string push_token = 2;
+  string apns_environment = 3;
+}
+
+message RegisterLiveActivityResponse {}
+
+message AuthenticationResponse {
+  string user_id = 1;
+  string device_id = 2;
+  string access_token = 3;
+  string refresh_token = 4;
+  repeated FamilyMembership families = 5;
+}
+
+message FamilyMembership {
+  string id = 1;
+  string name = 2;
+  string role = 3;
+}
+
+message DevelopmentAuthResponse {
+  AuthenticationResponse authentication = 1;
+}
+
+message AppleAuthResponse {
+  AuthenticationResponse authentication = 1;
+}
+
+message RefreshAuthResponse {
+  AuthenticationResponse authentication = 1;
+}
+
+message CreateFamilyRequest {
+  string id = 1;
+  string name = 2;
+}
+
+message CreateFamilyResponse {
+  string id = 1;
+  string name = 2;
+  string role = 3;
+}
+
+message CreateInviteRequest {
+  string family_id = 1;
+}
+
+message CreateInviteResponse {
+  string token = 1;
+  google.protobuf.Timestamp expires_at = 2;
+}
+
+message AcceptInviteRequest {
+  string token = 1;
+}
+
+message AcceptInviteResponse {
+  string family_id = 1;
+  string role = 2;
+}
+
+message SyncRequest {
+  string family_id = 1;
+  int64 cursor = 2;
+  reserved 3;
+  reserved "device_id";
+  repeated Command commands = 4;
+  int32 limit = 5;
+  string generation = 6;
+}
+
+message Command {
+  string id = 1;
+  optional int64 expected_revision = 2;
+  oneof payload {
+    CreateChild create_child = 10;
+    UpdateChild update_child = 11;
+    StartSleep start_sleep = 12;
+    EndSleep end_sleep = 13;
+    UpsertSleep upsert_sleep = 14;
+    DeleteSleep delete_sleep = 15;
+  }
+}
+
+message CreateChild {
+  ChildInput child = 1;
+}
+
+message UpdateChild {
+  ChildInput child = 1;
+}
+
+message ChildInput {
+  string id = 1;
+  string nickname = 2;
+  string birth_date = 3;
+  string prediction_mode = 4;
+  optional int32 manual_interval_minutes = 5;
+  int32 quiet_hours_start_minutes = 6;
+  int32 quiet_hours_end_minutes = 7;
+  string time_zone = 8;
+}
+
+message StartSleep {
+  SleepInput sleep = 1;
+}
+
+message EndSleep {
+  string id = 1;
+  google.protobuf.Timestamp ended_at = 2;
+  string end_condition = 3;
+  string wake_mood = 4;
+  string wake_reason = 5;
+  optional bool caregiver_intervened = 6;
+}
+
+message UpsertSleep {
+  SleepInput sleep = 1;
+}
+
+message DeleteSleep {
+  string id = 1;
+}
+
+message SleepInput {
+  string id = 1;
+  string child_id = 2;
+  google.protobuf.Timestamp started_at = 3;
+  optional google.protobuf.Timestamp ended_at = 4;
+  string source = 5;
+  string start_condition = 6;
+  string sleep_location = 7;
+  string end_condition = 8;
+  string wake_mood = 9;
+  string wake_reason = 10;
+  optional bool caregiver_intervened = 11;
+}
+
+enum CommandStatus {
+  COMMAND_STATUS_UNSPECIFIED = 0;
+  COMMAND_STATUS_ACCEPTED = 1;
+  COMMAND_STATUS_REJECTED = 2;
+}
+
+message CommandResult {
+  string id = 1;
+  CommandStatus status = 2;
+  string error = 3;
+  string entity_id = 4;
+  Entity entity = 5;
+}
+
+enum EntityType {
+  ENTITY_TYPE_UNSPECIFIED = 0;
+  ENTITY_TYPE_CHILD = 1;
+  ENTITY_TYPE_SLEEP_SESSION = 2;
+}
+
+enum EventOperation {
+  EVENT_OPERATION_UNSPECIFIED = 0;
+  EVENT_OPERATION_UPSERT = 1;
+  EVENT_OPERATION_DELETE = 2;
+}
+
+message Entity {
+  oneof value {
+    Child child = 1;
+    SleepSession sleep_session = 2;
+    DeletedEntity deleted = 3;
+  }
+}
+
+message DeletedEntity {
+  string id = 1;
+}
+
+message Child {
+  string id = 1;
+  string family_id = 2;
+  string nickname = 3;
+  string birth_date = 4;
+  string prediction_mode = 5;
+  optional int32 manual_interval_minutes = 6;
+  int32 quiet_hours_start_minutes = 7;
+  int32 quiet_hours_end_minutes = 8;
+  int64 revision = 9;
+  google.protobuf.Timestamp updated_at = 10;
+  string time_zone = 11;
+}
+
+message SleepSession {
+  string id = 1;
+  string family_id = 2;
+  string child_id = 3;
+  google.protobuf.Timestamp started_at = 4;
+  optional google.protobuf.Timestamp ended_at = 5;
+  int64 revision = 6;
+  string author_id = 7;
+  string source = 8;
+  optional string superseded_by_id = 9;
+  google.protobuf.Timestamp updated_at = 10;
+  optional google.protobuf.Timestamp deleted_at = 11;
+  string start_condition = 12;
+  string sleep_location = 13;
+  string end_condition = 14;
+  string wake_mood = 15;
+  string wake_reason = 16;
+  optional bool caregiver_intervened = 17;
+}
+
+message SyncEvent {
+  int64 cursor = 1;
+  EntityType entity_type = 2;
+  string entity_id = 3;
+  EventOperation operation = 4;
+  int64 revision = 5;
+  Entity entity = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+message SnapshotEntity {
+  EntityType entity_type = 1;
+  string entity_id = 2;
+  int64 revision = 3;
+  Entity entity = 4;
+}
+
+message FamilySnapshot {
+  int64 cursor = 1;
+  repeated SnapshotEntity entities = 2;
+  google.protobuf.Timestamp created_at = 3;
+}
+
+message SleepPrediction {
+  google.protobuf.Timestamp target_at = 1;
+  google.protobuf.Timestamp range_start_at = 2;
+  google.protobuf.Timestamp range_end_at = 3;
+  string confidence = 4;
+  string explanation = 5;
+  int32 algorithm_version = 6;
+  string kind = 7;
+  int32 sample_count = 8;
+}
+
+message SleepForecast {
+  string child_id = 1;
+  optional string active_sleep_id = 2;
+  optional SleepPrediction wake_estimate = 3;
+  optional SleepPrediction next_sleep_estimate = 4;
+  bool next_sleep_is_provisional = 5;
+}
+
+message SyncResponse {
+  repeated CommandResult command_results = 1;
+  repeated SyncEvent events = 2;
+  int64 next_cursor = 3;
+  bool has_more = 4;
+  optional SleepPrediction next_sleep_estimate = 5;
+  google.protobuf.Timestamp server_time = 6;
+  optional SleepForecast sleep_forecast = 7;
+  string generation = 8;
+  optional FamilySnapshot snapshot = 9;
+  bool reset_required = 10;
+}
+
+message WatchFamilyRequest {
+  string family_id = 1;
+  int64 after_cursor = 2;
+  string generation = 3;
+}
+
+message WatchFamilyResponse {
+  int64 cursor = 1;
+  string generation = 2;
+  bool reset_required = 3;
+}
