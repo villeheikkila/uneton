@@ -7,7 +7,7 @@ Uneton is an iOS/watchOS family sleep tracker. The Apple client is offline-first
 - `clients/ios/Uneton/` — single-screen SwiftUI iPhone app and app-level integrations.
 - `clients/ios/UnetonWatch/` — paired Watch controls for starting and ending sleep.
 - `clients/ios/UnetonWidgets/` — Live Activity, Lock Screen, and Dynamic Island UI.
-- `clients/ios/UnetonPackage/Sources/UnetonCore/` — local schema, projection, sync coordinator, API adapter, and prediction engine.
+- `clients/ios/UnetonPackage/Sources/UnetonCore/` — local schema, projection, sync coordinator, and API adapter.
 - `clients/ios/UnetonPackage/Sources/UnetonAPI/` — generated Protobuf and Connect Swift SDK.
 - `clients/loadtest/` — Go client that simulates realistic two-caregiver flows against a running API.
 - `platform/backend/` — Go ConnectRPC service, authentication, sync command processing, invitations, and authoritative SQLite database.
@@ -81,6 +81,10 @@ After changing the `.proto` contract or SQL queries, run `mise run generate` and
 - `mise run docker:up` — run the production-shaped backend locally.
 
 The debug client uses `http://localhost:8080`; local server data is stored at `platform/backend/var/uneton.sqlite`. Prefer tests around `SyncCoordinator`, projection behavior, command idempotency, stale revisions, pagination, and retry paths whenever sync behavior changes. Keep the load-test scenarios behaviorally aligned with the Apple client's command sequence.
+
+## Git conventions
+
+Use Conventional Commit messages for every commit. Use an imperative type-and-scope subject such as `feat(sync): preserve pending commands`, `fix(sweetspot): separate night resettling`, or `docs: clarify forecast ownership`.
 
 ## Platform boundaries
 

@@ -189,7 +189,7 @@ Removing a device or account cascades its notification and Live Activity tokens.
 
 ## Prediction and derived UI
 
-Sweet-spot inference is stateless and recomputed from acknowledged server history and child settings. It never rewrites diary records and has no independent synchronization domain. The local estimate is useful offline; the server forecast returned by sync is canonical after acknowledgement. Predictions are estimates, not medical advice.
+Sweet-spot inference is stateless and recomputed only by the backend from acknowledged server history and child settings. It never rewrites diary records and has no independent synchronization domain. The client does not implement an offline prediction model: it displays a forecast only when received from `Sync`, while its diary projection and pending commands remain fully usable offline. Predictions are estimates, not medical advice.
 
 Widgets and Live Activities display derived state. They must not originate authoritative mutations or advance sync cursors.
 

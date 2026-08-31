@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"solutions.bytesized/uneton/platform/backend/internal/historyimport"
-	"solutions.bytesized/uneton/platform/backend/internal/prediction"
 	"solutions.bytesized/uneton/platform/backend/internal/sweetspot"
 )
 
@@ -58,7 +57,6 @@ func main() {
 	sort.Slice(sessions, func(i, j int) bool { return sessions[i].StartedAt.Before(sessions[j].StartedAt) })
 	byKind := map[string]*metrics{}
 	all := &metrics{}
-	legacy := &metrics{}
 	for index := 1; index < len(sessions); index++ {
 		actual := sessions[index].StartedAt
 		wokeAt := sessions[index-1].EndedAt
@@ -71,20 +69,12 @@ func main() {
 			continue
 		}
 		add(all, estimate, actual)
-		var intervals []time.Duration
-		for prior := 1; prior < index; prior++ {
-			intervals = append(intervals, sessions[prior].StartedAt.Sub(sessions[prior-1].EndedAt))
-		}
-		if old, exists := prediction.Calculate(wokeAt, birth, intervals, nil); exists {
-			add(legacy, sweetspot.Estimate{Target: old.Target, RangeStart: old.RangeStart, RangeEnd: old.RangeEnd}, actual)
-		}
 		if byKind[estimate.Kind] == nil {
 			byKind[estimate.Kind] = &metrics{}
 		}
 		add(byKind[estimate.Kind], estimate, actual)
 	}
 	printMetrics("sweetspot", all)
-	printMetrics("legacy", legacy)
 	for _, kind := range []string{"resettle", "morning", "daytime", "bedtime"} {
 		printMetrics(kind, byKind[kind])
 	}
