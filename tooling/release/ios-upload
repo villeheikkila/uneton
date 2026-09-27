@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ "$#" -lt 1 || "$#" -gt 2 ]]; then
+  echo "usage: ios-upload IPA_PATH [--publish]" >&2
+  exit 2
+fi
+
+ipa="$1"
+mode="${2:---dry-run}"
+case "$mode" in
+  --dry-run|--publish) ;;
+  *) echo "usage: ios-upload IPA_PATH [--publish]" >&2; exit 2 ;;
+esac
+
+[[ -f "$ipa" ]] || { echo "IPA not found: $ipa" >&2; exit 2; }
+[[ -n "${ASC_APP_ID:-}" ]] || { echo "Set ASC_APP_ID to the App Store Connect app ID" >&2; exit 2; }
+
+command -v asc >/dev/null
+args=(publish appstore --app "$ASC_APP_ID" --ipa "$ipa" --platform IOS --wait)
+if [[ "$mode" == --dry-run ]]; then
+  args+=(--dry-run --output table)
+fi
+
+asc "${args[@]}"

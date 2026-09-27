@@ -198,6 +198,18 @@ run = "docker compose -f tooling/local-dev/compose.yaml up --build"
 [tasks."docker:down"]
 run = "docker compose -f tooling/local-dev/compose.yaml down"
 
+[tasks."release:ghcr"]
+description = "Build the commit-tagged ARM64 backend image locally; pass --publish to push to GHCR"
+run = "tooling/release/ghcr"
+
+[tasks."release:ios:build"]
+description = "Archive and export a signed App Store IPA locally; pass VERSION BUILD_NUMBER"
+run = "tooling/release/ios-build"
+
+[tasks."release:ios:upload"]
+description = "Preview an App Store Connect upload; pass IPA_PATH --publish to upload and stage"
+run = "tooling/release/ios-upload"
+
 [tasks."infra:orb:create"]
 description = "Create the disposable OrbStack production-rehearsal VM"
 run = "platform/infra/vps/operations/orb-machine.sh create"

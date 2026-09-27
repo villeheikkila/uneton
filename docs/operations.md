@@ -6,6 +6,31 @@ Run `mise run infra:orb:rehearse` to create an Ubuntu OrbStack VM, build and loa
 
 `mise run ci:workflow:release` is the stronger release rehearsal. It requires a clean checkout, then runs the actual manual GitHub Actions workflow locally through `act`, producing a commit-addressed ARM64 Docker image. It then makes OrbStack load and deploy that exact image (`infra:orb:rollout`), verifies readiness and backup replication, and performs the disposable restore rehearsal. This path has no registry push or production deployment capability. The ordinary `infra:orb:rehearse` task intentionally remains convenient for development and builds `uneton-backend:orb` from the checkout.
 
+## Local publishing
+
+Run the relevant checks and rehearsal on the Mac before publishing. The publication tasks require a clean checkout so the commit SHA identifies the source. They do not depend on a remote CI job.
+
+For GHCR, authenticate Docker locally with a token allowed to write packages, then build the ARM64 image and inspect it before pushing:
+
+```sh
+mise run release:ghcr
+mise run release:ghcr -- --publish
+```
+
+The image is `ghcr.io/villeheikkila/uneton-backend:<full commit SHA>`. The publish command prints the registry manifest and digest. Use the digest for a later server rollout; publishing alone does not deploy it.
+
+For App Store Connect, configure local Xcode distribution signing for the iPhone, Watch, and widget targets, and configure `asc` authentication (`asc auth login` or `ASC_*` credentials). The Xcode project derives all three targets' bundle versions from `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`; the local build command overrides both for one archive without editing tracked files. Choose a build number that has not been uploaded for that app version:
+
+```sh
+mise run release:ios:build -- 1.0 2
+export ASC_APP_ID=1234567890 # replace with the numeric App Store Connect app ID
+ipa=".asc/artifacts/Uneton-1.0-2-$(git rev-parse HEAD).ipa"
+mise run release:ios:upload -- "$ipa"
+mise run release:ios:upload -- "$ipa" --publish
+```
+
+The first upload command previews the `asc publish appstore` plan. The second uploads the same IPA, waits for processing, creates or finds the App Store version, and attaches the build. It does not submit the version for App Review. Run `asc validate --app "$ASC_APP_ID" --version 1.0 --platform IOS` before a separate review submission. The signed IPA and archive are kept locally under ignored `.asc/artifacts/`.
+
 Production changes should follow the same sequence: validate typed config with `uneton config`, verify the database with `uneton database-check`, deploy, wait for readiness, and confirm backup freshness. Never copy a live WAL database without SQLite/Litestream coordination.
 
 ## Constrained VM capacity test

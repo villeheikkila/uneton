@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ "$#" -ne 2 || ! "$1" =~ ^[0-9]+(\.[0-9]+){1,2}$ || ! "$2" =~ ^[0-9]+$ ]]; then
+  echo "usage: ios-build VERSION BUILD_NUMBER" >&2
+  exit 2
+fi
+
+version="$1"
+build_number="$2"
+repo_root="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
+
+[[ -z "$(git -C "$repo_root" status --porcelain)" ]] || {
+  echo "Commit or remove local changes before building a release artifact" >&2
+  exit 2
+}
+
+revision="$(git -C "$repo_root" rev-parse HEAD)"
+artifact_base="$repo_root/.asc/artifacts/Uneton-$version-$build_number-$revision"
+archive="$artifact_base.xcarchive"
+ipa="$artifact_base.ipa"
+
+command -v asc >/dev/null
+mkdir -p "$repo_root/.asc/artifacts"
+
+asc xcode archive \
+  --workspace "$repo_root/clients/ios/UnetonWorkspace.xcworkspace" \
+  --scheme Uneton \
+  --configuration Release \
+  --archive-path "$archive" \
+  --xcodebuild-flag=-destination \
+  --xcodebuild-flag=generic/platform=iOS \
+  --xcodebuild-flag=-allowProvisioningUpdates \
+  --xcodebuild-flag="MARKETING_VERSION=$version" \
+  --xcodebuild-flag="CURRENT_PROJECT_VERSION=$build_number" \
+  --output json
+
+asc xcode export \
+  --archive-path "$archive" \
+  --ipa-path "$ipa" \
+  --xcodebuild-flag=-allowProvisioningUpdates \
+  --output json
+
+echo "App Store IPA: $ipa"
