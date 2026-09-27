@@ -19,6 +19,8 @@ mise run release:ghcr -- --publish
 
 The image is `ghcr.io/villeheikkila/uneton-backend:<full commit SHA>`. The publish command prints the registry manifest and digest. Use the digest for a later server rollout; publishing alone does not deploy it.
 
+The backend Dockerfile pins its Go and Alpine base images by digest. Refresh those digests deliberately during local release maintenance, rebuild with `docker build --pull -f platform/backend/Dockerfile -t uneton-backend:check .`, and run the container readiness check before publishing. `.dockerignore` sends only Go module files, generated RPC code, and backend sources to the builder; private journals, local databases, and age-encrypted configuration stay outside the build context. The runtime uses UID/GID 10001, and Compose mounts only `/data` and a small `/tmp` as writable paths.
+
 For App Store Connect, configure local Xcode distribution signing for the iPhone, Watch, and widget targets, and configure `asc` authentication (`asc auth login` or `ASC_*` credentials). The Xcode project derives all three targets' bundle versions from `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`; the local build command overrides both for one archive without editing tracked files. Choose a build number that has not been uploaded for that app version:
 
 ```sh

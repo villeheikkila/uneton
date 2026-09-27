@@ -56,6 +56,12 @@ prepare_machine_files() {
     rm "$runtime_env_file.bak"
     generate_rehearsal_secrets "$runtime_env_file"
   fi
+  if ! grep -q '^UNETON_LEGAL_OPERATOR_NAME=' "$runtime_env_file"; then
+    printf '%s\n' 'UNETON_LEGAL_OPERATOR_NAME=Uneton Orb rehearsal' >> "$runtime_env_file"
+  fi
+  if ! grep -q '^UNETON_LEGAL_CONTACT_EMAIL=' "$runtime_env_file"; then
+    printf '%s\n' 'UNETON_LEGAL_CONTACT_EMAIL=support@example.invalid' >> "$runtime_env_file"
+  fi
   sed -i.bak "s|^COMPOSE_BACKEND_IMAGE=.*|COMPOSE_BACKEND_IMAGE=${backend_image}|" "$runtime_env_file"
   rm "$runtime_env_file.bak"
   if [[ "${UNETON_ORB_ENABLE_DEVELOPMENT_AUTH:-0}" == "1" ]]; then
