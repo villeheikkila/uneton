@@ -57,7 +57,7 @@ services:
       uneton-data-init:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/health/ready"]
+      test: ["CMD", "uneton", "healthcheck"]
       interval: 5s
       timeout: 3s
       start_period: 5s

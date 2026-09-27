@@ -1,6 +1,6 @@
 # Backend entry point
 
-`cmd/server/main.go` must stay testable and nearly free of policy. `run` parses the command (`serve`, `config`, or `database-check`), loads the strict `UNETON_*` environment snapshot, and returns an error instead of exiting deep in the call graph.
+`cmd/server/main.go` must stay testable and nearly free of policy. `run` parses the command (`serve`, `config`, `database-check`, or `healthcheck`), loads the strict `UNETON_*` environment snapshot for server and maintenance commands, and returns an error instead of exiting deep in the call graph. `healthcheck` probes the local readiness endpoint without loading secrets so the distroless container needs no shell or external probe utility.
 
 Configuration rejects unknown project-prefixed variables. Secret values use the redacting wrapper and must never appear in config output or structured logs. Production enables Sign in with Apple and its HTTPS server-notification URL; provider endpoint overrides are development-only.
 
