@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "primaryCategory": "HEALTH_AND_FITNESS",
+  "contentRights": "USES_THIRD_PARTY_CONTENT",
+  "copyrightYear": 2026,
+  "pricing": "FREE",
+  "availability": {
+    "territories": ["FIN"],
+    "availableInNewTerritories": false
+  },
+  "reviewContact": {
+    "firstNameSecret": "ASC_REVIEW_FIRST_NAME",
+    "lastNameSecret": "ASC_REVIEW_LAST_NAME",
+    "emailSecret": "ASC_REVIEW_EMAIL",
+    "phoneSecret": "ASC_REVIEW_PHONE"
+  },
+  "reviewAccess": {
+    "status": "PENDING_DEMO_ACCESS",
+    "mode": "PENDING",
+    "notes": "Uneton requires Sign in with Apple. Prepare an active reviewer demo account or a fully featured demo mode before submitting for App Review."
+  }
+}

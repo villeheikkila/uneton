@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "dataUsages": [
+    {"category": "CONTACTS", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]},
+    {"category": "DEVICE_ID", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]},
+    {"category": "HEALTH", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]},
+    {"category": "NAME", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]},
+    {"category": "OTHER_DIAGNOSTIC_DATA", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]},
+    {"category": "OTHER_USAGE_DATA", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]},
+    {"category": "OTHER_USER_CONTENT", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]},
+    {"category": "USER_ID", "purposes": ["APP_FUNCTIONALITY"], "dataProtections": ["DATA_LINKED_TO_YOU"]}
+  ]
+}

@@ -39,6 +39,12 @@ struct OnboardingView: View {
                 .frame(height: 52)
                 .disabled(session.isWorking)
 
+                HStack(spacing: 20) {
+                    Link("Privacy Policy", destination: LegalLinks.privacy)
+                    Link("Terms of Service", destination: LegalLinks.terms)
+                }
+                .font(.footnote)
+
                 #if DEBUG
                 TextField("Local caregiver", text: $caregiverName)
                     .textFieldStyle(.roundedBorder)

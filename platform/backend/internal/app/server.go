@@ -35,6 +35,8 @@ type Config struct {
 	StreamLifetime         time.Duration
 	SnapshotEventThreshold int
 	DeliveryRetention      time.Duration
+	LegalOperator          string
+	LegalContactEmail      string
 }
 
 type Server struct {
@@ -52,6 +54,8 @@ type Server struct {
 	streamLifetime         time.Duration
 	snapshotEventThreshold int
 	deliveryRetention      time.Duration
+	legalOperator          string
+	legalContactEmail      string
 	readiness              atomic.Bool
 }
 
@@ -79,6 +83,7 @@ func NewServer(config Config) *Server {
 		logger: config.Logger, now: config.Now, broker: newBroker(), mux: http.NewServeMux(),
 		streamHeartbeat: config.StreamHeartbeat, streamLifetime: config.StreamLifetime,
 		snapshotEventThreshold: config.SnapshotEventThreshold, deliveryRetention: config.DeliveryRetention,
+		legalOperator: config.LegalOperator, legalContactEmail: config.LegalContactEmail,
 	}
 	tokenKeys, err := newAppleTokenKeyring(config.Apple.TokenKeyring, config.Apple.TokenActiveKeyID, config.TokenSecret)
 	if err != nil {
@@ -127,6 +132,9 @@ func (s *Server) RewrapAppleTokens(ctx context.Context) error {
 }
 
 func (s *Server) routes() {
+	s.mux.HandleFunc("GET /privacy", s.legalPage("privacy"))
+	s.mux.HandleFunc("GET /terms", s.legalPage("terms"))
+	s.mux.HandleFunc("GET /support", s.legalPage("support"))
 	s.mux.HandleFunc("GET /health/live", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})

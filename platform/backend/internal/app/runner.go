@@ -53,11 +53,13 @@ func (r *Runner) Run(ctx context.Context, cfg config.Config) error {
 		return fmt.Errorf("validate Apple integration: %w", err)
 	}
 	handler := NewServer(Config{
-		Store:       database,
-		TokenSecret: []byte(cfg.TokenSecret.Reveal()),
-		Development: cfg.Environment == config.Development,
-		Logger:      r.logger,
-		Apple:       appleConfig,
+		Store:             database,
+		TokenSecret:       []byte(cfg.TokenSecret.Reveal()),
+		Development:       cfg.Environment == config.Development,
+		Logger:            r.logger,
+		LegalOperator:     cfg.LegalOperator,
+		LegalContactEmail: cfg.LegalEmail,
+		Apple:             appleConfig,
 		APNS: APNSConfig{
 			TeamID: cfg.APNS.TeamID, KeyID: cfg.APNS.KeyID,
 			PrivateKey: cfg.APNS.PrivateKey.Reveal(), Topic: cfg.APNS.Topic,

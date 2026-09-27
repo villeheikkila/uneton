@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ "$#" -lt 2 || "$#" -gt 3 ]]; then
+  echo "usage: ios-testflight BUILD_ID GROUP_ID [--publish]" >&2
+  exit 2
+fi
+
+build_id="$1"
+group_id="$2"
+mode="${3:---preview}"
+case "$mode" in
+  --preview|--publish) ;;
+  *) echo "usage: ios-testflight BUILD_ID GROUP_ID [--publish]" >&2; exit 2 ;;
+esac
+
+[[ -n "${ASC_APP_ID:-}" ]] || { echo "Set ASC_APP_ID to the Uneton App Store Connect app ID" >&2; exit 2; }
+repo_root="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
+locale="${UNETON_TESTFLIGHT_LOCALE:-en-US}"
+case "$locale" in
+  en-US|fi) ;;
+  *) echo "UNETON_TESTFLIGHT_LOCALE must be en-US or fi" >&2; exit 2 ;;
+esac
+notes="$(cat "$repo_root/clients/ios/asc/testflight/$locale.txt")"
+
+actual_bundle="$(asc apps view --id "$ASC_APP_ID" --output json | jq -er '.data.attributes.bundleId')"
+[[ "$actual_bundle" == solutions.bytesized.uneton ]] || {
+  echo "App $ASC_APP_ID has bundle ID $actual_bundle; expected solutions.bytesized.uneton" >&2
+  exit 2
+}
+
+asc builds info --build-id "$build_id" --output table
+asc testflight groups view --id "$group_id" --output table
+
+if [[ "$mode" == --preview ]]; then
+  echo "Would distribute build $build_id to TestFlight group $group_id with these What to Test notes:"
+  printf '%s\n' "$notes"
+  exit 0
+fi
+
+asc publish testflight --app "$ASC_APP_ID" --build-id "$build_id" --group "$group_id" \
+  --test-notes "$notes" --locale "$locale" --wait --output table

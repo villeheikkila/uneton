@@ -1,0 +1,5 @@
+{
+  "description": "Pidä lapsen unipäiväkirjaa yhdessä toisen hoitajan kanssa. Aloita ja päätä uni iPhonella tai Apple Watchilla, tarkastele aikajanaa ja pidä molempien hoitajien tiedot ajan tasalla.\n\nUneton toimii myös ilman verkkoyhteyttä ja lähettää muutokset, kun yhteys palautuu. Voit käyttää itse valitsemaasi muistutusväliä tai nähdä päiväkirjaan perustuvan arvion seuraavasta unesta. Kirjaa paino ja pituus yksinkertaista kasvukäyrää varten.\n\nUniarviot ja kasvukäyrät ovat tiedoksi tarkoitettuja apuvälineitä, eivät lääketieteellisiä neuvoja.",
+  "keywords": "vauvan uni,unipäiväkirja,päiväunet,uniseuranta,perhe,hoitaja,muistutus,kasvukäyrä",
+  "supportUrl": "https://api.uneton.app/support?lang=fi"
+}

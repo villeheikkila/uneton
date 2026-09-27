@@ -1,4 +1,5 @@
 [tools]
+fnox = "1.34.0"
 go = "1.27.0"
 buf = "1.72.0"
 sqlc = "1.31.1"
@@ -21,6 +22,10 @@ yamllint = "1.38.0"
 [tasks.dev]
 description = "Run the API locally with development sign-in"
 run = "go run ./platform/backend/cmd/server"
+
+[tasks."dev:legal"]
+description = "Run the local API with age-encrypted legal contact values"
+run = "fnox exec -- mise run dev"
 
 [tasks.dev.env]
 UNETON_HTTP_LISTEN_ADDRESS = "127.0.0.1:8080"
@@ -98,8 +103,12 @@ run = "./tooling/ci/server-check"
 
 [tasks."lint:repo"]
 description = "Lint repository configuration, Dockerfiles, scripts, YAML, and SQL"
-depends = ["lint:actions", "lint:docker", "lint:shell", "lint:yaml", "lint:sql"]
+depends = ["lint:actions", "lint:docker", "lint:shell", "lint:yaml", "lint:sql", "privacy:check"]
 run = "true"
+
+[tasks."privacy:check"]
+description = "Check the SQLite data inventory against App Store privacy declarations and the app manifest"
+run = "python3 tooling/privacy/check.py"
 
 [tasks."lint:actions"]
 description = "Lint GitHub Actions workflows"
@@ -209,6 +218,18 @@ run = "tooling/release/ios-build"
 [tasks."release:ios:upload"]
 description = "Preview an App Store Connect upload; pass IPA_PATH --publish to upload and stage"
 run = "tooling/release/ios-upload"
+
+[tasks."release:ios:testflight"]
+description = "Preview TestFlight distribution of a processed build; pass BUILD_ID GROUP_ID --publish to distribute"
+run = "tooling/release/ios-testflight"
+
+[tasks."release:ios:review"]
+description = "Check App Store readiness and preview or submit a processed iOS build for review"
+run = "tooling/release/ios-review"
+
+[tasks."store"]
+description = "Validate, plan, approve, apply, and inspect App Store Connect declarations locally"
+run = "tooling/release/store"
 
 [tasks."infra:orb:create"]
 description = "Create the disposable OrbStack production-rehearsal VM"

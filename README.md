@@ -22,6 +22,7 @@ GitHub Actions and local CI share the canonical Linux gate: `mise run ci:server:
 Run `mise run ci:workflow:release` from a clean checkout before a release candidate. It invokes the manual release-rehearsal workflow through `act`, builds a commit-addressed Linux/ARM64 backend image into the local Docker engine, deploys that exact image to the disposable OrbStack VM, verifies it, and rehearses a Litestream restore. It never publishes an image or contacts a production server.
 
 Publishing is driven from the local Mac; see [local release commands](docs/operations.md#local-publishing). No remote release workflow is required.
+Git-owned App Store listing and questionnaire state, the privacy inventory, age-encrypted contact configuration, and local TestFlight steps are described in [clients/ios/asc/README.md](clients/ios/asc/README.md).
 
 Backtest the server sweet-spot model against an explicitly supplied, local CSV export without future-data leakage:
 

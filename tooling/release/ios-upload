@@ -18,6 +18,11 @@ esac
 [[ -n "${ASC_APP_ID:-}" ]] || { echo "Set ASC_APP_ID to the App Store Connect app ID" >&2; exit 2; }
 
 command -v asc >/dev/null
+actual_bundle="$(asc apps view --id "$ASC_APP_ID" --output json | jq -er '.data.attributes.bundleId')"
+[[ "$actual_bundle" == solutions.bytesized.uneton ]] || {
+  echo "App $ASC_APP_ID has bundle ID $actual_bundle; expected solutions.bytesized.uneton" >&2
+  exit 2
+}
 args=(publish appstore --app "$ASC_APP_ID" --ipa "$ipa" --platform IOS --wait)
 if [[ "$mode" == --dry-run ]]; then
   args+=(--dry-run --output table)

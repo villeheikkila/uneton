@@ -17,6 +17,8 @@ func TestFromEnvRejectsUnknownProjectVariable(t *testing.T) {
 func TestProductionRequiresNotificationAndTokenKeyring(t *testing.T) {
 	values := developmentEnvironment()
 	values["UNETON_RUNTIME_ENVIRONMENT"] = "production"
+	values["UNETON_LEGAL_OPERATOR_NAME"] = "Example Operator"
+	values["UNETON_LEGAL_CONTACT_EMAIL"] = "privacy@example.invalid"
 	values["UNETON_AUTH_APPLE_CLIENT_ID"] = "solutions.bytesized.uneton"
 	values["UNETON_INTEGRATION_APPLE_TEAM_ID"] = "team"
 	values["UNETON_INTEGRATION_APPLE_PRIVATE_KEY_ID"] = "key"
@@ -32,6 +34,14 @@ func TestProductionRequiresNotificationAndTokenKeyring(t *testing.T) {
 	values["UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_KEYRING_JSON"] = `{"current":"MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE="}`
 	if _, err := FromEnv(values); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestProductionRequiresLegalContact(t *testing.T) {
+	values := developmentEnvironment()
+	values["UNETON_RUNTIME_ENVIRONMENT"] = "production"
+	if _, err := FromEnv(values); err == nil || !strings.Contains(err.Error(), "UNETON_LEGAL_OPERATOR_NAME") {
+		t.Fatalf("error = %v", err)
 	}
 }
 

@@ -27,6 +27,7 @@ coverage.out
 /clients/ios/UnetonPackage/.swiftpm/
 /clients/ios/.swiftpm/
 /.asc/artifacts/
+/.asc/metadata/
 
 # Xcode user-specific and derived data
 /DerivedData/

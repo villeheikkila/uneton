@@ -1,0 +1,1 @@
+Testaa unen aloitus ja lopetus iPhonella ja Apple Watchilla, muokkaus ilman verkkoyhteyttä ja synkronointi yhteyden palauduttua, kahden hoitajan yhteinen päiväkirja, live-toiminnot sekä kasvukäyrä. Kerro mahdollisista vanhentuneista tai ristiriitaisista tiedoista ja vaiheista, joilla ongelma toistuu.

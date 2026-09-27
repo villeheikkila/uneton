@@ -62,6 +62,8 @@ Sweet-spot inference is deliberately stateless: it is recomputed from acknowledg
 
 ## API and persistence conventions
 
+Read `docs/privacy-data-retention.md` before changing stored user-linked data, retention, account deletion, notifications, telemetry, or external processing. Update the machine-readable inventory, App Store privacy and age-rating declarations, privacy manifest, and backend-owned public policy and terms when behavior changes. Run `mise run privacy:check`; a schema change must fail that check until its data implications are reviewed. Do not claim an export, deletion guarantee, consent choice, or retention period that the code does not enforce.
+
 Use Protobuf messages for the wire contract and generated Connect clients/handlers for transport. Do not add parallel handwritten JSON endpoints or edit generated files directly.
 
 Put static backend SQL in `platform/backend/internal/store/queries/` and access it through generated sqlc methods. Handwritten SQL is reserved for migrations, SQLite pragmas, and genuinely dynamic transaction/savepoint statements.

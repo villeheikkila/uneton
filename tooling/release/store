@@ -1,0 +1,204 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+action="${1:-validate}"
+version="${UNETON_STORE_VERSION:-1.0}"
+repo_root="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
+metadata="$repo_root/clients/ios/asc/metadata"
+privacy="$repo_root/clients/ios/asc/privacy.json"
+age_rating="$repo_root/clients/ios/asc/age-rating.json"
+readiness="$repo_root/clients/ios/asc/readiness.json"
+review_dir="$repo_root/.asc/metadata/review/$version"
+
+validate_local() {
+  python3 "$repo_root/tooling/privacy/check.py"
+  asc metadata validate --dir "$metadata" --output table
+  jq -e '
+    .schemaVersion == 1
+    and (.answers | keys == [
+      "advertising", "ageAssurance", "ageRatingOverride", "ageRatingOverrideV2",
+      "alcoholTobaccoOrDrugUseOrReferences", "contests", "gambling", "gamblingSimulated",
+      "gunsOrOtherWeapons", "healthOrWellnessTopics", "horrorOrFearThemes", "koreaAgeRatingOverride",
+      "lootBox", "matureOrSuggestiveThemes", "medicalOrTreatmentInformation", "messagingAndChat",
+      "parentalControls", "profanityOrCrudeHumor", "sexualContentGraphicAndNudity",
+      "sexualContentOrNudity", "socialMedia", "socialMediaAgeRestricted", "unrestrictedWebAccess",
+      "userGeneratedContent", "violenceCartoonOrFantasy", "violenceRealistic",
+      "violenceRealisticProlongedGraphicOrSadistic"
+    ])
+    and .answers.healthOrWellnessTopics == true
+    and .answers.userGeneratedContent == true
+    and all(.answers | to_entries[]; if .key == "healthOrWellnessTopics" or .key == "userGeneratedContent"
+        then .value == true else .value == false or .value == "NONE" end)
+  ' "$age_rating" >/dev/null
+  jq -e '
+    .schemaVersion == 1
+    and .primaryCategory == "HEALTH_AND_FITNESS"
+    and .contentRights == "USES_THIRD_PARTY_CONTENT"
+    and .copyrightYear == 2026
+    and .pricing == "FREE"
+    and (.availability.territories | type == "array" and length > 0 and all(test("^[A-Z]{3}$")))
+    and (.availability.territories | unique | length) == (.availability.territories | length)
+    and .availability.availableInNewTerritories == false
+    and .reviewContact.firstNameSecret == "ASC_REVIEW_FIRST_NAME"
+    and .reviewContact.lastNameSecret == "ASC_REVIEW_LAST_NAME"
+    and .reviewContact.emailSecret == "ASC_REVIEW_EMAIL"
+    and .reviewContact.phoneSecret == "ASC_REVIEW_PHONE"
+    and (.reviewAccess.status == "PENDING_DEMO_ACCESS" or .reviewAccess.status == "READY")
+    and (if .reviewAccess.status == "READY" then
+      (.reviewAccess.mode == "DEMO_MODE" or .reviewAccess.mode == "DEMO_ACCOUNT")
+      else .reviewAccess.mode == "PENDING" end)
+    and (.reviewAccess.notes | type == "string" and length > 0)
+  ' "$readiness" >/dev/null
+}
+
+require_clean_checkout() {
+  [[ -z "$(git -C "$repo_root" status --porcelain)" ]] || {
+    echo "App Store Connect changes require a clean, reviewed checkout" >&2
+    exit 2
+  }
+}
+
+require_app() {
+  [[ -n "${ASC_APP_ID:-}" ]] || { echo "Set ASC_APP_ID to the Uneton App Store Connect app ID" >&2; exit 2; }
+  local actual
+  actual="$(asc apps view --id "$ASC_APP_ID" --output json | jq -er '.data.attributes.bundleId')"
+  [[ "$actual" == solutions.bytesized.uneton ]] || {
+    echo "App $ASC_APP_ID has bundle ID $actual; expected solutions.bytesized.uneton" >&2
+    exit 2
+  }
+}
+
+show_age_rating_diff() {
+  local current
+  current="$(asc age-rating view --app "$ASC_APP_ID" --output json)"
+  jq -n --argjson current "$current" --slurpfile desired "$age_rating" '
+    ($current.data.attributes // {}) as $before
+    | $desired[0].answers | to_entries
+    | map(select($before[.key] != .value) | {field: .key, current: $before[.key], desired: .value})
+  '
+}
+
+apply_readiness() {
+  local version_id review_id review_mode
+  review_mode="$(jq -er '.reviewAccess.mode' "$readiness")"
+  [[ "$(jq -r '.reviewAccess.status' "$readiness")" == READY ]] || {
+    echo "Prepare reviewer demo access and mark readiness.json READY before applying readiness" >&2
+    exit 2
+  }
+  local demo_args=(--demo-account-required=false)
+  if [[ "$review_mode" == DEMO_ACCOUNT ]]; then
+    [[ -n "${ASC_REVIEW_DEMO_NAME:-}" && -n "${ASC_REVIEW_DEMO_PASSWORD:-}" ]] || {
+      echo "Set ASC_REVIEW_DEMO_NAME and ASC_REVIEW_DEMO_PASSWORD locally" >&2
+      exit 2
+    }
+    demo_args=(--demo-account-required=true --demo-account-name "$ASC_REVIEW_DEMO_NAME" \
+      --demo-account-password "$ASC_REVIEW_DEMO_PASSWORD")
+  fi
+  local operator review_first review_last review_email review_phone
+  operator="$(fnox -c "$repo_root/fnox.toml" --no-daemon get UNETON_LEGAL_OPERATOR_NAME)"
+  review_first="$(fnox -c "$repo_root/fnox.toml" --no-daemon get ASC_REVIEW_FIRST_NAME)"
+  review_last="$(fnox -c "$repo_root/fnox.toml" --no-daemon get ASC_REVIEW_LAST_NAME)"
+  review_email="$(fnox -c "$repo_root/fnox.toml" --no-daemon get ASC_REVIEW_EMAIL)"
+  review_phone="$(fnox -c "$repo_root/fnox.toml" --no-daemon get ASC_REVIEW_PHONE)"
+  version_id="$(asc versions list --app "$ASC_APP_ID" --version "$version" --platform IOS --output json | jq -er '(.items // .data) | first.id')"
+  asc app-setup categories set --app "$ASC_APP_ID" --primary "$(jq -r '.primaryCategory' "$readiness")" --output table
+  asc apps content-rights edit --app "$ASC_APP_ID" --uses-third-party-content=true --output table
+  asc versions update --version-id "$version_id" --copyright "$(jq -r '.copyrightYear' "$readiness") $operator" --output table
+  asc app-setup pricing set --app "$ASC_APP_ID" --free --output table
+
+  local territories
+  territories="$(jq -r '.availability.territories | join(",")' "$readiness")"
+  if asc pricing availability view --app "$ASC_APP_ID" --output json >/dev/null 2>&1; then
+    asc pricing availability edit --app "$ASC_APP_ID" --all-territories --available false \
+      --available-in-new-territories false --output table
+    asc pricing availability edit --app "$ASC_APP_ID" --territory "$territories" --available true \
+      --available-in-new-territories false --output table
+  else
+    asc pricing availability create --app "$ASC_APP_ID" --territory "$territories" --available true \
+      --available-in-new-territories false --output table
+  fi
+
+  review_id="$(asc review details-for-version --version-id "$version_id" --output json | jq -r '.data.id // empty')"
+  local review_command=(asc review details-create --version-id "$version_id")
+  if [[ -n "$review_id" ]]; then
+    review_command=(asc review details-update --id "$review_id")
+  fi
+  "${review_command[@]}" \
+    --contact-first-name "$review_first" \
+    --contact-last-name "$review_last" \
+    --contact-email "$review_email" \
+    --contact-phone "$review_phone" \
+    "${demo_args[@]}" --notes "$(jq -r '.reviewAccess.notes' "$readiness")" --output table
+}
+
+case "$action" in
+  validate)
+    validate_local
+    ;;
+  plan)
+    validate_local
+    require_app
+    echo "Proposed App Store readiness settings (configure separately after review):"
+    jq . "$readiness"
+    asc metadata plan --app "$ASC_APP_ID" --version "$version" --platform IOS \
+      --dir "$metadata" --review-dir "$review_dir" --output table
+    asc web privacy plan --app "$ASC_APP_ID" --file "$privacy" --output table
+    show_age_rating_diff
+    ;;
+  approve)
+    asc metadata approve --review-dir "$review_dir" --all --output table
+    ;;
+  apply)
+    validate_local
+    require_clean_checkout
+    require_app
+    asc metadata apply --app "$ASC_APP_ID" --version "$version" --platform IOS \
+      --dir "$metadata" --review-dir "$review_dir" --confirm --output table
+    asc web privacy apply --app "$ASC_APP_ID" --file "$privacy" --allow-deletes --confirm --output table
+    asc age-rating edit --app "$ASC_APP_ID" --all-none \
+      --health-or-wellness-topics true --user-generated-content true --output table
+    ;;
+  readiness-apply)
+    validate_local
+    require_clean_checkout
+    require_app
+    apply_readiness
+    ;;
+  publish-privacy)
+    require_clean_checkout
+    require_app
+    asc web privacy publish --app "$ASC_APP_ID" --confirm --output table
+    ;;
+  drift)
+    validate_local
+    require_app
+    changes=0
+    metadata_plan="$(asc metadata apply --app "$ASC_APP_ID" --version "$version" --platform IOS --dir "$metadata" --dry-run --output json)"
+    if ! jq -e '([.adds[], .updates[], .deletes[]] | length) == 0' <<<"$metadata_plan" >/dev/null; then
+      echo "App Store metadata differs from Git" >&2
+      changes=1
+    fi
+    privacy_plan="$(asc web privacy plan --app "$ASC_APP_ID" --file "$privacy" --output json)"
+    if ! jq -e '([.adds[], .deletes[]] | length) == 0' <<<"$privacy_plan" >/dev/null; then
+      echo "App Store privacy declaration differs from Git" >&2
+      changes=1
+    fi
+    age_changes="$(show_age_rating_diff)"
+    if ! jq -e 'length == 0' <<<"$age_changes" >/dev/null; then
+      echo "App Store age rating differs from Git" >&2
+      changes=1
+    fi
+    if [[ "$changes" -ne 0 ]]; then exit 3; fi
+    echo "Managed App Store Connect declarations match Git"
+    ;;
+  submission-check)
+    require_app
+    asc validate --app "$ASC_APP_ID" --version "$version" --platform IOS --output table
+    asc review doctor --app "$ASC_APP_ID" --output table
+    ;;
+  *)
+    echo "usage: store {validate|plan|approve|apply|readiness-apply|publish-privacy|drift|submission-check}" >&2
+    exit 2
+    ;;
+esac

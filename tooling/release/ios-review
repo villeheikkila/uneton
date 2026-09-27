@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ "$#" -lt 1 || "$#" -gt 2 ]]; then
+  echo "usage: ios-review BUILD_ID [--submit]" >&2
+  exit 2
+fi
+
+build_id="$1"
+mode="${2:---preview}"
+case "$mode" in
+  --preview|--submit) ;;
+  *) echo "usage: ios-review BUILD_ID [--submit]" >&2; exit 2 ;;
+esac
+
+repo_root="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
+version="${UNETON_STORE_VERSION:-1.0}"
+readiness="$repo_root/clients/ios/asc/readiness.json"
+
+review_access="$(jq -er '.reviewAccess.status' "$readiness")"
+if [[ "$review_access" != READY ]]; then
+  if [[ "$mode" == --submit ]]; then
+    echo "App Review access is $review_access; prepare and document a demo account or demo mode first" >&2
+    exit 2
+  fi
+  echo "App Review access is $review_access: $(jq -r '.reviewAccess.notes' "$readiness")" >&2
+fi
+
+if [[ "$mode" == --submit && -n "$(git -C "$repo_root" status --porcelain)" ]]; then
+  echo "App Review submission requires a clean, reviewed checkout" >&2
+  exit 2
+fi
+
+"$repo_root/tooling/release/store" drift
+"$repo_root/tooling/release/store" submission-check
+asc builds info --build-id "$build_id" --output table
+asc review submit --app "$ASC_APP_ID" --version "$version" --platform IOS \
+  --build-id "$build_id" --dry-run --output table
+
+if [[ "$mode" == --submit ]]; then
+  asc review submit --app "$ASC_APP_ID" --version "$version" --platform IOS \
+    --build-id "$build_id" --confirm --output table
+fi

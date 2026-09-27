@@ -2,3 +2,4 @@ dbs:
   - path: /data/uneton.sqlite
     replicas:
       - url: ${LITESTREAM_REPLICA_URL}
+        retention: 24h

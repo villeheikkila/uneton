@@ -33,6 +33,8 @@ type Config struct {
 	ShutdownTimeout time.Duration
 	Apple           AppleConfig
 	APNS            APNSConfig
+	LegalOperator   string
+	LegalEmail      string
 }
 
 type AppleConfig struct {
@@ -96,6 +98,8 @@ func FromEnv(values map[string]string) (Config, error) {
 		LogFormat:       logFormat,
 		LogLevel:        level.Level(),
 		ShutdownTimeout: shutdownTimeout,
+		LegalOperator:   value(values, "UNETON_LEGAL_OPERATOR_NAME", "Uneton"),
+		LegalEmail:      value(values, "UNETON_LEGAL_CONTACT_EMAIL", "support@example.invalid"),
 		Apple: AppleConfig{
 			ClientID:              strings.TrimSpace(values["UNETON_AUTH_APPLE_CLIENT_ID"]),
 			TeamID:                strings.TrimSpace(values["UNETON_INTEGRATION_APPLE_TEAM_ID"]),
@@ -120,6 +124,12 @@ func FromEnv(values map[string]string) (Config, error) {
 	}
 	if len(cfg.TokenSecret.Reveal()) < 32 {
 		return Config{}, errors.New("UNETON_AUTH_TOKEN_SECRET must contain at least 32 characters")
+	}
+	if environment == Production && (strings.TrimSpace(values["UNETON_LEGAL_OPERATOR_NAME"]) == "" || strings.TrimSpace(values["UNETON_LEGAL_CONTACT_EMAIL"]) == "") {
+		return Config{}, errors.New("UNETON_LEGAL_OPERATOR_NAME and UNETON_LEGAL_CONTACT_EMAIL are required in production")
+	}
+	if !strings.Contains(cfg.LegalEmail, "@") || strings.ContainsAny(cfg.LegalEmail, " \t\r\n") {
+		return Config{}, errors.New("UNETON_LEGAL_CONTACT_EMAIL must be an email address")
 	}
 	appleValues := []string{cfg.Apple.ClientID, cfg.Apple.TeamID, cfg.Apple.KeyID, cfg.Apple.PrivateKey.Reveal()}
 	configured, complete := false, true
@@ -195,6 +205,8 @@ func (c Config) WriteRedacted(w io.Writer) error {
 		"UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_KEYRING_JSON=***",
 		"UNETON_AUTH_TOKEN_SECRET=***",
 		"UNETON_INTEGRATION_APNS_TOPIC=" + c.APNS.Topic,
+		"UNETON_LEGAL_CONTACT_EMAIL=***",
+		"UNETON_LEGAL_OPERATOR_NAME=***",
 		"UNETON_DATABASE_PATH=" + c.DatabasePath,
 		"UNETON_HTTP_LISTEN_ADDRESS=" + c.HTTPAddress,
 		"UNETON_LOG_FORMAT=" + c.LogFormat,
@@ -240,4 +252,6 @@ var knownEnvironment = map[string]bool{
 	"UNETON_INTEGRATION_APNS_PRIVATE_KEY_ID":           true,
 	"UNETON_INTEGRATION_APNS_PRIVATE_KEY_PEM":          true,
 	"UNETON_INTEGRATION_APNS_TOPIC":                    true,
+	"UNETON_LEGAL_OPERATOR_NAME":                       true,
+	"UNETON_LEGAL_CONTACT_EMAIL":                       true,
 }

@@ -70,6 +70,12 @@ struct FamilySharingSheet: View {
                 }
                 .disabled(session.isWorking)
 
+                HStack(spacing: 20) {
+                    Link("Privacy Policy", destination: LegalLinks.privacy)
+                    Link("Terms of Service", destination: LegalLinks.terms)
+                }
+                .font(.footnote)
+
                 if let error = session.errorMessage {
                     Text(error)
                         .font(.footnote)
@@ -87,12 +93,12 @@ struct FamilySharingSheet: View {
                 isPresented: $isConfirmingAccountDeletion,
                 titleVisibility: .visible
             ) {
-                Button("Delete account and family data", role: .destructive) {
+                Button("Delete account", role: .destructive) {
                     Task { await deleteAccountButtonTapped() }
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This revokes Sign in with Apple, signs out every device, and permanently deletes families you own.")
+                Text("This signs out every device. Families you own transfer to another caregiver when one is present; otherwise their diaries are deleted.")
             }
         }
         .presentationDetents([.large])

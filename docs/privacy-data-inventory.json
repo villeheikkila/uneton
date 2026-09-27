@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "authoritativeSchemaSha256": "f260c7521ad96f860f6a98fc9193e5682a18cfb181739f0423ef52c9c75a26f8",
+  "tables": {
+    "users": ["USER_ID", "NAME"],
+    "families": ["OTHER_USER_CONTENT", "USER_ID"],
+    "family_members": ["CONTACTS", "USER_ID"],
+    "invites": ["CONTACTS", "USER_ID"],
+    "children": ["HEALTH", "NAME"],
+    "sleep_sessions": ["HEALTH", "USER_ID"],
+    "growth_measurements": ["HEALTH", "OTHER_USER_CONTENT"],
+    "growth_reference_points": [],
+    "devices": ["DEVICE_ID", "OTHER_USAGE_DATA", "USER_ID"],
+    "live_activity_tokens": ["DEVICE_ID", "HEALTH"],
+    "live_activity_starts": ["DEVICE_ID", "HEALTH"],
+    "commands": ["CONTACTS", "HEALTH", "NAME", "OTHER_USER_CONTENT", "OTHER_USAGE_DATA", "USER_ID"],
+    "sync_events": ["CONTACTS", "HEALTH", "NAME", "OTHER_USER_CONTENT", "OTHER_USAGE_DATA", "USER_ID"],
+    "family_sync_snapshots": ["CONTACTS", "HEALTH", "NAME", "OTHER_USER_CONTENT", "OTHER_USAGE_DATA", "USER_ID"],
+    "deliveries": ["DEVICE_ID", "HEALTH", "NAME", "OTHER_USAGE_DATA"]
+  },
+  "additionalCollection": {
+    "OTHER_DIAGNOSTIC_DATA": [
+      "platform/backend/internal/app/server.go",
+      "platform/infra/vps/runtime/compose.yaml"
+    ]
+  },
+  "excludedFromCollection": {
+    "growth_reference_points": "Static population reference curves, not a family's observations",
+    "local_projection": "Device-local copy and unresolved commands are already represented by authoritative data categories; they are not a separate upload category"
+  }
+}
