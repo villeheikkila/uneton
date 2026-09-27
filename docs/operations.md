@@ -1,5 +1,7 @@
 # Operations and rehearsal
 
+For the intended shared VPS deployment, see [Uneton on Maku's shared VPS](shared-vps.md). The Compose stack below remains the standalone local rehearsal topology; the shared host uses Maku's existing Compose project and Caddy.
+
 The production runtime is Compose with one Uneton API writer, Caddy ingress, a durable SQLite volume, and Litestream replication. Runtime secrets live outside Git in machine-specific `platform/infra/vps/.orb/runtime.<machine>.env` files for rehearsal and in the production secret store on the VPS.
 
 Run `mise run infra:orb:rehearse` to create an Ubuntu OrbStack VM, build and load the checkout's backend image, provision Docker with Ansible, start the exact production-shaped runtime, probe readiness, and verify that Litestream has written a replica and the guest has the requested cgroup CPU and memory quotas. Use `mise run infra:orb:restore-test` only against that disposable VM; it stops the writer, preserves the current database as a timestamped `uneton.sqlite.before-restore.*` file, restores from Litestream, rotates the adjacent `uneton.sqlite.sync-generation` sidecar, restarts services, and probes readiness. A failed restore returns the preserved database and restarts the services. Rotating this sidecar is mandatory: it tells every client that a restored lineage requires a snapshot and acknowledged-command replay.
@@ -10,7 +12,7 @@ Run `mise run infra:orb:rehearse` to create an Ubuntu OrbStack VM, build and loa
 
 Run the relevant checks and rehearsal on the Mac before publishing. The publication tasks require a clean checkout so the commit SHA identifies the source. They do not depend on a remote CI job.
 
-For GHCR, authenticate Docker locally with a token allowed to write packages, then build the ARM64 image and inspect it before pushing:
+For GHCR, authenticate Docker locally with a token allowed to write packages, then build the ARM64 image and inspect it before pushing a multi-architecture AMD64/ARM64 manifest:
 
 ```sh
 mise run release:ghcr

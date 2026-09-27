@@ -21,7 +21,6 @@ image="ghcr.io/villeheikkila/uneton-backend:$revision"
 args=(
   buildx build
   --pull
-  --platform linux/arm64
   --file "$repo_root/platform/backend/Dockerfile"
   --tag "$image"
   --label "org.opencontainers.image.revision=$revision"
@@ -29,9 +28,9 @@ args=(
 )
 
 if [[ "$mode" == --publish ]]; then
-  args+=(--push)
+  args+=(--platform "linux/amd64,linux/arm64" --push)
 else
-  args+=(--load)
+  args+=(--platform linux/arm64 --load)
 fi
 
 docker "${args[@]}" "$repo_root"
