@@ -7,64 +7,77 @@ struct FamilySetupView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                Image(systemName: "person.2.badge.plus")
-                    .font(.system(size: 52))
-                    .foregroundStyle(.indigo)
-                Text("Set up your family")
-                    .font(.title.bold())
-                Text("Create your child’s sleep diary, or scan a caregiver’s QR invitation to join theirs.")
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.secondary)
+            ScrollView {
+                VStack(spacing: 24) {
+                    Image(systemName: "person.2.badge.plus")
+                        .font(.system(size: 52))
+                        .foregroundStyle(.indigo)
+                    Text("Set up your family")
+                        .font(.title.bold())
+                    Text("Create your child’s sleep diary, or scan a caregiver’s QR invitation to join theirs.")
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Your baby")
-                        .font(.headline)
-                    TextField("Baby’s name", text: $store.childName)
-                        .textFieldStyle(.roundedBorder)
-                    DatePicker("Birthday", selection: $store.birthDate, in: ...Date.now, displayedComponents: .date)
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Your baby")
+                            .font(.headline)
+                        TextField("Baby’s name", text: $store.childName)
+                            .textFieldStyle(.roundedBorder)
+                        DatePicker("Birthday", selection: $store.birthDate, in: ...Date.now, displayedComponents: .date)
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Gender")
-                            .font(.subheadline.weight(.medium))
-                        Picker("Gender", selection: $store.growthReference) {
-                            Text("Girl").tag(Optional("girl"))
-                            Text("Boy").tag(Optional("boy"))
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Gender")
+                                .font(.subheadline.weight(.medium))
+                            Picker("Gender", selection: $store.growthReference) {
+                                Text("Girl").tag(Optional("girl"))
+                                Text("Boy").tag(Optional("boy"))
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.segmented)
+                            Text("This selects the Finnish growth reference curves. You can change or turn them off later.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
-                        .labelsHidden()
-                        .pickerStyle(.segmented)
-                        Text("This selects the Finnish growth reference curves. You can change or turn them off later.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
 
-                    Button("Create sleep diary") {
-                        store.send(.createSleepDiaryButtonTapped)
+                        Button("Create sleep diary") {
+                            store.send(.createSleepDiaryButtonTapped)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(
+                            store.childName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                || store.growthReference == nil
+                                || store.request.isRunning
+                        )
                     }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(
-                        store.childName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                            || store.growthReference == nil
-                            || store.request.isRunning
-                    )
-                }
-                .padding(20)
-                .background(.background.secondary, in: .rect(cornerRadius: 24))
+                    .padding(20)
+                    .background(.background.secondary, in: .rect(cornerRadius: 24))
 
-                Divider()
-                Button("Scan family invitation", systemImage: "qrcode.viewfinder") {
-                    store.send(.scanInvitationButtonTapped)
-                }
+                    Divider()
+                    Button("Scan family invitation", systemImage: "qrcode.viewfinder") {
+                        store.send(.scanInvitationButtonTapped)
+                    }
                     .buttonStyle(.bordered)
-                if store.request.isRunning { ProgressView() }
-                if let error = store.errorMessage { Text(error).font(.footnote).foregroundStyle(.red) }
-                Spacer()
+                    if store.request.isRunning { ProgressView() }
+                    if let error = store.errorMessage { Text(error).font(.footnote).foregroundStyle(.red) }
+                }
+                .padding(24)
             }
-            .padding(24)
             .sheet(isPresented: $store.isScanning) {
                 QRCodeScanner { value in
                     store.send(.invitationCodeScanned(value))
                 }
+                .overlay(alignment: .bottom) {
+                    Text("Point the camera at a caregiver’s invitation QR code")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(16)
+                        .background(.black.opacity(0.75), in: .rect(cornerRadius: 16))
+                        .padding(24)
+                }
+                .background(.black)
             }
         }
     }
@@ -88,6 +101,7 @@ private final class ScannerController: UIViewController, AVCaptureMetadataOutput
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .black
         guard let camera = AVCaptureDevice.default(for: .video), let input = try? AVCaptureDeviceInput(device: camera), session.canAddInput(input) else { return }
         session.addInput(input)
         let output = AVCaptureMetadataOutput()

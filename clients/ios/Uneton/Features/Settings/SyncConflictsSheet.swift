@@ -1,18 +1,12 @@
 import ComposableArchitecture2
 import Foundation
 import UnetonCore
-import SQLiteData
 import SwiftUI
 
 struct SyncConflictsSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @FetchAll(SyncConflict.order { $0.createdAt.desc() }) private var allConflicts
-    let family: Family
+    let conflicts: [SyncConflict]
     let syncStore: StoreOf<FamilySync>
-
-    private var conflicts: [SyncConflict] {
-        allConflicts.filter { $0.familyID == family.id }
-    }
 
     var body: some View {
         NavigationStack {

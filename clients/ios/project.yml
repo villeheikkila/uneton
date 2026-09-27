@@ -12,6 +12,9 @@ packages:
   TCA26:
     url: https://github.com/pointfreeco/TCA26.git
     revision: 685aa13e104ce2234d16615e78489e4f6e4cb685
+  SnapshotTesting:
+    url: https://github.com/pointfreeco/swift-snapshot-testing.git
+    revision: 59a99c458de4d2dee580529b61b4f78dca7b7fa6
 settings:
   base:
     DEVELOPMENT_TEAM: J9S7QG9SVR
@@ -121,10 +124,13 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: solutions.bytesized.uneton.tests
         GENERATE_INFOPLIST_FILE: "YES"
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) $(UNETON_RECORD_SNAPSHOTS)"
     dependencies:
       - target: Uneton
       - package: TCA26
         product: ComposableArchitectureTestSupport
+      - package: SnapshotTesting
+        product: SnapshotTesting
 schemes:
   Uneton:
     build:

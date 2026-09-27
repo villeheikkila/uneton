@@ -8,80 +8,81 @@ struct FamilySharingSheet: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 22) {
-                Image(systemName: "person.2.badge.plus")
-                    .font(.system(size: 48))
-                    .foregroundStyle(.indigo)
-                Text("Invite a caregiver")
-                    .font(.title2.bold())
-                Text("They can log and end sleep, and changes appear on both phones. The link expires in seven days and works once.")
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.secondary)
-                if let inviteURL = store.inviteURL {
-                    QRCodeImage(value: inviteURL.absoluteString)
-                        .frame(width: 180, height: 180)
-                        .accessibilityLabel("Family invitation QR code")
-                    ShareLink(item: inviteURL, subject: Text("Join our Uneton family")) {
-                        Label("Share invitation", systemImage: "square.and.arrow.up")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                } else {
-                    ProgressView("Creating secure invitation…")
-                }
-                Spacer()
-
-                Divider()
-
-                VStack(alignment: .leading, spacing: 14) {
-                    Text("This device").font(.headline)
-                    Toggle("Push notifications", isOn: Binding(
-                        get: { store.notificationsEnabled },
-                        set: { store.send(.notificationsChanged($0)) }
-                    ))
-                    Toggle("Live Activities", isOn: Binding(
-                        get: { store.liveActivitiesEnabled },
-                        set: { store.send(.liveActivitiesChanged($0)) }
-                    ))
-                    Picker("Sleep reminder", selection: Binding(
-                        get: { store.reminderLeadMinutes },
-                        set: { store.send(.reminderLeadChanged($0)) }
-                    )) {
-                        Text("At predicted time").tag(0)
-                        Text("15 minutes before").tag(15)
-                        Text("30 minutes before").tag(30)
-                        Text("1 hour before").tag(60)
-                    }
-                }
-
-                Divider()
-
-                Button("Sign out", systemImage: "rectangle.portrait.and.arrow.right") {
-                    store.send(.signOutButtonTapped)
-                }
-                .buttonStyle(.bordered)
-                .disabled(store.accountRequest.isRunning)
-
-                Button("Delete account", systemImage: "person.crop.circle.badge.minus", role: .destructive) {
-                    store.send(.deleteAccountPromptButtonTapped)
-                }
-                .disabled(store.accountRequest.isRunning)
-
-                HStack(spacing: 20) {
-                    Link("Privacy Policy", destination: LegalLinks.privacy)
-                    Link("Terms of Service", destination: LegalLinks.terms)
-                }
-                .font(.footnote)
-
-                if let error = store.errorMessage {
-                    Text(error)
-                        .font(.footnote)
-                        .foregroundStyle(.red)
+            ScrollView {
+                VStack(spacing: 22) {
+                    Image(systemName: "person.2.badge.plus")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.indigo)
+                    Text("Invite a caregiver")
+                        .font(.title2.bold())
+                    Text("They can log and end sleep, and changes appear on both phones. The link expires in seven days and works once.")
                         .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let inviteURL = store.inviteURL {
+                        QRCodeImage(value: inviteURL.absoluteString)
+                            .frame(width: 180, height: 180)
+                            .accessibilityLabel("Family invitation QR code")
+                        ShareLink(item: inviteURL, subject: Text("Join our Uneton family")) {
+                            Label("Share invitation", systemImage: "square.and.arrow.up")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                    } else {
+                        ProgressView("Creating secure invitation…")
+                    }
+                    Divider()
+
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("This device").font(.headline)
+                        Toggle("Push notifications", isOn: Binding(
+                            get: { store.notificationsEnabled },
+                            set: { store.send(.notificationsChanged($0)) }
+                        ))
+                        Toggle("Live Activities", isOn: Binding(
+                            get: { store.liveActivitiesEnabled },
+                            set: { store.send(.liveActivitiesChanged($0)) }
+                        ))
+                        Picker("Sleep reminder", selection: Binding(
+                            get: { store.reminderLeadMinutes },
+                            set: { store.send(.reminderLeadChanged($0)) }
+                        )) {
+                            Text("At predicted time").tag(0)
+                            Text("15 minutes before").tag(15)
+                            Text("30 minutes before").tag(30)
+                            Text("1 hour before").tag(60)
+                        }
+                    }
+
+                    Divider()
+
+                    Button("Sign out", systemImage: "rectangle.portrait.and.arrow.right") {
+                        store.send(.signOutButtonTapped)
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(store.accountRequest.isRunning)
+
+                    Button("Delete account", systemImage: "person.crop.circle.badge.minus", role: .destructive) {
+                        store.send(.deleteAccountPromptButtonTapped)
+                    }
+                    .disabled(store.accountRequest.isRunning)
+
+                    HStack(spacing: 20) {
+                        Link("Privacy Policy", destination: LegalLinks.privacy)
+                        Link("Terms of Service", destination: LegalLinks.terms)
+                    }
+                    .font(.footnote)
+
+                    if let error = store.errorMessage {
+                        Text(error)
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                            .multilineTextAlignment(.center)
+                    }
                 }
+                .padding(24)
             }
-            .padding(24)
             .navigationTitle("Family")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { Button("Done") { dismiss() } }

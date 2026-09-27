@@ -3,18 +3,20 @@ import UnetonCore
 import SwiftUI
 
 struct TrendsView: View {
+    @Environment(\.calendar) private var calendar
+    @Environment(\.unetonDisplayNow) private var displayNowOverride
     let sessions: [SleepSession]
     @State private var range = 7
+    private var now: Date { displayNowOverride ?? .now }
 
     private var daily: [DailySleep] {
-        let calendar = Calendar.current
         return (0..<range).reversed().compactMap { offset in
-            guard let day = calendar.date(byAdding: .day, value: -offset, to: calendar.startOfDay(for: .now)),
+            guard let day = calendar.date(byAdding: .day, value: -offset, to: calendar.startOfDay(for: now)),
                   let end = calendar.date(byAdding: .day, value: 1, to: day)
             else { return nil }
-            let matching = sessions.filter { $0.startedAt < end && ($0.endedAt ?? .now) > day }
+            let matching = sessions.filter { $0.startedAt < end && ($0.endedAt ?? now) > day }
             let seconds = matching.reduce(0.0) { result, session in
-                result + max(0, min(end, session.endedAt ?? .now).timeIntervalSince(max(day, session.startedAt)))
+                result + max(0, min(end, session.endedAt ?? now).timeIntervalSince(max(day, session.startedAt)))
             }
             return DailySleep(day: day, hours: seconds / 3_600, naps: matching.count)
         }
@@ -82,8 +84,8 @@ struct TrendsView: View {
                     Chart(sessionsInRange) { session in
                         BarMark(
                             xStart: .value("Start", minuteOfDay(session.startedAt)),
-                            xEnd: .value("End", minuteOfDay(session.endedAt ?? .now)),
-                            y: .value("Day", Calendar.current.startOfDay(for: session.startedAt), unit: .day)
+                            xEnd: .value("End", minuteOfDay(session.endedAt ?? now)),
+                            y: .value("Day", calendar.startOfDay(for: session.startedAt), unit: .day)
                         )
                         .foregroundStyle(
                             LinearGradient(
@@ -196,12 +198,12 @@ struct TrendsView: View {
     }
 
     private var sessionsInRange: [SleepSession] {
-        let cutoff = Calendar.current.date(byAdding: .day, value: -range, to: .now) ?? .distantPast
+        let cutoff = calendar.date(byAdding: .day, value: -range, to: now) ?? .distantPast
         return sessions.filter { $0.startedAt >= cutoff && $0.endedAt != nil }
     }
 
     private func minuteOfDay(_ date: Date) -> Int {
-        Calendar.current.component(.hour, from: date) * 60 + Calendar.current.component(.minute, from: date)
+        calendar.component(.hour, from: date) * 60 + calendar.component(.minute, from: date)
     }
 
     private func metricCard(title: String, value: String, detail: String, icon: String, color: Color) -> some View {

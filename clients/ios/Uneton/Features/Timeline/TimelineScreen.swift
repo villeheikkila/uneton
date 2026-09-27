@@ -30,8 +30,15 @@ struct TimelineScreen: View {
     let family: Family
     let child: Child
 
-    @State private var mode = Mode.timeline
+    @State private var mode: Mode
     @Namespace private var navigationNamespace
+
+    init(syncStore: StoreOf<FamilySync>, family: Family, child: Child, initialMode: Mode = .timeline) {
+        self.syncStore = syncStore
+        self.family = family
+        self.child = child
+        self._mode = State(initialValue: initialMode)
+    }
 
     private var conflicts: [SyncConflict] {
         allConflicts.filter { $0.familyID == family.id }
@@ -143,7 +150,7 @@ struct TimelineScreen: View {
                 FamilySharingSheet(store: sharingStore)
             }
             .sheet(isPresented: $syncStore.isPresentingConflicts) {
-                SyncConflictsSheet(family: family, syncStore: syncStore)
+                SyncConflictsSheet(conflicts: conflicts, syncStore: syncStore)
             }
             .sheet(item: $syncStore.scope(\.growthEntry)) { entryStore in
                 GrowthEntrySheet(store: entryStore)
@@ -199,16 +206,18 @@ struct TimelineScreen: View {
 }
 
 private struct SleepTimeline: View {
+    @Environment(\.calendar) private var calendar
+    @Environment(\.unetonDisplayNow) private var displayNowOverride
     let child: Child
     let sessions: [SleepSession]
     let forecast: SleepForecast?
     let navigationNamespace: Namespace.ID
     let onSelectSession: (SleepSession) -> Void
 
-    private let calendar = Calendar.current
+    private var now: Date { displayNowOverride ?? .now }
 
     private var currentPageEnd: Date {
-        calendar.dateInterval(of: .hour, for: .now)?.end ?? .now
+        calendar.dateInterval(of: .hour, for: now)?.end ?? now
     }
 
     private var pageEnd: Date { currentPageEnd }
@@ -247,18 +256,20 @@ private struct SleepTimeline: View {
 }
 
 private struct SleepSummary: View {
+    @Environment(\.calendar) private var calendar
+    @Environment(\.unetonDisplayNow) private var displayNowOverride
     let child: Child
     let latest: SleepSession
     let sessions: [SleepSession]
     let forecast: SleepForecast?
+    private var now: Date { displayNowOverride ?? .now }
 
     private var todayTotal: TimeInterval {
-        let calendar = Calendar.current
-        let start = calendar.startOfDay(for: .now)
+        let start = calendar.startOfDay(for: now)
         let end = calendar.date(byAdding: .day, value: 1, to: start)!
         return sessions.reduce(0) { result, session in
             let lower = max(start, session.startedAt)
-            let upper = min(end, session.endedAt ?? .now)
+            let upper = min(end, session.endedAt ?? now)
             return result + max(0, upper.timeIntervalSince(lower))
         }
     }
@@ -272,7 +283,7 @@ private struct SleepSummary: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.secondary)
 
-                        Text(stateDuration(at: context.date))
+                        Text(stateDuration(at: displayNowOverride ?? context.date))
                             .font(.system(size: 36, weight: .bold, design: .rounded).monospacedDigit())
                             .contentTransition(.numericText())
                     }
@@ -342,9 +353,9 @@ private struct SleepSummary: View {
     }
 
     private var todaySessions: [SleepSession] {
-        let start = Calendar.current.startOfDay(for: .now)
-        let end = Calendar.current.date(byAdding: .day, value: 1, to: start)!
-        return sessions.filter { $0.startedAt < end && ($0.endedAt ?? .now) > start }
+        let start = calendar.startOfDay(for: now)
+        let end = calendar.date(byAdding: .day, value: 1, to: start)!
+        return sessions.filter { $0.startedAt < end && ($0.endedAt ?? now) > start }
     }
 
     private func summaryMetric(_ title: String, value: String) -> some View {
@@ -752,6 +763,8 @@ private struct GrowthEntrySheet: View {
 }
 
 private struct ContinuousSleepTimeline: View {
+    @Environment(\.calendar) private var calendar
+    @Environment(\.unetonDisplayNow) private var displayNowOverride
     struct Period: Identifiable {
         enum State { case sleeping, awake }
 
@@ -770,8 +783,8 @@ private struct ContinuousSleepTimeline: View {
     let navigationNamespace: Namespace.ID
     let onSelectSession: (SleepSession) -> Void
 
-    private let calendar = Calendar.current
     private let hourHeight: CGFloat = 44
+    private var now: Date { displayNowOverride ?? .now }
 
     private var hourCount: Int {
         max(1, calendar.dateComponents([.hour], from: pageStart, to: pageEnd).hour ?? 168)
@@ -783,7 +796,7 @@ private struct ContinuousSleepTimeline: View {
         var result: [Period] = []
 
         for (index, session) in ordered.enumerated() {
-            let sessionEnd = session.endedAt ?? .now
+            let sessionEnd = session.endedAt ?? now
             appendPeriod(
                 id: "sleep-\(session.id)",
                 .sleeping,
@@ -796,7 +809,7 @@ private struct ContinuousSleepTimeline: View {
             )
 
             let awakeStart = sessionEnd
-            let awakeEnd = index + 1 < ordered.count ? ordered[index + 1].startedAt : .now
+            let awakeEnd = index + 1 < ordered.count ? ordered[index + 1].startedAt : now
             appendPeriod(
                 id: "awake-\(session.id)",
                 .awake,
@@ -826,7 +839,7 @@ private struct ContinuousSleepTimeline: View {
                         periodBand(period, width: proxy.size.width)
                     }
 
-                    if pageEnd >= .now && pageStart <= .now {
+                    if pageEnd >= now && pageStart <= now {
                         nowMarker(width: proxy.size.width)
                     }
                 }
@@ -948,7 +961,7 @@ private struct ContinuousSleepTimeline: View {
     }
 
     private func nowMarker(width: CGFloat) -> some View {
-        let y = pageEnd.timeIntervalSince(.now) / 3_600 * hourHeight
+        let y = pageEnd.timeIntervalSince(now) / 3_600 * hourHeight
         return ZStack(alignment: .topTrailing) {
             HStack(spacing: 6) {
                 Circle()

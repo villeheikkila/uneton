@@ -57,6 +57,14 @@ run = "swift test --package-path clients/ios/UnetonPackage"
 description = "Build the iPhone, Watch, and widget targets for an iOS simulator"
 run = "xcodebuild -workspace clients/ios/UnetonWorkspace.xcworkspace -scheme Uneton -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/uneton-xcode-derived-data build"
 
+[tasks."ios:snapshots:test"]
+description = "Compare iPhone screen snapshots on iPhone 17 Pro with iOS 26.5"
+run = "xcodebuild -project clients/ios/Uneton.xcodeproj -scheme Uneton -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' -derivedDataPath /tmp/uneton-snapshot-derived-data -only-testing:UnetonTests/ScreenSnapshots test CODE_SIGNING_ALLOWED=NO ARCHS=arm64"
+
+[tasks."ios:snapshots:record"]
+description = "Record iPhone screen snapshots on iPhone 17 Pro with iOS 26.5"
+run = "xcodebuild -project clients/ios/Uneton.xcodeproj -scheme Uneton -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' -derivedDataPath /tmp/uneton-snapshot-derived-data -only-testing:UnetonTests/ScreenSnapshots test CODE_SIGNING_ALLOWED=NO ARCHS=arm64 UNETON_RECORD_SNAPSHOTS=UNETON_RECORD_SNAPSHOTS"
+
 [tasks.generate]
 description = "Regenerate sqlc and ConnectRPC sources"
 depends = ["backend:generate", "contracts:generate"]
