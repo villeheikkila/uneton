@@ -1,6 +1,6 @@
 # Operations and rehearsal
 
-For the intended shared VPS deployment, see [Uneton on Maku's shared VPS](shared-vps.md). The Compose stack below remains the standalone local rehearsal topology; the shared host uses Maku's existing Compose project and Caddy.
+For deployment within an existing shared Compose project, see [the shared VPS guide](shared-vps.md). The Compose stack below remains the standalone local rehearsal topology; the shared host uses its existing Compose project and Caddy.
 
 The production runtime is Compose with one Uneton API writer, Caddy ingress, a durable SQLite volume, and Litestream replication. Runtime secrets live outside Git in machine-specific `platform/infra/vps/.orb/runtime.<machine>.env` files for rehearsal and in the production secret store on the VPS.
 

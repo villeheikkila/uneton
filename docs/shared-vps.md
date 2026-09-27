@@ -1,12 +1,12 @@
-# Uneton on Maku's shared VPS
+# Uneton in a shared VPS Compose stack
 
-This is the deployment configuration to add to Maku's **shared services** VPS. The source of that host's runtime is `../maku/platform/infra/shared-services/runtime/`, and its Ansible role is `../maku/platform/infra/vps/ansible/roles/shared_traceway/`. It installs one Compose project, `maku-shared-observability`, under `/srv/maku/shared-observability`. Maku's separate application VPS Compose stack is not the target. This document changes no Maku files and does not deploy Uneton.
+This is a host-neutral configuration for running Uneton inside an existing shared Docker Compose project. It assumes the host already has a public Caddy service and a local deployment process that owns the Compose file, Caddyfile, and private environment. Adapt the host paths and deployment commands to that project. This guide does not deploy Uneton.
 
-The shared Compose project already has the only public Caddy on ports 80 and 443. Add Uneton's API and Litestream to **that same Compose file and project**, on its default network. Do not start `platform/infra/vps/runtime/compose.yaml` on the shared host: that standalone Caddy would compete for the public ports. An override that adds services only to the shared project at rollout time would also be undone by the Ansible role's next `up -d --remove-orphans`. Keep the standalone stack for disposable OrbStack rehearsal.
+Use the existing Caddy on ports 80 and 443. Add Uneton's API and Litestream to **that same Compose file and project**, on its default network. Do not start `platform/infra/vps/runtime/compose.yaml` on the shared host: that standalone Caddy would compete for the public ports. If the host rollout uses `up -d --remove-orphans`, commit the new services to its canonical Compose definition so the next rollout retains them. Keep Uneton's standalone stack for disposable OrbStack rehearsal.
 
 ## Shared Compose additions
 
-Merge these services and volume into `../maku/platform/infra/shared-services/runtime/compose.yaml`. The existing `name`, Caddy, Traceway, and collector services remain in the same file. The backend image value must be a published, multi-platform **digest**, verified to include `linux/amd64` for this CX23 host. A commit tag identifies source, but a digest fixes the exact bytes deployed.
+Merge these services and volume into the host's canonical Compose file. Keep its existing project name and services. Set the backend image to a published, multi-platform **digest** that includes the host's architecture. A commit tag identifies source, but a digest fixes the exact bytes deployed.
 
 ```yaml
 services:
@@ -88,9 +88,9 @@ volumes:
   uneton_data:
 ```
 
-There are no `ports` or blanket `env_file` entries on these services. This keeps the API reachable only through the shared Compose network and avoids passing Traceway secrets to Uneton. The image's `/data` directory is owned by UID 10001; the init service also repairs ownership of a newly created named volume. Use a pinned Litestream image digest in the final host change, as Maku does for its existing images. The 512 MiB API limit is a starting allocation, not a capacity claim; measure it alongside Traceway's 2 GiB limit on the 4 GiB host.
+There are no `ports` or blanket `env_file` entries on these services. This keeps the API reachable only through the shared Compose network and avoids passing other services' secrets to Uneton. The image's `/data` directory is owned by UID 10001; the init service also repairs ownership of a newly created named volume. Pin the Litestream image by digest in the final host configuration. The 512 MiB API limit is a starting allocation, not a capacity claim; measure it alongside the host's other services.
 
-Copy this file as `/srv/maku/shared-observability/uneton-litestream.yml` from the shared Ansible role:
+Place `uneton-litestream.yml` beside the host's Compose file:
 
 ```yaml
 dbs:
@@ -104,7 +104,7 @@ Use an off-host object-store URL such as `s3://<bucket>/uneton/production`. The 
 
 ## Shared Caddy and DNS
 
-Append a site to Maku's **existing** `Caddyfile`:
+Append a site to the host's **existing** `Caddyfile`:
 
 ```caddyfile
 api.uneton.app {
@@ -126,11 +126,11 @@ api.uneton.app {
 }
 ```
 
-Point `api.uneton.app` A and AAAA records to the shared VPS public addresses in the DNS zone that owns `uneton.app`. Maku's Terraform currently owns only `traceway.getmaku.app` DNS, so adding Uneton DNS requires an explicit owner. Caddy obtains the certificate once DNS points to this host. The existing firewall already exposes TCP 80/443 and UDP 443; no new public port is needed. Preserve all API paths, including ConnectRPC, `/health/ready`, `/privacy`, `/terms`, `/support`, and Apple's `/apple/server-notifications` callback.
+Point `api.uneton.app` A and AAAA records to the shared VPS public addresses in the DNS zone that owns `uneton.app`. Assign ownership of those records in the host's DNS configuration. Caddy obtains the certificate once DNS points to this host. Expose TCP 80/443 and, if HTTP/3 is enabled, UDP 443; no Uneton-specific public port is needed. Preserve all API paths, including ConnectRPC, `/health/ready`, `/privacy`, `/terms`, `/support`, and Apple's `/apple/server-notifications` callback.
 
-## Secrets and Ansible rollout
+## Secrets and host rollout
 
-Extend the shared Ansible role to copy the Litestream file, render Uneton's values into its root-owned `0600` `/srv/maku/shared-observability/.env`, and validate the *merged* Compose configuration before `pull` and `up -d --remove-orphans`. Put the values in the host's existing secret source, not in Git. The Compose example consumes these `.env` names:
+Extend the host's local deployment process to install the Litestream file, render Uneton's values into a root-owned `0600` `.env` next to the Compose file, and validate the merged Compose configuration before pulling images and starting services. Put the values in the host's secret source, not in Git. The Compose example consumes these `.env` names:
 
 | Name | Source or purpose |
 | --- | --- |
@@ -143,13 +143,13 @@ Extend the shared Ansible role to copy the Litestream file, render Uneton's valu
 
 If the Apple integration key cannot send APNs, add the four `UNETON_INTEGRATION_APNS_*` variables from `platform/backend/.env.example` to the API service and the secret template. The App Review phone is for local ASC submission, not a backend runtime variable. Keep personal contact values age-encrypted in Uneton's local `fnox.toml`; the server secret source must supply its own production copy. The `.env` file and `docker compose config` output contain secrets, so do not log or commit the rendered configuration.
 
-The current Maku shared Ansible role is the deployment owner. It copies runtime files, writes `.env`, validates Compose, pulls images, starts the project, waits for service health, and checks the public listener allowlist. Extend its health verification to check `uneton-api` and backup freshness. Run the Maku Ansible command **locally** when the host change is ready; no remote CI/CD is needed. Services added only through a local override of that Compose project would be removed by Maku's next `--remove-orphans` run.
+Have the host's deployment process verify `uneton-api` health, backup freshness, and the public listener allowlist after rollout. Drive deployment from the local machine; no remote CI/CD is needed. If that process uses `--remove-orphans`, services added only through a temporary local Compose override will be removed on its next run.
 
 ## Release and recovery sequence
 
 1. From a clean Uneton commit, run local tests and rehearsal, then `mise run release:ghcr -- --publish`. Inspect the published manifest for both `linux/amd64` and `linux/arm64`, and record its digest. Publishing does not deploy.
-2. Prepare an off-host backup bucket and credentials. Test a backup and a restore with disposable data using the chosen object store. Verify that the shared host has enough CPU, memory, and disk headroom for Traceway and Uneton together.
-3. In a separate, reviewed Maku change, integrate the Compose services, Caddy site, Litestream file, secret template, and Ansible health checks above. Deploy that project from the local machine. Check internal API health and Litestream replication before changing DNS.
+2. Prepare an off-host backup bucket and credentials. Test a backup and a restore with disposable data using the chosen object store. Verify that the shared host has enough CPU, memory, and disk headroom for Uneton and its existing services.
+3. In the host configuration, integrate the Compose services, Caddy site, Litestream file, secret template, and health checks above. Deploy that project from the local machine. Check internal API health and Litestream replication before changing DNS.
 4. Point `api.uneton.app` at the shared host, then verify HTTPS `/health/ready`, legal pages, an authenticated app flow, and Apple server notification reachability. Verify backup freshness again after real traffic begins.
 
-For a restore, stop **both** `uneton-api` and `uneton-litestream` before replacing the SQLite files from the off-host replica. Rotate `/data/uneton.sqlite.sync-generation` before starting the API so clients receive a snapshot after lineage changes. Ensure restored files are writable by UID 10001, start the API and then Litestream, and verify readiness, sync recovery, and a new backup. The existing `infra:orb:restore-test` script assumes `/srv/uneton` and a local file replica; it is not a shared-host restore procedure. Add and rehearse a host-specific restore operation as part of the Maku integration.
+For a restore, stop **both** `uneton-api` and `uneton-litestream` before replacing the SQLite files from the off-host replica. Rotate `/data/uneton.sqlite.sync-generation` before starting the API so clients receive a snapshot after lineage changes. Ensure restored files are writable by UID 10001, start the API and then Litestream, and verify readiness, sync recovery, and a new backup. The existing `infra:orb:restore-test` script assumes `/srv/uneton` and a local file replica; it is not a shared-host restore procedure. Add and rehearse a host-specific restore operation as part of the deployment integration.
