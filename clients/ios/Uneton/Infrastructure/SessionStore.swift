@@ -32,6 +32,7 @@ final class SessionStore {
     private let reminders = ReminderController()
 
     var isWorking = false
+    private(set) var isAuthenticated = false
     var errorMessage: String?
     var forecast: SleepForecast?
     var prediction: SleepPrediction? { forecast?.nextSleepEstimate }
@@ -70,6 +71,7 @@ final class SessionStore {
             accessToken: { CredentialStore().value(for: Key.accessToken) }
         )
         self.watchBridge = PhoneWatchBridge(store: self)
+        self.isAuthenticated = accessToken != nil
         self.credentialRevocationTask = Task { [weak self] in
             for await _ in NotificationCenter.default.notifications(
                 named: ASAuthorizationAppleIDProvider.credentialRevokedNotification
@@ -458,6 +460,7 @@ final class SessionStore {
         credentials.set(authentication.accessToken, for: Key.accessToken)
         credentials.set(authentication.refreshToken, for: Key.refreshToken)
         UserDefaults.standard.set(authentication.deviceID.uuidString, forKey: Key.deviceID)
+        isAuthenticated = true
     }
 
     private func configurePushRegistration() async {
@@ -513,6 +516,7 @@ final class SessionStore {
             try SyncState.delete().execute(database)
             try Family.delete().execute(database)
         }
+        isAuthenticated = false
     }
 
     private func randomNonce() throws -> String {

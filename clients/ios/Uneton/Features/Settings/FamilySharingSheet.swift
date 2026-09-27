@@ -1,12 +1,10 @@
 import CoreImage.CIFilterBuiltins
+import ComposableArchitecture2
 import SwiftUI
 
 struct FamilySharingSheet: View {
-    @Environment(SessionStore.self) private var session
     @Environment(\.dismiss) private var dismiss
-    let familyID: UUID
-    @State private var inviteURL: URL?
-    @State private var isConfirmingAccountDeletion = false
+    @Bindable var store: StoreOf<FamilySharing>
 
     var body: some View {
         NavigationStack {
@@ -19,7 +17,7 @@ struct FamilySharingSheet: View {
                 Text("They can log and end sleep, and changes appear on both phones. The link expires in seven days and works once.")
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
-                if let inviteURL {
+                if let inviteURL = store.inviteURL {
                     QRCodeImage(value: inviteURL.absoluteString)
                         .frame(width: 180, height: 180)
                         .accessibilityLabel("Family invitation QR code")
@@ -39,16 +37,16 @@ struct FamilySharingSheet: View {
                 VStack(alignment: .leading, spacing: 14) {
                     Text("This device").font(.headline)
                     Toggle("Push notifications", isOn: Binding(
-                        get: { session.notificationsEnabled },
-                        set: { value in Task { await session.setNotificationsEnabled(value) } }
+                        get: { store.notificationsEnabled },
+                        set: { store.send(.notificationsChanged($0)) }
                     ))
                     Toggle("Live Activities", isOn: Binding(
-                        get: { session.liveActivitiesEnabled },
-                        set: { value in Task { await session.setLiveActivitiesEnabled(value) } }
+                        get: { store.liveActivitiesEnabled },
+                        set: { store.send(.liveActivitiesChanged($0)) }
                     ))
                     Picker("Sleep reminder", selection: Binding(
-                        get: { session.reminderLeadMinutes },
-                        set: { value in Task { await session.setReminderLeadMinutes(value) } }
+                        get: { store.reminderLeadMinutes },
+                        set: { store.send(.reminderLeadChanged($0)) }
                     )) {
                         Text("At predicted time").tag(0)
                         Text("15 minutes before").tag(15)
@@ -60,15 +58,15 @@ struct FamilySharingSheet: View {
                 Divider()
 
                 Button("Sign out", systemImage: "rectangle.portrait.and.arrow.right") {
-                    Task { await signOutButtonTapped() }
+                    store.send(.signOutButtonTapped)
                 }
                 .buttonStyle(.bordered)
-                .disabled(session.isWorking)
+                .disabled(store.accountRequest.isRunning)
 
                 Button("Delete account", systemImage: "person.crop.circle.badge.minus", role: .destructive) {
-                    isConfirmingAccountDeletion = true
+                    store.send(.deleteAccountPromptButtonTapped)
                 }
-                .disabled(session.isWorking)
+                .disabled(store.accountRequest.isRunning)
 
                 HStack(spacing: 20) {
                     Link("Privacy Policy", destination: LegalLinks.privacy)
@@ -76,7 +74,7 @@ struct FamilySharingSheet: View {
                 }
                 .font(.footnote)
 
-                if let error = session.errorMessage {
+                if let error = store.errorMessage {
                     Text(error)
                         .font(.footnote)
                         .foregroundStyle(.red)
@@ -87,14 +85,13 @@ struct FamilySharingSheet: View {
             .navigationTitle("Family")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { Button("Done") { dismiss() } }
-            .task { inviteURL = await session.createInvite(familyID: familyID) }
             .confirmationDialog(
                 "Delete your Uneton account?",
-                isPresented: $isConfirmingAccountDeletion,
+                isPresented: $store.isConfirmingAccountDeletion,
                 titleVisibility: .visible
             ) {
                 Button("Delete account", role: .destructive) {
-                    Task { await deleteAccountButtonTapped() }
+                    store.send(.deleteAccountButtonTapped)
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
@@ -102,14 +99,9 @@ struct FamilySharingSheet: View {
             }
         }
         .presentationDetents([.large])
-    }
-
-    private func signOutButtonTapped() async {
-        if await session.signOut() { dismiss() }
-    }
-
-    private func deleteAccountButtonTapped() async {
-        if await session.deleteAccount() { dismiss() }
+        .onChange(of: store.isFinished) { _, finished in
+            if finished { dismiss() }
+        }
     }
 }
 

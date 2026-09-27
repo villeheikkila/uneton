@@ -1,4 +1,5 @@
 import Charts
+import ComposableArchitecture2
 import UnetonCore
 import SQLiteData
 import SwiftUI
@@ -21,6 +22,7 @@ struct TimelineScreen: View {
 
     @Environment(SessionStore.self) private var session
     @Environment(\.scenePhase) private var scenePhase
+    @Bindable var syncStore: StoreOf<FamilySync>
     @FetchAll(SleepSession.order { $0.startedAt.desc() }) private var allSessions
     @FetchAll(GrowthMeasurement.order { $0.measuredAt.desc() }) private var allGrowthMeasurements
     @FetchAll(GrowthReferencePoint.order { $0.ageMonths }) private var allGrowthReferencePoints
@@ -29,12 +31,6 @@ struct TimelineScreen: View {
     let child: Child
 
     @State private var mode = Mode.timeline
-    @State private var isPresentingEntry = false
-    @State private var isPresentingFamily = false
-    @State private var isPresentingConflicts = false
-    @State private var editingSession: SleepSession?
-    @State private var isPresentingGrowthEntry = false
-    @State private var editingGrowthMeasurement: GrowthMeasurement?
     @Namespace private var navigationNamespace
 
     private var conflicts: [SyncConflict] {
@@ -65,7 +61,9 @@ struct TimelineScreen: View {
                         sessions: sessions,
                         forecast: session.forecast?.childID == child.id ? session.forecast : nil,
                         navigationNamespace: navigationNamespace,
-                        onSelectSession: { editingSession = $0 }
+                        onSelectSession: { sleep in
+                            syncStore.send(.sleepSelected(child.id, child.nickname, sleep.id, sleep.startedAt, sleep.endedAt))
+                        }
                     )
                 }
                 .tag(Mode.timeline)
@@ -76,12 +74,19 @@ struct TimelineScreen: View {
                 ZStack {
                     SleepBackground()
                     GrowthCard(
-                        family: family,
                         child: child,
                         measurements: growthMeasurements,
                         referencePoints: allGrowthReferencePoints,
-                        onAdd: { isPresentingGrowthEntry = true },
-                        onSelect: { editingGrowthMeasurement = $0 }
+                        onAdd: { syncStore.send(.newGrowthMeasurementButtonTapped(child.id)) },
+                        onSelect: { measurement in
+                            syncStore.send(.growthMeasurementSelected(
+                                child.id, measurement.id, measurement.measuredAt,
+                                measurement.weightGrams, measurement.heightMillimeters, measurement.note
+                            ))
+                        },
+                        onReferenceChanged: { reference in
+                            syncStore.send(.growthReferenceChanged(child.id, reference))
+                        }
                     )
                 }
                 .tag(Mode.growth)
@@ -112,52 +117,53 @@ struct TimelineScreen: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Family", systemImage: "person.2.fill") {
-                        isPresentingFamily = true
+                        syncStore.send(.familyButtonTapped(
+                            session.notificationsEnabled,
+                            session.liveActivitiesEnabled,
+                            session.reminderLeadMinutes
+                        ))
                     }
                 }
 
                 if !conflicts.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Sync conflicts", systemImage: "exclamationmark.triangle.fill") {
-                            isPresentingConflicts = true
+                            syncStore.send(.conflictListButtonTapped)
                         }
                         .tint(.orange)
                     }
                 }
             }
-            .sheet(isPresented: $isPresentingEntry) {
-                SleepEntrySheet(family: family, child: child)
+            .sheet(item: $syncStore.scope(\.entry)) { entryStore in
+                SleepEntrySheet(store: entryStore)
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
             }
-            .sheet(isPresented: $isPresentingFamily) {
-                FamilySharingSheet(familyID: family.id)
+            .sheet(item: $syncStore.scope(\.sharing)) { sharingStore in
+                FamilySharingSheet(store: sharingStore)
             }
-            .sheet(isPresented: $isPresentingConflicts) {
-                SyncConflictsSheet(family: family)
+            .sheet(isPresented: $syncStore.isPresentingConflicts) {
+                SyncConflictsSheet(family: family, syncStore: syncStore)
             }
-            .sheet(item: $editingSession) { sleep in
-                SleepEntrySheet(family: family, child: child, sleep: sleep)
-                    .navigationTransition(.zoom(sourceID: sleep.id, in: navigationNamespace))
-                    .presentationDetents([.medium])
-                    .presentationDragIndicator(.visible)
-            }
-            .sheet(isPresented: $isPresentingGrowthEntry) {
-                GrowthEntrySheet(family: family, child: child)
-                    .presentationDetents([.medium])
-                    .presentationDragIndicator(.visible)
-            }
-            .sheet(item: $editingGrowthMeasurement) { measurement in
-                GrowthEntrySheet(family: family, child: child, measurement: measurement)
+            .sheet(item: $syncStore.scope(\.growthEntry)) { entryStore in
+                GrowthEntrySheet(store: entryStore)
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
             }
             .task(id: scenePhase) {
-                guard scenePhase == .active else { return }
-                await session.observeChanges(familyID: family.id)
+                syncStore.send(.foregroundChanged(scenePhase == .active))
             }
             .refreshable {
-                await session.synchronize(familyID: family.id)
+                await syncStore.send(.refreshRequested)?.value
+            }
+            .safeAreaInset(edge: .bottom) {
+                if let error = syncStore.errorMessage, !syncStore.isPresentingConflicts {
+                    Text(error)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                        .padding(8)
+                        .background(.regularMaterial, in: .rect(cornerRadius: 12))
+                }
             }
         }
     }
@@ -166,9 +172,7 @@ struct TimelineScreen: View {
     private var bottomControl: some View {
         if let activeSession {
             Button {
-                Task {
-                    await session.endSleep(familyID: family.id, sessionID: activeSession.id)
-                }
+                syncStore.send(.endSleepButtonTapped(activeSession.id))
             } label: {
                 Label("Wake \(child.nickname)", systemImage: "sun.max.fill")
                     .font(.headline.weight(.semibold))
@@ -177,11 +181,11 @@ struct TimelineScreen: View {
             }
             .buttonStyle(.glassProminent)
             .tint(Color.sleepDawn)
-            .disabled(session.isWorking)
+            .disabled(syncStore.wake.isRunning)
             .accessibilityHint("Ends the current sleep at the present time")
         } else {
             Button {
-                isPresentingEntry = true
+                syncStore.send(.newSleepButtonTapped(child.id, child.nickname))
             } label: {
                 Label("Start sleep", systemImage: "moon.fill")
                     .font(.headline.weight(.semibold))
@@ -384,14 +388,12 @@ private struct EmptySleepCard: View {
 }
 
 private struct GrowthCard: View {
-    @Environment(SessionStore.self) private var session
-
-    let family: Family
     let child: Child
     let measurements: [GrowthMeasurement]
     let referencePoints: [GrowthReferencePoint]
     let onAdd: () -> Void
     let onSelect: (GrowthMeasurement) -> Void
+    let onReferenceChanged: (String) -> Void
 
     var body: some View {
         ScrollView {
@@ -411,15 +413,7 @@ private struct GrowthCard: View {
                         .font(.headline)
                     Picker("Reference curves", selection: Binding(
                         get: { child.growthReference },
-                        set: { reference in
-                            Task {
-                                await session.setGrowthReference(
-                                    familyID: family.id,
-                                    childID: child.id,
-                                    growthReference: reference
-                                )
-                            }
-                        }
+                        set: onReferenceChanged
                     )) {
                         Text("Off").tag("none")
                         Text("Girl").tag("girl")
@@ -703,39 +697,21 @@ private struct GrowthReferenceChart: View {
 }
 
 private struct GrowthEntrySheet: View {
-    @Environment(SessionStore.self) private var session
     @Environment(\.dismiss) private var dismiss
-
-    let family: Family
-    let child: Child
-    let measurement: GrowthMeasurement?
-    @State private var measuredAt: Date
-    @State private var weight: String
-    @State private var height: String
-    @State private var note: String
-
-    init(family: Family, child: Child, measurement: GrowthMeasurement? = nil) {
-        self.family = family
-        self.child = child
-        self.measurement = measurement
-        _measuredAt = State(initialValue: measurement?.measuredAt ?? .now)
-        _weight = State(initialValue: measurement?.weightGrams.map { String(format: "%.2f", Double($0) / 1_000) } ?? "")
-        _height = State(initialValue: measurement?.heightMillimeters.map { String(format: "%.1f", Double($0) / 10) } ?? "")
-        _note = State(initialValue: measurement?.note ?? "")
-    }
+    @Bindable var store: StoreOf<GrowthEntry>
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Measurement") {
-                    DatePicker("Date", selection: $measuredAt, displayedComponents: .date)
-                    TextField("Weight (kg)", text: $weight)
+                    DatePicker("Date", selection: $store.measuredAt, displayedComponents: .date)
+                    TextField("Weight (kg)", text: $store.weight)
                         .keyboardType(.decimalPad)
-                    TextField("Height (cm)", text: $height)
+                    TextField("Height (cm)", text: $store.height)
                         .keyboardType(.decimalPad)
                 }
                 Section("Note") {
-                    TextField("Optional note", text: $note, axis: .vertical)
+                    TextField("Optional note", text: $store.note, axis: .vertical)
                         .lineLimit(2...4)
                 }
                 Section {
@@ -743,18 +719,19 @@ private struct GrowthEntrySheet: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
-                if measurement != nil {
+                if let error = store.errorMessage {
+                    Section { Text(error).foregroundStyle(.red) }
+                }
+                if store.measurementID != nil {
                     Section {
                         Button("Delete measurement", role: .destructive) {
-                            Task {
-                                await session.deleteGrowthMeasurement(familyID: family.id, measurementID: measurement!.id)
-                                dismiss()
-                            }
+                            store.send(.deleteButtonTapped)
                         }
+                        .disabled(store.request.isRunning)
                     }
                 }
             }
-            .navigationTitle(measurement == nil ? "Add measurement" : "Edit measurement")
+            .navigationTitle(store.measurementID == nil ? "Add measurement" : "Edit measurement")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -762,28 +739,15 @@ private struct GrowthEntrySheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        Task {
-                            await session.logGrowthMeasurement(
-                                familyID: family.id, childID: child.id, measurementID: measurement?.id,
-                                measuredAt: measuredAt, weightGrams: grams, heightMillimeters: millimeters,
-                                note: note.trimmingCharacters(in: .whitespacesAndNewlines)
-                            )
-                            dismiss()
-                        }
+                        store.send(.saveButtonTapped)
                     }
-                    .disabled(grams == nil && millimeters == nil)
+                    .disabled((store.grams == nil && store.millimeters == nil) || store.request.isRunning)
                 }
             }
         }
-    }
-
-    private var grams: Int? { scaledValue(weight, multiplier: 1_000) }
-    private var millimeters: Int? { scaledValue(height, multiplier: 10) }
-
-    private func scaledValue(_ value: String, multiplier: Double) -> Int? {
-        let normalized = value.replacingOccurrences(of: ",", with: ".")
-        guard !normalized.isEmpty, let decimal = Double(normalized) else { return nil }
-        return Int((decimal * multiplier).rounded())
+        .onChange(of: store.isSaved) { _, isSaved in
+            if isSaved { dismiss() }
+        }
     }
 }
 

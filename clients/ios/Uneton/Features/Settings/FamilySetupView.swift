@@ -1,12 +1,9 @@
 import AVFoundation
+import ComposableArchitecture2
 import SwiftUI
 
 struct FamilySetupView: View {
-    @Environment(SessionStore.self) private var session
-    @State private var childName = ""
-    @State private var birthDate = Calendar.current.date(byAdding: .month, value: -6, to: .now) ?? .now
-    @State private var growthReference: String?
-    @State private var isScanning = false
+    @Bindable var store: StoreOf<FamilySetup>
 
     var body: some View {
         NavigationStack {
@@ -23,14 +20,14 @@ struct FamilySetupView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Your baby")
                         .font(.headline)
-                    TextField("Baby’s name", text: $childName)
+                    TextField("Baby’s name", text: $store.childName)
                         .textFieldStyle(.roundedBorder)
-                    DatePicker("Birthday", selection: $birthDate, in: ...Date.now, displayedComponents: .date)
+                    DatePicker("Birthday", selection: $store.birthDate, in: ...Date.now, displayedComponents: .date)
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Gender")
                             .font(.subheadline.weight(.medium))
-                        Picker("Gender", selection: $growthReference) {
+                        Picker("Gender", selection: $store.growthReference) {
                             Text("Girl").tag(Optional("girl"))
                             Text("Boy").tag(Optional("boy"))
                         }
@@ -42,38 +39,31 @@ struct FamilySetupView: View {
                     }
 
                     Button("Create sleep diary") {
-                        guard let growthReference else { return }
-                        Task {
-                            await session.createChildFamily(
-                                childName: childName,
-                                birthDate: birthDate,
-                                growthReference: growthReference
-                            )
-                        }
+                        store.send(.createSleepDiaryButtonTapped)
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(
-                        childName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                            || growthReference == nil
-                            || session.isWorking
+                        store.childName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            || store.growthReference == nil
+                            || store.request.isRunning
                     )
                 }
                 .padding(20)
                 .background(.background.secondary, in: .rect(cornerRadius: 24))
 
                 Divider()
-                Button("Scan family invitation", systemImage: "qrcode.viewfinder") { isScanning = true }
+                Button("Scan family invitation", systemImage: "qrcode.viewfinder") {
+                    store.send(.scanInvitationButtonTapped)
+                }
                     .buttonStyle(.bordered)
-                if session.isWorking { ProgressView() }
-                if let error = session.errorMessage { Text(error).font(.footnote).foregroundStyle(.red) }
+                if store.request.isRunning { ProgressView() }
+                if let error = store.errorMessage { Text(error).font(.footnote).foregroundStyle(.red) }
                 Spacer()
             }
             .padding(24)
-            .sheet(isPresented: $isScanning) {
+            .sheet(isPresented: $store.isScanning) {
                 QRCodeScanner { value in
-                    isScanning = false
-                    guard let url = URL(string: value) else { return }
-                    Task { await session.handle(url: url) }
+                    store.send(.invitationCodeScanned(value))
                 }
             }
         }

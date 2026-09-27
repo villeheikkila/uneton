@@ -28,7 +28,7 @@ No foreground stream, push payload, Live Activity, widget, Watch message, or pre
  │          +                           │                        │  ├─ idempotent command results│
  │  unresolved pending commands         │                        │  ├─ monotonic event log       │
  │                                      │                        │  └─ durable delivery outbox   │
- │  SessionStore lifecycle orchestration│                        │          │                   │
+ │  TCA root + SessionStore runtime      │                        │          │                   │
  └──────────┬───────────────┬───────────┘                        └──────────┼───────────────────┘
             │               │                                               │
      WatchConnectivity  ActivityKit                                APNs alerts, silent
@@ -39,7 +39,7 @@ No foreground stream, push payload, Live Activity, widget, Watch message, or pre
       └───────────┘   └────────────────┘
 ```
 
-The production deployment runs one API writer behind Caddy with a durable SQLite volume and Litestream replication. The single-writer topology is intentional; the correctness model does not depend on in-memory stream delivery.
+The production deployment runs one API writer behind Caddy with a durable SQLite volume and Litestream replication. The single-writer topology is intentional; the correctness model does not depend on in-memory stream delivery. The iPhone app's TCA26 root owns active-family selection and the foreground observation task. `SessionStore` remains the Apple-framework runtime adapter, and `SyncCoordinator` remains the only client path that applies authoritative events or changes the local cursor.
 
 ## Ownership and boundaries
 
@@ -69,6 +69,12 @@ The local database deliberately separates server knowledge from what the user se
 6. `SyncConflict` stores a rejected intent that needs an explicit user decision.
 
 The visible child, sleep-session, and growth-measurement projection is disposable and derived. Family membership, authentication state, pending commands, and the acknowledged journal have separate lifecycles; commands are user data and are never disposable before their recovery-retention policy permits it. A pull must never replace the database wholesale or discard unresolved commands.
+
+### iPhone feature ownership
+
+The app uses TCA26 for presentation and lifecycle orchestration. `AppRoot` owns authentication visibility, onboarding, family setup, and the selected family's `FamilySync` feature. `FamilySync` observes that family only while the scene is active; its task is cancelled when the app backgrounds, the selected family changes, or authentication ends. Manual refresh, sleep and growth entry, waking, conflict resolution, and family sharing actions enter the existing `SessionStore`/`SyncCoordinator` path through feature environment adapters. Feature tests can control these effects without a server.
+
+SQLiteData remains the durable read source. TCA feature state holds selection, presentation, loading, and form workflow state, not a second copy of authoritative diary records or a second command queue. The `SessionStore` runtime still handles Apple frameworks, the Watch bridge, background push registration, and existing sync effects. Moving further actions into features must preserve optimistic command insertion and the complete `SyncCoordinator` reconciliation path described below.
 
 ## Mutation path: local intent to authoritative state
 
@@ -163,7 +169,7 @@ Sync until caught up → read committed cursor → open WatchFamily(cursor)
         └──── hint, heartbeat expiry, auth expiry, transport failure ────┘
 ```
 
-Reconnects use bounded exponential backoff. The stream closes when the scene backgrounds and is recreated only after a foreground sync. Heartbeats and finite stream lifetimes detect dead connections and refresh expiring access tokens; they do not carry durable events.
+Reconnects use bounded exponential backoff. The TCA26 family feature mounts observation for the active family and cancels it when the scene backgrounds or the selected family changes. `SessionStore.observeChanges` synchronizes before each stream wait. Heartbeats and finite stream lifetimes detect dead connections and refresh expiring access tokens; they do not carry durable events.
 
 ### Background convergence
 

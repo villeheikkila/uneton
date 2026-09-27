@@ -1,13 +1,14 @@
+import ComposableArchitecture2
 import Foundation
 import UnetonCore
 import SQLiteData
 import SwiftUI
 
 struct SyncConflictsSheet: View {
-    @Environment(SessionStore.self) private var session
     @Environment(\.dismiss) private var dismiss
     @FetchAll(SyncConflict.order { $0.createdAt.desc() }) private var allConflicts
     let family: Family
+    let syncStore: StoreOf<FamilySync>
 
     private var conflicts: [SyncConflict] {
         allConflicts.filter { $0.familyID == family.id }
@@ -68,14 +69,16 @@ struct SyncConflictsSheet: View {
             .navigationTitle("Sync conflicts")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { Button("Done") { dismiss() } }
+            .overlay(alignment: .bottom) {
+                if let error = syncStore.errorMessage {
+                    Text(error).foregroundStyle(.red).padding()
+                }
+            }
         }
     }
 
     private func resolve(_ conflict: SyncConflict, as resolution: SyncConflictResolution) {
-        Task {
-            await session.resolveConflict(conflict.id, familyID: family.id, resolution: resolution)
-            if conflicts.count == 1 { dismiss() }
-        }
+        syncStore.send(.resolveConflictButtonTapped(conflict.id, resolution))
     }
 
     private func title(for conflict: SyncConflict) -> String {

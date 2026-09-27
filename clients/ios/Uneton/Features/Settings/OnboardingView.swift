@@ -1,12 +1,12 @@
 import AuthenticationServices
+import ComposableArchitecture2
 import SwiftUI
 
 struct OnboardingView: View {
-    @Environment(SessionStore.self) private var session
-    @State private var caregiverName = "Caregiver"
+    @Bindable var store: StoreOf<Onboarding>
+    let prepareAppleAuthorization: (ASAuthorizationAppleIDRequest) -> Void
 
     var body: some View {
-        @Bindable var session = session
         ZStack {
             LinearGradient(
                 colors: [Color.indigo.opacity(0.16), Color.cyan.opacity(0.08), Color.clear],
@@ -29,15 +29,13 @@ struct OnboardingView: View {
                         .multilineTextAlignment(.center)
                 }
                 SignInWithAppleButton(.continue) { request in
-                    session.prepareAppleAuthorization(request)
+                    prepareAppleAuthorization(request)
                 } onCompletion: { result in
-                    Task {
-                        await session.completeAppleAuthorization(result)
-                    }
+                    store.send(.appleAuthorizationCompleted(result))
                 }
                 .signInWithAppleButtonStyle(.black)
                 .frame(height: 52)
-                .disabled(session.isWorking)
+                .disabled(store.signIn.isRunning)
 
                 HStack(spacing: 20) {
                     Link("Privacy Policy", destination: LegalLinks.privacy)
@@ -46,19 +44,17 @@ struct OnboardingView: View {
                 .font(.footnote)
 
                 #if DEBUG
-                TextField("Local caregiver", text: $caregiverName)
+                TextField("Local caregiver", text: $store.caregiverName)
                     .textFieldStyle(.roundedBorder)
                 Button("Use local server") {
-                    Task {
-                        await session.developmentAuthenticate(name: caregiverName)
-                    }
+                    store.send(.developmentSignInButtonTapped)
                 }
                 .buttonStyle(.glass)
-                .disabled(caregiverName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || session.isWorking)
+                .disabled(store.caregiverName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || store.signIn.isRunning)
                 #endif
 
-                if session.isWorking { ProgressView() }
-                if let error = session.errorMessage {
+                if store.signIn.isRunning { ProgressView() }
+                if let error = store.errorMessage {
                     Text(error)
                         .font(.footnote)
                         .foregroundStyle(.red)

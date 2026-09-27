@@ -1,5 +1,5 @@
 {
-  "originHash" : "66ea7bbdd4372186af3f71c2c605ef1e614e121c57ed42fccce6b998d8d38410",
+  "originHash" : "2f796a53036930eca263a1d34b729d4b7e1342717826f1ca5115cb1ff765a86a",
   "pins" : [
     {
       "identity" : "combine-schedulers",
@@ -47,12 +47,21 @@
       }
     },
     {
+      "identity" : "swift-case-paths",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-case-paths",
+      "state" : {
+        "branch" : "protocol-case-paths",
+        "revision" : "f59f046b554f5346255d74dd8a2fe1959e9f3264"
+      }
+    },
+    {
       "identity" : "swift-clocks",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-clocks",
       "state" : {
-        "revision" : "82440fa0a8b1c381a6d1e8e0fc7bbba53ec63204",
-        "version" : "1.1.1"
+        "branch" : "clocks-2",
+        "revision" : "77abbdd51dc05c719d5a758572e18f3643f546b7"
       }
     },
     {
@@ -83,6 +92,15 @@
       }
     },
     {
+      "identity" : "swift-debug-snapshots",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-debug-snapshots",
+      "state" : {
+        "revision" : "083c2aa4d1edf6e98bb20670cfddc04ac45ad8a4",
+        "version" : "0.5.1"
+      }
+    },
+    {
       "identity" : "swift-dependencies",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-dependencies",
@@ -98,6 +116,24 @@
       "state" : {
         "revision" : "322d9ffeeba85c9f7c4984b39422ec7cc3c56597",
         "version" : "1.1.1"
+      }
+    },
+    {
+      "identity" : "swift-issue-reporting",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-issue-reporting",
+      "state" : {
+        "revision" : "75b000cea2ca6d7527a57e1b9cc0bdf21a9abe9f",
+        "version" : "2.1.1"
+      }
+    },
+    {
+      "identity" : "swift-navigation",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-navigation",
+      "state" : {
+        "branch" : "case-paths-2",
+        "revision" : "c4344194c0f9abace6782c349bab48f513ade8e4"
       }
     },
     {
@@ -191,12 +227,11 @@
       }
     },
     {
-      "identity" : "xctest-dynamic-overlay",
+      "identity" : "tca26",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay",
+      "location" : "https://github.com/pointfreeco/TCA26.git",
       "state" : {
-        "revision" : "d9308ad679143c26a30dec52daefe82f54af2b82",
-        "version" : "1.13.1"
+        "revision" : "685aa13e104ce2234d16615e78489e4f6e4cb685"
       }
     }
   ],

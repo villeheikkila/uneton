@@ -1,3 +1,4 @@
+import ComposableArchitecture2
 import Dependencies
 import UnetonCore
 import SwiftUI
@@ -6,6 +7,7 @@ import SwiftUI
 struct UnetonApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var session: SessionStore
+    @State private var store: StoreOf<AppRoot>
 
     init() {
         prepareDependencies {
@@ -16,12 +18,23 @@ struct UnetonApp: App {
             $0.apiClient = .live(baseURL: URL(string: "https://api.uneton.app")!)
             #endif
         }
-        _session = State(initialValue: SessionStore())
+        let session = SessionStore()
+        _session = State(initialValue: session)
+        _store = State(initialValue: Store(initialState: AppRoot.State(
+            isAuthenticated: session.isAuthenticated
+        )) {
+            AppRoot()
+                .environment(\.sessionSync, .live(session: session))
+                .environment(\.sessionAuth, .live(session: session))
+                .environment(\.sessionFamily, .live(session: session))
+                .environment(\.sessionDiary, .live(session: session))
+                .environment(\.sessionSharing, .live(session: session))
+        })
     }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(store: store)
                 .environment(session)
         }
     }

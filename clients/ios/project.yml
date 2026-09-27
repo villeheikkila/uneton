@@ -9,6 +9,9 @@ options:
 packages:
   UnetonPackage:
     path: UnetonPackage
+  TCA26:
+    url: https://github.com/pointfreeco/TCA26.git
+    revision: 685aa13e104ce2234d16615e78489e4f6e4cb685
 settings:
   base:
     DEVELOPMENT_TEAM: J9S7QG9SVR
@@ -52,6 +55,8 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
     dependencies:
+      - package: TCA26
+        product: ComposableArchitecture2
       - package: UnetonPackage
         product: UnetonCore
       - package: UnetonPackage
@@ -107,6 +112,19 @@ targets:
     dependencies:
       - package: UnetonPackage
         product: UnetonCore
+  UnetonTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - UnetonTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: solutions.bytesized.uneton.tests
+        GENERATE_INFOPLIST_FILE: "YES"
+    dependencies:
+      - target: Uneton
+      - package: TCA26
+        product: ComposableArchitectureTestSupport
 schemes:
   Uneton:
     build:
@@ -114,6 +132,9 @@ schemes:
         Uneton: all
     run:
       config: Debug
+    test:
+      targets:
+        - UnetonTests
   UnetonWidgets:
     build:
       targets:
