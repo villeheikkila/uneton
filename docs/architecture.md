@@ -119,7 +119,7 @@ A rejected command is also returned deterministically. Its savepoint rolls back 
 
 ### 4. Reconcile locally in one transaction
 
-Before writing anything, the client validates response structure: cursors cannot move backwards, event cursors must be ordered and bounded, pagination must make progress, and command-result IDs must match the sent batch.
+Before writing anything, the client validates response structure: cursors cannot move backwards or advance past the final supplied event or snapshot, event cursors must be ordered and bounded, pagination must make progress, and command-result IDs and statuses must match the sent batch. Event, snapshot, and canonical result payloads must agree with their declared entity identity, revision, and family. A malformed response leaves the cursor and pending commands untouched.
 
 It then performs one local SQLite transaction:
 
@@ -169,7 +169,7 @@ Sync until caught up → read committed cursor → open WatchFamily(cursor)
         └──── hint, heartbeat expiry, auth expiry, transport failure ────┘
 ```
 
-Reconnects use bounded exponential backoff. The TCA26 family feature mounts observation for the active family and cancels it when the scene backgrounds or the selected family changes. `SessionStore.observeChanges` synchronizes before each stream wait. Heartbeats and finite stream lifetimes detect dead connections and refresh expiring access tokens; they do not carry durable events.
+Reconnects use bounded exponential backoff. The TCA26 family feature mounts observation for the active family and cancels it when the scene backgrounds or the selected family changes. `SessionStore.observeChanges` synchronizes before each stream wait. If a local command arrives after an in-flight sync's final outbox read, the joining caller performs another sync before reporting success. Heartbeats and finite stream lifetimes detect dead connections and refresh expiring access tokens; they do not carry durable events.
 
 ### Background convergence
 

@@ -453,6 +453,28 @@ struct SyncCoordinatorTests {
     #expect(await responder.requestCount == 1)
   }
 
+  @Test func commandQueuedDuringInFlightSyncIsDrainedBeforeSuccess() async throws {
+    let fixture = Fixture(familyID: UUID(-1), childID: UUID(-2), sessionID: UUID(-3))
+    try await seedFamilyAndChild(familyID: fixture.familyID, childID: fixture.childID)
+    let responder = PausedResponder(fixture: fixture)
+    var api = APIClient.testValue
+    api.sync = { _, _, request in try await responder.response(for: request) }
+
+    try await withDependencies { $0.apiClient = api } operation: {
+      let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      let first = Task { try await coordinator.synchronize(familyID: fixture.familyID) }
+      await responder.waitUntilStarted()
+      _ = try await coordinator.startSleep(familyID: fixture.familyID, childID: fixture.childID, startedAt: date(1_000))
+      let joined = Task { try await coordinator.synchronize(familyID: fixture.familyID) }
+      await responder.release()
+      _ = try await first.value
+      _ = try await joined.value
+    }
+
+    #expect(await responder.commandCounts == [0, 1])
+    #expect(try await database.read { try PendingCommand.fetchCount($0) } == 0)
+  }
+
   @Test func malformedCursorResponseLeavesDurableCommandUntouched() async throws {
     let familyID = UUID(-1)
     let childID = UUID(-2)
@@ -488,6 +510,70 @@ struct SyncCoordinatorTests {
     }
     #expect(state.0 == 1)
     #expect(state.1 == nil)
+  }
+
+  @Test func skippedEventCursorLeavesDurableCommandUntouched() async throws {
+    let familyID = UUID(-1)
+    let childID = UUID(-2)
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    var api = APIClient.testValue
+    api.sync = { _, _, request in
+      SyncResponse(
+        commandResults: request.commands.map {
+          APICommandResult(id: $0.id, status: "accepted", entityID: nil, payload: nil)
+        },
+        events: [], nextCursor: request.cursor + 1, hasMore: false, serverTime: date(6_000)
+      )
+    }
+
+    try await withDependencies { $0.apiClient = api } operation: {
+      let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      _ = try await coordinator.startSleep(familyID: familyID, childID: childID, startedAt: date(1_000))
+      do {
+        _ = try await coordinator.synchronize(familyID: familyID)
+        Issue.record("Expected an unexplained cursor advance to be rejected")
+      } catch {
+        #expect(error as? SyncError == .invalidServerPayload)
+      }
+    }
+
+    let state = try await database.read { database in
+      (try PendingCommand.fetchCount(database), try SyncState.find(familyID).fetchOne(database)?.cursor)
+    }
+    #expect(state.0 == 1)
+    #expect(state.1 == nil)
+  }
+
+  @Test func foreignFamilyEventCannotAdvanceTheCursor() async throws {
+    let fixture = Fixture(familyID: UUID(-1), childID: UUID(-2), sessionID: UUID(-3))
+    try await seedFamilyAndChild(familyID: fixture.familyID, childID: fixture.childID)
+    var foreign = serverSleep(fixture: fixture, revision: 1, endedAt: nil)
+    foreign.familyID = UUID(-99)
+    let foreignPayload = try jsonValue(foreign)
+    var api = APIClient.testValue
+    api.sync = { _, _, _ in
+      SyncResponse(
+        commandResults: [],
+        events: [SyncEvent(
+          cursor: 1, entityType: "sleepSession", entityID: fixture.sessionID,
+          operation: "upsert", revision: 1, payload: foreignPayload,
+          createdAt: date(6_000)
+        )],
+        nextCursor: 1, hasMore: false, serverTime: date(6_000)
+      )
+    }
+
+    await withDependencies { $0.apiClient = api } operation: {
+      let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      do {
+        _ = try await coordinator.synchronize(familyID: fixture.familyID)
+        Issue.record("Expected a foreign family event to be rejected")
+      } catch {
+        #expect(error as? SyncError == .invalidServerPayload)
+      }
+    }
+
+    #expect(try await database.read { try SyncState.find(fixture.familyID).fetchOne($0)?.cursor } == nil)
   }
 
   @Test func networkFailureKeepsOptimisticStateAndCommandForRetry() async throws {
@@ -732,6 +818,52 @@ private actor SlowResponder {
   }
 }
 
+private actor PausedResponder {
+  private(set) var commandCounts: [Int] = []
+  private let fixture: Fixture
+  private var started = false
+  private var startedWaiter: CheckedContinuation<Void, Never>?
+  private var releaseWaiter: CheckedContinuation<Void, Never>?
+
+  init(fixture: Fixture) { self.fixture = fixture }
+
+  func waitUntilStarted() async {
+    if started { return }
+    await withCheckedContinuation { startedWaiter = $0 }
+  }
+
+  func release() {
+    releaseWaiter?.resume()
+    releaseWaiter = nil
+  }
+
+  func response(for request: SyncRequest) async throws -> SyncResponse {
+    commandCounts.append(request.commands.count)
+    if commandCounts.count == 1 {
+      started = true
+      startedWaiter?.resume()
+      startedWaiter = nil
+      await withCheckedContinuation { releaseWaiter = $0 }
+      return SyncResponse(
+        commandResults: [], events: [], nextCursor: request.cursor,
+        hasMore: false, serverTime: date(6_000)
+      )
+    }
+    let command = try #require(request.commands.first)
+    let payload = try jsonValue(serverSleep(fixture: fixture, revision: 1, endedAt: nil))
+    return SyncResponse(
+      commandResults: [APICommandResult(
+        id: command.id, status: "accepted", entityID: fixture.sessionID, payload: payload
+      )],
+      events: [SyncEvent(
+        cursor: 1, entityType: "sleepSession", entityID: fixture.sessionID,
+        operation: "upsert", revision: 1, payload: payload, createdAt: date(6_001)
+      )],
+      nextCursor: 1, hasMore: false, serverTime: date(6_001)
+    )
+  }
+}
+
 private actor BatchResponder {
   private(set) var batchSizes: [Int] = []
 
@@ -768,7 +900,12 @@ private actor SnapshotRecoveryResponder {
             payload: try jsonValue(serverSleep(fixture: fixture, revision: 1, endedAt: nil))
           )
         ],
-        events: [], nextCursor: 1, hasMore: false, serverTime: date(2_000),
+        events: [SyncEvent(
+          cursor: 1, entityType: "sleepSession", entityID: fixture.sessionID,
+          operation: "upsert", revision: 1,
+          payload: try jsonValue(serverSleep(fixture: fixture, revision: 1, endedAt: nil)),
+          createdAt: date(2_000)
+        )], nextCursor: 1, hasMore: false, serverTime: date(2_000),
         generation: "generation-before-restore"
       )
     case 2:
@@ -803,7 +940,12 @@ private actor SnapshotRecoveryResponder {
             payload: try jsonValue(serverSleep(fixture: fixture, revision: 1, endedAt: nil))
           )
         ],
-        events: [], nextCursor: 1, hasMore: false, serverTime: date(2_200),
+        events: [SyncEvent(
+          cursor: 1, entityType: "sleepSession", entityID: fixture.sessionID,
+          operation: "upsert", revision: 1,
+          payload: try jsonValue(serverSleep(fixture: fixture, revision: 1, endedAt: nil)),
+          createdAt: date(2_200)
+        )], nextCursor: 1, hasMore: false, serverTime: date(2_200),
         generation: "generation-after-restore"
       )
     }

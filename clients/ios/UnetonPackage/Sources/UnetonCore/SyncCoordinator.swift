@@ -10,7 +10,11 @@ public actor SyncCoordinator {
 
   private let deviceID: UUID
   private let accessToken: @Sendable () -> String?
-  private var synchronizationTasks: [Family.ID: Task<SleepForecast?, Error>] = [:]
+  private struct SynchronizationFlight {
+    let id: UUID
+    let task: Task<SleepForecast?, Error>
+  }
+  private var synchronizationTasks: [Family.ID: SynchronizationFlight] = [:]
 
   public init(deviceID: UUID, accessToken: @escaping @Sendable () -> String?) {
     self.deviceID = deviceID
@@ -194,19 +198,37 @@ public actor SyncCoordinator {
   }
 
   public func synchronize(familyID: Family.ID) async throws -> SleepForecast? {
-    if let task = synchronizationTasks[familyID] {
-      return try await task.value
+    let flight: SynchronizationFlight
+    if let existing = synchronizationTasks[familyID] {
+      flight = existing
+    } else {
+      flight = SynchronizationFlight(
+        id: UUID(),
+        task: Task { try await self.performSynchronization(familyID: familyID) }
+      )
+      synchronizationTasks[familyID] = flight
     }
-    let task = Task { try await self.performSynchronization(familyID: familyID) }
-    synchronizationTasks[familyID] = task
+    let forecast: SleepForecast?
     do {
-      let forecast = try await task.value
-      synchronizationTasks[familyID] = nil
-      return forecast
+      forecast = try await flight.task.value
     } catch {
-      synchronizationTasks[familyID] = nil
+      if synchronizationTasks[familyID]?.id == flight.id {
+        synchronizationTasks[familyID] = nil
+      }
       throw error
     }
+    if synchronizationTasks[familyID]?.id == flight.id {
+      synchronizationTasks[familyID] = nil
+    }
+    // A command can arrive after the flight's final outbox read. A caller joining
+    // that flight must not report success while its newly queued intent is unsent.
+    let hasPending = try await database.read { database in
+      try PendingCommand.where { $0.familyID.eq(familyID) }.fetchCount(database) > 0
+    }
+    if hasPending {
+      return try await synchronize(familyID: familyID)
+    }
+    return forecast
   }
 
   public func cursor(familyID: Family.ID) async throws -> Int64 {
@@ -243,7 +265,7 @@ public actor SyncCoordinator {
         token,
         SyncRequest(cursor: snapshot.0, generation: snapshot.1, deviceID: deviceID, commands: commands)
       )
-      try Self.validate(response, after: snapshot.0, generation: snapshot.1, commandIDs: Set(commands.map(\.id)))
+      try Self.validate(response, for: familyID, after: snapshot.0, generation: snapshot.1, commands: commands)
       try await apply(response, familyID: familyID)
       forecast = response.sleepForecast ?? response.nextSleepEstimate.map {
         SleepForecast(nextSleepEstimate: $0)
@@ -255,7 +277,8 @@ public actor SyncCoordinator {
         let hasPending = try await database.read { database in
           try PendingCommand.where { $0.familyID.eq(familyID) }.fetchCount(database) > 0
         }
-        shouldContinue = hasPending && commandPasses < 100
+        if hasPending && commandPasses >= 100 { throw SyncError.incompleteSynchronization }
+        shouldContinue = hasPending
         includeCommands = shouldContinue
       }
     }
@@ -385,11 +408,12 @@ public actor SyncCoordinator {
 
   private nonisolated static func validate(
     _ response: SyncResponse,
+    for familyID: Family.ID,
     after cursor: Int64,
     generation: String,
-    commandIDs: Set<UUID>
+    commands: [APICommand]
   ) throws {
-    guard !response.generation.isEmpty else { throw SyncError.invalidServerPayload }
+    guard !response.generation.isEmpty, response.nextCursor >= 0 else { throw SyncError.invalidServerPayload }
     if response.resetRequired {
       guard response.snapshot != nil, response.commandResults.isEmpty, !response.hasMore else {
         throw SyncError.invalidServerPayload
@@ -401,23 +425,85 @@ public actor SyncCoordinator {
     }
     guard !response.hasMore || !response.events.isEmpty else { throw SyncError.invalidServerPayload }
     if let snapshot = response.snapshot {
-      guard snapshot.cursor <= response.nextCursor else { throw SyncError.invalidServerPayload }
+      guard snapshot.cursor >= 0, snapshot.cursor <= response.nextCursor,
+            response.resetRequired || snapshot.cursor >= cursor else { throw SyncError.invalidServerPayload }
+      var identities = Set<String>()
+      for entity in snapshot.entities {
+        let identity = "\(entity.entityType):\(entity.entityID.uuidString)"
+        guard identities.insert(identity).inserted,
+              validEntity(entity.entityType, id: entity.entityID, revision: entity.revision, payload: entity.payload, familyID: familyID)
+        else { throw SyncError.invalidServerPayload }
+      }
     }
     var previous = response.snapshot?.cursor ?? cursor
     for event in response.events {
-      guard event.cursor > previous, event.cursor <= response.nextCursor else {
+      guard event.cursor > previous, event.cursor <= response.nextCursor,
+            event.operation == "upsert" || event.operation == "delete",
+            validEntity(event.entityType, id: event.entityID, revision: event.revision, payload: event.payload, familyID: familyID) else {
         throw SyncError.invalidServerPayload
       }
       previous = event.cursor
     }
+    guard response.nextCursor == previous,
+          !response.hasMore || response.nextCursor > cursor else {
+      throw SyncError.invalidServerPayload
+    }
+    let commandByID = Dictionary(uniqueKeysWithValues: commands.map { ($0.id, $0) })
     var resultIDs = Set<UUID>()
     for result in response.commandResults {
-      guard commandIDs.contains(result.id), resultIDs.insert(result.id).inserted else {
+      guard let command = commandByID[result.id], resultIDs.insert(result.id).inserted,
+            result.status == "accepted" || result.status == "rejected" else {
         throw SyncError.invalidServerPayload
       }
+      if let payload = result.payload {
+        guard let type = entityType(for: command.kind),
+              case let .object(commandObject) = command.payload,
+              case let .string(commandIDValue)? = commandObject["id"],
+              let commandEntityID = UUID(uuidString: commandIDValue),
+              case let .object(resultObject) = payload,
+              case let .number(revisionValue)? = resultObject["revision"],
+              let revision = Int(exactly: revisionValue),
+              validEntity(
+                type, id: result.entityID ?? commandEntityID, revision: revision,
+                payload: payload, familyID: familyID
+              ) else { throw SyncError.invalidServerPayload }
+      }
     }
-    if !response.resetRequired, resultIDs != commandIDs {
+    if !response.resetRequired, resultIDs != Set(commandByID.keys) {
       throw SyncError.invalidServerPayload
+    }
+  }
+
+  private nonisolated static func entityType(for kind: String) -> String? {
+    switch kind {
+    case "createChild", "updateChild", "updatePredictionSettings": "child"
+    case "startSleep", "endSleep", "upsertSleep", "deleteSleep": "sleepSession"
+    case "upsertGrowthMeasurement", "deleteGrowthMeasurement": "growthMeasurement"
+    default: nil
+    }
+  }
+
+  private nonisolated static func validEntity(
+    _ type: String,
+    id: UUID,
+    revision: Int,
+    payload: JSONValue,
+    familyID: Family.ID
+  ) -> Bool {
+    guard revision > 0 else { return false }
+    guard let data = try? JSONEncoder.uneton.encode(payload) else { return false }
+    switch type {
+    case "child":
+      guard let child = try? JSONDecoder.uneton.decode(ServerChildPayload.self, from: data) else { return false }
+      return child.id == id && child.revision == revision
+    case "sleepSession":
+      guard let sleep = try? JSONDecoder.uneton.decode(ServerSleepPayload.self, from: data) else { return false }
+      return sleep.id == id && sleep.familyID == familyID && sleep.revision == revision
+    case "growthMeasurement":
+      guard let measurement = try? JSONDecoder.uneton.decode(ServerGrowthMeasurementPayload.self, from: data) else { return false }
+      return measurement.id == id && measurement.familyID == familyID && measurement.revision == revision
+    default:
+      return false
     }
   }
 
@@ -564,7 +650,7 @@ public actor SyncCoordinator {
     guard case let .object(object) = try JSONDecoder.uneton.decode(JSONValue.self, from: data),
           case let .number(value)? = object["revision"]
     else { return nil }
-    return Int(value)
+    return Int(exactly: value)
   }
 
   private func pendingCommand(
@@ -620,6 +706,7 @@ public enum SyncError: Error, Equatable {
   case missingGrowthMeasurement
   case missingChild
   case invalidGrowthReference
+  case incompleteSynchronization
 }
 
 struct ChildCommandPayload: Codable {
