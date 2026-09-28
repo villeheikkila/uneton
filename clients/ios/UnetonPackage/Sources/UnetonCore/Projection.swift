@@ -158,7 +158,7 @@ enum Projection {
       session.pendingCommandID = command.id
       try SleepSession.upsert { session }.execute(database)
     case "deleteSleep":
-      let payload = try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: command.payloadJSON)
+      let payload = try JSONDecoder.uneton.decode(DeleteCommandPayload<SleepSession.ID>.self, from: command.payloadJSON)
       try SleepSession.find(payload.id).delete().execute(database)
     case "upsertGrowthMeasurement":
       let payload = try JSONDecoder.uneton.decode(GrowthMeasurementCommandPayload.self, from: command.payloadJSON)
@@ -173,7 +173,7 @@ enum Projection {
         )
       }.execute(database)
     case "deleteGrowthMeasurement":
-      let payload = try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: command.payloadJSON)
+      let payload = try JSONDecoder.uneton.decode(DeleteCommandPayload<GrowthMeasurement.ID>.self, from: command.payloadJSON)
       try GrowthMeasurement.find(payload.id).delete().execute(database)
     case "upsertTemperatureReading":
       let payload = try JSONDecoder.uneton.decode(TemperatureReadingCommandPayload.self, from: command.payloadJSON)
@@ -184,7 +184,7 @@ enum Projection {
           revision: current?.revision ?? 0, updatedAt: command.createdAt, pendingCommandID: command.id)
       }.execute(database)
     case "deleteTemperatureReading":
-      let payload = try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: command.payloadJSON)
+      let payload = try JSONDecoder.uneton.decode(DeleteCommandPayload<TemperatureReading.ID>.self, from: command.payloadJSON)
       try TemperatureReading.find(payload.id).delete().execute(database)
     default:
       break

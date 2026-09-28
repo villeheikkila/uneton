@@ -1,11 +1,12 @@
 import ComposableArchitecture2
 import Foundation
+import UnetonCore
 
 struct SessionSyncClient: Sendable {
     var handleURL: @MainActor @Sendable (URL) async -> Void
     var isAuthenticated: @MainActor @Sendable () -> Bool
-    var observe: @MainActor @Sendable (UUID) async -> Void
-    var refresh: @MainActor @Sendable (UUID) async -> Void
+    var observe: @MainActor @Sendable (Family.ID) async -> Void
+    var refresh: @MainActor @Sendable (Family.ID) async -> Void
     var validateCredential: @MainActor @Sendable () async -> Void
 
     @MainActor

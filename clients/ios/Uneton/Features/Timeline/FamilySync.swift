@@ -5,7 +5,7 @@ import UnetonCore
 @Feature
 struct FamilySync {
     struct State {
-        let familyID: UUID
+        let familyID: Family.ID
         var entry: SleepEntry.State?
         var errorMessage: String?
         var growthEntry: GrowthEntry.State?
@@ -21,23 +21,23 @@ struct FamilySync {
     }
 
     enum Action {
-        case endSleepButtonTapped(UUID)
+        case endSleepButtonTapped(SleepSession.ID)
         case entry(SleepEntry.Action)
         case familyButtonTapped(Bool, Bool, Int)
         case foregroundChanged(Bool)
         case conflictListButtonTapped
         case growthEntry(GrowthEntry.Action)
         case temperatureEntry(TemperatureEntry.Action)
-        case temperatureReadingSelected(UUID, UUID, Date, Int, String)
-        case newTemperatureReadingButtonTapped(UUID)
-        case growthMeasurementSelected(UUID, UUID, Date, Int?, Int?, String)
-        case growthReferenceChanged(UUID, String)
-        case newGrowthMeasurementButtonTapped(UUID)
-        case newSleepButtonTapped(UUID, String)
+        case temperatureReadingSelected(Child.ID, TemperatureReading.ID, Date, Int, String)
+        case newTemperatureReadingButtonTapped(Child.ID)
+        case growthMeasurementSelected(Child.ID, GrowthMeasurement.ID, Date, Int?, Int?, String)
+        case growthReferenceChanged(Child.ID, String)
+        case newGrowthMeasurementButtonTapped(Child.ID)
+        case newSleepButtonTapped(Child.ID, String)
         case refreshRequested
-        case resolveConflictButtonTapped(UUID, SyncConflictResolution)
+        case resolveConflictButtonTapped(SyncConflict.ID, SyncConflictResolution)
         case sharing(FamilySharing.Action)
-        case sleepSelected(UUID, String, UUID, Date, Date?)
+        case sleepSelected(Child.ID, String, SleepSession.ID, Date, Date?)
     }
 
     @FeatureEnvironment(\.sessionSync) private var sessionSync

@@ -1,8 +1,9 @@
 import ComposableArchitecture2
 import Foundation
+import UnetonCore
 
 struct SessionSharingClient: Sendable {
-    var createInvite: @MainActor @Sendable (UUID) async -> (URL?, String?)
+    var createInvite: @MainActor @Sendable (Family.ID) async -> (URL?, String?)
     var deleteAccount: @MainActor @Sendable () async -> (Bool, String?)
     var setLiveActivitiesEnabled: @MainActor @Sendable (Bool) async -> Void
     var setNotificationsEnabled: @MainActor @Sendable (Bool) async -> Void

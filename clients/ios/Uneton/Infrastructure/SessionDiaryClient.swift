@@ -3,15 +3,15 @@ import Foundation
 import UnetonCore
 
 struct SessionDiaryClient: Sendable {
-    var deleteGrowth: @MainActor @Sendable (UUID, UUID) async -> String?
-    var deleteTemperature: @MainActor @Sendable (UUID, UUID) async -> String?
-    var endSleep: @MainActor @Sendable (UUID, UUID) async -> String?
-    var logGrowth: @MainActor @Sendable (UUID, UUID, UUID?, Date, Int?, Int?, String) async -> String?
-    var logTemperature: @MainActor @Sendable (UUID, UUID, UUID?, Date, Int, String) async -> String?
-    var logSleep: @MainActor @Sendable (UUID, UUID, UUID?, Date, Date?) async -> String?
-    var resolveConflict: @MainActor @Sendable (UUID, UUID, SyncConflictResolution) async -> String?
-    var setGrowthReference: @MainActor @Sendable (UUID, UUID, String) async -> String?
-    var startSleep: @MainActor @Sendable (UUID, UUID, String, Date) async -> String?
+    var deleteGrowth: @MainActor @Sendable (Family.ID, GrowthMeasurement.ID) async -> String?
+    var deleteTemperature: @MainActor @Sendable (Family.ID, TemperatureReading.ID) async -> String?
+    var endSleep: @MainActor @Sendable (Family.ID, SleepSession.ID) async -> String?
+    var logGrowth: @MainActor @Sendable (Family.ID, Child.ID, GrowthMeasurement.ID?, Date, Int?, Int?, String) async -> String?
+    var logTemperature: @MainActor @Sendable (Family.ID, Child.ID, TemperatureReading.ID?, Date, Int, String) async -> String?
+    var logSleep: @MainActor @Sendable (Family.ID, Child.ID, SleepSession.ID?, Date, Date?) async -> String?
+    var resolveConflict: @MainActor @Sendable (Family.ID, SyncConflict.ID, SyncConflictResolution) async -> String?
+    var setGrowthReference: @MainActor @Sendable (Family.ID, Child.ID, String) async -> String?
+    var startSleep: @MainActor @Sendable (Family.ID, Child.ID, String, Date) async -> String?
 
     @MainActor
     static func live(session: SessionStore) -> Self {

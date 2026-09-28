@@ -33,8 +33,8 @@ final class DemoRuntime {
         SessionFamilyClient(
             createChildFamily: { [self] name, birthDate, reference in
                 await result {
-                    let family = Family(id: uuid(), name: "Our family", role: "owner", updatedAt: now)
-                    let child = Child(id: uuid(), familyID: family.id, nickname: name,
+                    let family = Family(id: Family.ID(rawValue: uuid()), name: "Our family", role: "owner", updatedAt: now)
+                    let child = Child(id: Child.ID(rawValue: uuid()), familyID: family.id, nickname: name,
                                       birthDate: birthDate, growthReference: reference,
                                       revision: 1, updatedAt: now)
                     try await database.write { db in
@@ -81,7 +81,7 @@ final class DemoRuntime {
                     let revision = try await database.read { db in
                         try id.flatMap { try GrowthMeasurement.find($0).fetchOne(db) }?.revision ?? 0
                     }
-                    let record = GrowthMeasurement(id: id ?? uuid(), familyID: familyID, childID: childID,
+                    let record = GrowthMeasurement(id: id ?? GrowthMeasurement.ID(rawValue: uuid()), familyID: familyID, childID: childID,
                         measuredAt: measuredAt, weightGrams: grams, heightMillimeters: millimeters,
                         note: note, revision: revision + 1, updatedAt: now)
                     try await database.write { db in try GrowthMeasurement.upsert { record }.execute(db) }
@@ -92,7 +92,7 @@ final class DemoRuntime {
                     let revision = try await database.read { db in
                         try id.flatMap { try TemperatureReading.find($0).fetchOne(db) }?.revision ?? 0
                     }
-                    let record = TemperatureReading(id: id ?? uuid(), familyID: familyID, childID: childID,
+                    let record = TemperatureReading(id: id ?? TemperatureReading.ID(rawValue: uuid()), familyID: familyID, childID: childID,
                         measuredAt: measuredAt, centiCelsius: centiCelsius, note: note,
                         revision: revision + 1, updatedAt: now)
                     try await database.write { db in try TemperatureReading.upsert { record }.execute(db) }
@@ -103,7 +103,7 @@ final class DemoRuntime {
                     let revision = try await database.read { db in
                         try id.flatMap { try SleepSession.find($0).fetchOne(db) }?.revision ?? 0
                     }
-                    let record = SleepSession(id: id ?? uuid(), familyID: familyID, childID: childID,
+                    let record = SleepSession(id: id ?? SleepSession.ID(rawValue: uuid()), familyID: familyID, childID: childID,
                         startedAt: startedAt, endedAt: endedAt, revision: revision + 1,
                         updatedAt: now)
                     try await database.write { db in try SleepSession.upsert { record }.execute(db) }

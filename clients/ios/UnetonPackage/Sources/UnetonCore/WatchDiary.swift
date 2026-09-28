@@ -1,4 +1,5 @@
 import Foundation
+import Tagged
 
 public enum TemperatureValue {
   public static func centiCelsius(from text: String) -> Int? {
@@ -24,17 +25,17 @@ public enum WatchDiaryAction: String, Codable, Sendable {
 
 public struct WatchDiaryRequest: Codable, Sendable {
   public var action: WatchDiaryAction
-  public var familyID: UUID?
-  public var childID: UUID?
-  public var readingID: UUID?
+  public var familyID: Family.ID?
+  public var childID: Child.ID?
+  public var readingID: TemperatureReading.ID?
   public var expectedRevision: Int?
   public var isNewReading: Bool
   public var measuredAt: Date?
   public var centiCelsius: Int?
   public var note: String
 
-  public init(action: WatchDiaryAction, familyID: UUID? = nil, childID: UUID? = nil,
-              readingID: UUID? = nil, expectedRevision: Int? = nil, isNewReading: Bool = false,
+  public init(action: WatchDiaryAction, familyID: Family.ID? = nil, childID: Child.ID? = nil,
+              readingID: TemperatureReading.ID? = nil, expectedRevision: Int? = nil, isNewReading: Bool = false,
               measuredAt: Date? = nil, centiCelsius: Int? = nil, note: String = "") {
     self.action = action
     self.familyID = familyID
@@ -63,14 +64,15 @@ public struct WatchDiaryRequest: Codable, Sendable {
 }
 
 public struct WatchDiaryReading: Codable, Equatable, Identifiable, Sendable {
-  public var id: UUID
+  public typealias ID = TemperatureReading.ID
+  public var id: ID
   public var measuredAt: Date
   public var centiCelsius: Int
   public var note: String
   public var revision: Int
   public var isPending: Bool
 
-  public init(id: UUID, measuredAt: Date, centiCelsius: Int, note: String, revision: Int, isPending: Bool) {
+  public init(id: ID, measuredAt: Date, centiCelsius: Int, note: String, revision: Int, isPending: Bool) {
     self.id = id
     self.measuredAt = measuredAt
     self.centiCelsius = centiCelsius
@@ -81,14 +83,15 @@ public struct WatchDiaryReading: Codable, Equatable, Identifiable, Sendable {
 }
 
 public struct WatchDiaryChild: Codable, Equatable, Identifiable, Sendable {
-  public var id: UUID
-  public var familyID: UUID
+  public typealias ID = Child.ID
+  public var id: ID
+  public var familyID: Family.ID
   public var familyName: String
   public var nickname: String
   public var activeSleepStartedAt: Date?
   public var readings: [WatchDiaryReading]
 
-  public init(id: UUID, familyID: UUID, familyName: String, nickname: String,
+  public init(id: ID, familyID: Family.ID, familyName: String, nickname: String,
               activeSleepStartedAt: Date?, readings: [WatchDiaryReading]) {
     self.id = id
     self.familyID = familyID
@@ -104,7 +107,7 @@ public struct WatchDiarySnapshot: Codable, Equatable, Sendable {
 
   public init(children: [WatchDiaryChild] = []) { self.children = children }
 
-  public func selectedChild(id: UUID?) -> WatchDiaryChild? {
+  public func selectedChild(id: Child.ID?) -> WatchDiaryChild? {
     children.first { $0.id == id } ?? children.first
   }
 }

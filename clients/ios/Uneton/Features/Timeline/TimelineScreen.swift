@@ -631,7 +631,7 @@ private struct GrowthReferenceCharts: View {
 
 private struct GrowthReferenceChart: View {
     private struct MeasurementPoint: Identifiable {
-        let id: UUID
+        let id: GrowthMeasurement.ID
         let ageMonths: Double
         let value: Double
     }

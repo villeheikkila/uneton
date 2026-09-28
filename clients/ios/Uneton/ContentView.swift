@@ -5,7 +5,7 @@ import SwiftUI
 
 struct ContentView: View {
     private struct Selection: Equatable {
-        let familyID: UUID?
+        let familyID: Family.ID?
         let isAuthenticated: Bool
     }
 

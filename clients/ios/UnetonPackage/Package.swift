@@ -11,6 +11,7 @@ let package = Package(
   ],
   products: [
     .library(name: "UnetonCore", targets: ["UnetonCore"]),
+    .library(name: "UnetonIdentity", targets: ["UnetonIdentity"]),
     .library(name: "UnetonActivity", targets: ["UnetonActivity"]),
     .library(name: "UnetonAPI", targets: ["UnetonAPI"]),
   ],
@@ -20,8 +21,13 @@ let package = Package(
     .package(url: "https://github.com/pointfreeco/sqlite-data", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.0.0"),
     .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.0.0"),
+    .package(url: "https://github.com/pointfreeco/swift-tagged", from: "0.10.0"),
   ],
   targets: [
+    .target(
+      name: "UnetonIdentity",
+      dependencies: [.product(name: "Tagged", package: "swift-tagged")]
+    ),
     .target(
       name: "UnetonAPI",
       dependencies: [
@@ -33,11 +39,13 @@ let package = Package(
       name: "UnetonCore",
       dependencies: [
         "UnetonAPI",
+        "UnetonIdentity",
         .product(name: "SQLiteData", package: "sqlite-data"),
         .product(name: "Dependencies", package: "swift-dependencies"),
+        .product(name: "Tagged", package: "swift-tagged"),
       ]
     ),
-    .target(name: "UnetonActivity"),
+    .target(name: "UnetonActivity", dependencies: ["UnetonIdentity"]),
     .testTarget(
       name: "UnetonCoreTests",
       dependencies: [

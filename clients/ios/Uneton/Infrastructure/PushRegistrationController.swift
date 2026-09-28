@@ -2,6 +2,7 @@ import BackgroundTasks
 import Foundation
 import UIKit
 import UserNotifications
+import UnetonCore
 
 extension Notification.Name {
     static let unetonAPNSTokenChanged = Notification.Name("unetonAPNSTokenChanged")
@@ -44,7 +45,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         didReceiveRemoteNotification userInfo: [AnyHashable: Any],
         fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
     ) {
-        guard let value = userInfo["familyID"] as? String, let familyID = UUID(uuidString: value) else {
+        guard let value = userInfo["familyID"] as? String, let familyID = Family.ID(uuidString: value) else {
             completionHandler(.noData)
             return
         }
@@ -80,18 +81,18 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
 @MainActor
 enum PushRegistrationController {
-    private static var familyRefresh: ((UUID) async -> Bool)?
+    private static var familyRefresh: ((Family.ID) async -> Bool)?
     private static var allRefresh: (() async -> Bool)?
 
     static func installBackgroundRefresh(
-        family: @escaping (UUID) async -> Bool,
+        family: @escaping (Family.ID) async -> Bool,
         all: @escaping () async -> Bool
     ) {
         familyRefresh = family
         allRefresh = all
     }
 
-    static func refresh(familyID: UUID) async -> Bool {
+    static func refresh(familyID: Family.ID) async -> Bool {
         await familyRefresh?(familyID) ?? false
     }
 

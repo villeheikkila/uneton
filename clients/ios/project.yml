@@ -15,6 +15,9 @@ packages:
   SnapshotTesting:
     url: https://github.com/pointfreeco/swift-snapshot-testing.git
     revision: 59a99c458de4d2dee580529b61b4f78dca7b7fa6
+  Tagged:
+    url: https://github.com/pointfreeco/swift-tagged.git
+    version: 0.10.0
 settings:
   base:
     DEVELOPMENT_TEAM: J9S7QG9SVR
@@ -140,6 +143,8 @@ targets:
       - target: Uneton
       - package: UnetonPackage
         product: UnetonActivity
+      - package: Tagged
+        product: Tagged
       - package: TCA26
         product: ComposableArchitectureTestSupport
       - package: SnapshotTesting

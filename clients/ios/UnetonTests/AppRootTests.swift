@@ -2,13 +2,14 @@ import ComposableArchitecture2
 import ComposableArchitectureTestSupport
 import Foundation
 import Testing
+import UnetonCore
 @testable import Uneton
 
 @MainActor
 struct AppRootTests {
     @Test func `selection follows authentication and family changes`() async {
-        let firstFamily = UUID(uuidString: "00000000-0000-4000-8000-000000000001")!
-        let secondFamily = UUID(uuidString: "00000000-0000-4000-8000-000000000002")!
+        let firstFamily = Family.ID(uuidString: "00000000-0000-4000-8000-000000000001")!
+        let secondFamily = Family.ID(uuidString: "00000000-0000-4000-8000-000000000002")!
         let store = TestStore(initialState: AppRoot.State(isAuthenticated: true)) {
             AppRoot()
         }
@@ -28,7 +29,7 @@ struct AppRootTests {
     }
 
     @Test func `foreground observation ends when the scene backgrounds`() async {
-        let familyID = UUID(uuidString: "00000000-0000-4000-8000-000000000003")!
+        let familyID = Family.ID(uuidString: "00000000-0000-4000-8000-000000000003")!
         var client = SessionSyncClient.unimplemented
         client.observe = { _ in
             try? await Task.sleep(for: .seconds(3600))
@@ -65,8 +66,8 @@ struct AppRootTests {
     }
 
     @Test func `invalid sleep interval never enters the command queue`() async {
-        let familyID = UUID(uuidString: "00000000-0000-4000-8000-000000000004")!
-        let childID = UUID(uuidString: "00000000-0000-4000-8000-000000000005")!
+        let familyID = Family.ID(uuidString: "00000000-0000-4000-8000-000000000004")!
+        let childID = Child.ID(uuidString: "00000000-0000-4000-8000-000000000005")!
         var state = SleepEntry.State(familyID: familyID, childID: childID, childName: "Child")
         state.usesCustomStart = true
         state.hasEnd = true

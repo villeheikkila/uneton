@@ -18,9 +18,9 @@ struct SyncCoordinatorTests {
   @Dependency(\.defaultDatabase) var database
 
   @Test func synchronizationReturnsTheServerForecast() async throws {
-    let familyID = UUID(-1)
-    let childID = UUID(-2)
-    let activeSleepID = UUID(-3)
+    let familyID = Family.ID(rawValue: UUID(-1))
+    let childID = Child.ID(rawValue: UUID(-2))
+    let activeSleepID = SleepSession.ID(rawValue: UUID(-3))
     try await seedFamilyAndChild(familyID: familyID, childID: childID)
     let wake = SleepPrediction(
       targetAt: date(11_000), rangeStartAt: date(10_700), rangeEndAt: date(11_300),
@@ -47,7 +47,7 @@ struct SyncCoordinatorTests {
     let actual = try await withDependencies {
       $0.apiClient = api
     } operation: {
-      try await SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      try await SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
         .synchronize(familyID: familyID)
     }
 
@@ -57,7 +57,7 @@ struct SyncCoordinatorTests {
   @Test func authoritativeBaseReplaysPendingOverlay() async throws {
     let fixture = try await seedAuthoritativeSession(revision: 2, endedAt: date(3_600))
     let command = PendingCommand(
-      id: UUID(10),
+      id: PendingCommand.ID(rawValue: UUID(10)),
       familyID: fixture.familyID,
       kind: "upsertSleep",
       expectedRevision: 2,
@@ -87,10 +87,10 @@ struct SyncCoordinatorTests {
         startedAt: date(300),
         endedAt: date(3_900),
         revision: 2,
-        authorID: UUID(-4),
+        authorID: UserID(rawValue: UUID(-4)),
         source: "manual",
         updatedAt: date(5_000),
-        pendingCommandID: UUID(10)
+        pendingCommandID: PendingCommand.ID(rawValue: UUID(10))
       )
     )
   }
@@ -106,7 +106,7 @@ struct SyncCoordinatorTests {
             id: command.id,
             status: "rejected",
             error: "stale revision",
-            entityID: fixture.sessionID,
+            entityID: EntityID(rawValue: fixture.sessionID.rawValue),
             payload: try jsonValue(serverSleep(fixture: fixture, revision: 3, endedAt: date(3_600)))
           )
         ],
@@ -120,7 +120,7 @@ struct SyncCoordinatorTests {
     try await withDependencies {
       $0.apiClient = api
     } operation: {
-      let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
       try await coordinator.upsertSleep(
         familyID: fixture.familyID,
         childID: fixture.childID,
@@ -146,9 +146,9 @@ struct SyncCoordinatorTests {
   }
 
   @Test func growthMeasurementReplaysPendingOverlay() async throws {
-    let familyID = UUID(-21)
-    let childID = UUID(-22)
-    let measurementID = UUID(-23)
+    let familyID = Family.ID(rawValue: UUID(-21))
+    let childID = Child.ID(rawValue: UUID(-22))
+    let measurementID = GrowthMeasurement.ID(rawValue: UUID(-23))
     try await seedFamilyAndChild(familyID: familyID, childID: childID)
     let authoritative = ServerGrowthMeasurementPayload(
       id: measurementID, familyID: familyID, childID: childID, measuredAt: date(1_000),
@@ -165,13 +165,13 @@ struct SyncCoordinatorTests {
       try AuthoritativeRecord.insert {
         AuthoritativeRecord(
           id: "growthMeasurement:\(measurementID)", familyID: familyID,
-          entityType: "growthMeasurement", entityID: measurementID, revision: 2,
+          entityType: "growthMeasurement", entityID: EntityID(rawValue: measurementID.rawValue), revision: 2,
           operation: "upsert", payloadJSON: authoritativeJSON
         )
       }.execute(database)
       try PendingCommand.insert {
         PendingCommand(
-          id: UUID(-24), familyID: familyID, kind: "upsertGrowthMeasurement",
+          id: PendingCommand.ID(rawValue: UUID(-24)), familyID: familyID, kind: "upsertGrowthMeasurement",
           expectedRevision: 2, payloadJSON: pendingJSON,
           createdAt: date(3_000)
         )
@@ -185,15 +185,15 @@ struct SyncCoordinatorTests {
     #expect(projected?.heightMillimeters == 630)
     #expect(projected?.note == "Home")
     #expect(projected?.revision == 2)
-    #expect(projected?.pendingCommandID == UUID(-24))
+    #expect(projected?.pendingCommandID == PendingCommand.ID(rawValue: UUID(-24)))
   }
 
   @Test func growthReferenceReplaysPendingChildUpdate() async throws {
-    let familyID = UUID(-61)
-    let childID = UUID(-62)
+    let familyID = Family.ID(rawValue: UUID(-61))
+    let childID = Child.ID(rawValue: UUID(-62))
     try await seedFamilyAndChild(familyID: familyID, childID: childID)
 
-    try await SyncCoordinator(deviceID: UUID(-63), accessToken: { "token" })
+    try await SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-63)), accessToken: { "token" })
       .updateGrowthReference(familyID: familyID, childID: childID, growthReference: "girl")
 
     let child = try await database.read { database in try Child.find(childID).fetchOne(database) }
@@ -206,9 +206,9 @@ struct SyncCoordinatorTests {
   }
 
   @Test func temperatureReadingReplaysPendingOverlay() async throws {
-    let familyID = UUID(-71)
-    let childID = UUID(-72)
-    let readingID = UUID(-73)
+    let familyID = Family.ID(rawValue: UUID(-71))
+    let childID = Child.ID(rawValue: UUID(-72))
+    let readingID = TemperatureReading.ID(rawValue: UUID(-73))
     try await seedFamilyAndChild(familyID: familyID, childID: childID)
     let authoritative = ServerTemperatureReadingPayload(id: readingID, familyID: familyID,
       childID: childID, measuredAt: date(1_000), centiCelsius: 3810,
@@ -220,11 +220,11 @@ struct SyncCoordinatorTests {
     try await database.write { database in
       try AuthoritativeRecord.insert {
         AuthoritativeRecord(id: "temperatureReading:\(readingID)", familyID: familyID,
-          entityType: "temperatureReading", entityID: readingID, revision: 2,
+          entityType: "temperatureReading", entityID: EntityID(rawValue: readingID.rawValue), revision: 2,
           operation: "upsert", payloadJSON: authoritativeJSON)
       }.execute(database)
       try PendingCommand.insert {
-        PendingCommand(id: UUID(-74), familyID: familyID, kind: "upsertTemperatureReading",
+        PendingCommand(id: PendingCommand.ID(rawValue: UUID(-74)), familyID: familyID, kind: "upsertTemperatureReading",
           expectedRevision: 2, payloadJSON: pendingJSON, createdAt: date(3_000))
       }.execute(database)
       try Projection.rebuild(familyID: familyID, database: database)
@@ -233,14 +233,14 @@ struct SyncCoordinatorTests {
     #expect(projected?.centiCelsius == 3875)
     #expect(projected?.note == "Evening")
     #expect(projected?.revision == 2)
-    #expect(projected?.pendingCommandID == UUID(-74))
+    #expect(projected?.pendingCommandID == PendingCommand.ID(rawValue: UUID(-74)))
   }
 
   @Test func temperatureEditsQueueSequentialRevisionsWhileOffline() async throws {
-    let familyID = UUID(-75)
-    let childID = UUID(-76)
+    let familyID = Family.ID(rawValue: UUID(-75))
+    let childID = Child.ID(rawValue: UUID(-76))
     try await seedFamilyAndChild(familyID: familyID, childID: childID)
-    let coordinator = SyncCoordinator(deviceID: UUID(-77), accessToken: { "token" })
+    let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-77)), accessToken: { "token" })
     try await coordinator.upsertTemperatureReading(familyID: familyID, childID: childID,
       measuredAt: date(1_000), centiCelsius: 3800)
     let reading = try #require(await database.read { try TemperatureReading.fetchAll($0).first })
@@ -254,9 +254,9 @@ struct SyncCoordinatorTests {
   }
 
   @Test func watchTemperatureEditKeepsTheRevisionTheUserSaw() async throws {
-    let familyID = UUID(-78)
-    let childID = UUID(-79)
-    let readingID = UUID(-80)
+    let familyID = Family.ID(rawValue: UUID(-78))
+    let childID = Child.ID(rawValue: UUID(-79))
+    let readingID = TemperatureReading.ID(rawValue: UUID(-80))
     try await seedFamilyAndChild(familyID: familyID, childID: childID)
     let authoritative = ServerTemperatureReadingPayload(id: readingID, familyID: familyID,
       childID: childID, measuredAt: date(1_000), centiCelsius: 3810,
@@ -265,12 +265,12 @@ struct SyncCoordinatorTests {
     try await database.write { database in
       try AuthoritativeRecord.insert {
         AuthoritativeRecord(id: "temperatureReading:\(readingID)", familyID: familyID,
-          entityType: "temperatureReading", entityID: readingID, revision: 3,
+          entityType: "temperatureReading", entityID: EntityID(rawValue: readingID.rawValue), revision: 3,
           operation: "upsert", payloadJSON: authoritativeJSON)
       }.execute(database)
       try Projection.rebuild(familyID: familyID, database: database)
     }
-    try await SyncCoordinator(deviceID: UUID(-81), accessToken: { "token" })
+    try await SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-81)), accessToken: { "token" })
       .upsertTemperatureReading(familyID: familyID, childID: childID, readingID: readingID,
         measuredAt: date(2_000), centiCelsius: 3890, expectedRevision: 2)
     let pending = try await database.read { try PendingCommand.where { $0.familyID.eq(familyID) }.fetchOne($0) }
@@ -278,8 +278,8 @@ struct SyncCoordinatorTests {
   }
 
   @Test func acceptedGrowthReferenceUpdatePersistsServerValue() async throws {
-    let familyID = UUID(-67)
-    let childID = UUID(-68)
+    let familyID = Family.ID(rawValue: UUID(-67))
+    let childID = Child.ID(rawValue: UUID(-68))
     try await seedFamilyAndChild(familyID: familyID, childID: childID)
     var api = APIClient.testValue
     api.sync = { _, _, request in
@@ -302,7 +302,7 @@ struct SyncCoordinatorTests {
           APICommandResult(
             id: command.id,
             status: "accepted",
-            entityID: childID,
+            entityID: EntityID(rawValue: childID.rawValue),
             payload: try jsonValue(child)
           )
         ],
@@ -314,7 +314,7 @@ struct SyncCoordinatorTests {
     }
 
     try await withDependencies { $0.apiClient = api } operation: {
-      let coordinator = SyncCoordinator(deviceID: UUID(-69), accessToken: { "token" })
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-69)), accessToken: { "token" })
       try await coordinator.updateGrowthReference(
         familyID: familyID,
         childID: childID,
@@ -329,8 +329,8 @@ struct SyncCoordinatorTests {
   }
 
   @Test func growthReferenceBootstrapIsCachedOffline() async throws {
-    let familyID = UUID(-64)
-    let childID = UUID(-65)
+    let familyID = Family.ID(rawValue: UUID(-64))
+    let childID = Child.ID(rawValue: UUID(-65))
     try await seedFamilyAndChild(familyID: familyID, childID: childID)
     var api = APIClient.testValue
     api.sync = { _, _, request in
@@ -343,20 +343,20 @@ struct SyncCoordinatorTests {
       )
     }
     try await withDependencies { $0.apiClient = api } operation: {
-      _ = try await SyncCoordinator(deviceID: UUID(-66), accessToken: { "token" }).synchronize(familyID: familyID)
+      _ = try await SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-66)), accessToken: { "token" }).synchronize(familyID: familyID)
     }
     let point = try await database.read { database in
-      try GrowthReferencePoint.find("girl:height:6:0").fetchOne(database)
+      try GrowthReferencePoint.find(GrowthReferencePoint.ID(rawValue: "girl:height:6:0")).fetchOne(database)
     }
     #expect(point?.value == 676)
   }
 
   @Test func duplicateStartRemapsToCanonicalServerSession() async throws {
-    let familyID = UUID(-1)
-    let childID = UUID(-2)
-    let canonicalID = UUID(-3)
+    let familyID = Family.ID(rawValue: UUID(-1))
+    let childID = Child.ID(rawValue: UUID(-2))
+    let canonicalID = SleepSession.ID(rawValue: UUID(-3))
     try await seedFamilyAndChild(familyID: familyID, childID: childID)
-    var optimisticID: UUID?
+    var optimisticID: SleepSession.ID?
     var api = APIClient.testValue
     api.sync = { _, _, request in
       let command = try #require(request.commands.first)
@@ -365,7 +365,7 @@ struct SyncCoordinatorTests {
           APICommandResult(
             id: command.id,
             status: "accepted",
-            entityID: canonicalID,
+            entityID: EntityID(rawValue: canonicalID.rawValue),
             payload: try jsonValue(
               ServerSleepPayload(
                 id: canonicalID,
@@ -374,7 +374,7 @@ struct SyncCoordinatorTests {
                 startedAt: date(1_000),
                 endedAt: nil,
                 revision: 1,
-                authorID: UUID(-4),
+                authorID: UserID(rawValue: UUID(-4)),
                 source: "phone",
                 updatedAt: date(1_000)
               )
@@ -391,7 +391,7 @@ struct SyncCoordinatorTests {
     try await withDependencies {
       $0.apiClient = api
     } operation: {
-      let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
       optimisticID = try await coordinator.startSleep(
         familyID: familyID,
         childID: childID,
@@ -421,12 +421,12 @@ struct SyncCoordinatorTests {
     let serverPayload = try JSONEncoder.uneton.encode(serverSleep(fixture: fixture, revision: 4, endedAt: date(3_600)))
     let conflict = ModelFixtures.conflict(
       localPayloadJSON: localPayload, serverPayloadJSON: serverPayload,
-      id: UUID(-20), familyID: fixture.familyID, entityID: fixture.sessionID,
+      id: SyncConflict.ID(rawValue: UUID(-20)), familyID: fixture.familyID, entityID: EntityID(rawValue: fixture.sessionID.rawValue),
       expectedRevision: 3, createdAt: date(5_000)
     )
     try await database.write { try SyncConflict.insert { conflict }.execute($0) }
 
-    let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+    let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
     try await coordinator.resolveConflict(conflict.id, resolution: .keepMine)
 
     let state = try await database.read { database in
@@ -452,7 +452,7 @@ struct SyncCoordinatorTests {
     try await withDependencies {
       $0.apiClient = api
     } operation: {
-      let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
       try await coordinator.endSleep(
         familyID: fixture.familyID,
         sessionID: fixture.sessionID,
@@ -477,7 +477,7 @@ struct SyncCoordinatorTests {
   }
 
   @Test func paginationAppliesEveryPageAndAdvancesCursor() async throws {
-    let fixture = Fixture(familyID: UUID(-1), childID: UUID(-2), sessionID: UUID(-3))
+    let fixture = Fixture(familyID: Family.ID(rawValue: UUID(-1)), childID: Child.ID(rawValue: UUID(-2)), sessionID: SleepSession.ID(rawValue: UUID(-3)))
     try await seedFamilyAndChild(familyID: fixture.familyID, childID: fixture.childID)
     let responder = PaginationResponder(fixture: fixture)
     var api = APIClient.testValue
@@ -486,7 +486,7 @@ struct SyncCoordinatorTests {
     try await withDependencies {
       $0.apiClient = api
     } operation: {
-      let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
       _ = try await coordinator.synchronize(familyID: fixture.familyID)
       #expect(try await coordinator.cursor(familyID: fixture.familyID) == 2)
     }
@@ -499,8 +499,8 @@ struct SyncCoordinatorTests {
   }
 
   @Test func concurrentSynchronizationUsesOneInFlightRequest() async throws {
-    let familyID = UUID(-1)
-    let childID = UUID(-2)
+    let familyID = Family.ID(rawValue: UUID(-1))
+    let childID = Child.ID(rawValue: UUID(-2))
     try await seedFamilyAndChild(familyID: familyID, childID: childID)
     let responder = SlowResponder()
     var api = APIClient.testValue
@@ -509,7 +509,7 @@ struct SyncCoordinatorTests {
     try await withDependencies {
       $0.apiClient = api
     } operation: {
-      let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
       async let first = coordinator.synchronize(familyID: familyID)
       async let second = coordinator.synchronize(familyID: familyID)
       _ = try await (first, second)
@@ -519,14 +519,14 @@ struct SyncCoordinatorTests {
   }
 
   @Test func commandQueuedDuringInFlightSyncIsDrainedBeforeSuccess() async throws {
-    let fixture = Fixture(familyID: UUID(-1), childID: UUID(-2), sessionID: UUID(-3))
+    let fixture = Fixture(familyID: Family.ID(rawValue: UUID(-1)), childID: Child.ID(rawValue: UUID(-2)), sessionID: SleepSession.ID(rawValue: UUID(-3)))
     try await seedFamilyAndChild(familyID: fixture.familyID, childID: fixture.childID)
     let responder = PausedResponder(fixture: fixture)
     var api = APIClient.testValue
     api.sync = { _, _, request in try await responder.response(for: request) }
 
     try await withDependencies { $0.apiClient = api } operation: {
-      let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
       let first = Task { try await coordinator.synchronize(familyID: fixture.familyID) }
       await responder.waitUntilStarted()
       _ = try await coordinator.startSleep(familyID: fixture.familyID, childID: fixture.childID, startedAt: date(1_000))
@@ -541,8 +541,8 @@ struct SyncCoordinatorTests {
   }
 
   @Test func malformedCursorResponseLeavesDurableCommandUntouched() async throws {
-    let familyID = UUID(-1)
-    let childID = UUID(-2)
+    let familyID = Family.ID(rawValue: UUID(-1))
+    let childID = Child.ID(rawValue: UUID(-2))
     try await seedFamilyAndChild(familyID: familyID, childID: childID)
     var api = APIClient.testValue
     api.sync = { _, _, request in
@@ -560,7 +560,7 @@ struct SyncCoordinatorTests {
     try await withDependencies {
       $0.apiClient = api
     } operation: {
-      let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
       _ = try await coordinator.startSleep(familyID: familyID, childID: childID, startedAt: date(1_000))
       do {
         _ = try await coordinator.synchronize(familyID: familyID)
@@ -578,8 +578,8 @@ struct SyncCoordinatorTests {
   }
 
   @Test func skippedEventCursorLeavesDurableCommandUntouched() async throws {
-    let familyID = UUID(-1)
-    let childID = UUID(-2)
+    let familyID = Family.ID(rawValue: UUID(-1))
+    let childID = Child.ID(rawValue: UUID(-2))
     try await seedFamilyAndChild(familyID: familyID, childID: childID)
     var api = APIClient.testValue
     api.sync = { _, _, request in
@@ -592,7 +592,7 @@ struct SyncCoordinatorTests {
     }
 
     try await withDependencies { $0.apiClient = api } operation: {
-      let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
       _ = try await coordinator.startSleep(familyID: familyID, childID: childID, startedAt: date(1_000))
       do {
         _ = try await coordinator.synchronize(familyID: familyID)
@@ -610,17 +610,17 @@ struct SyncCoordinatorTests {
   }
 
   @Test func foreignFamilyEventCannotAdvanceTheCursor() async throws {
-    let fixture = Fixture(familyID: UUID(-1), childID: UUID(-2), sessionID: UUID(-3))
+    let fixture = Fixture(familyID: Family.ID(rawValue: UUID(-1)), childID: Child.ID(rawValue: UUID(-2)), sessionID: SleepSession.ID(rawValue: UUID(-3)))
     try await seedFamilyAndChild(familyID: fixture.familyID, childID: fixture.childID)
     var foreign = serverSleep(fixture: fixture, revision: 1, endedAt: nil)
-    foreign.familyID = UUID(-99)
+    foreign.familyID = Family.ID(rawValue: UUID(-99))
     let foreignPayload = try jsonValue(foreign)
     var api = APIClient.testValue
     api.sync = { _, _, _ in
       SyncResponse(
         commandResults: [],
         events: [SyncEvent(
-          cursor: 1, entityType: "sleepSession", entityID: fixture.sessionID,
+          cursor: 1, entityType: "sleepSession", entityID: EntityID(rawValue: fixture.sessionID.rawValue),
           operation: "upsert", revision: 1, payload: foreignPayload,
           createdAt: date(6_000)
         )],
@@ -629,7 +629,7 @@ struct SyncCoordinatorTests {
     }
 
     await withDependencies { $0.apiClient = api } operation: {
-      let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
       do {
         _ = try await coordinator.synchronize(familyID: fixture.familyID)
         Issue.record("Expected a foreign family event to be rejected")
@@ -642,17 +642,17 @@ struct SyncCoordinatorTests {
   }
 
   @Test func networkFailureKeepsOptimisticStateAndCommandForRetry() async throws {
-    let familyID = UUID(-1)
-    let childID = UUID(-2)
+    let familyID = Family.ID(rawValue: UUID(-1))
+    let childID = Child.ID(rawValue: UUID(-2))
     try await seedFamilyAndChild(familyID: familyID, childID: childID)
     var api = APIClient.testValue
     api.sync = { _, _, _ in throw TestTransportError.offline }
 
-    var optimisticID: UUID?
+    var optimisticID: SleepSession.ID?
     try await withDependencies {
       $0.apiClient = api
     } operation: {
-      let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
       optimisticID = try await coordinator.startSleep(familyID: familyID, childID: childID, startedAt: date(1_000))
       do {
         _ = try await coordinator.synchronize(familyID: familyID)
@@ -672,11 +672,11 @@ struct SyncCoordinatorTests {
   }
 
   @Test func offlineBacklogIsSentInBoundedBatches() async throws {
-    let familyID = UUID(-1)
+    let familyID = Family.ID(rawValue: UUID(-1))
     try await database.write { database in
       try Family.insert { ModelFixtures.family(id: familyID, name: "Home", updatedAt: date(0)) }.execute(database)
       for index in 0..<101 {
-        let childID = UUID(index + 1_000)
+        let childID = Child.ID(rawValue: UUID(index + 1_000))
         let payload = ChildCommandPayload(
           id: childID,
           nickname: "Child \(index)",
@@ -689,7 +689,7 @@ struct SyncCoordinatorTests {
         let payloadJSON = try JSONEncoder.uneton.encode(payload)
         try PendingCommand.insert {
           PendingCommand(
-            id: UUID(index + 2_000),
+            id: PendingCommand.ID(rawValue: UUID(index + 2_000)),
             familyID: familyID,
             kind: "createChild",
             payloadJSON: payloadJSON,
@@ -705,7 +705,7 @@ struct SyncCoordinatorTests {
     try await withDependencies {
       $0.apiClient = api
     } operation: {
-      let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
       _ = try await coordinator.synchronize(familyID: familyID)
     }
 
@@ -714,7 +714,7 @@ struct SyncCoordinatorTests {
   }
 
   @Test func snapshotRecoveryReplaysAcknowledgedCommandsAfterServerRollback() async throws {
-    let fixture = Fixture(familyID: UUID(-1), childID: UUID(-2), sessionID: UUID(-3))
+    let fixture = Fixture(familyID: Family.ID(rawValue: UUID(-1)), childID: Child.ID(rawValue: UUID(-2)), sessionID: SleepSession.ID(rawValue: UUID(-3)))
     try await seedFamilyAndChild(familyID: fixture.familyID, childID: fixture.childID)
     let responder = SnapshotRecoveryResponder(fixture: fixture)
     var api = APIClient.testValue
@@ -723,7 +723,7 @@ struct SyncCoordinatorTests {
     try await withDependencies {
       $0.apiClient = api
     } operation: {
-      let coordinator = SyncCoordinator(deviceID: UUID(-10), accessToken: { "token" })
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
       _ = try await coordinator.startSleep(
         familyID: fixture.familyID,
         childID: fixture.childID,
@@ -748,17 +748,17 @@ struct SyncCoordinatorTests {
   }
 
   private func seedAuthoritativeSession(revision: Int, endedAt: Date?) async throws -> Fixture {
-    let fixture = Fixture(familyID: UUID(-1), childID: UUID(-2), sessionID: UUID(-3))
+    let fixture = Fixture(familyID: Family.ID(rawValue: UUID(-1)), childID: Child.ID(rawValue: UUID(-2)), sessionID: SleepSession.ID(rawValue: UUID(-3)))
     try await seedFamilyAndChild(familyID: fixture.familyID, childID: fixture.childID)
     let payload = serverSleep(fixture: fixture, revision: revision, endedAt: endedAt)
     let payloadJSON = try JSONEncoder.uneton.encode(payload)
     try await database.write { database in
       try AuthoritativeRecord.insert {
         AuthoritativeRecord(
-          id: "sleepSession:\(fixture.sessionID)",
+          id: "sleepSession:\(fixture.sessionID.uuidString)",
           familyID: fixture.familyID,
           entityType: "sleepSession",
-          entityID: fixture.sessionID,
+          entityID: EntityID(rawValue: fixture.sessionID.rawValue),
           revision: revision,
           operation: "upsert",
           payloadJSON: payloadJSON
@@ -769,7 +769,7 @@ struct SyncCoordinatorTests {
     return fixture
   }
 
-  private func seedFamilyAndChild(familyID: UUID, childID: UUID) async throws {
+  private func seedFamilyAndChild(familyID: Family.ID, childID: Child.ID) async throws {
     let child = ServerChildPayload(
       id: childID,
       nickname: "Muru",
@@ -785,10 +785,10 @@ struct SyncCoordinatorTests {
       try Family.insert { ModelFixtures.family(id: familyID, name: "Home", updatedAt: date(0)) }.execute(database)
       try AuthoritativeRecord.insert {
         AuthoritativeRecord(
-          id: "child:\(childID)",
+          id: "child:\(childID.uuidString)",
           familyID: familyID,
           entityType: "child",
-          entityID: childID,
+          entityID: EntityID(rawValue: childID.rawValue),
           revision: 1,
           operation: "upsert",
           payloadJSON: childJSON
@@ -800,9 +800,9 @@ struct SyncCoordinatorTests {
 }
 
 private struct Fixture: Sendable {
-  var familyID: UUID
-  var childID: UUID
-  var sessionID: UUID
+  var familyID: Family.ID
+  var childID: Child.ID
+  var sessionID: SleepSession.ID
 }
 
 private enum TestTransportError: Error, Equatable {
@@ -826,7 +826,7 @@ private actor CollisionResponder {
           id: command.id,
           status: "rejected",
           error: "stale revision",
-          entityID: fixture.sessionID,
+          entityID: EntityID(rawValue: fixture.sessionID.rawValue),
           payload: try jsonValue(serverSleep(fixture: fixture, revision: revision, endedAt: endedAt))
         )
       ],
@@ -856,7 +856,7 @@ private actor PaginationResponder {
         SyncEvent(
           cursor: Int64(requestCount),
           entityType: "sleepSession",
-          entityID: fixture.sessionID,
+          entityID: EntityID(rawValue: fixture.sessionID.rawValue),
           operation: "upsert",
           revision: revision,
           payload: try jsonValue(serverSleep(fixture: fixture, revision: revision, endedAt: endedAt)),
@@ -918,10 +918,10 @@ private actor PausedResponder {
     let payload = try jsonValue(serverSleep(fixture: fixture, revision: 1, endedAt: nil))
     return SyncResponse(
       commandResults: [APICommandResult(
-        id: command.id, status: "accepted", entityID: fixture.sessionID, payload: payload
+        id: command.id, status: "accepted", entityID: EntityID(rawValue: fixture.sessionID.rawValue), payload: payload
       )],
       events: [SyncEvent(
-        cursor: 1, entityType: "sleepSession", entityID: fixture.sessionID,
+        cursor: 1, entityType: "sleepSession", entityID: EntityID(rawValue: fixture.sessionID.rawValue),
         operation: "upsert", revision: 1, payload: payload, createdAt: date(6_001)
       )],
       nextCursor: 1, hasMore: false, serverTime: date(6_001)
@@ -961,12 +961,12 @@ private actor SnapshotRecoveryResponder {
           APICommandResult(
             id: command.id,
             status: "accepted",
-            entityID: fixture.sessionID,
+            entityID: EntityID(rawValue: fixture.sessionID.rawValue),
             payload: try jsonValue(serverSleep(fixture: fixture, revision: 1, endedAt: nil))
           )
         ],
         events: [SyncEvent(
-          cursor: 1, entityType: "sleepSession", entityID: fixture.sessionID,
+          cursor: 1, entityType: "sleepSession", entityID: EntityID(rawValue: fixture.sessionID.rawValue),
           operation: "upsert", revision: 1,
           payload: try jsonValue(serverSleep(fixture: fixture, revision: 1, endedAt: nil)),
           createdAt: date(2_000)
@@ -989,7 +989,7 @@ private actor SnapshotRecoveryResponder {
         generation: "generation-after-restore",
         snapshot: FamilySnapshot(
           cursor: 0,
-          entities: [SnapshotEntity(entityType: "child", entityID: fixture.childID, revision: 1, payload: try jsonValue(child))],
+          entities: [SnapshotEntity(entityType: "child", entityID: EntityID(rawValue: fixture.childID.rawValue), revision: 1, payload: try jsonValue(child))],
           createdAt: date(2_100)
         ),
         resetRequired: true
@@ -1001,12 +1001,12 @@ private actor SnapshotRecoveryResponder {
           APICommandResult(
             id: command.id,
             status: "accepted",
-            entityID: fixture.sessionID,
+            entityID: EntityID(rawValue: fixture.sessionID.rawValue),
             payload: try jsonValue(serverSleep(fixture: fixture, revision: 1, endedAt: nil))
           )
         ],
         events: [SyncEvent(
-          cursor: 1, entityType: "sleepSession", entityID: fixture.sessionID,
+          cursor: 1, entityType: "sleepSession", entityID: EntityID(rawValue: fixture.sessionID.rawValue),
           operation: "upsert", revision: 1,
           payload: try jsonValue(serverSleep(fixture: fixture, revision: 1, endedAt: nil)),
           createdAt: date(2_200)
@@ -1025,7 +1025,7 @@ private func serverSleep(fixture: Fixture, revision: Int, endedAt: Date?) -> Ser
     startedAt: date(0),
     endedAt: endedAt,
     revision: revision,
-    authorID: UUID(-4),
+    authorID: UserID(rawValue: UUID(-4)),
     source: "phone",
     updatedAt: date(4_500)
   )

@@ -1,5 +1,6 @@
 import ComposableArchitecture2
 import Foundation
+import UnetonCore
 
 @Feature
 struct AppRoot {
@@ -14,7 +15,7 @@ struct AppRoot {
         case authenticationChanged(Bool)
         case credentialValidationRequested
         case familySetup(FamilySetup.Action)
-        case familySelected(UUID?)
+        case familySelected(Family.ID?)
         case familySync(FamilySync.Action)
         case onboarding(Onboarding.Action)
         case openedURL(URL)

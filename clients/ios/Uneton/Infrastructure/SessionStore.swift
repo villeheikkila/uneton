@@ -41,7 +41,7 @@ final class SessionStore {
     var liveActivitiesEnabled: Bool
     var reminderLeadMinutes: Int
 
-    private(set) var deviceID: UUID
+    private(set) var deviceID: DeviceID
     private var coordinator: SyncCoordinator
     private var refreshTask: Task<AuthenticationResponse, Error>?
     private var pendingAppleNonce: String?
@@ -51,11 +51,11 @@ final class SessionStore {
     @ObservationIgnored private var liveActivityTokenTask: Task<Void, Never>?
     @ObservationIgnored private var apnsToken: String?
     @ObservationIgnored private var pushToStartToken: String?
-    @ObservationIgnored private var activityTokens: [UUID: String] = [:]
+    @ObservationIgnored private var activityTokens: [SleepSession.ID: String] = [:]
 
     init(demo: Bool = false) {
         if demo {
-            let demoDeviceID = UUID()
+            let demoDeviceID = DeviceID()
             self.deviceID = demoDeviceID
             self.notificationsEnabled = false
             self.liveActivitiesEnabled = false
@@ -64,11 +64,11 @@ final class SessionStore {
             return
         }
         let defaults = UserDefaults.standard
-        let deviceID: UUID
-        if let stored = defaults.string(forKey: Key.deviceID).flatMap(UUID.init(uuidString:)) {
+        let deviceID: DeviceID
+        if let stored = defaults.string(forKey: Key.deviceID).flatMap(DeviceID.init(uuidString:)) {
             deviceID = stored
         } else {
-            deviceID = UUID()
+            deviceID = DeviceID()
             defaults.set(deviceID.uuidString, forKey: Key.deviceID)
         }
         self.deviceID = deviceID
@@ -364,8 +364,8 @@ final class SessionStore {
               let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let familyValue = components.queryItems?.first(where: { $0.name == "familyID" })?.value,
               let sessionValue = components.queryItems?.first(where: { $0.name == "sessionID" })?.value,
-              let familyID = UUID(uuidString: familyValue),
-              let sessionID = UUID(uuidString: sessionValue)
+              let familyID = Family.ID(uuidString: familyValue),
+              let sessionID = SleepSession.ID(uuidString: sessionValue)
         else { return }
         await endSleep(familyID: familyID, sessionID: sessionID)
     }
@@ -386,7 +386,7 @@ final class SessionStore {
         }
     }
 
-    func createInvite(familyID: UUID) async -> URL? {
+    func createInvite(familyID: Family.ID) async -> URL? {
         guard let accessToken else { return nil }
         do {
             let invite = try await apiClient.createInvite(familyID, accessToken)
@@ -557,7 +557,7 @@ final class SessionStore {
         guard let accessToken else { throw SessionError.notAuthenticated }
         let familyID = try await database.read { database in
             try Family.order(by: { $0.updatedAt.desc() }).fetchOne(database)?.id
-        } ?? uuid()
+        } ?? Family.ID(rawValue: uuid())
         let family = Family(id: familyID, name: "Our family", role: "owner", updatedAt: now)
         try await database.write { database in
             try Family.upsert { family }.execute(database)
@@ -598,7 +598,7 @@ final class SessionStore {
         await uploadPushSettings()
     }
 
-    private func receivedActivityToken(sessionID: UUID, token: String) async {
+    private func receivedActivityToken(sessionID: SleepSession.ID, token: String) async {
         activityTokens[sessionID] = token
         await uploadActivityToken(sessionID: sessionID, token: token)
     }
@@ -609,7 +609,7 @@ final class SessionStore {
         _ = try? await apiClient.updateDevicePushSettings(apnsToken, pushToStartToken, PushRegistrationController.environment, settings, accessToken)
     }
 
-    private func uploadActivityToken(sessionID: UUID, token: String) async {
+    private func uploadActivityToken(sessionID: SleepSession.ID, token: String) async {
         guard let accessToken else { return }
         try? await apiClient.registerLiveActivity(sessionID, token, PushRegistrationController.environment, accessToken)
     }
@@ -669,7 +669,7 @@ final class SessionStore {
         await reminders.schedule(value?.nextSleepIsProvisional == true ? nil : value?.nextSleepEstimate, leadMinutes: reminderLeadMinutes)
     }
 
-    private func synchronizeWithRefresh(familyID: UUID) async throws -> SleepForecast? {
+    private func synchronizeWithRefresh(familyID: Family.ID) async throws -> SleepForecast? {
         let result: SleepForecast?
         do {
             result = try await coordinator.synchronize(familyID: familyID)
@@ -682,7 +682,7 @@ final class SessionStore {
         return result
     }
 
-    private func synchronizeInBackground(familyID: UUID) async -> Bool {
+    private func synchronizeInBackground(familyID: Family.ID) async -> Bool {
         guard accessToken != nil else { return false }
         do {
             _ = try await synchronizeWithRefresh(familyID: familyID)

@@ -1,15 +1,25 @@
 import Dependencies
 import Foundation
 import SQLiteData
+import Tagged
+import UnetonIdentity
+
+public enum UserTag {}
+public typealias UserID = Tagged<UserTag, UUID>
+public enum DeviceTag {}
+public typealias DeviceID = Tagged<DeviceTag, UUID>
+public enum EntityTag {}
+public typealias EntityID = Tagged<EntityTag, UUID>
 
 @Table
 public struct Family: Identifiable, Codable, Equatable, Sendable {
-  public let id: UUID
+  public typealias ID = FamilyID
+  public let id: ID
   public var name: String
   public var role: String
   public var updatedAt: Date
 
-  public init(id: UUID, name: String, role: String, updatedAt: Date) {
+  public init(id: ID, name: String, role: String, updatedAt: Date) {
     self.id = id
     self.name = name
     self.role = role
@@ -19,13 +29,14 @@ public struct Family: Identifiable, Codable, Equatable, Sendable {
 
 @Table
 public struct FamilyMember: Identifiable, Codable, Equatable, Sendable {
-  public let id: UUID
+  public typealias ID = Tagged<Self, UUID>
+  public let id: ID
   public var familyID: Family.ID
   public var displayName: String
   public var role: String
   public var joinedAt: Date
 
-  public init(id: UUID, familyID: Family.ID, displayName: String, role: String, joinedAt: Date) {
+  public init(id: ID, familyID: Family.ID, displayName: String, role: String, joinedAt: Date) {
     self.id = id
     self.familyID = familyID
     self.displayName = displayName
@@ -36,7 +47,8 @@ public struct FamilyMember: Identifiable, Codable, Equatable, Sendable {
 
 @Table("children")
 public struct Child: Identifiable, Codable, Equatable, Sendable {
-  public let id: UUID
+  public typealias ID = ChildID
+  public let id: ID
   public var familyID: Family.ID
   public var nickname: String
   public var birthDate: Date
@@ -50,7 +62,7 @@ public struct Child: Identifiable, Codable, Equatable, Sendable {
   public var updatedAt: Date
 
   public init(
-    id: UUID,
+    id: ID,
     familyID: Family.ID,
     nickname: String,
     birthDate: Date,
@@ -80,13 +92,14 @@ public struct Child: Identifiable, Codable, Equatable, Sendable {
 
 @Table
 public struct SleepSession: Identifiable, Codable, Equatable, Sendable {
-  public let id: UUID
+  public typealias ID = SleepSessionID
+  public let id: ID
   public var familyID: Family.ID
   public var childID: Child.ID
   public var startedAt: Date
   public var endedAt: Date?
   public var revision: Int
-  public var authorID: UUID?
+  public var authorID: UserID?
   public var source: String
   public var startCondition: String
   public var sleepLocation: String
@@ -97,16 +110,16 @@ public struct SleepSession: Identifiable, Codable, Equatable, Sendable {
   public var supersededByID: SleepSession.ID?
   public var updatedAt: Date
   public var deletedAt: Date?
-  public var pendingCommandID: UUID?
+  public var pendingCommandID: PendingCommand.ID?
 
   public init(
-    id: UUID,
+    id: ID,
     familyID: Family.ID,
     childID: Child.ID,
     startedAt: Date,
     endedAt: Date? = nil,
     revision: Int = 0,
-    authorID: UUID? = nil,
+    authorID: UserID? = nil,
     source: String = "phone",
     startCondition: String = "",
     sleepLocation: String = "",
@@ -117,7 +130,7 @@ public struct SleepSession: Identifiable, Codable, Equatable, Sendable {
     supersededByID: SleepSession.ID? = nil,
     updatedAt: Date,
     deletedAt: Date? = nil,
-    pendingCommandID: UUID? = nil
+    pendingCommandID: PendingCommand.ID? = nil
   ) {
     self.id = id
     self.familyID = familyID
@@ -142,7 +155,8 @@ public struct SleepSession: Identifiable, Codable, Equatable, Sendable {
 
 @Table
 public struct GrowthMeasurement: Identifiable, Codable, Equatable, Sendable {
-  public let id: UUID
+  public typealias ID = Tagged<Self, UUID>
+  public let id: ID
   public var familyID: Family.ID
   public var childID: Child.ID
   public var measuredAt: Date
@@ -152,9 +166,9 @@ public struct GrowthMeasurement: Identifiable, Codable, Equatable, Sendable {
   public var revision: Int
   public var updatedAt: Date
   public var deletedAt: Date?
-  public var pendingCommandID: UUID?
+  public var pendingCommandID: PendingCommand.ID?
 
-  public init(id: UUID, familyID: Family.ID, childID: Child.ID, measuredAt: Date, weightGrams: Int? = nil, heightMillimeters: Int? = nil, note: String = "", revision: Int = 0, updatedAt: Date, deletedAt: Date? = nil, pendingCommandID: UUID? = nil) {
+  public init(id: ID, familyID: Family.ID, childID: Child.ID, measuredAt: Date, weightGrams: Int? = nil, heightMillimeters: Int? = nil, note: String = "", revision: Int = 0, updatedAt: Date, deletedAt: Date? = nil, pendingCommandID: PendingCommand.ID? = nil) {
     self.id = id
     self.familyID = familyID
     self.childID = childID
@@ -171,7 +185,8 @@ public struct GrowthMeasurement: Identifiable, Codable, Equatable, Sendable {
 
 @Table
 public struct TemperatureReading: Identifiable, Codable, Equatable, Sendable {
-  public let id: UUID
+  public typealias ID = Tagged<Self, UUID>
+  public let id: ID
   public var familyID: Family.ID
   public var childID: Child.ID
   public var measuredAt: Date
@@ -180,9 +195,9 @@ public struct TemperatureReading: Identifiable, Codable, Equatable, Sendable {
   public var revision: Int
   public var updatedAt: Date
   public var deletedAt: Date?
-  public var pendingCommandID: UUID?
+  public var pendingCommandID: PendingCommand.ID?
 
-  public init(id: UUID, familyID: Family.ID, childID: Child.ID, measuredAt: Date, centiCelsius: Int, note: String = "", revision: Int = 0, updatedAt: Date, deletedAt: Date? = nil, pendingCommandID: UUID? = nil) {
+  public init(id: ID, familyID: Family.ID, childID: Child.ID, measuredAt: Date, centiCelsius: Int, note: String = "", revision: Int = 0, updatedAt: Date, deletedAt: Date? = nil, pendingCommandID: PendingCommand.ID? = nil) {
     self.id = id
     self.familyID = familyID
     self.childID = childID
@@ -198,7 +213,8 @@ public struct TemperatureReading: Identifiable, Codable, Equatable, Sendable {
 
 @Table("growthReferencePoints")
 public struct GrowthReferencePoint: Identifiable, Codable, Equatable, Sendable {
-  public let id: String
+  public typealias ID = Tagged<Self, String>
+  public let id: ID
   public var reference: String
   public var metric: String
   public var ageMonths: Int
@@ -206,7 +222,7 @@ public struct GrowthReferencePoint: Identifiable, Codable, Equatable, Sendable {
   public var value: Int
 
   public init(reference: String, metric: String, ageMonths: Int, sd: Int, value: Int) {
-    self.id = "\(reference):\(metric):\(ageMonths):\(sd)"
+    self.id = ID(rawValue: "\(reference):\(metric):\(ageMonths):\(sd)")
     self.reference = reference
     self.metric = metric
     self.ageMonths = ageMonths
@@ -217,15 +233,16 @@ public struct GrowthReferencePoint: Identifiable, Codable, Equatable, Sendable {
 
 @Table
 public struct AuthoritativeRecord: Identifiable, Equatable, Sendable {
-  public let id: String
+  public typealias ID = Tagged<Self, String>
+  public let id: ID
   public var familyID: Family.ID
   public var entityType: String
-  public var entityID: UUID
+  public var entityID: EntityID
   public var revision: Int
   public var operation: String
   public var payloadJSON: Data
 
-  public init(id: String, familyID: Family.ID, entityType: String, entityID: UUID, revision: Int, operation: String, payloadJSON: Data) {
+  public init(id: ID, familyID: Family.ID, entityType: String, entityID: EntityID, revision: Int, operation: String, payloadJSON: Data) {
     self.id = id
     self.familyID = familyID
     self.entityType = entityType
@@ -238,7 +255,8 @@ public struct AuthoritativeRecord: Identifiable, Equatable, Sendable {
 
 @Table
 public struct PendingCommand: Identifiable, Equatable, Sendable {
-  public let id: UUID
+  public typealias ID = Tagged<Self, UUID>
+  public let id: ID
   public var familyID: Family.ID
   public var kind: String
   public var expectedRevision: Int?
@@ -247,7 +265,7 @@ public struct PendingCommand: Identifiable, Equatable, Sendable {
   public var lastError: String?
   public var rebaseAttempt: Int
 
-  public init(id: UUID, familyID: Family.ID, kind: String, expectedRevision: Int? = nil, payloadJSON: Data, createdAt: Date, lastError: String? = nil, rebaseAttempt: Int = 0) {
+  public init(id: ID, familyID: Family.ID, kind: String, expectedRevision: Int? = nil, payloadJSON: Data, createdAt: Date, lastError: String? = nil, rebaseAttempt: Int = 0) {
     self.id = id
     self.familyID = familyID
     self.kind = kind
@@ -261,7 +279,8 @@ public struct PendingCommand: Identifiable, Equatable, Sendable {
 
 @Table
 public struct AcknowledgedCommand: Identifiable, Equatable, Sendable {
-  public let id: UUID
+  public typealias ID = PendingCommand.ID
+  public let id: ID
   public var familyID: Family.ID
   public var kind: String
   public var expectedRevision: Int?
@@ -269,7 +288,7 @@ public struct AcknowledgedCommand: Identifiable, Equatable, Sendable {
   public var createdAt: Date
   public var acknowledgedAt: Date
 
-  public init(id: UUID, familyID: Family.ID, kind: String, expectedRevision: Int? = nil, payloadJSON: Data, createdAt: Date, acknowledgedAt: Date) {
+  public init(id: ID, familyID: Family.ID, kind: String, expectedRevision: Int? = nil, payloadJSON: Data, createdAt: Date, acknowledgedAt: Date) {
     self.id = id
     self.familyID = familyID
     self.kind = kind
@@ -282,12 +301,13 @@ public struct AcknowledgedCommand: Identifiable, Equatable, Sendable {
 
 @Table
 public struct SyncState: Identifiable, Equatable, Sendable {
-  public let id: UUID
+  public typealias ID = Family.ID
+  public let id: ID
   public var cursor: Int64
   public var generation: String
   public var lastSyncedAt: Date?
 
-  public init(id: UUID, cursor: Int64 = 0, generation: String = "", lastSyncedAt: Date? = nil) {
+  public init(id: ID, cursor: Int64 = 0, generation: String = "", lastSyncedAt: Date? = nil) {
     self.id = id
     self.cursor = cursor
     self.generation = generation
@@ -297,10 +317,11 @@ public struct SyncState: Identifiable, Equatable, Sendable {
 
 @Table
 public struct SyncConflict: Identifiable, Equatable, Sendable {
-  public let id: UUID
+  public typealias ID = Tagged<Self, UUID>
+  public let id: ID
   public var familyID: Family.ID
   public var entityType: String
-  public var entityID: UUID
+  public var entityID: EntityID
   public var commandKind: String
   public var expectedRevision: Int?
   public var localPayloadJSON: Data
@@ -309,10 +330,10 @@ public struct SyncConflict: Identifiable, Equatable, Sendable {
   public var createdAt: Date
 
   public init(
-    id: UUID,
+    id: ID,
     familyID: Family.ID,
     entityType: String,
-    entityID: UUID,
+    entityID: EntityID,
     commandKind: String,
     expectedRevision: Int? = nil,
     localPayloadJSON: Data,

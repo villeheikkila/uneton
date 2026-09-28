@@ -36,12 +36,12 @@ public enum JSONValue: Codable, Equatable, Sendable {
 }
 
 public struct APICommand: Codable, Equatable, Sendable {
-  public var id: UUID
+  public var id: PendingCommand.ID
   public var kind: String
   public var expectedRevision: Int?
   public var payload: JSONValue
 
-  public init(id: UUID, kind: String, expectedRevision: Int? = nil, payload: JSONValue) {
+  public init(id: PendingCommand.ID, kind: String, expectedRevision: Int? = nil, payload: JSONValue) {
     self.id = id
     self.kind = kind
     self.expectedRevision = expectedRevision
@@ -52,11 +52,11 @@ public struct APICommand: Codable, Equatable, Sendable {
 public struct SyncRequest: Codable, Equatable, Sendable {
   public var cursor: Int64
   public var generation: String
-  public var deviceID: UUID
+  public var deviceID: DeviceID
   public var commands: [APICommand]
   public var limit: Int
 
-  public init(cursor: Int64, generation: String = "", deviceID: UUID, commands: [APICommand], limit: Int = 500) {
+  public init(cursor: Int64, generation: String = "", deviceID: DeviceID, commands: [APICommand], limit: Int = 500) {
     self.cursor = cursor
     self.generation = generation
     self.deviceID = deviceID
@@ -66,17 +66,17 @@ public struct SyncRequest: Codable, Equatable, Sendable {
 }
 
 public struct APICommandResult: Codable, Equatable, Sendable {
-  public var id: UUID
+  public var id: PendingCommand.ID
   public var status: String
   public var error: String?
-  public var entityID: UUID?
+  public var entityID: EntityID?
   public var payload: JSONValue?
 }
 
 public struct SyncEvent: Codable, Equatable, Sendable {
   public var cursor: Int64
   public var entityType: String
-  public var entityID: UUID
+  public var entityID: EntityID
   public var operation: String
   public var revision: Int
   public var payload: JSONValue
@@ -85,7 +85,7 @@ public struct SyncEvent: Codable, Equatable, Sendable {
 
 public struct SnapshotEntity: Codable, Equatable, Sendable {
   public var entityType: String
-  public var entityID: UUID
+  public var entityID: EntityID
   public var revision: Int
   public var payload: JSONValue
 }
@@ -119,13 +119,13 @@ public struct SleepPrediction: Codable, Equatable, Sendable {
 }
 
 public struct SleepForecast: Codable, Equatable, Sendable {
-  public var childID: UUID?
-  public var activeSleepID: UUID?
+  public var childID: Child.ID?
+  public var activeSleepID: SleepSession.ID?
   public var wakeEstimate: SleepPrediction?
   public var nextSleepEstimate: SleepPrediction?
   public var nextSleepIsProvisional: Bool
 
-  public init(childID: UUID? = nil, activeSleepID: UUID? = nil, wakeEstimate: SleepPrediction? = nil, nextSleepEstimate: SleepPrediction? = nil, nextSleepIsProvisional: Bool = false) {
+  public init(childID: Child.ID? = nil, activeSleepID: SleepSession.ID? = nil, wakeEstimate: SleepPrediction? = nil, nextSleepEstimate: SleepPrediction? = nil, nextSleepIsProvisional: Bool = false) {
     self.childID = childID
     self.activeSleepID = activeSleepID
     self.wakeEstimate = wakeEstimate
@@ -157,13 +157,13 @@ public struct SyncResponse: Codable, Equatable, Sendable {
 }
 
 public struct AuthenticationResponse: Codable, Equatable, Sendable {
-  public var userID: UUID
-  public var deviceID: UUID
+  public var userID: UserID
+  public var deviceID: DeviceID
   public var accessToken: String
   public var refreshToken: String
   public var families: [AuthenticatedFamily]
 
-  public init(userID: UUID, deviceID: UUID, accessToken: String, refreshToken: String, families: [AuthenticatedFamily] = []) {
+  public init(userID: UserID, deviceID: DeviceID, accessToken: String, refreshToken: String, families: [AuthenticatedFamily] = []) {
     self.userID = userID
     self.deviceID = deviceID
     self.accessToken = accessToken
@@ -173,11 +173,11 @@ public struct AuthenticationResponse: Codable, Equatable, Sendable {
 }
 
 public struct AuthenticatedFamily: Codable, Equatable, Sendable {
-  public var id: UUID
+  public var id: Family.ID
   public var name: String
   public var role: String
 
-  public init(id: UUID, name: String, role: String) {
+  public init(id: Family.ID, name: String, role: String) {
     self.id = id
     self.name = name
     self.role = role
@@ -190,7 +190,7 @@ public struct FamilyInvite: Codable, Equatable, Sendable {
 }
 
 public struct AcceptedInvite: Codable, Equatable, Sendable {
-  public var familyID: UUID
+  public var familyID: Family.ID
   public var role: String
 }
 
@@ -207,32 +207,32 @@ public struct DevicePushSettings: Codable, Equatable, Sendable {
 }
 
 public struct APIClient: Sendable {
-  public var developmentAuth: @Sendable (_ name: String, _ deviceID: UUID) async throws -> AuthenticationResponse
-  public var appleAuth: @Sendable (_ authorizationCode: String, _ nonce: String, _ displayName: String, _ deviceID: UUID) async throws -> AuthenticationResponse
-  public var refreshAuth: @Sendable (_ deviceID: UUID, _ refreshToken: String) async throws -> AuthenticationResponse
+  public var developmentAuth: @Sendable (_ name: String, _ deviceID: DeviceID) async throws -> AuthenticationResponse
+  public var appleAuth: @Sendable (_ authorizationCode: String, _ nonce: String, _ displayName: String, _ deviceID: DeviceID) async throws -> AuthenticationResponse
+  public var refreshAuth: @Sendable (_ deviceID: DeviceID, _ refreshToken: String) async throws -> AuthenticationResponse
   public var signOut: @Sendable (_ accessToken: String) async throws -> Void
   public var deleteAccount: @Sendable (_ accessToken: String) async throws -> Void
   public var updateDevicePushSettings: @Sendable (_ apnsToken: String?, _ pushToStartToken: String?, _ environment: String, _ settings: DevicePushSettings, _ accessToken: String) async throws -> DevicePushSettings
-  public var registerLiveActivity: @Sendable (_ sessionID: UUID, _ pushToken: String, _ environment: String, _ accessToken: String) async throws -> Void
-  public var createFamily: @Sendable (_ id: UUID, _ name: String, _ accessToken: String) async throws -> Void
-  public var createInvite: @Sendable (_ familyID: UUID, _ accessToken: String) async throws -> FamilyInvite
+  public var registerLiveActivity: @Sendable (_ sessionID: SleepSession.ID, _ pushToken: String, _ environment: String, _ accessToken: String) async throws -> Void
+  public var createFamily: @Sendable (_ id: Family.ID, _ name: String, _ accessToken: String) async throws -> Void
+  public var createInvite: @Sendable (_ familyID: Family.ID, _ accessToken: String) async throws -> FamilyInvite
   public var acceptInvite: @Sendable (_ token: String, _ accessToken: String) async throws -> AcceptedInvite
-  public var waitForChange: @Sendable (_ familyID: UUID, _ afterCursor: Int64, _ generation: String, _ accessToken: String) async throws -> Void
-  public var sync: @Sendable (_ familyID: UUID, _ accessToken: String, _ request: SyncRequest) async throws -> SyncResponse
+  public var waitForChange: @Sendable (_ familyID: Family.ID, _ afterCursor: Int64, _ generation: String, _ accessToken: String) async throws -> Void
+  public var sync: @Sendable (_ familyID: Family.ID, _ accessToken: String, _ request: SyncRequest) async throws -> SyncResponse
 
   public init(
-    developmentAuth: @escaping @Sendable (String, UUID) async throws -> AuthenticationResponse,
-    appleAuth: @escaping @Sendable (String, String, String, UUID) async throws -> AuthenticationResponse,
-    refreshAuth: @escaping @Sendable (UUID, String) async throws -> AuthenticationResponse,
+    developmentAuth: @escaping @Sendable (String, DeviceID) async throws -> AuthenticationResponse,
+    appleAuth: @escaping @Sendable (String, String, String, DeviceID) async throws -> AuthenticationResponse,
+    refreshAuth: @escaping @Sendable (DeviceID, String) async throws -> AuthenticationResponse,
     signOut: @escaping @Sendable (String) async throws -> Void,
     deleteAccount: @escaping @Sendable (String) async throws -> Void,
     updateDevicePushSettings: @escaping @Sendable (String?, String?, String, DevicePushSettings, String) async throws -> DevicePushSettings,
-    registerLiveActivity: @escaping @Sendable (UUID, String, String, String) async throws -> Void,
-    createFamily: @escaping @Sendable (UUID, String, String) async throws -> Void,
-    createInvite: @escaping @Sendable (UUID, String) async throws -> FamilyInvite,
+    registerLiveActivity: @escaping @Sendable (SleepSession.ID, String, String, String) async throws -> Void,
+    createFamily: @escaping @Sendable (Family.ID, String, String) async throws -> Void,
+    createInvite: @escaping @Sendable (Family.ID, String) async throws -> FamilyInvite,
     acceptInvite: @escaping @Sendable (String, String) async throws -> AcceptedInvite,
-    waitForChange: @escaping @Sendable (UUID, Int64, String, String) async throws -> Void,
-    sync: @escaping @Sendable (UUID, String, SyncRequest) async throws -> SyncResponse
+    waitForChange: @escaping @Sendable (Family.ID, Int64, String, String) async throws -> Void,
+    sync: @escaping @Sendable (Family.ID, String, SyncRequest) async throws -> SyncResponse
   ) {
     self.developmentAuth = developmentAuth
     self.appleAuth = appleAuth
@@ -252,16 +252,16 @@ public struct APIClient: Sendable {
 extension APIClient: TestDependencyKey {
   public static var testValue: APIClient {
     APIClient(
-      developmentAuth: { _, deviceID in AuthenticationResponse(userID: UUID(0), deviceID: deviceID, accessToken: "test", refreshToken: "test") },
-      appleAuth: { _, _, _, deviceID in AuthenticationResponse(userID: UUID(0), deviceID: deviceID, accessToken: "test", refreshToken: "test") },
-      refreshAuth: { deviceID, _ in AuthenticationResponse(userID: UUID(0), deviceID: deviceID, accessToken: "test", refreshToken: "test") },
+      developmentAuth: { _, deviceID in AuthenticationResponse(userID: UserID(rawValue: UUID(0)), deviceID: deviceID, accessToken: "test", refreshToken: "test") },
+      appleAuth: { _, _, _, deviceID in AuthenticationResponse(userID: UserID(rawValue: UUID(0)), deviceID: deviceID, accessToken: "test", refreshToken: "test") },
+      refreshAuth: { deviceID, _ in AuthenticationResponse(userID: UserID(rawValue: UUID(0)), deviceID: deviceID, accessToken: "test", refreshToken: "test") },
       signOut: { _ in },
       deleteAccount: { _ in },
       updateDevicePushSettings: { _, _, _, settings, _ in settings },
       registerLiveActivity: { _, _, _, _ in },
       createFamily: { _, _, _ in },
       createInvite: { _, _ in FamilyInvite(token: "invite", expiresAt: .distantFuture) },
-      acceptInvite: { _, _ in AcceptedInvite(familyID: UUID(0), role: "caregiver") },
+      acceptInvite: { _, _ in AcceptedInvite(familyID: Family.ID(rawValue: UUID(0)), role: "caregiver") },
       waitForChange: { _, _, _, _ in try await Task.sleep(for: .seconds(60)) },
       sync: { _, _, request in SyncResponse(commandResults: [], events: [], nextCursor: request.cursor, hasMore: false, serverTime: Date(timeIntervalSince1970: 0)) }
     )
@@ -355,7 +355,7 @@ extension APIClient {
         var request = Uneton_V1_AcceptInviteRequest()
         request.token = inviteToken
         let response = try await generated.acceptInvite(request: request, headers: authorization(token)).result.get()
-        guard let familyID = UUID(uuidString: response.familyID) else { throw APIError.invalidResponse("Invalid family identifier") }
+        guard let familyID = Family.ID(uuidString: response.familyID) else { throw APIError.invalidResponse("Invalid family identifier") }
         return AcceptedInvite(familyID: familyID, role: response.role)
       },
       waitForChange: { familyID, afterCursor, generation, token in
@@ -395,11 +395,11 @@ public func isUnauthenticatedAPIError(_ error: any Error) -> Bool {
 private func authorization(_ token: String) -> Connect.Headers { ["Authorization": ["Bearer \(token)"]] }
 
 private func authentication(_ value: Uneton_V1_AuthenticationResponse) throws -> AuthenticationResponse {
-  guard let userID = UUID(uuidString: value.userID), let deviceID = UUID(uuidString: value.deviceID) else {
+  guard let userID = UserID(uuidString: value.userID), let deviceID = DeviceID(uuidString: value.deviceID) else {
     throw APIError.invalidResponse("Invalid authentication identifiers")
   }
   let families = try value.families.map { family in
-    guard let id = UUID(uuidString: family.id) else { throw APIError.invalidResponse("Invalid family identifier") }
+    guard let id = Family.ID(uuidString: family.id) else { throw APIError.invalidResponse("Invalid family identifier") }
     return AuthenticatedFamily(id: id, name: family.name, role: family.role)
   }
   return AuthenticationResponse(
@@ -408,7 +408,7 @@ private func authentication(_ value: Uneton_V1_AuthenticationResponse) throws ->
   )
 }
 
-private func protoSyncRequest(familyID: UUID, request: SyncRequest) throws -> Uneton_V1_SyncRequest {
+private func protoSyncRequest(familyID: Family.ID, request: SyncRequest) throws -> Uneton_V1_SyncRequest {
   var result = Uneton_V1_SyncRequest()
   result.familyID = familyID.uuidString
   result.cursor = request.cursor
@@ -452,7 +452,7 @@ private func protoCommand(_ command: APICommand) throws -> Uneton_V1_Command {
     payload.sleep = try sleepInput(JSONDecoder.uneton.decode(SleepCommandPayload.self, from: data))
     result.payload = .upsertSleep(payload)
   case "deleteSleep":
-    let value = try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: data)
+    let value = try JSONDecoder.uneton.decode(DeleteCommandPayload<SleepSession.ID>.self, from: data)
     var payload = Uneton_V1_DeleteSleep()
     payload.id = value.id.uuidString
     result.payload = .deleteSleep(payload)
@@ -461,7 +461,7 @@ private func protoCommand(_ command: APICommand) throws -> Uneton_V1_Command {
     payload.measurement = try growthMeasurementInput(JSONDecoder.uneton.decode(GrowthMeasurementCommandPayload.self, from: data))
     result.payload = .upsertGrowthMeasurement(payload)
   case "deleteGrowthMeasurement":
-    let value = try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: data)
+    let value = try JSONDecoder.uneton.decode(DeleteCommandPayload<GrowthMeasurement.ID>.self, from: data)
     var payload = Uneton_V1_DeleteGrowthMeasurement()
     payload.id = value.id.uuidString
     result.payload = .deleteGrowthMeasurement(payload)
@@ -470,7 +470,7 @@ private func protoCommand(_ command: APICommand) throws -> Uneton_V1_Command {
     payload.reading = try temperatureReadingInput(JSONDecoder.uneton.decode(TemperatureReadingCommandPayload.self, from: data))
     result.payload = .upsertTemperatureReading(payload)
   case "deleteTemperatureReading":
-    let value = try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: data)
+    let value = try JSONDecoder.uneton.decode(DeleteCommandPayload<TemperatureReading.ID>.self, from: data)
     var payload = Uneton_V1_DeleteTemperatureReading()
     payload.id = value.id.uuidString
     result.payload = .deleteTemperatureReading(payload)
@@ -534,17 +534,17 @@ private func temperatureReadingInput(_ value: TemperatureReadingCommandPayload) 
 private func syncResponse(_ value: Uneton_V1_SyncResponse) throws -> SyncResponse {
   SyncResponse(
     commandResults: try value.commandResults.map { item in
-      guard let id = UUID(uuidString: item.id) else { throw APIError.invalidResponse("Invalid command identifier") }
+      guard let id = PendingCommand.ID(uuidString: item.id) else { throw APIError.invalidResponse("Invalid command identifier") }
       return APICommandResult(
         id: id,
         status: item.status == .accepted ? "accepted" : "rejected",
         error: item.error.isEmpty ? nil : item.error,
-        entityID: UUID(uuidString: item.entityID),
+        entityID: EntityID(uuidString: item.entityID),
         payload: item.hasEntity ? entityJSON(item.entity) : nil
       )
     },
     events: try value.events.map { item in
-      guard let entityID = UUID(uuidString: item.entityID) else { throw APIError.invalidResponse("Invalid event identifier") }
+      guard let entityID = EntityID(uuidString: item.entityID) else { throw APIError.invalidResponse("Invalid event identifier") }
       return SyncEvent(
         cursor: item.cursor,
         entityType: entityTypeName(item.entityType),
@@ -573,7 +573,7 @@ private func familySnapshot(_ value: Uneton_V1_FamilySnapshot) throws -> FamilyS
   FamilySnapshot(
     cursor: value.cursor,
     entities: try value.entities.map { item in
-      guard let entityID = UUID(uuidString: item.entityID) else {
+      guard let entityID = EntityID(uuidString: item.entityID) else {
         throw APIError.invalidResponse("Invalid snapshot entity identifier")
       }
       return SnapshotEntity(
@@ -601,10 +601,10 @@ private func sleepPrediction(_ value: Uneton_V1_SleepPrediction) -> SleepPredict
 }
 
 private func sleepForecast(_ value: Uneton_V1_SleepForecast) throws -> SleepForecast {
-  guard let childID = UUID(uuidString: value.childID) else { throw APIError.invalidResponse("Invalid forecast child identifier") }
+  guard let childID = Child.ID(uuidString: value.childID) else { throw APIError.invalidResponse("Invalid forecast child identifier") }
   return SleepForecast(
     childID: childID,
-    activeSleepID: value.hasActiveSleepID ? UUID(uuidString: value.activeSleepID) : nil,
+    activeSleepID: value.hasActiveSleepID ? SleepSession.ID(uuidString: value.activeSleepID) : nil,
     wakeEstimate: value.hasWakeEstimate ? sleepPrediction(value.wakeEstimate) : nil,
     nextSleepEstimate: value.hasNextSleepEstimate ? sleepPrediction(value.nextSleepEstimate) : nil,
     nextSleepIsProvisional: value.nextSleepIsProvisional

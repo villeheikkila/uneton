@@ -11,13 +11,14 @@
 		0AE8D08DB064AAA222E8B1CE /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B293649851B1A89B1E172B15 /* PrivacyInfo.xcprivacy */; };
 		0B91E39FC61F020E77DF8521 /* capture-_.familySetup.png in Resources */ = {isa = PBXBuildFile; fileRef = 3C8893A3594EB823C661CF83 /* capture-_.familySetup.png */; };
 		0BA2287994E4486BC0EA1A4D /* ReminderController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B794393108E5A174E3327F /* ReminderController.swift */; };
-		0D8DA5E00B5F06B8947F7A50 /* ComposableArchitectureTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 06B60E57F5A920DA240B84E9 /* ComposableArchitectureTestSupport */; };
+		0D8DA5E00B5F06B8947F7A50 /* Tagged in Frameworks */ = {isa = PBXBuildFile; productRef = 2D7F139B42F265E12A43CFEC /* Tagged */; };
 		111F9270D99C39C292AFEF73 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23D3449DAAACCCD6BDCA5AE5 /* OnboardingView.swift */; };
 		1FE1E4D54037C47A74F5F7C3 /* UnetonWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E559806C9EB49DB6CD0CB7B2 /* UnetonWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		277371375578159F4D765AAE /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93442058261D164D125FE85A /* SessionStore.swift */; };
 		27BDDD0B1DAF19C0D517BA04 /* GrowthEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423880E6A053D48080C50C45 /* GrowthEntry.swift */; };
 		2A50BABCAE347A1F309FEE8F /* DemoRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28A5777B90BA88C36670DCB1 /* DemoRuntime.swift */; };
 		2C26B83CC603AC626C6B7195 /* TemperatureEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B2C25DAD59C55EE96BD82B9 /* TemperatureEntry.swift */; };
+		31435D6C1E99F573422650FB /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 98FF8790ABA3E818C0847C23 /* SnapshotTesting */; };
 		316D502577DE587D9F1B1F0D /* PhoneWatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD9758664132AB21584A96AC /* PhoneWatchBridge.swift */; };
 		32E347573C4C49842ABB92CC /* SessionAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C28DF7DBFEC8C4705D78AB09 /* SessionAuthClient.swift */; };
 		358CD8F31FC926F168F67669 /* TimelineScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16F8A18EB8BF393F83693600 /* TimelineScreen.swift */; };
@@ -63,7 +64,7 @@
 		B8DBF9D70A6713E52C0B647A /* capture-_.growthEntrySheet.png in Resources */ = {isa = PBXBuildFile; fileRef = 4FC02C1D697CDD4E05DFC2CC /* capture-_.growthEntrySheet.png */; };
 		BEFE7CDE95F4D27ADACFCF67 /* UnetonWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15EA75C38B7B9913EFAF8D3C /* UnetonWatchApp.swift */; };
 		C5071F7322E5584706D06B10 /* UnetonWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBA9C6F0A3F7C533AFAA3988 /* UnetonWidgets.swift */; };
-		CEDA28F3996277488E0A0F6A /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 98FF8790ABA3E818C0847C23 /* SnapshotTesting */; };
+		CEDA28F3996277488E0A0F6A /* ComposableArchitectureTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 06B60E57F5A920DA240B84E9 /* ComposableArchitectureTestSupport */; };
 		D507085F179846B6F3B6E444 /* FamilySharing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF29C953864C252FCF044CB /* FamilySharing.swift */; };
 		D974E132D0CF32C73E16BA5D /* Onboarding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B3D56BB737E543E8EF49E5A /* Onboarding.swift */; };
 		E1018104A4399F3B84036C3E /* capture-_.invitationScannerSheet.png in Resources */ = {isa = PBXBuildFile; fileRef = FA2052494B4601933892ADB7 /* capture-_.invitationScannerSheet.png */; };
@@ -209,8 +210,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				75403028B84412E1F1236D46 /* UnetonActivity in Frameworks */,
-				0D8DA5E00B5F06B8947F7A50 /* ComposableArchitectureTestSupport in Frameworks */,
-				CEDA28F3996277488E0A0F6A /* SnapshotTesting in Frameworks */,
+				0D8DA5E00B5F06B8947F7A50 /* Tagged in Frameworks */,
+				CEDA28F3996277488E0A0F6A /* ComposableArchitectureTestSupport in Frameworks */,
+				31435D6C1E99F573422650FB /* SnapshotTesting in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -556,6 +558,7 @@
 			name = UnetonTests;
 			packageProductDependencies = (
 				D8550C2501F7A8807B6C0F66 /* UnetonActivity */,
+				2D7F139B42F265E12A43CFEC /* Tagged */,
 				06B60E57F5A920DA240B84E9 /* ComposableArchitectureTestSupport */,
 				98FF8790ABA3E818C0847C23 /* SnapshotTesting */,
 			);
@@ -602,6 +605,7 @@
 			packageReferences = (
 				51E22005D061FDB60FFCEFF2 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */,
 				280E90178431470BF8BABAD8 /* XCRemoteSwiftPackageReference "TCA26" */,
+				77BEF8C5E0A32B23A1F71085 /* XCRemoteSwiftPackageReference "swift-tagged" */,
 				1717CBBB2DC3216B9AD81D25 /* XCLocalSwiftPackageReference "UnetonPackage" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -1137,6 +1141,14 @@
 				revision = 59a99c458de4d2dee580529b61b4f78dca7b7fa6;
 			};
 		};
+		77BEF8C5E0A32B23A1F71085 /* XCRemoteSwiftPackageReference "swift-tagged" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-tagged.git";
+			requirement = {
+				kind = exactVersion;
+				version = 0.10.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1148,6 +1160,11 @@
 		23C61FE5E1FD5C9379CAB8CF /* UnetonActivity */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = UnetonActivity;
+		};
+		2D7F139B42F265E12A43CFEC /* Tagged */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 77BEF8C5E0A32B23A1F71085 /* XCRemoteSwiftPackageReference "swift-tagged" */;
+			productName = Tagged;
 		};
 		5378E6759E7E1B38F4036EC0 /* ComposableArchitecture2 */ = {
 			isa = XCSwiftPackageProductDependency;

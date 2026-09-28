@@ -1,12 +1,13 @@
 import ComposableArchitecture2
 import Foundation
+import UnetonCore
 
 @Feature
 struct GrowthEntry {
     struct State {
-        let childID: UUID
-        let familyID: UUID
-        let measurementID: UUID?
+        let childID: Child.ID
+        let familyID: Family.ID
+        let measurementID: GrowthMeasurement.ID?
         var errorMessage: String?
         var height = ""
         var isSaved = false
@@ -16,9 +17,9 @@ struct GrowthEntry {
         @StoreTaskID var request
 
         init(
-            familyID: UUID,
-            childID: UUID,
-            measurementID: UUID? = nil,
+            familyID: Family.ID,
+            childID: Child.ID,
+            measurementID: GrowthMeasurement.ID? = nil,
             measuredAt: Date = .now,
             weightGrams: Int? = nil,
             heightMillimeters: Int? = nil,

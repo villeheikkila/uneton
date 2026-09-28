@@ -1,22 +1,24 @@
 import Dependencies
 import Foundation
 import SQLiteData
+import Tagged
 
 public actor SyncCoordinator {
+  private enum SynchronizationFlightTag {}
   @Dependency(\.defaultDatabase) private var database
   @Dependency(\.apiClient) private var apiClient
   @Dependency(\.date.now) private var now
   @Dependency(\.uuid) private var uuid
 
-  private let deviceID: UUID
+  private let deviceID: DeviceID
   private let accessToken: @Sendable () -> String?
   private struct SynchronizationFlight {
-    let id: UUID
+    let id: Tagged<SynchronizationFlightTag, UUID>
     let task: Task<SleepForecast?, Error>
   }
   private var synchronizationTasks: [Family.ID: SynchronizationFlight] = [:]
 
-  public init(deviceID: UUID, accessToken: @escaping @Sendable () -> String?) {
+  public init(deviceID: DeviceID, accessToken: @escaping @Sendable () -> String?) {
     self.deviceID = deviceID
     self.accessToken = accessToken
   }
@@ -29,8 +31,8 @@ public actor SyncCoordinator {
     growthReference: String = "none"
   ) async throws -> Child.ID {
     guard ["none", "girl", "boy"].contains(growthReference) else { throw SyncError.invalidGrowthReference }
-    let childID = uuid()
-    let commandID = uuid()
+    let childID: Child.ID = nextID()
+    let commandID: PendingCommand.ID = nextID()
     let payload = try jsonValue(
       ChildCommandPayload(
         id: childID,
@@ -59,8 +61,8 @@ public actor SyncCoordinator {
     startedAt: Date? = nil,
     source: String = "phone"
   ) async throws -> SleepSession.ID {
-    let sessionID = uuid()
-    let commandID = uuid()
+    let sessionID: SleepSession.ID = nextID()
+    let commandID: PendingCommand.ID = nextID()
     let start = startedAt ?? now
     let payload = try jsonValue(SleepCommandPayload(id: sessionID, childID: childID, startedAt: start, endedAt: nil, source: source))
     let pending = try pendingCommand(id: commandID, familyID: familyID, kind: "startSleep", payload: payload)
@@ -85,7 +87,7 @@ public actor SyncCoordinator {
     }
     guard let session else { throw SyncError.missingSession }
     guard end > session.startedAt else { throw SyncError.invalidInterval }
-    let commandID = uuid()
+    let commandID: PendingCommand.ID = nextID()
     let payload = try jsonValue(SleepCommandPayload(id: sessionID, childID: session.childID, startedAt: session.startedAt, endedAt: end, source: session.source, startCondition: session.startCondition, sleepLocation: session.sleepLocation, endCondition: session.endCondition, wakeMood: wakeMood, wakeReason: wakeReason, caregiverIntervened: caregiverIntervened))
     let pending = try pendingCommand(id: commandID, familyID: familyID, kind: "endSleep", expectedRevision: session.revision == 0 ? nil : session.revision, payload: payload)
     try await database.write { database in
@@ -102,9 +104,9 @@ public actor SyncCoordinator {
     endedAt: Date?
   ) async throws {
     if let endedAt, endedAt <= startedAt { throw SyncError.invalidInterval }
-    let id = sessionID ?? uuid()
+    let id = sessionID ?? nextID()
     let existing = try await database.read { database in try SleepSession.find(id).fetchOne(database) }
-    let commandID = uuid()
+    let commandID: PendingCommand.ID = nextID()
     let payload = try jsonValue(SleepCommandPayload(
       id: id,
       childID: childID,
@@ -138,14 +140,14 @@ public actor SyncCoordinator {
     guard weightGrams.map({ 100...100_000 ~= $0 }) ?? true,
           heightMillimeters.map({ 100...2_500 ~= $0 }) ?? true
     else { throw SyncError.invalidGrowthMeasurement }
-    let id = measurementID ?? uuid()
+    let id = measurementID ?? nextID()
     let existing = try await database.read { database in try GrowthMeasurement.find(id).fetchOne(database) }
     let payload = try jsonValue(GrowthMeasurementCommandPayload(
       id: id, childID: childID, measuredAt: measuredAt, weightGrams: weightGrams,
       heightMillimeters: heightMillimeters, note: note
     ))
     let pending = try pendingCommand(
-      id: uuid(), familyID: familyID, kind: "upsertGrowthMeasurement",
+      id: nextID(), familyID: familyID, kind: "upsertGrowthMeasurement",
       expectedRevision: existing?.revision == 0 ? nil : existing?.revision, payload: payload
     )
     try await database.write { database in
@@ -162,7 +164,7 @@ public actor SyncCoordinator {
     guard let existing else { throw SyncError.missingGrowthMeasurement }
     let payload = try jsonValue(DeleteCommandPayload(id: measurementID))
     let pending = try pendingCommand(
-      id: uuid(), familyID: familyID, kind: "deleteGrowthMeasurement",
+      id: nextID(), familyID: familyID, kind: "deleteGrowthMeasurement",
       expectedRevision: existing.revision == 0 ? nil : existing.revision, payload: payload
     )
     try await database.write { database in
@@ -176,13 +178,13 @@ public actor SyncCoordinator {
     measuredAt: Date, centiCelsius: Int, note: String = "", expectedRevision: Int? = nil
   ) async throws {
     guard TemperatureValue.isValid(centiCelsius) else { throw SyncError.invalidTemperatureReading }
-    let id = readingID ?? uuid()
+    let id = readingID ?? nextID()
     let existing = try await database.read { database in try TemperatureReading.find(id).fetchOne(database) }
     let effectiveRevision = try await pendingTemperatureRevision(familyID: familyID, readingID: id)
       ?? expectedRevision ?? (existing?.revision == 0 ? nil : existing?.revision)
     let payload = try jsonValue(TemperatureReadingCommandPayload(id: id, childID: childID,
       measuredAt: measuredAt, centiCelsius: centiCelsius, note: note))
-    let pending = try pendingCommand(id: uuid(), familyID: familyID, kind: "upsertTemperatureReading",
+    let pending = try pendingCommand(id: nextID(), familyID: familyID, kind: "upsertTemperatureReading",
       expectedRevision: effectiveRevision, payload: payload)
     try await database.write { database in
       try PendingCommand.insert { pending }.execute(database)
@@ -197,7 +199,7 @@ public actor SyncCoordinator {
     let effectiveRevision = try await pendingTemperatureRevision(familyID: familyID, readingID: readingID)
       ?? expectedRevision ?? (existing.revision == 0 ? nil : existing.revision)
     let payload = try jsonValue(DeleteCommandPayload(id: readingID))
-    let pending = try pendingCommand(id: uuid(), familyID: familyID, kind: "deleteTemperatureReading",
+    let pending = try pendingCommand(id: nextID(), familyID: familyID, kind: "deleteTemperatureReading",
       expectedRevision: effectiveRevision, payload: payload)
     try await database.write { database in
       try PendingCommand.insert { pending }.execute(database)
@@ -237,7 +239,7 @@ public actor SyncCoordinator {
       growthReference: growthReference
     ))
     let pending = try pendingCommand(
-      id: uuid(), familyID: familyID, kind: "updateChild",
+      id: nextID(), familyID: familyID, kind: "updateChild",
       expectedRevision: child.revision == 0 ? nil : child.revision, payload: payload
     )
     try await database.write { database in
@@ -252,7 +254,7 @@ public actor SyncCoordinator {
       flight = existing
     } else {
       flight = SynchronizationFlight(
-        id: UUID(),
+        id: Tagged<SynchronizationFlightTag, UUID>(),
         task: Task { try await self.performSynchronization(familyID: familyID) }
       )
       synchronizationTasks[familyID] = flight
@@ -336,7 +338,7 @@ public actor SyncCoordinator {
 
   private func apply(_ response: SyncResponse, familyID: Family.ID) async throws {
     let appliedAt = now
-    let replacementIDs = Dictionary(uniqueKeysWithValues: response.commandResults.map { ($0.id, uuid()) })
+    let replacementIDs = Dictionary(uniqueKeysWithValues: response.commandResults.map { ($0.id, nextID() as PendingCommand.ID) })
     try await database.write { database in
       if !response.growthReferencePoints.isEmpty {
         try GrowthReferencePoint.delete().execute(database)
@@ -352,7 +354,7 @@ public actor SyncCoordinator {
         try AuthoritativeRecord.where { $0.familyID.eq(familyID) }.delete().execute(database)
         for entity in snapshot.entities {
           let record = AuthoritativeRecord(
-            id: "\(entity.entityType):\(entity.entityID.uuidString)",
+            id: AuthoritativeRecord.ID(rawValue: "\(entity.entityType):\(entity.entityID.uuidString)"),
             familyID: familyID,
             entityType: entity.entityType,
             entityID: entity.entityID,
@@ -415,7 +417,7 @@ public actor SyncCoordinator {
             let serverPayload = try result.payload.map { try JSONEncoder.uneton.encode($0) }
             try SyncConflict.upsert {
               SyncConflict(
-                id: command.id,
+                id: SyncConflict.ID(rawValue: command.id.rawValue),
                 familyID: familyID,
                 entityType: identity.entityType,
                 entityID: identity.entityID,
@@ -435,7 +437,7 @@ public actor SyncCoordinator {
         guard event.cursor > eventBaseline else { continue }
         let payload = try JSONEncoder.uneton.encode(event.payload)
         let record = AuthoritativeRecord(
-          id: "\(event.entityType):\(event.entityID.uuidString)",
+          id: AuthoritativeRecord.ID(rawValue: "\(event.entityType):\(event.entityID.uuidString)"),
           familyID: familyID,
           entityType: event.entityType,
           entityID: event.entityID,
@@ -498,7 +500,7 @@ public actor SyncCoordinator {
       throw SyncError.invalidServerPayload
     }
     let commandByID = Dictionary(uniqueKeysWithValues: commands.map { ($0.id, $0) })
-    var resultIDs = Set<UUID>()
+    var resultIDs = Set<PendingCommand.ID>()
     for result in response.commandResults {
       guard let command = commandByID[result.id], resultIDs.insert(result.id).inserted,
             result.status == "accepted" || result.status == "rejected" else {
@@ -508,7 +510,7 @@ public actor SyncCoordinator {
         guard let type = entityType(for: command.kind),
               case let .object(commandObject) = command.payload,
               case let .string(commandIDValue)? = commandObject["id"],
-              let commandEntityID = UUID(uuidString: commandIDValue),
+              let commandEntityID = EntityID(uuidString: commandIDValue),
               case let .object(resultObject) = payload,
               case let .number(revisionValue)? = resultObject["revision"],
               let revision = Int(exactly: revisionValue),
@@ -535,7 +537,7 @@ public actor SyncCoordinator {
 
   private nonisolated static func validEntity(
     _ type: String,
-    id: UUID,
+    id: EntityID,
     revision: Int,
     payload: JSONValue,
     familyID: Family.ID
@@ -545,23 +547,23 @@ public actor SyncCoordinator {
     switch type {
     case "child":
       guard let child = try? JSONDecoder.uneton.decode(ServerChildPayload.self, from: data) else { return false }
-      return child.id == id && child.revision == revision
+      return child.id.rawValue == id.rawValue && child.revision == revision
     case "sleepSession":
       guard let sleep = try? JSONDecoder.uneton.decode(ServerSleepPayload.self, from: data) else { return false }
-      return sleep.id == id && sleep.familyID == familyID && sleep.revision == revision
+      return sleep.id.rawValue == id.rawValue && sleep.familyID == familyID && sleep.revision == revision
     case "growthMeasurement":
       guard let measurement = try? JSONDecoder.uneton.decode(ServerGrowthMeasurementPayload.self, from: data) else { return false }
-      return measurement.id == id && measurement.familyID == familyID && measurement.revision == revision
+      return measurement.id.rawValue == id.rawValue && measurement.familyID == familyID && measurement.revision == revision
     case "temperatureReading":
       guard let reading = try? JSONDecoder.uneton.decode(ServerTemperatureReadingPayload.self, from: data) else { return false }
-      return reading.id == id && reading.familyID == familyID && reading.revision == revision
+      return reading.id.rawValue == id.rawValue && reading.familyID == familyID && reading.revision == revision
     default:
       return false
     }
   }
 
   public func resolveConflict(_ conflictID: SyncConflict.ID, resolution: SyncConflictResolution) async throws {
-    let replacementID = uuid()
+    let replacementID: PendingCommand.ID = nextID()
     let resolvedAt = now
     try await database.write { database in
       guard let conflict = try SyncConflict.find(conflictID).fetchOne(database) else { return }
@@ -596,7 +598,7 @@ public actor SyncCoordinator {
     guard let revision = try revision(payloadData) else { return }
     try AuthoritativeRecord.upsert {
       AuthoritativeRecord(
-        id: "\(identity.entityType):\(entityID.uuidString)",
+        id: AuthoritativeRecord.ID(rawValue: "\(identity.entityType):\(entityID.uuidString)"),
         familyID: familyID,
         entityType: identity.entityType,
         entityID: entityID,
@@ -610,7 +612,7 @@ public actor SyncCoordinator {
   private nonisolated static func automaticResolution(
     _ result: APICommandResult,
     command: PendingCommand,
-    replacementID: UUID,
+    replacementID: PendingCommand.ID,
     appliedAt: Date
   ) throws -> AutomaticResolution {
     guard let serverPayload = result.payload else { return .requiresUser }
@@ -682,22 +684,22 @@ public actor SyncCoordinator {
     }
   }
 
-  private nonisolated static func commandIdentity(_ command: PendingCommand) throws -> (entityType: String, entityID: UUID) {
+  private nonisolated static func commandIdentity(_ command: PendingCommand) throws -> (entityType: String, entityID: EntityID) {
     switch command.kind {
     case "createChild", "updateChild", "updatePredictionSettings":
-      return ("child", try JSONDecoder.uneton.decode(ChildCommandPayload.self, from: command.payloadJSON).id)
+      return ("child", try EntityID(rawValue: JSONDecoder.uneton.decode(ChildCommandPayload.self, from: command.payloadJSON).id.rawValue))
     case "startSleep", "endSleep", "upsertSleep":
-      return ("sleepSession", try JSONDecoder.uneton.decode(SleepCommandPayload.self, from: command.payloadJSON).id)
+      return ("sleepSession", try EntityID(rawValue: JSONDecoder.uneton.decode(SleepCommandPayload.self, from: command.payloadJSON).id.rawValue))
     case "deleteSleep":
-      return ("sleepSession", try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: command.payloadJSON).id)
+      return ("sleepSession", try EntityID(rawValue: JSONDecoder.uneton.decode(DeleteCommandPayload<SleepSession.ID>.self, from: command.payloadJSON).id.rawValue))
     case "upsertGrowthMeasurement":
-      return ("growthMeasurement", try JSONDecoder.uneton.decode(GrowthMeasurementCommandPayload.self, from: command.payloadJSON).id)
+      return ("growthMeasurement", try EntityID(rawValue: JSONDecoder.uneton.decode(GrowthMeasurementCommandPayload.self, from: command.payloadJSON).id.rawValue))
     case "deleteGrowthMeasurement":
-      return ("growthMeasurement", try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: command.payloadJSON).id)
+      return ("growthMeasurement", try EntityID(rawValue: JSONDecoder.uneton.decode(DeleteCommandPayload<GrowthMeasurement.ID>.self, from: command.payloadJSON).id.rawValue))
     case "upsertTemperatureReading":
-      return ("temperatureReading", try JSONDecoder.uneton.decode(TemperatureReadingCommandPayload.self, from: command.payloadJSON).id)
+      return ("temperatureReading", try EntityID(rawValue: JSONDecoder.uneton.decode(TemperatureReadingCommandPayload.self, from: command.payloadJSON).id.rawValue))
     case "deleteTemperatureReading":
-      return ("temperatureReading", try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: command.payloadJSON).id)
+      return ("temperatureReading", try EntityID(rawValue: JSONDecoder.uneton.decode(DeleteCommandPayload<TemperatureReading.ID>.self, from: command.payloadJSON).id.rawValue))
     default:
       throw SyncError.invalidServerPayload
     }
@@ -711,7 +713,7 @@ public actor SyncCoordinator {
   }
 
   private func pendingCommand(
-    id: UUID,
+    id: PendingCommand.ID,
     familyID: Family.ID,
     kind: String,
     expectedRevision: Int? = nil,
@@ -739,6 +741,10 @@ public actor SyncCoordinator {
   private func jsonValue<Value: Encodable>(_ value: Value) throws -> JSONValue {
     let data = try JSONEncoder.uneton.encode(value)
     return try JSONDecoder.uneton.decode(JSONValue.self, from: data)
+  }
+
+  private func nextID<Tag>() -> Tagged<Tag, UUID> {
+    Tagged(rawValue: uuid())
   }
 
 }
@@ -769,7 +775,7 @@ public enum SyncError: Error, Equatable {
 }
 
 struct ChildCommandPayload: Codable {
-  var id: UUID
+  var id: Child.ID
   var nickname: String
   var birthDate: String
   var predictionMode: String
@@ -781,8 +787,8 @@ struct ChildCommandPayload: Codable {
 }
 
 struct SleepCommandPayload: Codable {
-  var id: UUID
-  var childID: UUID
+  var id: SleepSession.ID
+  var childID: Child.ID
   var startedAt: Date
   var endedAt: Date?
   var source: String
@@ -794,13 +800,13 @@ struct SleepCommandPayload: Codable {
   var caregiverIntervened: Bool?
 }
 
-struct DeleteCommandPayload: Codable {
-  var id: UUID
+struct DeleteCommandPayload<ID: Codable>: Codable {
+  var id: ID
 }
 
 struct GrowthMeasurementCommandPayload: Codable {
-  var id: UUID
-  var childID: UUID
+  var id: GrowthMeasurement.ID
+  var childID: Child.ID
   var measuredAt: Date
   var weightGrams: Int?
   var heightMillimeters: Int?
@@ -808,15 +814,15 @@ struct GrowthMeasurementCommandPayload: Codable {
 }
 
 struct TemperatureReadingCommandPayload: Codable {
-  var id: UUID
-  var childID: UUID
+  var id: TemperatureReading.ID
+  var childID: Child.ID
   var measuredAt: Date
   var centiCelsius: Int
   var note: String
 }
 
 struct ServerChildPayload: Codable {
-  var id: UUID
+  var id: Child.ID
   var nickname: String
   var birthDate: String
   var predictionMode: String
@@ -830,13 +836,13 @@ struct ServerChildPayload: Codable {
 }
 
 struct ServerSleepPayload: Codable {
-  var id: UUID
-  var familyID: UUID
-  var childID: UUID
+  var id: SleepSession.ID
+  var familyID: Family.ID
+  var childID: Child.ID
   var startedAt: Date
   var endedAt: Date?
   var revision: Int
-  var authorID: UUID
+  var authorID: UserID
   var source: String
   var startCondition: String = ""
   var sleepLocation: String = ""
@@ -844,15 +850,15 @@ struct ServerSleepPayload: Codable {
   var wakeMood: String = "unknown"
   var wakeReason: String = "unknown"
   var caregiverIntervened: Bool?
-  var supersededByID: UUID?
+  var supersededByID: SleepSession.ID?
   var updatedAt: Date
   var deletedAt: Date?
 }
 
 struct ServerGrowthMeasurementPayload: Codable {
-  var id: UUID
-  var familyID: UUID
-  var childID: UUID
+  var id: GrowthMeasurement.ID
+  var familyID: Family.ID
+  var childID: Child.ID
   var measuredAt: Date
   var weightGrams: Int?
   var heightMillimeters: Int?
@@ -863,9 +869,9 @@ struct ServerGrowthMeasurementPayload: Codable {
 }
 
 struct ServerTemperatureReadingPayload: Codable {
-  var id: UUID
-  var familyID: UUID
-  var childID: UUID
+  var id: TemperatureReading.ID
+  var familyID: Family.ID
+  var childID: Child.ID
   var measuredAt: Date
   var centiCelsius: Int
   var note: String

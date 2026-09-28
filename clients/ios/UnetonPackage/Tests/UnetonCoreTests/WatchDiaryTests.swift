@@ -11,9 +11,9 @@ struct WatchDiaryTests {
   }
 
   @Test func watchRequestsRequireAChildAndRevisionForEdits() {
-    let familyID = UUID()
-    let childID = UUID()
-    let readingID = UUID()
+    let familyID = Family.ID()
+    let childID = Child.ID()
+    let readingID = TemperatureReading.ID()
     #expect(WatchDiaryRequest(action: .status).isWellFormed)
     #expect(!WatchDiaryRequest(action: .startSleep).isWellFormed)
     #expect(WatchDiaryRequest(action: .startSleep, familyID: familyID, childID: childID).isWellFormed)
@@ -26,8 +26,8 @@ struct WatchDiaryTests {
   }
 
   @Test func retryPreservesTheTemperatureReadingIdentity() throws {
-    let request = WatchDiaryRequest(action: .upsertTemperature, familyID: UUID(), childID: UUID(),
-      readingID: UUID(), isNewReading: true, measuredAt: .now, centiCelsius: 3875,
+    let request = WatchDiaryRequest(action: .upsertTemperature, familyID: Family.ID(), childID: Child.ID(),
+      readingID: TemperatureReading.ID(), isNewReading: true, measuredAt: .now, centiCelsius: 3875,
       note: "Evening")
     let decoded = try JSONDecoder().decode(WatchDiaryRequest.self, from: JSONEncoder().encode(request))
     #expect(decoded.isWellFormed)
@@ -36,26 +36,33 @@ struct WatchDiaryTests {
     #expect(decoded.isNewReading)
   }
 
+  @Test func taggedIdentifiersKeepTheExistingWatchWireShape() throws {
+    let familyID = Family.ID(uuidString: "00000000-0000-4000-8000-000000000101")!
+    let request = WatchDiaryRequest(action: .startSleep, familyID: familyID, childID: Child.ID())
+    let object = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(request)) as? [String: Any])
+    #expect(object["familyID"] as? String == familyID.uuidString)
+  }
+
   @Test func snapshotSelectsTheRequestedChildAndRoundTrips() throws {
-    let familyID = UUID()
+    let familyID = Family.ID()
     let family = ModelFixtures.family(id: familyID, name: "Family")
     let first = ModelFixtures.watchChild(
-      from: ModelFixtures.child(id: UUID(), familyID: familyID, nickname: "First"),
+      from: ModelFixtures.child(id: Child.ID(), familyID: familyID, nickname: "First"),
       family: family
     )
     let second = ModelFixtures.watchChild(
-      from: ModelFixtures.child(id: UUID(), familyID: familyID, nickname: "Second"),
+      from: ModelFixtures.child(id: Child.ID(), familyID: familyID, nickname: "Second"),
       family: family, activeSleepStartedAt: .now,
       readings: [ModelFixtures.temperature(
-        id: UUID(), familyID: familyID, measuredAt: .now,
+        id: TemperatureReading.ID(), familyID: familyID, measuredAt: .now,
         centiCelsius: 3_850, note: "Evening", revision: 2,
-        pendingCommandID: UUID()
+        pendingCommandID: PendingCommand.ID()
       )]
     )
     let snapshot = WatchDiarySnapshot(children: [first, second])
     let decoded = try JSONDecoder().decode(WatchDiarySnapshot.self, from: JSONEncoder().encode(snapshot))
     #expect(decoded == snapshot)
     #expect(decoded.selectedChild(id: second.id)?.nickname == "Second")
-    #expect(decoded.selectedChild(id: UUID())?.nickname == "First")
+    #expect(decoded.selectedChild(id: Child.ID())?.nickname == "First")
   }
 }

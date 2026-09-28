@@ -1,13 +1,14 @@
 import ComposableArchitecture2
 import Foundation
 import UnetonCore
+import UnetonCore
 
 @Feature
 struct TemperatureEntry {
     struct State {
-        let familyID: UUID
-        let childID: UUID
-        let readingID: UUID?
+        let familyID: Family.ID
+        let childID: Child.ID
+        let readingID: TemperatureReading.ID?
         var measuredAt: Date
         var temperature: String
         var note: String
@@ -15,7 +16,7 @@ struct TemperatureEntry {
         var isSaved = false
         @StoreTaskID var request
 
-        init(familyID: UUID, childID: UUID, readingID: UUID? = nil,
+        init(familyID: Family.ID, childID: Child.ID, readingID: TemperatureReading.ID? = nil,
              measuredAt: Date = .now, centiCelsius: Int? = nil, note: String = "") {
             self.familyID = familyID
             self.childID = childID

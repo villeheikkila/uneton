@@ -6,9 +6,9 @@ import UnetonCore
 @MainActor
 struct LiveActivityController {
     func start(
-        familyID: UUID,
-        childID: UUID,
-        sessionID: UUID,
+        familyID: Family.ID,
+        childID: Child.ID,
+        sessionID: SleepSession.ID,
         childName: String,
         startedAt: Date
     ) async {
@@ -29,7 +29,7 @@ struct LiveActivityController {
 
     func observeTokens(
         pushToStart: @escaping @Sendable (String) async -> Void,
-        activity: @escaping @Sendable (UUID, String) async -> Void
+        activity: @escaping @Sendable (SleepSession.ID, String) async -> Void
     ) async {
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
@@ -49,7 +49,7 @@ struct LiveActivityController {
         }
     }
 
-    func end(sessionID: UUID, endedAt: Date) async {
+    func end(sessionID: SleepSession.ID, endedAt: Date) async {
         for activity in Activity<SleepActivityAttributes>.activities
         where activity.attributes.sessionID == sessionID {
             await activity.end(
@@ -62,7 +62,7 @@ struct LiveActivityController {
 
 private func observe(
     _ value: Activity<SleepActivityAttributes>,
-    activity: @escaping @Sendable (UUID, String) async -> Void
+    activity: @escaping @Sendable (SleepSession.ID, String) async -> Void
 ) async {
     for await token in value.pushTokenUpdates {
         await activity(value.attributes.sessionID, token.hexadecimalString)

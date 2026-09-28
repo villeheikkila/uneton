@@ -1,10 +1,11 @@
 import ComposableArchitecture2
 import Foundation
+import UnetonCore
 
 @Feature
 struct FamilySharing {
     struct State {
-        let familyID: UUID
+        let familyID: Family.ID
         var errorMessage: String?
         var inviteURL: URL?
         var isConfirmingAccountDeletion = false
@@ -15,7 +16,7 @@ struct FamilySharing {
         @StoreTaskID var accountRequest
         @StoreTaskID var inviteRequest
 
-        init(familyID: UUID, notificationsEnabled: Bool, liveActivitiesEnabled: Bool, reminderLeadMinutes: Int) {
+        init(familyID: Family.ID, notificationsEnabled: Bool, liveActivitiesEnabled: Bool, reminderLeadMinutes: Int) {
             self.familyID = familyID
             self.notificationsEnabled = notificationsEnabled
             self.liveActivitiesEnabled = liveActivitiesEnabled

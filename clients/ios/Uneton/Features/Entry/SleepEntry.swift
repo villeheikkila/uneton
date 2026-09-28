@@ -1,13 +1,14 @@
 import ComposableArchitecture2
 import Foundation
+import UnetonCore
 
 @Feature
 struct SleepEntry {
     struct State {
-        let childID: UUID
+        let childID: Child.ID
         let childName: String
-        let familyID: UUID
-        let sessionID: UUID?
+        let familyID: Family.ID
+        let sessionID: SleepSession.ID?
         var endedAt: Date
         var errorMessage: String?
         var hasEnd: Bool
@@ -16,7 +17,7 @@ struct SleepEntry {
         var usesCustomStart: Bool
         @StoreTaskID var save
 
-        init(familyID: UUID, childID: UUID, childName: String, sessionID: UUID? = nil, startedAt: Date = .now, endedAt: Date? = nil) {
+        init(familyID: Family.ID, childID: Child.ID, childName: String, sessionID: SleepSession.ID? = nil, startedAt: Date = .now, endedAt: Date? = nil) {
             self.childID = childID
             self.childName = childName
             self.familyID = familyID

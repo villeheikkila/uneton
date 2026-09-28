@@ -23,7 +23,7 @@ final class WatchBridge: NSObject, WCSessionDelegate {
     private(set) var pendingRequest: WatchDiaryRequest?
     var errorMessage: String?
     var notice: String?
-    var selectedChildID: UUID?
+    var selectedChildID: Child.ID?
 
     var selectedChild: WatchDiaryChild? { snapshot.selectedChild(id: selectedChildID) }
 
@@ -31,7 +31,7 @@ final class WatchBridge: NSObject, WCSessionDelegate {
 
     init(snapshotFixture: WatchDiarySnapshot? = nil) {
         usesSnapshotFixture = snapshotFixture != nil
-        selectedChildID = UserDefaults.standard.string(forKey: "watch.selectedChildID").flatMap(UUID.init(uuidString:))
+        selectedChildID = UserDefaults.standard.string(forKey: "watch.selectedChildID").flatMap(Child.ID.init(uuidString:))
         super.init()
         if let snapshotFixture {
             snapshot = snapshotFixture
@@ -43,7 +43,7 @@ final class WatchBridge: NSObject, WCSessionDelegate {
         WCSession.default.activate()
     }
 
-    func selectChild(_ id: UUID) {
+    func selectChild(_ id: Child.ID) {
         selectedChildID = id
         UserDefaults.standard.set(id.uuidString, forKey: "watch.selectedChildID")
     }
@@ -259,7 +259,7 @@ private struct WatchTemperatureSheet: View {
     let child: WatchDiaryChild
     let reading: WatchDiaryReading?
     let send: (WatchDiaryRequest) -> Void
-    @State private var newReadingID = UUID()
+    @State private var newReadingID = TemperatureReading.ID()
     @State private var measuredAt: Date
     @State private var temperature: String
     @State private var note: String
