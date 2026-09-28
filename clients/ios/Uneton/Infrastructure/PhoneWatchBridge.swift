@@ -1,4 +1,5 @@
 import Foundation
+import UnetonCore
 import WatchConnectivity
 
 final class PhoneWatchBridge: NSObject, WCSessionDelegate, @unchecked Sendable {
@@ -12,40 +13,58 @@ final class PhoneWatchBridge: NSObject, WCSessionDelegate, @unchecked Sendable {
         WCSession.default.activate()
     }
 
-    func session(
+    nonisolated func session(
         _ session: WCSession,
-        didReceiveMessage message: [String: Any],
-        replyHandler: @escaping ([String: Any]) -> Void
+        didReceiveMessageData messageData: Data,
+        replyHandler: @escaping (Data) -> Void
     ) {
-        guard let action = message["action"] as? String else {
-            replyHandler(["error": "Missing action"])
-            return
-        }
         let reply = SendableReply(replyHandler)
         Task { @MainActor [weak self] in
             guard let store = self?.store else {
-                reply.call(["error": "Phone app unavailable"])
+                reply.call(Self.encoded(WatchDiaryResponse(snapshot: WatchDiarySnapshot(),
+                    errorMessage: "Phone app unavailable")))
                 return
             }
-            let state = await store.handleWatchAction(action)
-            var response: [String: Any] = ["isSleeping": state.isSleeping]
-            if let startedAt = state.startedAt { response["startedAt"] = startedAt }
-            if let error = state.error { response["error"] = error }
-            reply.call(response)
+            let request = try? JSONDecoder().decode(WatchDiaryRequest.self, from: messageData)
+            guard let request else {
+                let snapshot = (try? await store.watchDiarySnapshot()) ?? WatchDiarySnapshot()
+                reply.call(Self.encoded(WatchDiaryResponse(snapshot: snapshot,
+                    errorMessage: "Invalid Watch request")))
+                return
+            }
+            reply.call(Self.encoded(await store.handleWatchRequest(request)))
         }
+    }
+
+    @MainActor
+    func publishSnapshot() async {
+        guard WCSession.isSupported(), WCSession.default.activationState == .activated,
+              let store else { return }
+        do {
+            let data = try JSONEncoder().encode(try await store.watchDiarySnapshot())
+            try WCSession.default.updateApplicationContext(["watchDiarySnapshot": data])
+        } catch {
+            // The next Watch status request reads the current phone projection.
+        }
+    }
+
+    private static func encoded(_ response: WatchDiaryResponse) -> Data {
+        (try? JSONEncoder().encode(response)) ?? Data()
     }
 
     nonisolated func session(
         _ session: WCSession,
         activationDidCompleteWith activationState: WCSessionActivationState,
         error: (any Error)?
-    ) {}
+    ) {
+        Task { @MainActor [weak self] in await self?.publishSnapshot() }
+    }
 
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
     nonisolated func sessionDidDeactivate(_ session: WCSession) { session.activate() }
 }
 
 private struct SendableReply: @unchecked Sendable {
-    let call: ([String: Any]) -> Void
-    init(_ call: @escaping ([String: Any]) -> Void) { self.call = call }
+    let call: (Data) -> Void
+    init(_ call: @escaping (Data) -> Void) { self.call = call }
 }

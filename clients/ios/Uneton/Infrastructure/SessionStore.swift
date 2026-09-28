@@ -273,17 +273,21 @@ final class SessionStore {
     }
 
     func logTemperatureReading(familyID: Family.ID, childID: Child.ID, readingID: TemperatureReading.ID? = nil,
-                               measuredAt: Date, centiCelsius: Int, note: String = "") async {
+                               measuredAt: Date, centiCelsius: Int, note: String = "",
+                               expectedRevision: Int? = nil) async {
         await perform {
             try await coordinator.upsertTemperatureReading(familyID: familyID, childID: childID,
-                readingID: readingID, measuredAt: measuredAt, centiCelsius: centiCelsius, note: note)
+                readingID: readingID, measuredAt: measuredAt, centiCelsius: centiCelsius,
+                note: note, expectedRevision: expectedRevision)
             _ = try await synchronizeWithRefresh(familyID: familyID)
         }
     }
 
-    func deleteTemperatureReading(familyID: Family.ID, readingID: TemperatureReading.ID) async {
+    func deleteTemperatureReading(familyID: Family.ID, readingID: TemperatureReading.ID,
+                                  expectedRevision: Int? = nil) async {
         await perform {
-            try await coordinator.deleteTemperatureReading(familyID: familyID, readingID: readingID)
+            try await coordinator.deleteTemperatureReading(familyID: familyID, readingID: readingID,
+                expectedRevision: expectedRevision)
             _ = try await synchronizeWithRefresh(familyID: familyID)
         }
     }
@@ -414,35 +418,119 @@ final class SessionStore {
         }
     }
 
-    func handleWatchAction(_ action: String) async -> (isSleeping: Bool, startedAt: Date?, error: String?) {
+    func watchDiarySnapshot() async throws -> WatchDiarySnapshot {
+        guard isAuthenticated else { return WatchDiarySnapshot() }
+        return try await database.read { database in
+            let families = try Family.order { $0.updatedAt.desc() }.fetchAll(database)
+            let children = try Child.fetchAll(database)
+            let sessions = try SleepSession.fetchAll(database)
+            let readings = try TemperatureReading.order { $0.measuredAt.desc() }.fetchAll(database)
+            return WatchDiarySnapshot(children: families.flatMap { family in
+                children.filter { $0.familyID == family.id }.map { child in
+                    let active = sessions.first {
+                        $0.childID == child.id && $0.endedAt == nil && $0.deletedAt == nil && $0.supersededByID == nil
+                    }
+                    let recent = readings.filter { $0.childID == child.id && $0.deletedAt == nil }
+                        .prefix(10).map { reading in
+                            WatchDiaryReading(id: reading.id, measuredAt: reading.measuredAt,
+                                centiCelsius: reading.centiCelsius, note: reading.note,
+                                revision: reading.revision, isPending: reading.pendingCommandID != nil)
+                        }
+                    return WatchDiaryChild(id: child.id, familyID: family.id, familyName: family.name,
+                        nickname: child.nickname, activeSleepStartedAt: active?.startedAt,
+                        readings: recent)
+                }
+            })
+        }
+    }
+
+    func handleWatchRequest(_ request: WatchDiaryRequest) async -> WatchDiaryResponse {
         do {
-            let context = try await database.read { database -> (Family, Child, SleepSession?)? in
-                guard let family = try Family.order(by: { $0.updatedAt.desc() }).fetchOne(database),
-                      let child = try Child.where({ $0.familyID.eq(family.id) }).fetchOne(database)
-                else { return nil }
-                let active = try SleepSession
-                    .where { $0.childID.eq(child.id) && $0.endedAt.is(nil) && $0.deletedAt.is(nil) }
-                    .order { $0.startedAt.desc() }
-                    .fetchOne(database)
-                return (family, child, active)
+            let before = try await watchDiarySnapshot()
+            guard request.isWellFormed else {
+                return WatchDiaryResponse(snapshot: before, errorMessage: "Invalid Watch request")
             }
-            guard let (family, child, active) = context else {
-                return (false, nil, "Set up Uneton on iPhone first")
+            if request.action == .status {
+                Task { [weak self] in _ = await self?.synchronizeAllInBackground() }
+                return WatchDiaryResponse(snapshot: before)
             }
-            if action == "endSleep", let active {
-                await endSleep(familyID: family.id, sessionID: active.id)
-            } else if action == "startSleep", active == nil {
-                await startSleep(familyID: family.id, childID: child.id, childName: child.nickname)
+            guard let familyID = request.familyID, let childID = request.childID,
+                  let child = before.children.first(where: { $0.familyID == familyID && $0.id == childID }) else {
+                return WatchDiaryResponse(snapshot: before, errorMessage: "Select a child on iPhone first")
             }
-            let current = try await database.read { database in
-                try SleepSession
-                    .where { $0.childID.eq(child.id) && $0.endedAt.is(nil) && $0.deletedAt.is(nil) }
-                    .order { $0.startedAt.desc() }
-                    .fetchOne(database)
+            let readingID = request.readingID
+            if let readingID {
+                let existing = try await database.read { try TemperatureReading.find(readingID).fetchOne($0) }
+                if request.action == .upsertTemperature && request.isNewReading {
+                    if let existing {
+                        let same = existing.familyID == familyID && existing.childID == childID
+                            && existing.deletedAt == nil && existing.measuredAt == request.measuredAt
+                            && existing.centiCelsius == request.centiCelsius && existing.note == request.note
+                        return WatchDiaryResponse(snapshot: before,
+                            errorMessage: same ? nil : "Reading already exists")
+                    }
+                } else if request.action == .upsertTemperature || request.action == .deleteTemperature {
+                    if request.action == .deleteTemperature && existing == nil {
+                        return WatchDiaryResponse(snapshot: before)
+                    }
+                    guard let existing, existing.familyID == familyID, existing.childID == childID,
+                          existing.deletedAt == nil else {
+                        return WatchDiaryResponse(snapshot: before, errorMessage: "Reading is no longer available")
+                    }
+                    if existing.revision != request.expectedRevision {
+                        let sameEdit = request.action == .upsertTemperature
+                            && existing.measuredAt == request.measuredAt
+                            && existing.centiCelsius == request.centiCelsius && existing.note == request.note
+                        return WatchDiaryResponse(snapshot: before,
+                            errorMessage: sameEdit ? nil : "Reading changed on iPhone. Refresh and try again.")
+                    }
+                }
             }
-            return (current != nil, current?.startedAt, errorMessage)
+            switch request.action {
+            case .status:
+                break
+            case .startSleep:
+                guard child.activeSleepStartedAt == nil else { return WatchDiaryResponse(snapshot: before) }
+                await startSleep(familyID: familyID, childID: childID, childName: child.nickname)
+            case .endSleep:
+                let activeID = try await database.read { database in
+                    try SleepSession.where { $0.childID.eq(childID) && $0.endedAt.is(nil) && $0.deletedAt.is(nil) && $0.supersededByID.is(nil) }
+                        .order { $0.startedAt.desc() }.fetchOne(database)?.id
+                }
+                guard let activeID else { return WatchDiaryResponse(snapshot: before) }
+                await endSleep(familyID: familyID, sessionID: activeID)
+            case .upsertTemperature:
+                await logTemperatureReading(familyID: familyID, childID: childID, readingID: readingID,
+                    measuredAt: request.measuredAt!, centiCelsius: request.centiCelsius!,
+                    note: request.note, expectedRevision: request.expectedRevision)
+            case .deleteTemperature:
+                await deleteTemperatureReading(familyID: familyID, readingID: request.readingID!,
+                    expectedRevision: request.expectedRevision)
+            }
+            let after = try await watchDiarySnapshot()
+            let updatedChild = after.children.first { $0.familyID == familyID && $0.id == childID }
+            let accepted: Bool
+            switch request.action {
+            case .status: accepted = true
+            case .startSleep: accepted = updatedChild?.activeSleepStartedAt != nil
+            case .endSleep: accepted = updatedChild?.activeSleepStartedAt == nil
+            case .upsertTemperature:
+                let saved = try await database.read { try TemperatureReading.find(readingID!).fetchOne($0) }
+                accepted = saved?.familyID == familyID && saved?.childID == childID
+                    && saved?.deletedAt == nil && saved?.measuredAt == request.measuredAt
+                    && saved?.centiCelsius == request.centiCelsius && saved?.note == request.note
+            case .deleteTemperature:
+                let saved = try await database.read { try TemperatureReading.find(readingID!).fetchOne($0) }
+                accepted = saved == nil || saved?.deletedAt != nil
+            }
+            if !accepted {
+                return WatchDiaryResponse(snapshot: after, errorMessage: errorMessage ?? "Could not save on iPhone")
+            }
+            return WatchDiaryResponse(snapshot: after,
+                notice: errorMessage == nil ? nil : "Saved on iPhone. Sync will retry when online.")
         } catch {
-            return (false, nil, error.localizedDescription)
+            return WatchDiaryResponse(snapshot: (try? await watchDiarySnapshot()) ?? WatchDiarySnapshot(),
+                errorMessage: error.localizedDescription)
         }
     }
 
@@ -534,6 +622,7 @@ final class SessionStore {
             try Family.delete().execute(database)
         }
         isAuthenticated = false
+        await watchBridge.publishSnapshot()
     }
 
     private func randomNonce() throws -> String {
@@ -566,13 +655,16 @@ final class SessionStore {
     }
 
     private func synchronizeWithRefresh(familyID: UUID) async throws -> SleepForecast? {
+        let result: SleepForecast?
         do {
-            return try await coordinator.synchronize(familyID: familyID)
+            result = try await coordinator.synchronize(familyID: familyID)
         } catch {
             guard isUnauthenticatedAPIError(error) else { throw error }
             try await refreshAuthentication()
-            return try await coordinator.synchronize(familyID: familyID)
+            result = try await coordinator.synchronize(familyID: familyID)
         }
+        await watchBridge.publishSnapshot()
+        return result
     }
 
     private func synchronizeInBackground(familyID: UUID) async -> Bool {
@@ -629,6 +721,7 @@ final class SessionStore {
         } catch {
             errorMessage = error.localizedDescription
         }
+        await watchBridge.publishSnapshot()
     }
 }
 

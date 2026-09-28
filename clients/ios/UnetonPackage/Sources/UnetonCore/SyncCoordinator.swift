@@ -173,31 +173,32 @@ public actor SyncCoordinator {
 
   public func upsertTemperatureReading(
     familyID: Family.ID, childID: Child.ID, readingID: TemperatureReading.ID? = nil,
-    measuredAt: Date, centiCelsius: Int, note: String = ""
+    measuredAt: Date, centiCelsius: Int, note: String = "", expectedRevision: Int? = nil
   ) async throws {
-    guard 2000...5000 ~= centiCelsius else { throw SyncError.invalidTemperatureReading }
+    guard TemperatureValue.isValid(centiCelsius) else { throw SyncError.invalidTemperatureReading }
     let id = readingID ?? uuid()
     let existing = try await database.read { database in try TemperatureReading.find(id).fetchOne(database) }
-    let expectedRevision = try await pendingTemperatureRevision(familyID: familyID, readingID: id)
-      ?? (existing?.revision == 0 ? nil : existing?.revision)
+    let effectiveRevision = try await pendingTemperatureRevision(familyID: familyID, readingID: id)
+      ?? expectedRevision ?? (existing?.revision == 0 ? nil : existing?.revision)
     let payload = try jsonValue(TemperatureReadingCommandPayload(id: id, childID: childID,
       measuredAt: measuredAt, centiCelsius: centiCelsius, note: note))
     let pending = try pendingCommand(id: uuid(), familyID: familyID, kind: "upsertTemperatureReading",
-      expectedRevision: expectedRevision, payload: payload)
+      expectedRevision: effectiveRevision, payload: payload)
     try await database.write { database in
       try PendingCommand.insert { pending }.execute(database)
       try Projection.rebuild(familyID: familyID, database: database)
     }
   }
 
-  public func deleteTemperatureReading(familyID: Family.ID, readingID: TemperatureReading.ID) async throws {
+  public func deleteTemperatureReading(familyID: Family.ID, readingID: TemperatureReading.ID,
+                                       expectedRevision: Int? = nil) async throws {
     let existing = try await database.read { database in try TemperatureReading.find(readingID).fetchOne(database) }
     guard let existing else { throw SyncError.missingTemperatureReading }
-    let expectedRevision = try await pendingTemperatureRevision(familyID: familyID, readingID: readingID)
-      ?? (existing.revision == 0 ? nil : existing.revision)
+    let effectiveRevision = try await pendingTemperatureRevision(familyID: familyID, readingID: readingID)
+      ?? expectedRevision ?? (existing.revision == 0 ? nil : existing.revision)
     let payload = try jsonValue(DeleteCommandPayload(id: readingID))
     let pending = try pendingCommand(id: uuid(), familyID: familyID, kind: "deleteTemperatureReading",
-      expectedRevision: expectedRevision, payload: payload)
+      expectedRevision: effectiveRevision, payload: payload)
     try await database.write { database in
       try PendingCommand.insert { pending }.execute(database)
       try Projection.rebuild(familyID: familyID, database: database)

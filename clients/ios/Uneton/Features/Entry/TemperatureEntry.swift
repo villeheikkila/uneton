@@ -1,5 +1,6 @@
 import ComposableArchitecture2
 import Foundation
+import UnetonCore
 
 @Feature
 struct TemperatureEntry {
@@ -25,9 +26,7 @@ struct TemperatureEntry {
         }
 
         var centiCelsius: Int? {
-            let normalized = temperature.replacingOccurrences(of: ",", with: ".")
-            guard let value = Double(normalized), value.isFinite, (20...50).contains(value) else { return nil }
-            return Int((value * 100).rounded())
+            TemperatureValue.centiCelsius(from: temperature)
         }
     }
 

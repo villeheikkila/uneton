@@ -253,6 +253,30 @@ struct SyncCoordinatorTests {
     #expect(try await database.read { try TemperatureReading.find(reading.id).fetchOne($0) } == nil)
   }
 
+  @Test func watchTemperatureEditKeepsTheRevisionTheUserSaw() async throws {
+    let familyID = UUID(-78)
+    let childID = UUID(-79)
+    let readingID = UUID(-80)
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    let authoritative = ServerTemperatureReadingPayload(id: readingID, familyID: familyID,
+      childID: childID, measuredAt: date(1_000), centiCelsius: 3810,
+      note: "Morning", revision: 3, updatedAt: date(1_000), deletedAt: nil)
+    let authoritativeJSON = try JSONEncoder.uneton.encode(authoritative)
+    try await database.write { database in
+      try AuthoritativeRecord.insert {
+        AuthoritativeRecord(id: "temperatureReading:\(readingID)", familyID: familyID,
+          entityType: "temperatureReading", entityID: readingID, revision: 3,
+          operation: "upsert", payloadJSON: authoritativeJSON)
+      }.execute(database)
+      try Projection.rebuild(familyID: familyID, database: database)
+    }
+    try await SyncCoordinator(deviceID: UUID(-81), accessToken: { "token" })
+      .upsertTemperatureReading(familyID: familyID, childID: childID, readingID: readingID,
+        measuredAt: date(2_000), centiCelsius: 3890, expectedRevision: 2)
+    let pending = try await database.read { try PendingCommand.where { $0.familyID.eq(familyID) }.fetchOne($0) }
+    #expect(pending?.expectedRevision == 2)
+  }
+
   @Test func acceptedGrowthReferenceUpdatePersistsServerValue() async throws {
     let familyID = UUID(-67)
     let childID = UUID(-68)

@@ -47,7 +47,7 @@ The production deployment runs one API writer behind Caddy with a durable SQLite
 | --- | --- |
 | `clients/ios/Uneton` | SwiftUI presentation and Apple-framework lifecycle orchestration |
 | `clients/ios/UnetonPackage/Sources/UnetonCore` | local schema, projection, durable commands, API adapter, and `SyncCoordinator` |
-| `clients/ios/UnetonWatch` | reachable phone controls; it does not own authoritative diary state |
+| `clients/ios/UnetonWatch` | paired phone controls and transient child/diary presentation; it does not own authoritative diary state |
 | `clients/ios/UnetonWidgets` and `UnetonActivity` | presentation of locally supplied or ActivityKit state |
 | `platform/contracts` | canonical Protobuf wire contract |
 | `platform/backend/internal/app` | authentication, authorization, command processing, sync, streams, APNs, and account lifecycle |
@@ -82,7 +82,7 @@ SQLiteData remains the durable read source. TCA feature state holds selection, p
 
 An iPhone action creates stable entity and command UUIDs, inserts a `PendingCommand`, and rebuilds the projection in one local SQLite transaction. The UI updates immediately. Network availability is irrelevant to accepting the action.
 
-The Watch app sends start/end intent to the paired phone through WatchConnectivity. The phone creates the same durable command used by its own UI; Watch state is not an independent diary database.
+The Watch app sends selected-child sleep and temperature intent to the paired phone through a typed `UnetonCore` Watch diary contract. The phone validates family and child identity, creates the same durable command used by its own UI, and returns the local projection. Watch replies and application-context updates are presentation snapshots only: they contain no event cursor and never apply authoritative entity state. The Watch keeps a request available for retry if the phone does not reply; the phone checks repeated temperature intent against its projection so an ambiguous reply does not create a duplicate reading. The Watch has no independent diary database or command queue, so the paired iPhone must be reachable to accept an action. When the iPhone is offline from the backend, it still accepts the command durably and retries `Sync` later.
 
 ### Growth measurements
 
