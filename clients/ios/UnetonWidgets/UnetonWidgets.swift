@@ -14,28 +14,10 @@ struct UnetonWidgets: WidgetBundle {
 struct SleepLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: SleepActivityAttributes.self) { context in
-            HStack(spacing: 14) {
-                Image(systemName: "moon.zzz.fill")
-                    .font(.title2)
-                    .foregroundStyle(.indigo)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("\(context.attributes.childName) is sleeping")
-                        .font(.headline)
-                    Text(timerInterval: context.attributes.startedAt...Date.distantFuture, countsDown: false)
-                        .font(.subheadline.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Link(destination: endURL(context.attributes)) {
-                    Text("Wake up")
-                        .font(.subheadline.weight(.semibold))
-                        .padding(.horizontal, 13)
-                        .padding(.vertical, 9)
-                        .background(.indigo, in: .capsule)
-                        .foregroundStyle(.white)
-                }
-            }
-            .padding()
+            SleepActivityLockScreenView(
+                childName: context.attributes.childName,
+                elapsed: Text(timerInterval: context.attributes.startedAt...Date.distantFuture, countsDown: false),
+                endURL: endURL(context.attributes))
             .activityBackgroundTint(Color.indigo.opacity(0.12))
             .activitySystemActionForegroundColor(.primary)
         } dynamicIsland: { context in
@@ -44,16 +26,15 @@ struct SleepLiveActivity: Widget {
                     Image(systemName: "moon.zzz.fill").foregroundStyle(.indigo)
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    Text(timerInterval: context.attributes.startedAt...Date.distantFuture, countsDown: false)
-                        .font(.headline.monospacedDigit())
+                    SleepActivityExpandedCenterView(
+                        elapsed: Text(timerInterval: context.attributes.startedAt...Date.distantFuture, countsDown: false))
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     Link("Wake", destination: endURL(context.attributes))
                         .font(.caption.weight(.bold))
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    Text("\(context.attributes.childName) is sleeping")
-                        .foregroundStyle(.secondary)
+                    SleepActivityExpandedBottomView(childName: context.attributes.childName)
                 }
             } compactLeading: {
                 Image(systemName: "moon.fill").foregroundStyle(.indigo)

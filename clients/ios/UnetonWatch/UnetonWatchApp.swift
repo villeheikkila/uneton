@@ -5,7 +5,7 @@ import WatchConnectivity
 
 @main
 struct UnetonWatchApp: App {
-    @State private var bridge = WatchBridge()
+    @State private var bridge = WatchBridge(snapshotFixture: WatchScreenshotFixture.current)
 
     var body: some Scene {
         WindowGroup {
@@ -27,9 +27,17 @@ final class WatchBridge: NSObject, WCSessionDelegate {
 
     var selectedChild: WatchDiaryChild? { snapshot.selectedChild(id: selectedChildID) }
 
-    override init() {
+    private let usesSnapshotFixture: Bool
+
+    init(snapshotFixture: WatchDiarySnapshot? = nil) {
+        usesSnapshotFixture = snapshotFixture != nil
         selectedChildID = UserDefaults.standard.string(forKey: "watch.selectedChildID").flatMap(UUID.init(uuidString:))
         super.init()
+        if let snapshotFixture {
+            snapshot = snapshotFixture
+            selectedChildID = snapshotFixture.children.first?.id
+            return
+        }
         guard WCSession.isSupported() else { return }
         WCSession.default.delegate = self
         WCSession.default.activate()
@@ -52,6 +60,7 @@ final class WatchBridge: NSObject, WCSessionDelegate {
     }
 
     func refresh() {
+        guard !usesSnapshotFixture else { return }
         guard pendingRequest == nil else { return }
         send(WatchDiaryRequest(action: .status))
     }
@@ -118,6 +127,31 @@ final class WatchBridge: NSObject, WCSessionDelegate {
         Task { @MainActor [weak self] in self?.accept(snapshot) }
     }
 }
+
+#if DEBUG
+private enum WatchScreenshotFixture {
+    static var current: WatchDiarySnapshot? {
+        guard let scenario = ProcessInfo.processInfo.environment["UNETON_WATCH_SCREENSHOT_SCENARIO"] else {
+            return nil
+        }
+        let familyID = UUID(uuidString: "00000000-0000-4000-8000-000000000101")!
+        let childID = UUID(uuidString: "00000000-0000-4000-8000-000000000102")!
+        let reading = WatchDiaryReading(
+            id: UUID(uuidString: "00000000-0000-4000-8000-000000000103")!,
+            measuredAt: Date(timeIntervalSince1970: 1_790_000_000),
+            centiCelsius: 3820, note: "After nap", revision: 1, isPending: false)
+        let child = WatchDiaryChild(
+            id: childID, familyID: familyID, familyName: "Our family", nickname: "Aino",
+            activeSleepStartedAt: scenario == "sleeping" ? .now.addingTimeInterval(-3600) : nil,
+            readings: scenario == "temperature" ? [reading] : [])
+        return WatchDiarySnapshot(children: [child])
+    }
+}
+#else
+private enum WatchScreenshotFixture {
+    static var current: WatchDiarySnapshot? { nil }
+}
+#endif
 
 private struct WatchDiaryView: View {
     @Environment(WatchBridge.self) private var bridge
