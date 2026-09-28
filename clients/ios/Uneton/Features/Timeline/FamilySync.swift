@@ -9,6 +9,7 @@ struct FamilySync {
         var entry: SleepEntry.State?
         var errorMessage: String?
         var growthEntry: GrowthEntry.State?
+        var temperatureEntry: TemperatureEntry.State?
         var isForeground = false
         var isPresentingConflicts = false
         var sharing: FamilySharing.State?
@@ -26,6 +27,9 @@ struct FamilySync {
         case foregroundChanged(Bool)
         case conflictListButtonTapped
         case growthEntry(GrowthEntry.Action)
+        case temperatureEntry(TemperatureEntry.Action)
+        case temperatureReadingSelected(UUID, UUID, Date, Int, String)
+        case newTemperatureReadingButtonTapped(UUID)
         case growthMeasurementSelected(UUID, UUID, Date, Int?, Int?, String)
         case growthReferenceChanged(UUID, String)
         case newGrowthMeasurementButtonTapped(UUID)
@@ -70,6 +74,13 @@ struct FamilySync {
                 }
             case .growthEntry:
                 break
+            case .temperatureEntry:
+                break
+            case let .temperatureReadingSelected(childID, readingID, measuredAt, centiCelsius, note):
+                state.temperatureEntry = TemperatureEntry.State(familyID: state.familyID, childID: childID,
+                    readingID: readingID, measuredAt: measuredAt, centiCelsius: centiCelsius, note: note)
+            case let .newTemperatureReadingButtonTapped(childID):
+                state.temperatureEntry = TemperatureEntry.State(familyID: state.familyID, childID: childID)
             case let .growthMeasurementSelected(childID, measurementID, measuredAt, grams, millimeters, note):
                 state.growthEntry = GrowthEntry.State(
                     familyID: state.familyID, childID: childID, measurementID: measurementID,
@@ -117,6 +128,7 @@ struct FamilySync {
         }
         .ifLet(\.entry) { SleepEntry() }
         .ifLet(\.growthEntry) { GrowthEntry() }
+        .ifLet(\.temperatureEntry) { TemperatureEntry() }
         .ifLet(\.sharing) { FamilySharing() }
         .onMount(id: store.isForeground ? store.familyID : nil) { state in
             guard state.isForeground else { return }

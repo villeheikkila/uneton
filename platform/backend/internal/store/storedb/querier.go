@@ -33,6 +33,7 @@ type Querier interface {
 	CreateGrowthReferencePoint(ctx context.Context, arg CreateGrowthReferencePointParams) error
 	CreateInvite(ctx context.Context, arg CreateInviteParams) error
 	CreateSleep(ctx context.Context, arg CreateSleepParams) error
+	CreateTemperatureReading(ctx context.Context, arg CreateTemperatureReadingParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	DeleteDeviceForUser(ctx context.Context, arg DeleteDeviceForUserParams) (int64, error)
 	DeleteFamilyEventsThrough(ctx context.Context, arg DeleteFamilyEventsThroughParams) error
@@ -45,6 +46,7 @@ type Querier interface {
 	DeletePushToken(ctx context.Context, arg DeletePushTokenParams) error
 	DeleteSentDeliveriesBefore(ctx context.Context, createdAt string) (int64, error)
 	DeleteSleep(ctx context.Context, arg DeleteSleepParams) error
+	DeleteTemperatureReading(ctx context.Context, arg DeleteTemperatureReadingParams) error
 	DeleteUserDevices(ctx context.Context, userID string) error
 	DevicePushSettings(ctx context.Context, arg DevicePushSettingsParams) (DevicePushSettingsRow, error)
 	DeviceSession(ctx context.Context, id string) (DeviceSessionRow, error)
@@ -52,6 +54,7 @@ type Querier interface {
 	EndSleep(ctx context.Context, arg EndSleepParams) error
 	ExistingGrowthMeasurementRevision(ctx context.Context, arg ExistingGrowthMeasurementRevisionParams) (int64, error)
 	ExistingSleepRevision(ctx context.Context, arg ExistingSleepRevisionParams) (int64, error)
+	ExistingTemperatureReadingRevision(ctx context.Context, arg ExistingTemperatureReadingRevisionParams) (int64, error)
 	FamiliesForUser(ctx context.Context, userID string) ([]FamiliesForUserRow, error)
 	FamilyByID(ctx context.Context, id string) (FamilyByIDRow, error)
 	FamilyEventCount(ctx context.Context, familyID string) (int64, error)
@@ -88,9 +91,12 @@ type Querier interface {
 	SleepRecord(ctx context.Context, arg SleepRecordParams) (SleepSession, error)
 	SleepRevision(ctx context.Context, arg SleepRevisionParams) (int64, error)
 	SnapshotChildIDs(ctx context.Context, familyID string) ([]string, error)
+	SnapshotGrowthIDs(ctx context.Context, familyID string) ([]string, error)
 	SnapshotSleepIDs(ctx context.Context, familyID string) ([]string, error)
+	SnapshotTemperatureIDs(ctx context.Context, familyID string) ([]string, error)
 	SupersedeSleep(ctx context.Context, arg SupersedeSleepParams) error
 	SweetSpotHistory(ctx context.Context, childID string) ([]SweetSpotHistoryRow, error)
+	TemperatureReadingRecord(ctx context.Context, arg TemperatureReadingRecordParams) (TemperatureReading, error)
 	TouchDeviceSession(ctx context.Context, arg TouchDeviceSessionParams) (int64, error)
 	TransferFamilyOwnership(ctx context.Context, arg TransferFamilyOwnershipParams) (int64, error)
 	UpdateAppleRefreshToken(ctx context.Context, arg UpdateAppleRefreshTokenParams) error
@@ -98,6 +104,7 @@ type Querier interface {
 	UpdateDevicePushSettings(ctx context.Context, arg UpdateDevicePushSettingsParams) (int64, error)
 	UpdateGrowthMeasurement(ctx context.Context, arg UpdateGrowthMeasurementParams) error
 	UpdateSleep(ctx context.Context, arg UpdateSleepParams) error
+	UpdateTemperatureReading(ctx context.Context, arg UpdateTemperatureReadingParams) error
 	UpsertDevice(ctx context.Context, arg UpsertDeviceParams) error
 	UpsertFamilySyncSnapshot(ctx context.Context, arg UpsertFamilySyncSnapshotParams) error
 	UserAppleRefreshToken(ctx context.Context, id string) ([]byte, error)

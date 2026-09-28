@@ -171,6 +171,54 @@ public actor SyncCoordinator {
     }
   }
 
+  public func upsertTemperatureReading(
+    familyID: Family.ID, childID: Child.ID, readingID: TemperatureReading.ID? = nil,
+    measuredAt: Date, centiCelsius: Int, note: String = ""
+  ) async throws {
+    guard 2000...5000 ~= centiCelsius else { throw SyncError.invalidTemperatureReading }
+    let id = readingID ?? uuid()
+    let existing = try await database.read { database in try TemperatureReading.find(id).fetchOne(database) }
+    let expectedRevision = try await pendingTemperatureRevision(familyID: familyID, readingID: id)
+      ?? (existing?.revision == 0 ? nil : existing?.revision)
+    let payload = try jsonValue(TemperatureReadingCommandPayload(id: id, childID: childID,
+      measuredAt: measuredAt, centiCelsius: centiCelsius, note: note))
+    let pending = try pendingCommand(id: uuid(), familyID: familyID, kind: "upsertTemperatureReading",
+      expectedRevision: expectedRevision, payload: payload)
+    try await database.write { database in
+      try PendingCommand.insert { pending }.execute(database)
+      try Projection.rebuild(familyID: familyID, database: database)
+    }
+  }
+
+  public func deleteTemperatureReading(familyID: Family.ID, readingID: TemperatureReading.ID) async throws {
+    let existing = try await database.read { database in try TemperatureReading.find(readingID).fetchOne(database) }
+    guard let existing else { throw SyncError.missingTemperatureReading }
+    let expectedRevision = try await pendingTemperatureRevision(familyID: familyID, readingID: readingID)
+      ?? (existing.revision == 0 ? nil : existing.revision)
+    let payload = try jsonValue(DeleteCommandPayload(id: readingID))
+    let pending = try pendingCommand(id: uuid(), familyID: familyID, kind: "deleteTemperatureReading",
+      expectedRevision: expectedRevision, payload: payload)
+    try await database.write { database in
+      try PendingCommand.insert { pending }.execute(database)
+      try Projection.rebuild(familyID: familyID, database: database)
+    }
+  }
+
+  private func pendingTemperatureRevision(familyID: Family.ID, readingID: TemperatureReading.ID) async throws -> Int? {
+    try await database.read { database in
+      let commands = try PendingCommand.where { $0.familyID.eq(familyID) }.fetchAll(database)
+        .sorted { ($0.createdAt, $0.id.uuidString) < ($1.createdAt, $1.id.uuidString) }
+      let matching = commands.filter { command in
+        guard command.kind == "upsertTemperatureReading",
+              let payload = try? JSONDecoder.uneton.decode(TemperatureReadingCommandPayload.self, from: command.payloadJSON)
+        else { return false }
+        return payload.id == readingID
+      }
+      guard let last = matching.last else { return nil }
+      return (last.expectedRevision ?? 0) + 1
+    }
+  }
+
   public func updateGrowthReference(
     familyID: Family.ID,
     childID: Child.ID,
@@ -479,6 +527,7 @@ public actor SyncCoordinator {
     case "createChild", "updateChild", "updatePredictionSettings": "child"
     case "startSleep", "endSleep", "upsertSleep", "deleteSleep": "sleepSession"
     case "upsertGrowthMeasurement", "deleteGrowthMeasurement": "growthMeasurement"
+    case "upsertTemperatureReading", "deleteTemperatureReading": "temperatureReading"
     default: nil
     }
   }
@@ -502,6 +551,9 @@ public actor SyncCoordinator {
     case "growthMeasurement":
       guard let measurement = try? JSONDecoder.uneton.decode(ServerGrowthMeasurementPayload.self, from: data) else { return false }
       return measurement.id == id && measurement.familyID == familyID && measurement.revision == revision
+    case "temperatureReading":
+      guard let reading = try? JSONDecoder.uneton.decode(ServerTemperatureReadingPayload.self, from: data) else { return false }
+      return reading.id == id && reading.familyID == familyID && reading.revision == revision
     default:
       return false
     }
@@ -577,7 +629,7 @@ public actor SyncCoordinator {
         createdAt: appliedAt,
         rebaseAttempt: 1
       ))
-    case "upsertGrowthMeasurement", "deleteGrowthMeasurement":
+    case "upsertGrowthMeasurement", "deleteGrowthMeasurement", "upsertTemperatureReading", "deleteTemperatureReading":
       return .retry(PendingCommand(
         id: replacementID,
         familyID: command.familyID,
@@ -641,6 +693,10 @@ public actor SyncCoordinator {
       return ("growthMeasurement", try JSONDecoder.uneton.decode(GrowthMeasurementCommandPayload.self, from: command.payloadJSON).id)
     case "deleteGrowthMeasurement":
       return ("growthMeasurement", try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: command.payloadJSON).id)
+    case "upsertTemperatureReading":
+      return ("temperatureReading", try JSONDecoder.uneton.decode(TemperatureReadingCommandPayload.self, from: command.payloadJSON).id)
+    case "deleteTemperatureReading":
+      return ("temperatureReading", try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: command.payloadJSON).id)
     default:
       throw SyncError.invalidServerPayload
     }
@@ -704,6 +760,8 @@ public enum SyncError: Error, Equatable {
   case invalidServerPayload
   case invalidGrowthMeasurement
   case missingGrowthMeasurement
+  case invalidTemperatureReading
+  case missingTemperatureReading
   case missingChild
   case invalidGrowthReference
   case incompleteSynchronization
@@ -748,6 +806,14 @@ struct GrowthMeasurementCommandPayload: Codable {
   var note: String
 }
 
+struct TemperatureReadingCommandPayload: Codable {
+  var id: UUID
+  var childID: UUID
+  var measuredAt: Date
+  var centiCelsius: Int
+  var note: String
+}
+
 struct ServerChildPayload: Codable {
   var id: UUID
   var nickname: String
@@ -789,6 +855,18 @@ struct ServerGrowthMeasurementPayload: Codable {
   var measuredAt: Date
   var weightGrams: Int?
   var heightMillimeters: Int?
+  var note: String
+  var revision: Int
+  var updatedAt: Date
+  var deletedAt: Date?
+}
+
+struct ServerTemperatureReadingPayload: Codable {
+  var id: UUID
+  var familyID: UUID
+  var childID: UUID
+  var measuredAt: Date
+  var centiCelsius: Int
   var note: String
   var revision: Int
   var updatedAt: Date

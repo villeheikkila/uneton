@@ -219,6 +219,26 @@ select id, family_id, child_id, measured_at, weight_grams, height_millimeters,
 from growth_measurements
 where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
 
+-- name: CreateTemperatureReading :exec
+insert into temperature_readings(id, family_id, child_id, measured_at, centi_celsius, note, revision, updated_at)
+values (sqlc.arg(id), sqlc.arg(family_id), sqlc.arg(child_id), sqlc.arg(measured_at), sqlc.arg(centi_celsius), sqlc.arg(note), 1, sqlc.arg(updated_at));
+
+-- name: ExistingTemperatureReadingRevision :one
+select revision from temperature_readings where id=sqlc.arg(id) and family_id=sqlc.arg(family_id) and deleted_at is null;
+
+-- name: UpdateTemperatureReading :exec
+update temperature_readings set measured_at=sqlc.arg(measured_at), centi_celsius=sqlc.arg(centi_celsius),
+  note=sqlc.arg(note), revision=revision+1, updated_at=sqlc.arg(updated_at)
+where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
+
+-- name: DeleteTemperatureReading :exec
+update temperature_readings set deleted_at=sqlc.arg(deleted_at), revision=sqlc.arg(revision), updated_at=sqlc.arg(updated_at)
+where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
+
+-- name: TemperatureReadingRecord :one
+select id, family_id, child_id, measured_at, centi_celsius, note, revision, updated_at, deleted_at
+from temperature_readings where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
+
 -- name: AppendEvent :exec
 insert into sync_events(
   family_id, entity_type, entity_id, operation, revision, payload_json, created_at
@@ -259,6 +279,12 @@ order by id;
 select id from sleep_sessions
 where family_id=sqlc.arg(family_id) and deleted_at is null
 order by id;
+
+-- name: SnapshotGrowthIDs :many
+select id from growth_measurements where family_id=sqlc.arg(family_id) and deleted_at is null order by id;
+
+-- name: SnapshotTemperatureIDs :many
+select id from temperature_readings where family_id=sqlc.arg(family_id) and deleted_at is null order by id;
 
 -- name: FamilySyncSnapshot :one
 select generation, cursor, entities_json, created_at

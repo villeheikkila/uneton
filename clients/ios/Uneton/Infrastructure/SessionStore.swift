@@ -272,6 +272,22 @@ final class SessionStore {
         }
     }
 
+    func logTemperatureReading(familyID: Family.ID, childID: Child.ID, readingID: TemperatureReading.ID? = nil,
+                               measuredAt: Date, centiCelsius: Int, note: String = "") async {
+        await perform {
+            try await coordinator.upsertTemperatureReading(familyID: familyID, childID: childID,
+                readingID: readingID, measuredAt: measuredAt, centiCelsius: centiCelsius, note: note)
+            _ = try await synchronizeWithRefresh(familyID: familyID)
+        }
+    }
+
+    func deleteTemperatureReading(familyID: Family.ID, readingID: TemperatureReading.ID) async {
+        await perform {
+            try await coordinator.deleteTemperatureReading(familyID: familyID, readingID: readingID)
+            _ = try await synchronizeWithRefresh(familyID: familyID)
+        }
+    }
+
     func setGrowthReference(familyID: Family.ID, childID: Child.ID, growthReference: String) async {
         await perform {
             try await coordinator.updateGrowthReference(
@@ -511,6 +527,7 @@ final class SessionStore {
             try AuthoritativeRecord.delete().execute(database)
             try SleepSession.delete().execute(database)
             try GrowthMeasurement.delete().execute(database)
+            try TemperatureReading.delete().execute(database)
             try Child.delete().execute(database)
             try FamilyMember.delete().execute(database)
             try SyncState.delete().execute(database)

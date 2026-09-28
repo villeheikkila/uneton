@@ -160,6 +160,18 @@ type SyncEvent struct {
 	CreatedAt   string `json:"created_at"`
 }
 
+type TemperatureReading struct {
+	ID           string         `json:"id"`
+	FamilyID     string         `json:"family_id"`
+	ChildID      string         `json:"child_id"`
+	MeasuredAt   string         `json:"measured_at"`
+	CentiCelsius int64          `json:"centi_celsius"`
+	Note         string         `json:"note"`
+	Revision     int64          `json:"revision"`
+	UpdatedAt    string         `json:"updated_at"`
+	DeletedAt    sql.NullString `json:"deleted_at"`
+}
+
 type User struct {
 	ID                          string         `json:"id"`
 	AppleSubject                string         `json:"apple_subject"`

@@ -9,6 +9,7 @@ struct TimelineScreen: View {
         case timeline = "Sleep"
         case trends = "Insights"
         case growth = "Growth"
+        case temperature = "Temperature"
         var id: Self { self }
 
         var systemImage: String {
@@ -16,6 +17,7 @@ struct TimelineScreen: View {
             case .timeline: "moon.stars.fill"
             case .trends: "chart.xyaxis.line"
             case .growth: "ruler.fill"
+            case .temperature: "thermometer.medium"
             }
         }
     }
@@ -25,6 +27,7 @@ struct TimelineScreen: View {
     @Bindable var syncStore: StoreOf<FamilySync>
     @FetchAll(SleepSession.order { $0.startedAt.desc() }) private var allSessions
     @FetchAll(GrowthMeasurement.order { $0.measuredAt.desc() }) private var allGrowthMeasurements
+    @FetchAll(TemperatureReading.order { $0.measuredAt.desc() }) private var allTemperatureReadings
     @FetchAll(GrowthReferencePoint.order { $0.ageMonths }) private var allGrowthReferencePoints
     @FetchAll(SyncConflict.order { $0.createdAt.desc() }) private var allConflicts
     let family: Family
@@ -56,6 +59,10 @@ struct TimelineScreen: View {
 
     private var growthMeasurements: [GrowthMeasurement] {
         allGrowthMeasurements.filter { $0.childID == child.id && $0.deletedAt == nil }
+    }
+
+    private var temperatureReadings: [TemperatureReading] {
+        allTemperatureReadings.filter { $0.childID == child.id && $0.deletedAt == nil }
     }
 
     var body: some View {
@@ -100,6 +107,18 @@ struct TimelineScreen: View {
                 .tabItem {
                     Label(Mode.growth.rawValue, systemImage: Mode.growth.systemImage)
                 }
+
+                ZStack {
+                    SleepBackground()
+                    TemperatureCard(readings: temperatureReadings,
+                        onAdd: { syncStore.send(.newTemperatureReadingButtonTapped(child.id)) },
+                        onSelect: { reading in
+                            syncStore.send(.temperatureReadingSelected(child.id, reading.id,
+                                reading.measuredAt, reading.centiCelsius, reading.note))
+                        })
+                }
+                .tag(Mode.temperature)
+                .tabItem { Label(Mode.temperature.rawValue, systemImage: Mode.temperature.systemImage) }
 
                 ZStack {
                     SleepBackground()
@@ -154,6 +173,11 @@ struct TimelineScreen: View {
             }
             .sheet(item: $syncStore.scope(\.growthEntry)) { entryStore in
                 GrowthEntrySheet(store: entryStore)
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
+            }
+            .sheet(item: $syncStore.scope(\.temperatureEntry)) { entryStore in
+                TemperatureEntrySheet(store: entryStore)
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
             }
@@ -395,6 +419,72 @@ private struct EmptySleepCard: View {
         .frame(maxWidth: .infinity)
         .padding(28)
         .glassEffect(.regular.tint(Color.sleepLavender.opacity(0.18)), in: .rect(cornerRadius: 28))
+    }
+}
+
+private struct TemperatureCard: View {
+    let readings: [TemperatureReading]
+    let onAdd: () -> Void
+    let onSelect: (TemperatureReading) -> Void
+
+    var body: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("Temperature diary", systemImage: "thermometer.medium")
+                        .font(.title2.weight(.bold))
+                    Text("Keep a shared record of temperature readings when your child is unwell.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(18)
+                .glassEffect(.regular.tint(Color.sleepMoonlight.opacity(0.12)), in: .rect(cornerRadius: 24))
+
+                Button(action: onAdd) {
+                    Label("Add temperature", systemImage: "plus.circle.fill")
+                        .font(.headline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                }
+                .buttonStyle(.glassProminent)
+                .tint(Color.sleepIndigo)
+
+                if readings.isEmpty {
+                    ContentUnavailableView("No readings yet", systemImage: "thermometer.medium",
+                        description: Text("Add a reading with its time and an optional note."))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 36)
+                } else {
+                    ForEach(readings) { reading in
+                        Button { onSelect(reading) } label: {
+                            HStack(spacing: 14) {
+                                Image(systemName: "thermometer.medium")
+                                    .font(.title3)
+                                    .foregroundStyle(Color.sleepIndigo)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(reading.measuredAt, format: .dateTime.year().month().day().hour().minute())
+                                        .font(.headline)
+                                    Text(String(format: "%.2f °C", Double(reading.centiCelsius) / 100))
+                                        .font(.subheadline.monospacedDigit())
+                                    if !reading.note.isEmpty {
+                                        Text(reading.note).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                                    }
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.tertiary)
+                            }
+                            .padding(16)
+                            .contentShape(.rect)
+                        }
+                        .buttonStyle(.plain)
+                        .glassEffect(.regular, in: .rect(cornerRadius: 20))
+                    }
+                }
+            }
+            .padding(20)
+            .padding(.bottom, 24)
+        }
+        .scrollIndicators(.hidden)
     }
 }
 
@@ -705,6 +795,47 @@ private struct GrowthReferenceChart: View {
         }
     }
 
+}
+
+private struct TemperatureEntrySheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Bindable var store: StoreOf<TemperatureEntry>
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Reading") {
+                    DatePicker("Measured", selection: $store.measuredAt, in: ...Date.now)
+                    TextField("Temperature (°C)", text: $store.temperature)
+                        .keyboardType(.decimalPad)
+                }
+                Section("Note") {
+                    TextField("Optional note", text: $store.note, axis: .vertical).lineLimit(2...4)
+                }
+                Section {
+                    Text("This is a shared observation, not a medical assessment. Contact a healthcare professional if you have concerns.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+                if let error = store.errorMessage { Section { Text(error).foregroundStyle(.red) } }
+                if store.readingID != nil {
+                    Section {
+                        Button("Delete reading", role: .destructive) { store.send(.deleteButtonTapped) }
+                            .disabled(store.request.isRunning)
+                    }
+                }
+            }
+            .navigationTitle(store.readingID == nil ? "Add temperature" : "Edit temperature")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { store.send(.saveButtonTapped) }
+                        .disabled(store.centiCelsius == nil || store.request.isRunning)
+                }
+            }
+        }
+        .onChange(of: store.isSaved) { _, isSaved in if isSaved { dismiss() } }
+    }
 }
 
 private struct GrowthEntrySheet: View {

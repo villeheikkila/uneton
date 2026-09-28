@@ -64,11 +64,11 @@ The local database deliberately separates server knowledge from what the user se
 1. `AuthoritativeRecord` stores the latest acknowledged server representation of each entity.
 2. `PendingCommand` stores unresolved local intent in creation order.
 3. `AcknowledgedCommand` retains the complete accepted command journal. It is not part of the visible projection; it exists solely to repair a server restored behind an acknowledged client.
-4. `Projection.rebuild` materializes the visible `Child`, `SleepSession`, and `GrowthMeasurement` diary tables, scoped by the locally stored family membership, by replaying pending intent over the authoritative base.
+4. `Projection.rebuild` materializes the visible `Child`, `SleepSession`, `GrowthMeasurement`, and `TemperatureReading` diary tables, scoped by the locally stored family membership, by replaying pending intent over the authoritative base.
 5. `SyncState` stores the committed family event cursor, server generation, and last synchronization time.
 6. `SyncConflict` stores a rejected intent that needs an explicit user decision.
 
-The visible child, sleep-session, and growth-measurement projection is disposable and derived. Family membership, authentication state, pending commands, and the acknowledged journal have separate lifecycles; commands are user data and are never disposable before their recovery-retention policy permits it. A pull must never replace the database wholesale or discard unresolved commands.
+The visible child, sleep-session, growth-measurement, and temperature-reading projection is disposable and derived. Family membership, authentication state, pending commands, and the acknowledged journal have separate lifecycles; commands are user data and are never disposable before their recovery-retention policy permits it. A pull must never replace the database wholesale or discard unresolved commands.
 
 ### iPhone feature ownership
 
@@ -89,6 +89,10 @@ The Watch app sends start/end intent to the paired phone through WatchConnectivi
 The digital neuvola card stores dated caregiver-recorded weight in grams and height in millimetres as `GrowthMeasurement` entities. Each measurement must contain at least one value and is an ordinary optimistic, revision-checked upsert/delete command with its own event and conflict behavior. The child’s optional `growthReference` selection (`none`, `girl`, or `boy`) follows that same revision-checked child update path so every caregiver sees the same selected chart. The app presents kilograms and centimetres, but stores integer base units to avoid rounding ambiguity. Measurements and reference curves are visual observations only: Uneton does not infer percentiles, diagnoses, or medical advice from them.
 
 Digitized reference points are private local development material. They are read from ignored `tmp/growth-reference.json` and imported with `mise run backend:growth-reference:seed` into `growth_reference_points`. The authoritative server includes this static bootstrap payload in `SyncResponse`; the app replaces its local reference cache transactionally before advancing the family cursor. Reference points are not family data, commands, or events, and the cache remains available when the app is offline.
+
+### Temperature readings
+
+Caregivers can log an individual body-temperature observation with a time, centi-Celsius value, and optional note. Readings use revision-checked upsert and delete commands, the same idempotent event and invalidation transaction as other diary records, and the shared offline projection. They are included in snapshots and restore replay. The diary does not interpret readings as a diagnosis or change sleep prediction.
 
 ### 2. Send a bounded sync request
 
@@ -134,7 +138,7 @@ Server timestamps, canonical entity IDs, and revisions win after acknowledgement
 
 ### Snapshots, compaction, and restore recovery
 
-The event log is an incremental transport optimization, not the only representation of family state. The server can return a complete `FamilySnapshot` at a cursor, containing every current child and sleep-session entity. A new device receives a snapshot instead of replaying years of diary events. Once a family crosses the configured event threshold, the server stores a snapshot in the same transaction and deletes events through its cursor; a device behind that point receives the snapshot plus any later events.
+The event log is an incremental transport optimization, not the only representation of family state. The server can return a complete `FamilySnapshot` at a cursor, containing every current child, sleep-session, growth-measurement, and temperature-reading entity. A new device receives a snapshot instead of replaying years of diary events. Once a family crosses the configured event threshold, the server stores a snapshot in the same transaction and deletes events through its cursor; a device behind that point receives the snapshot plus any later events.
 
 Every database lineage also has a durable `generation` sidecar. A restored database receives a new generation before it is reopened. If a client sees a generation mismatch—or defensively finds its cursor ahead of the server—it receives a reset snapshot before the server evaluates new commands. The client atomically replaces its authoritative cache, restores its accepted-command journal into the pending outbox, and replays it in original order. Commands already present in the restored database return their stored result; commands lost after the backup point apply once. This closes the otherwise irrecoverable gap between an acknowledged client and a restored older database.
 

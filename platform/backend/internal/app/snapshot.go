@@ -44,7 +44,15 @@ func (s *Server) buildSnapshot(ctx context.Context, tx *sql.Tx, familyID string,
 	if err != nil {
 		return nil, fmt.Errorf("list snapshot sleeps: %w", err)
 	}
-	entities := make([]SnapshotEntity, 0, len(childIDs)+len(sleepIDs))
+	growthIDs, err := q.SnapshotGrowthIDs(ctx, familyID)
+	if err != nil {
+		return nil, fmt.Errorf("list snapshot growth: %w", err)
+	}
+	temperatureIDs, err := q.SnapshotTemperatureIDs(ctx, familyID)
+	if err != nil {
+		return nil, fmt.Errorf("list snapshot temperatures: %w", err)
+	}
+	entities := make([]SnapshotEntity, 0, len(childIDs)+len(sleepIDs)+len(growthIDs)+len(temperatureIDs))
 	for _, id := range childIDs {
 		payload, revision, err := childJSON(ctx, tx, familyID, id)
 		if err != nil {
@@ -58,6 +66,20 @@ func (s *Server) buildSnapshot(ctx context.Context, tx *sql.Tx, familyID string,
 			return nil, fmt.Errorf("snapshot sleep %s: %w", id, err)
 		}
 		entities = append(entities, SnapshotEntity{EntityType: "sleepSession", EntityID: id, Revision: revision, Payload: payload})
+	}
+	for _, id := range growthIDs {
+		payload, revision, err := growthMeasurementJSON(ctx, tx, familyID, id)
+		if err != nil {
+			return nil, fmt.Errorf("snapshot growth %s: %w", id, err)
+		}
+		entities = append(entities, SnapshotEntity{EntityType: "growthMeasurement", EntityID: id, Revision: revision, Payload: payload})
+	}
+	for _, id := range temperatureIDs {
+		payload, revision, err := temperatureReadingJSON(ctx, tx, familyID, id)
+		if err != nil {
+			return nil, fmt.Errorf("snapshot temperature %s: %w", id, err)
+		}
+		entities = append(entities, SnapshotEntity{EntityType: "temperatureReading", EntityID: id, Revision: revision, Payload: payload})
 	}
 	createdAt := s.now().UTC()
 	encoded, err := json.Marshal(entities)

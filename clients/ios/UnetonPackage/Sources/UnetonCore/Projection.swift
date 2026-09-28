@@ -15,6 +15,7 @@ enum Projection {
 
     try SleepSession.where { $0.familyID.eq(familyID) }.delete().execute(database)
     try GrowthMeasurement.where { $0.familyID.eq(familyID) }.delete().execute(database)
+    try TemperatureReading.where { $0.familyID.eq(familyID) }.delete().execute(database)
     try Child.where { $0.familyID.eq(familyID) }.delete().execute(database)
 
     for record in records where record.operation != "delete" && record.entityType == "child" {
@@ -24,6 +25,9 @@ enum Projection {
       try applyAuthoritative(record, familyID: familyID, database: database)
     }
     for record in records where record.operation != "delete" && record.entityType == "growthMeasurement" {
+      try applyAuthoritative(record, familyID: familyID, database: database)
+    }
+    for record in records where record.operation != "delete" && record.entityType == "temperatureReading" {
       try applyAuthoritative(record, familyID: familyID, database: database)
     }
     for command in commands {
@@ -90,6 +94,14 @@ enum Projection {
           heightMillimeters: payload.heightMillimeters, note: payload.note,
           revision: payload.revision, updatedAt: payload.updatedAt, deletedAt: payload.deletedAt
         )
+      }.execute(database)
+    case "temperatureReading":
+      let payload = try JSONDecoder.uneton.decode(ServerTemperatureReadingPayload.self, from: record.payloadJSON)
+      try TemperatureReading.upsert {
+        TemperatureReading(id: payload.id, familyID: payload.familyID, childID: payload.childID,
+          measuredAt: payload.measuredAt, centiCelsius: payload.centiCelsius,
+          note: payload.note, revision: payload.revision, updatedAt: payload.updatedAt,
+          deletedAt: payload.deletedAt)
       }.execute(database)
     default:
       break
@@ -163,6 +175,17 @@ enum Projection {
     case "deleteGrowthMeasurement":
       let payload = try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: command.payloadJSON)
       try GrowthMeasurement.find(payload.id).delete().execute(database)
+    case "upsertTemperatureReading":
+      let payload = try JSONDecoder.uneton.decode(TemperatureReadingCommandPayload.self, from: command.payloadJSON)
+      let current = try TemperatureReading.find(payload.id).fetchOne(database)
+      try TemperatureReading.upsert {
+        TemperatureReading(id: payload.id, familyID: command.familyID, childID: payload.childID,
+          measuredAt: payload.measuredAt, centiCelsius: payload.centiCelsius, note: payload.note,
+          revision: current?.revision ?? 0, updatedAt: command.createdAt, pendingCommandID: command.id)
+      }.execute(database)
+    case "deleteTemperatureReading":
+      let payload = try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: command.payloadJSON)
+      try TemperatureReading.find(payload.id).delete().execute(database)
     default:
       break
     }

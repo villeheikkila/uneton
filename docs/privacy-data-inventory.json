@@ -1,22 +1,83 @@
 {
   "schemaVersion": 1,
-  "authoritativeSchemaSha256": "f260c7521ad96f860f6a98fc9193e5682a18cfb181739f0423ef52c9c75a26f8",
+  "authoritativeSchemaSha256": "5680335ab75009d57c05f71ba0be60a87788cfa7fa63ec9b40c8ecb997a003bd",
   "tables": {
-    "users": ["USER_ID", "NAME"],
-    "families": ["OTHER_USER_CONTENT", "USER_ID"],
-    "family_members": ["CONTACTS", "USER_ID"],
-    "invites": ["CONTACTS", "USER_ID"],
-    "children": ["HEALTH", "NAME"],
-    "sleep_sessions": ["HEALTH", "USER_ID"],
-    "growth_measurements": ["HEALTH", "OTHER_USER_CONTENT"],
+    "users": [
+      "USER_ID",
+      "NAME"
+    ],
+    "families": [
+      "OTHER_USER_CONTENT",
+      "USER_ID"
+    ],
+    "family_members": [
+      "CONTACTS",
+      "USER_ID"
+    ],
+    "invites": [
+      "CONTACTS",
+      "USER_ID"
+    ],
+    "children": [
+      "HEALTH",
+      "NAME"
+    ],
+    "sleep_sessions": [
+      "HEALTH",
+      "USER_ID"
+    ],
+    "growth_measurements": [
+      "HEALTH",
+      "OTHER_USER_CONTENT"
+    ],
     "growth_reference_points": [],
-    "devices": ["DEVICE_ID", "OTHER_USAGE_DATA", "USER_ID"],
-    "live_activity_tokens": ["DEVICE_ID", "HEALTH"],
-    "live_activity_starts": ["DEVICE_ID", "HEALTH"],
-    "commands": ["CONTACTS", "HEALTH", "NAME", "OTHER_USER_CONTENT", "OTHER_USAGE_DATA", "USER_ID"],
-    "sync_events": ["CONTACTS", "HEALTH", "NAME", "OTHER_USER_CONTENT", "OTHER_USAGE_DATA", "USER_ID"],
-    "family_sync_snapshots": ["CONTACTS", "HEALTH", "NAME", "OTHER_USER_CONTENT", "OTHER_USAGE_DATA", "USER_ID"],
-    "deliveries": ["DEVICE_ID", "HEALTH", "NAME", "OTHER_USAGE_DATA"]
+    "devices": [
+      "DEVICE_ID",
+      "OTHER_USAGE_DATA",
+      "USER_ID"
+    ],
+    "live_activity_tokens": [
+      "DEVICE_ID",
+      "HEALTH"
+    ],
+    "live_activity_starts": [
+      "DEVICE_ID",
+      "HEALTH"
+    ],
+    "commands": [
+      "CONTACTS",
+      "HEALTH",
+      "NAME",
+      "OTHER_USER_CONTENT",
+      "OTHER_USAGE_DATA",
+      "USER_ID"
+    ],
+    "sync_events": [
+      "CONTACTS",
+      "HEALTH",
+      "NAME",
+      "OTHER_USER_CONTENT",
+      "OTHER_USAGE_DATA",
+      "USER_ID"
+    ],
+    "family_sync_snapshots": [
+      "CONTACTS",
+      "HEALTH",
+      "NAME",
+      "OTHER_USER_CONTENT",
+      "OTHER_USAGE_DATA",
+      "USER_ID"
+    ],
+    "deliveries": [
+      "DEVICE_ID",
+      "HEALTH",
+      "NAME",
+      "OTHER_USAGE_DATA"
+    ],
+    "temperature_readings": [
+      "HEALTH",
+      "OTHER_USER_CONTENT"
+    ]
   },
   "additionalCollection": {
     "OTHER_DIAGNOSTIC_DATA": [

@@ -465,6 +465,15 @@ private func protoCommand(_ command: APICommand) throws -> Uneton_V1_Command {
     var payload = Uneton_V1_DeleteGrowthMeasurement()
     payload.id = value.id.uuidString
     result.payload = .deleteGrowthMeasurement(payload)
+  case "upsertTemperatureReading":
+    var payload = Uneton_V1_UpsertTemperatureReading()
+    payload.reading = try temperatureReadingInput(JSONDecoder.uneton.decode(TemperatureReadingCommandPayload.self, from: data))
+    result.payload = .upsertTemperatureReading(payload)
+  case "deleteTemperatureReading":
+    let value = try JSONDecoder.uneton.decode(DeleteCommandPayload.self, from: data)
+    var payload = Uneton_V1_DeleteTemperatureReading()
+    payload.id = value.id.uuidString
+    result.payload = .deleteTemperatureReading(payload)
   default:
     throw APIError.invalidResponse("Unsupported command \(command.kind)")
   }
@@ -508,6 +517,16 @@ private func growthMeasurementInput(_ value: GrowthMeasurementCommandPayload) ->
   result.measuredAt = .init(date: value.measuredAt)
   if let weight = value.weightGrams { result.weightGrams = Int32(weight) }
   if let height = value.heightMillimeters { result.heightMillimeters = Int32(height) }
+  result.note = value.note
+  return result
+}
+
+private func temperatureReadingInput(_ value: TemperatureReadingCommandPayload) -> Uneton_V1_TemperatureReadingInput {
+  var result = Uneton_V1_TemperatureReadingInput()
+  result.id = value.id.uuidString
+  result.childID = value.childID.uuidString
+  result.measuredAt = .init(date: value.measuredAt)
+  result.centiCelsius = Int32(value.centiCelsius)
   result.note = value.note
   return result
 }
@@ -631,6 +650,15 @@ private func entityJSON(_ entity: Uneton_V1_Entity) -> JSONValue {
     if value.hasHeightMillimeters { object["heightMillimeters"] = .number(Double(value.heightMillimeters)) }
     if value.hasDeletedAt { object["deletedAt"] = .string(dateString(value.deletedAt.date)) }
     return .object(object)
+  case let .temperatureReading(value):
+    var object: [String: JSONValue] = [
+      "id": .string(value.id), "familyID": .string(value.familyID), "childID": .string(value.childID),
+      "measuredAt": .string(dateString(value.measuredAt.date)),
+      "centiCelsius": .number(Double(value.centiCelsius)), "note": .string(value.note),
+      "revision": .number(Double(value.revision)), "updatedAt": .string(dateString(value.updatedAt.date)),
+    ]
+    if value.hasDeletedAt { object["deletedAt"] = .string(dateString(value.deletedAt.date)) }
+    return .object(object)
   case let .deleted(value):
     return .object(["id": .string(value.id)])
   case nil:
@@ -642,6 +670,7 @@ private func entityTypeName(_ value: Uneton_V1_EntityType) -> String {
   switch value {
   case .child: "child"
   case .growthMeasurement: "growthMeasurement"
+  case .temperatureReading: "temperatureReading"
   default: "sleepSession"
   }
 }

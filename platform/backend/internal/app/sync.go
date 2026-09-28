@@ -81,6 +81,26 @@ type growthMeasurementRecord struct {
 	DeletedAt         *time.Time `json:"deletedAt,omitempty"`
 }
 
+type temperatureReadingPayload struct {
+	ID           string    `json:"id"`
+	ChildID      string    `json:"childID"`
+	MeasuredAt   time.Time `json:"measuredAt"`
+	CentiCelsius int       `json:"centiCelsius"`
+	Note         string    `json:"note,omitempty"`
+}
+
+type temperatureReadingRecord struct {
+	ID           string     `json:"id"`
+	FamilyID     string     `json:"familyID"`
+	ChildID      string     `json:"childID"`
+	MeasuredAt   time.Time  `json:"measuredAt"`
+	CentiCelsius int        `json:"centiCelsius"`
+	Note         string     `json:"note"`
+	Revision     int        `json:"revision"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
+	DeletedAt    *time.Time `json:"deletedAt,omitempty"`
+}
+
 type activityDelivery struct {
 	OriginDeviceID string      `json:"originDeviceID,omitempty"`
 	Sleep          sleepRecord `json:"sleep"`
@@ -229,6 +249,11 @@ func currentCommandEntity(ctx context.Context, tx *sql.Tx, familyID string, comm
 		if err == nil {
 			return identity.ID, payload
 		}
+	case "upsertTemperatureReading", "deleteTemperatureReading":
+		payload, _, err := temperatureReadingJSON(ctx, tx, familyID, identity.ID)
+		if err == nil {
+			return identity.ID, payload
+		}
 	}
 	return identity.ID, nil
 }
@@ -266,6 +291,10 @@ func (s *Server) applyCommand(ctx context.Context, tx *sql.Tx, familyID, userID,
 		return s.upsertGrowthMeasurement(ctx, tx, familyID, command)
 	case "deleteGrowthMeasurement":
 		return s.deleteGrowthMeasurement(ctx, tx, familyID, command)
+	case "upsertTemperatureReading":
+		return s.upsertTemperatureReading(ctx, tx, familyID, command)
+	case "deleteTemperatureReading":
+		return s.deleteTemperatureReading(ctx, tx, familyID, command)
 	default:
 		return CommandResult{ID: command.ID}, fmt.Errorf("unsupported command %q", command.Kind)
 	}
@@ -547,6 +576,65 @@ func (s *Server) deleteGrowthMeasurement(ctx context.Context, tx *sql.Tx, family
 	return CommandResult{ID: command.ID, Status: "accepted", EntityID: payload.ID, Payload: encoded}, nil
 }
 
+func (s *Server) upsertTemperatureReading(ctx context.Context, tx *sql.Tx, familyID string, command Command) (CommandResult, error) {
+	var payload temperatureReadingPayload
+	if json.Unmarshal(command.Payload, &payload) != nil || payload.ID == "" || payload.ChildID == "" || payload.MeasuredAt.IsZero() || payload.CentiCelsius < 2000 || payload.CentiCelsius > 5000 {
+		return CommandResult{ID: command.ID}, errors.New("invalid temperature reading")
+	}
+	q := s.store.Queries.WithTx(tx)
+	if _, err := q.ChildRevision(ctx, storedb.ChildRevisionParams{ID: payload.ChildID, FamilyID: familyID}); err != nil {
+		return CommandResult{ID: command.ID}, errors.New("child not found")
+	}
+	current, err := q.TemperatureReadingRecord(ctx, storedb.TemperatureReadingRecordParams{ID: payload.ID, FamilyID: familyID})
+	now := formatTime(s.now().UTC())
+	if errors.Is(err, sql.ErrNoRows) {
+		if command.ExpectedRevision != nil {
+			return CommandResult{ID: command.ID}, errors.New("stale revision")
+		}
+		err = q.CreateTemperatureReading(ctx, storedb.CreateTemperatureReadingParams{ID: payload.ID, FamilyID: familyID, ChildID: payload.ChildID, MeasuredAt: formatTime(payload.MeasuredAt), CentiCelsius: int64(payload.CentiCelsius), Note: payload.Note, UpdatedAt: now})
+	} else if err == nil {
+		if current.DeletedAt.Valid || current.ChildID != payload.ChildID || command.ExpectedRevision == nil || *command.ExpectedRevision != int(current.Revision) {
+			return CommandResult{ID: command.ID}, errors.New("stale revision")
+		}
+		err = q.UpdateTemperatureReading(ctx, storedb.UpdateTemperatureReadingParams{MeasuredAt: formatTime(payload.MeasuredAt), CentiCelsius: int64(payload.CentiCelsius), Note: payload.Note, UpdatedAt: now, ID: payload.ID, FamilyID: familyID})
+	}
+	if err != nil {
+		return CommandResult{ID: command.ID}, err
+	}
+	encoded, currentRevision, err := temperatureReadingJSON(ctx, tx, familyID, payload.ID)
+	if err == nil {
+		err = appendEvent(ctx, q, familyID, "temperatureReading", payload.ID, "upsert", currentRevision, encoded, now)
+	}
+	return CommandResult{ID: command.ID, Status: "accepted", EntityID: payload.ID, Payload: encoded}, err
+}
+
+func (s *Server) deleteTemperatureReading(ctx context.Context, tx *sql.Tx, familyID string, command Command) (CommandResult, error) {
+	var payload struct {
+		ID string `json:"id"`
+	}
+	if json.Unmarshal(command.Payload, &payload) != nil || payload.ID == "" {
+		return CommandResult{ID: command.ID}, errors.New("invalid temperature reading id")
+	}
+	q := s.store.Queries.WithTx(tx)
+	revision, err := q.ExistingTemperatureReadingRevision(ctx, storedb.ExistingTemperatureReadingRevisionParams{ID: payload.ID, FamilyID: familyID})
+	if err != nil {
+		return CommandResult{ID: command.ID}, errors.New("temperature reading not found")
+	}
+	if command.ExpectedRevision == nil || *command.ExpectedRevision != int(revision) {
+		return CommandResult{ID: command.ID}, errors.New("stale revision")
+	}
+	now := formatTime(s.now().UTC())
+	revision++
+	if err := q.DeleteTemperatureReading(ctx, storedb.DeleteTemperatureReadingParams{DeletedAt: nullString(now), Revision: revision, UpdatedAt: now, ID: payload.ID, FamilyID: familyID}); err != nil {
+		return CommandResult{ID: command.ID}, err
+	}
+	encoded := json.RawMessage(`{"id":"` + payload.ID + `"}`)
+	if err := appendEvent(ctx, q, familyID, "temperatureReading", payload.ID, "delete", int(revision), encoded, now); err != nil {
+		return CommandResult{ID: command.ID}, err
+	}
+	return CommandResult{ID: command.ID, Status: "accepted", EntityID: payload.ID, Payload: encoded}, nil
+}
+
 func (s *Server) mergeOverlaps(ctx context.Context, tx *sql.Tx, familyID, childID string) error {
 	q := s.store.Queries.WithTx(tx)
 	rows, err := q.SleepIntervals(ctx, storedb.SleepIntervalsParams{FamilyID: familyID, ChildID: childID})
@@ -668,6 +756,22 @@ func growthMeasurementJSON(ctx context.Context, tx *sql.Tx, familyID, id string)
 		item := int(row.HeightMillimeters.Int64)
 		value.HeightMillimeters = &item
 	}
+	if row.DeletedAt.Valid {
+		item, _ := parseTime(row.DeletedAt.String)
+		value.DeletedAt = &item
+	}
+	encoded, err := json.Marshal(value)
+	return encoded, value.Revision, err
+}
+
+func temperatureReadingJSON(ctx context.Context, tx *sql.Tx, familyID, id string) (json.RawMessage, int, error) {
+	row, err := storedb.New(tx).TemperatureReadingRecord(ctx, storedb.TemperatureReadingRecordParams{ID: id, FamilyID: familyID})
+	if err != nil {
+		return nil, 0, err
+	}
+	value := temperatureReadingRecord{ID: row.ID, FamilyID: row.FamilyID, ChildID: row.ChildID, CentiCelsius: int(row.CentiCelsius), Note: row.Note, Revision: int(row.Revision)}
+	value.MeasuredAt, _ = parseTime(row.MeasuredAt)
+	value.UpdatedAt, _ = parseTime(row.UpdatedAt)
 	if row.DeletedAt.Valid {
 		item, _ := parseTime(row.DeletedAt.String)
 		value.DeletedAt = &item

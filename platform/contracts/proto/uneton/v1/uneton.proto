@@ -155,6 +155,8 @@ message Command {
     DeleteSleep delete_sleep = 15;
     UpsertGrowthMeasurement upsert_growth_measurement = 16;
     DeleteGrowthMeasurement delete_growth_measurement = 17;
+    UpsertTemperatureReading upsert_temperature_reading = 18;
+    DeleteTemperatureReading delete_temperature_reading = 19;
   }
 }
 
@@ -216,6 +218,22 @@ message GrowthMeasurementInput {
   string note = 6;
 }
 
+message UpsertTemperatureReading {
+  TemperatureReadingInput reading = 1;
+}
+
+message DeleteTemperatureReading {
+  string id = 1;
+}
+
+message TemperatureReadingInput {
+  string id = 1;
+  string child_id = 2;
+  google.protobuf.Timestamp measured_at = 3;
+  int32 centi_celsius = 4;
+  string note = 5;
+}
+
 message SleepInput {
   string id = 1;
   string child_id = 2;
@@ -249,6 +267,7 @@ enum EntityType {
   ENTITY_TYPE_CHILD = 1;
   ENTITY_TYPE_SLEEP_SESSION = 2;
   ENTITY_TYPE_GROWTH_MEASUREMENT = 3;
+  ENTITY_TYPE_TEMPERATURE_READING = 4;
 }
 
 enum EventOperation {
@@ -263,6 +282,7 @@ message Entity {
     SleepSession sleep_session = 2;
     DeletedEntity deleted = 3;
     GrowthMeasurement growth_measurement = 4;
+    TemperatureReading temperature_reading = 5;
   }
 }
 
@@ -316,6 +336,18 @@ message GrowthMeasurement {
   int64 revision = 8;
   google.protobuf.Timestamp updated_at = 9;
   optional google.protobuf.Timestamp deleted_at = 10;
+}
+
+message TemperatureReading {
+  string id = 1;
+  string family_id = 2;
+  string child_id = 3;
+  google.protobuf.Timestamp measured_at = 4;
+  int32 centi_celsius = 5;
+  string note = 6;
+  int64 revision = 7;
+  google.protobuf.Timestamp updated_at = 8;
+  optional google.protobuf.Timestamp deleted_at = 9;
 }
 
 message SyncEvent {

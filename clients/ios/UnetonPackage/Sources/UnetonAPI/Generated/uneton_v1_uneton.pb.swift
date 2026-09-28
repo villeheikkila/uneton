@@ -64,6 +64,7 @@ public nonisolated enum Uneton_V1_EntityType: SwiftProtobuf.Enum, Swift.CaseIter
   case child // = 1
   case sleepSession // = 2
   case growthMeasurement // = 3
+  case temperatureReading // = 4
   case UNRECOGNIZED(Int)
 
   public init() {
@@ -76,6 +77,7 @@ public nonisolated enum Uneton_V1_EntityType: SwiftProtobuf.Enum, Swift.CaseIter
     case 1: self = .child
     case 2: self = .sleepSession
     case 3: self = .growthMeasurement
+    case 4: self = .temperatureReading
     default: self = .UNRECOGNIZED(rawValue)
     }
   }
@@ -86,6 +88,7 @@ public nonisolated enum Uneton_V1_EntityType: SwiftProtobuf.Enum, Swift.CaseIter
     case .child: return 1
     case .sleepSession: return 2
     case .growthMeasurement: return 3
+    case .temperatureReading: return 4
     case .UNRECOGNIZED(let i): return i
     }
   }
@@ -96,6 +99,7 @@ public nonisolated enum Uneton_V1_EntityType: SwiftProtobuf.Enum, Swift.CaseIter
     .child,
     .sleepSession,
     .growthMeasurement,
+    .temperatureReading,
   ]
 
 }
@@ -642,6 +646,22 @@ public nonisolated struct Uneton_V1_Command: Sendable {
     set {payload = .deleteGrowthMeasurement(newValue)}
   }
 
+  public var upsertTemperatureReading: Uneton_V1_UpsertTemperatureReading {
+    get {
+      if case .upsertTemperatureReading(let v)? = payload {return v}
+      return Uneton_V1_UpsertTemperatureReading()
+    }
+    set {payload = .upsertTemperatureReading(newValue)}
+  }
+
+  public var deleteTemperatureReading: Uneton_V1_DeleteTemperatureReading {
+    get {
+      if case .deleteTemperatureReading(let v)? = payload {return v}
+      return Uneton_V1_DeleteTemperatureReading()
+    }
+    set {payload = .deleteTemperatureReading(newValue)}
+  }
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public nonisolated enum OneOf_Payload: Equatable, Sendable {
@@ -653,6 +673,8 @@ public nonisolated struct Uneton_V1_Command: Sendable {
     case deleteSleep(Uneton_V1_DeleteSleep)
     case upsertGrowthMeasurement(Uneton_V1_UpsertGrowthMeasurement)
     case deleteGrowthMeasurement(Uneton_V1_DeleteGrowthMeasurement)
+    case upsertTemperatureReading(Uneton_V1_UpsertTemperatureReading)
+    case deleteTemperatureReading(Uneton_V1_DeleteTemperatureReading)
 
   }
 
@@ -913,6 +935,68 @@ public nonisolated struct Uneton_V1_GrowthMeasurementInput: Sendable {
   fileprivate var _heightMillimeters: Int32? = nil
 }
 
+public nonisolated struct Uneton_V1_UpsertTemperatureReading: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var reading: Uneton_V1_TemperatureReadingInput {
+    get {_reading ?? Uneton_V1_TemperatureReadingInput()}
+    set {_reading = newValue}
+  }
+  /// Returns true if `reading` has been explicitly set.
+  public var hasReading: Bool {self._reading != nil}
+  /// Clears the value of `reading`. Subsequent reads from it will return its default value.
+  public mutating func clearReading() {self._reading = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _reading: Uneton_V1_TemperatureReadingInput? = nil
+}
+
+public nonisolated struct Uneton_V1_DeleteTemperatureReading: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var id: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+}
+
+public nonisolated struct Uneton_V1_TemperatureReadingInput: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var id: String = String()
+
+  public var childID: String = String()
+
+  public var measuredAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_measuredAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_measuredAt = newValue}
+  }
+  /// Returns true if `measuredAt` has been explicitly set.
+  public var hasMeasuredAt: Bool {self._measuredAt != nil}
+  /// Clears the value of `measuredAt`. Subsequent reads from it will return its default value.
+  public mutating func clearMeasuredAt() {self._measuredAt = nil}
+
+  public var centiCelsius: Int32 = 0
+
+  public var note: String = String()
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _measuredAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+}
+
 public nonisolated struct Uneton_V1_SleepInput: Sendable {
   // SwiftProtobuf.Message conformance is added in an extension below. See the
   // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
@@ -1050,6 +1134,14 @@ public nonisolated struct Uneton_V1_Entity: Sendable {
     set {value = .growthMeasurement(newValue)}
   }
 
+  public var temperatureReading: Uneton_V1_TemperatureReading {
+    get {
+      if case .temperatureReading(let v)? = value {return v}
+      return Uneton_V1_TemperatureReading()
+    }
+    set {value = .temperatureReading(newValue)}
+  }
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public nonisolated enum OneOf_Value: Equatable, Sendable {
@@ -1057,6 +1149,7 @@ public nonisolated struct Uneton_V1_Entity: Sendable {
     case sleepSession(Uneton_V1_SleepSession)
     case deleted(Uneton_V1_DeletedEntity)
     case growthMeasurement(Uneton_V1_GrowthMeasurement)
+    case temperatureReading(Uneton_V1_TemperatureReading)
 
   }
 
@@ -1314,6 +1407,59 @@ public nonisolated struct Uneton_V1_GrowthMeasurement: Sendable {
   fileprivate var _measuredAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
   fileprivate var _weightGrams: Int32? = nil
   fileprivate var _heightMillimeters: Int32? = nil
+  fileprivate var _updatedAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+  fileprivate var _deletedAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+}
+
+public nonisolated struct Uneton_V1_TemperatureReading: Sendable {
+  // SwiftProtobuf.Message conformance is added in an extension below. See the
+  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
+  // methods supported on all messages.
+
+  public var id: String = String()
+
+  public var familyID: String = String()
+
+  public var childID: String = String()
+
+  public var measuredAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_measuredAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_measuredAt = newValue}
+  }
+  /// Returns true if `measuredAt` has been explicitly set.
+  public var hasMeasuredAt: Bool {self._measuredAt != nil}
+  /// Clears the value of `measuredAt`. Subsequent reads from it will return its default value.
+  public mutating func clearMeasuredAt() {self._measuredAt = nil}
+
+  public var centiCelsius: Int32 = 0
+
+  public var note: String = String()
+
+  public var revision: Int64 = 0
+
+  public var updatedAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_updatedAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_updatedAt = newValue}
+  }
+  /// Returns true if `updatedAt` has been explicitly set.
+  public var hasUpdatedAt: Bool {self._updatedAt != nil}
+  /// Clears the value of `updatedAt`. Subsequent reads from it will return its default value.
+  public mutating func clearUpdatedAt() {self._updatedAt = nil}
+
+  public var deletedAt: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_deletedAt ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_deletedAt = newValue}
+  }
+  /// Returns true if `deletedAt` has been explicitly set.
+  public var hasDeletedAt: Bool {self._deletedAt != nil}
+  /// Clears the value of `deletedAt`. Subsequent reads from it will return its default value.
+  public mutating func clearDeletedAt() {self._deletedAt = nil}
+
+  public var unknownFields = SwiftProtobuf.UnknownStorage()
+
+  public init() {}
+
+  fileprivate var _measuredAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
   fileprivate var _updatedAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
   fileprivate var _deletedAt: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
 }
@@ -1669,7 +1815,7 @@ nonisolated extension Uneton_V1_CommandStatus: SwiftProtobuf._ProtoNameProviding
 }
 
 nonisolated extension Uneton_V1_EntityType: SwiftProtobuf._ProtoNameProviding {
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0ENTITY_TYPE_UNSPECIFIED\0\u{1}ENTITY_TYPE_CHILD\0\u{1}ENTITY_TYPE_SLEEP_SESSION\0\u{1}ENTITY_TYPE_GROWTH_MEASUREMENT\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{2}\0ENTITY_TYPE_UNSPECIFIED\0\u{1}ENTITY_TYPE_CHILD\0\u{1}ENTITY_TYPE_SLEEP_SESSION\0\u{1}ENTITY_TYPE_GROWTH_MEASUREMENT\0\u{1}ENTITY_TYPE_TEMPERATURE_READING\0")
 }
 
 nonisolated extension Uneton_V1_EventOperation: SwiftProtobuf._ProtoNameProviding {
@@ -2512,7 +2658,7 @@ nonisolated extension Uneton_V1_SyncRequest: SwiftProtobuf.Message, SwiftProtobu
 
 nonisolated extension Uneton_V1_Command: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Command"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{3}expected_revision\0\u{4}\u{8}create_child\0\u{3}update_child\0\u{3}start_sleep\0\u{3}end_sleep\0\u{3}upsert_sleep\0\u{3}delete_sleep\0\u{3}upsert_growth_measurement\0\u{3}delete_growth_measurement\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{3}expected_revision\0\u{4}\u{8}create_child\0\u{3}update_child\0\u{3}start_sleep\0\u{3}end_sleep\0\u{3}upsert_sleep\0\u{3}delete_sleep\0\u{3}upsert_growth_measurement\0\u{3}delete_growth_measurement\0\u{3}upsert_temperature_reading\0\u{3}delete_temperature_reading\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2626,6 +2772,32 @@ nonisolated extension Uneton_V1_Command: SwiftProtobuf.Message, SwiftProtobuf._M
           self.payload = .deleteGrowthMeasurement(v)
         }
       }()
+      case 18: try {
+        var v: Uneton_V1_UpsertTemperatureReading?
+        var hadOneofValue = false
+        if let current = self.payload {
+          hadOneofValue = true
+          if case .upsertTemperatureReading(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.payload = .upsertTemperatureReading(v)
+        }
+      }()
+      case 19: try {
+        var v: Uneton_V1_DeleteTemperatureReading?
+        var hadOneofValue = false
+        if let current = self.payload {
+          hadOneofValue = true
+          if case .deleteTemperatureReading(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.payload = .deleteTemperatureReading(v)
+        }
+      }()
       default: break
       }
     }
@@ -2674,6 +2846,14 @@ nonisolated extension Uneton_V1_Command: SwiftProtobuf.Message, SwiftProtobuf._M
     case .deleteGrowthMeasurement?: try {
       guard case .deleteGrowthMeasurement(let v)? = self.payload else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 17)
+    }()
+    case .upsertTemperatureReading?: try {
+      guard case .upsertTemperatureReading(let v)? = self.payload else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 18)
+    }()
+    case .deleteTemperatureReading?: try {
+      guard case .deleteTemperatureReading(let v)? = self.payload else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 19)
     }()
     case nil: break
     }
@@ -3111,6 +3291,124 @@ nonisolated extension Uneton_V1_GrowthMeasurementInput: SwiftProtobuf.Message, S
   }
 }
 
+nonisolated extension Uneton_V1_UpsertTemperatureReading: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".UpsertTemperatureReading"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}reading\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._reading) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._reading {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Uneton_V1_UpsertTemperatureReading, rhs: Uneton_V1_UpsertTemperatureReading) -> Bool {
+    if lhs._reading != rhs._reading {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Uneton_V1_DeleteTemperatureReading: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".DeleteTemperatureReading"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.id) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    if !self.id.isEmpty {
+      try visitor.visitSingularStringField(value: self.id, fieldNumber: 1)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Uneton_V1_DeleteTemperatureReading, rhs: Uneton_V1_DeleteTemperatureReading) -> Bool {
+    if lhs.id != rhs.id {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Uneton_V1_TemperatureReadingInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".TemperatureReadingInput"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{3}child_id\0\u{3}measured_at\0\u{3}centi_celsius\0\u{1}note\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.id) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.childID) }()
+      case 3: try { try decoder.decodeSingularMessageField(value: &self._measuredAt) }()
+      case 4: try { try decoder.decodeSingularInt32Field(value: &self.centiCelsius) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.note) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.id.isEmpty {
+      try visitor.visitSingularStringField(value: self.id, fieldNumber: 1)
+    }
+    if !self.childID.isEmpty {
+      try visitor.visitSingularStringField(value: self.childID, fieldNumber: 2)
+    }
+    try { if let v = self._measuredAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 3)
+    } }()
+    if self.centiCelsius != 0 {
+      try visitor.visitSingularInt32Field(value: self.centiCelsius, fieldNumber: 4)
+    }
+    if !self.note.isEmpty {
+      try visitor.visitSingularStringField(value: self.note, fieldNumber: 5)
+    }
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Uneton_V1_TemperatureReadingInput, rhs: Uneton_V1_TemperatureReadingInput) -> Bool {
+    if lhs.id != rhs.id {return false}
+    if lhs.childID != rhs.childID {return false}
+    if lhs._measuredAt != rhs._measuredAt {return false}
+    if lhs.centiCelsius != rhs.centiCelsius {return false}
+    if lhs.note != rhs.note {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
 nonisolated extension Uneton_V1_SleepInput: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SleepInput"
   public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{3}child_id\0\u{3}started_at\0\u{3}ended_at\0\u{1}source\0\u{3}start_condition\0\u{3}sleep_location\0\u{3}end_condition\0\u{3}wake_mood\0\u{3}wake_reason\0\u{3}caregiver_intervened\0")
@@ -3295,7 +3593,7 @@ nonisolated extension Uneton_V1_CommandResult: SwiftProtobuf.Message, SwiftProto
 
 nonisolated extension Uneton_V1_Entity: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".Entity"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}child\0\u{3}sleep_session\0\u{1}deleted\0\u{3}growth_measurement\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}child\0\u{3}sleep_session\0\u{1}deleted\0\u{3}growth_measurement\0\u{3}temperature_reading\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -3355,6 +3653,19 @@ nonisolated extension Uneton_V1_Entity: SwiftProtobuf.Message, SwiftProtobuf._Me
           self.value = .growthMeasurement(v)
         }
       }()
+      case 5: try {
+        var v: Uneton_V1_TemperatureReading?
+        var hadOneofValue = false
+        if let current = self.value {
+          hadOneofValue = true
+          if case .temperatureReading(let m) = current {v = m}
+        }
+        try decoder.decodeSingularMessageField(value: &v)
+        if let v = v {
+          if hadOneofValue {try decoder.handleConflictingOneOf()}
+          self.value = .temperatureReading(v)
+        }
+      }()
       default: break
       }
     }
@@ -3381,6 +3692,10 @@ nonisolated extension Uneton_V1_Entity: SwiftProtobuf.Message, SwiftProtobuf._Me
     case .growthMeasurement?: try {
       guard case .growthMeasurement(let v)? = self.value else { preconditionFailure() }
       try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    }()
+    case .temperatureReading?: try {
+      guard case .temperatureReading(let v)? = self.value else { preconditionFailure() }
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
     }()
     case nil: break
     }
@@ -3765,6 +4080,80 @@ nonisolated extension Uneton_V1_GrowthMeasurement: SwiftProtobuf.Message, SwiftP
     if lhs._measuredAt != rhs._measuredAt {return false}
     if lhs._weightGrams != rhs._weightGrams {return false}
     if lhs._heightMillimeters != rhs._heightMillimeters {return false}
+    if lhs.note != rhs.note {return false}
+    if lhs.revision != rhs.revision {return false}
+    if lhs._updatedAt != rhs._updatedAt {return false}
+    if lhs._deletedAt != rhs._deletedAt {return false}
+    if lhs.unknownFields != rhs.unknownFields {return false}
+    return true
+  }
+}
+
+nonisolated extension Uneton_V1_TemperatureReading: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
+  public static let protoMessageName: String = _protobuf_package + ".TemperatureReading"
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{1}id\0\u{3}family_id\0\u{3}child_id\0\u{3}measured_at\0\u{3}centi_celsius\0\u{1}note\0\u{1}revision\0\u{3}updated_at\0\u{3}deleted_at\0")
+
+  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularStringField(value: &self.id) }()
+      case 2: try { try decoder.decodeSingularStringField(value: &self.familyID) }()
+      case 3: try { try decoder.decodeSingularStringField(value: &self.childID) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._measuredAt) }()
+      case 5: try { try decoder.decodeSingularInt32Field(value: &self.centiCelsius) }()
+      case 6: try { try decoder.decodeSingularStringField(value: &self.note) }()
+      case 7: try { try decoder.decodeSingularInt64Field(value: &self.revision) }()
+      case 8: try { try decoder.decodeSingularMessageField(value: &self._updatedAt) }()
+      case 9: try { try decoder.decodeSingularMessageField(value: &self._deletedAt) }()
+      default: break
+      }
+    }
+  }
+
+  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    if !self.id.isEmpty {
+      try visitor.visitSingularStringField(value: self.id, fieldNumber: 1)
+    }
+    if !self.familyID.isEmpty {
+      try visitor.visitSingularStringField(value: self.familyID, fieldNumber: 2)
+    }
+    if !self.childID.isEmpty {
+      try visitor.visitSingularStringField(value: self.childID, fieldNumber: 3)
+    }
+    try { if let v = self._measuredAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
+    if self.centiCelsius != 0 {
+      try visitor.visitSingularInt32Field(value: self.centiCelsius, fieldNumber: 5)
+    }
+    if !self.note.isEmpty {
+      try visitor.visitSingularStringField(value: self.note, fieldNumber: 6)
+    }
+    if self.revision != 0 {
+      try visitor.visitSingularInt64Field(value: self.revision, fieldNumber: 7)
+    }
+    try { if let v = self._updatedAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
+    } }()
+    try { if let v = self._deletedAt {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
+    } }()
+    try unknownFields.traverse(visitor: &visitor)
+  }
+
+  public static func ==(lhs: Uneton_V1_TemperatureReading, rhs: Uneton_V1_TemperatureReading) -> Bool {
+    if lhs.id != rhs.id {return false}
+    if lhs.familyID != rhs.familyID {return false}
+    if lhs.childID != rhs.childID {return false}
+    if lhs._measuredAt != rhs._measuredAt {return false}
+    if lhs.centiCelsius != rhs.centiCelsius {return false}
     if lhs.note != rhs.note {return false}
     if lhs.revision != rhs.revision {return false}
     if lhs._updatedAt != rhs._updatedAt {return false}

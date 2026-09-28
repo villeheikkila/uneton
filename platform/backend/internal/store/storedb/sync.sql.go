@@ -401,6 +401,34 @@ func (q *Queries) CreateSleep(ctx context.Context, arg CreateSleepParams) error 
 	return err
 }
 
+const createTemperatureReading = `-- name: CreateTemperatureReading :exec
+insert into temperature_readings(id, family_id, child_id, measured_at, centi_celsius, note, revision, updated_at)
+values (?1, ?2, ?3, ?4, ?5, ?6, 1, ?7)
+`
+
+type CreateTemperatureReadingParams struct {
+	ID           string `json:"id"`
+	FamilyID     string `json:"family_id"`
+	ChildID      string `json:"child_id"`
+	MeasuredAt   string `json:"measured_at"`
+	CentiCelsius int64  `json:"centi_celsius"`
+	Note         string `json:"note"`
+	UpdatedAt    string `json:"updated_at"`
+}
+
+func (q *Queries) CreateTemperatureReading(ctx context.Context, arg CreateTemperatureReadingParams) error {
+	_, err := q.db.ExecContext(ctx, createTemperatureReading,
+		arg.ID,
+		arg.FamilyID,
+		arg.ChildID,
+		arg.MeasuredAt,
+		arg.CentiCelsius,
+		arg.Note,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
 const deleteFamilyEventsThrough = `-- name: DeleteFamilyEventsThrough :exec
 delete from sync_events
 where family_id=?1 and cursor<=?2
@@ -486,6 +514,30 @@ func (q *Queries) DeleteSleep(ctx context.Context, arg DeleteSleepParams) error 
 		arg.Revision,
 		arg.UpdatedAt,
 		arg.ID,
+	)
+	return err
+}
+
+const deleteTemperatureReading = `-- name: DeleteTemperatureReading :exec
+update temperature_readings set deleted_at=?1, revision=?2, updated_at=?3
+where id=?4 and family_id=?5
+`
+
+type DeleteTemperatureReadingParams struct {
+	DeletedAt sql.NullString `json:"deleted_at"`
+	Revision  int64          `json:"revision"`
+	UpdatedAt string         `json:"updated_at"`
+	ID        string         `json:"id"`
+	FamilyID  string         `json:"family_id"`
+}
+
+func (q *Queries) DeleteTemperatureReading(ctx context.Context, arg DeleteTemperatureReadingParams) error {
+	_, err := q.db.ExecContext(ctx, deleteTemperatureReading,
+		arg.DeletedAt,
+		arg.Revision,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.FamilyID,
 	)
 	return err
 }
@@ -608,6 +660,22 @@ type ExistingSleepRevisionParams struct {
 
 func (q *Queries) ExistingSleepRevision(ctx context.Context, arg ExistingSleepRevisionParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, existingSleepRevision, arg.ID, arg.FamilyID)
+	var revision int64
+	err := row.Scan(&revision)
+	return revision, err
+}
+
+const existingTemperatureReadingRevision = `-- name: ExistingTemperatureReadingRevision :one
+select revision from temperature_readings where id=?1 and family_id=?2 and deleted_at is null
+`
+
+type ExistingTemperatureReadingRevisionParams struct {
+	ID       string `json:"id"`
+	FamilyID string `json:"family_id"`
+}
+
+func (q *Queries) ExistingTemperatureReadingRevision(ctx context.Context, arg ExistingTemperatureReadingRevisionParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, existingTemperatureReadingRevision, arg.ID, arg.FamilyID)
 	var revision int64
 	err := row.Scan(&revision)
 	return revision, err
@@ -1086,6 +1154,33 @@ func (q *Queries) SnapshotChildIDs(ctx context.Context, familyID string) ([]stri
 	return items, nil
 }
 
+const snapshotGrowthIDs = `-- name: SnapshotGrowthIDs :many
+select id from growth_measurements where family_id=?1 and deleted_at is null order by id
+`
+
+func (q *Queries) SnapshotGrowthIDs(ctx context.Context, familyID string) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, snapshotGrowthIDs, familyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []string{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const snapshotSleepIDs = `-- name: SnapshotSleepIDs :many
 select id from sleep_sessions
 where family_id=?1 and deleted_at is null
@@ -1094,6 +1189,33 @@ order by id
 
 func (q *Queries) SnapshotSleepIDs(ctx context.Context, familyID string) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, snapshotSleepIDs, familyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []string{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const snapshotTemperatureIDs = `-- name: SnapshotTemperatureIDs :many
+select id from temperature_readings where family_id=?1 and deleted_at is null order by id
+`
+
+func (q *Queries) SnapshotTemperatureIDs(ctx context.Context, familyID string) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, snapshotTemperatureIDs, familyID)
 	if err != nil {
 		return nil, err
 	}
@@ -1186,6 +1308,33 @@ func (q *Queries) SweetSpotHistory(ctx context.Context, childID string) ([]Sweet
 		return nil, err
 	}
 	return items, nil
+}
+
+const temperatureReadingRecord = `-- name: TemperatureReadingRecord :one
+select id, family_id, child_id, measured_at, centi_celsius, note, revision, updated_at, deleted_at
+from temperature_readings where id=?1 and family_id=?2
+`
+
+type TemperatureReadingRecordParams struct {
+	ID       string `json:"id"`
+	FamilyID string `json:"family_id"`
+}
+
+func (q *Queries) TemperatureReadingRecord(ctx context.Context, arg TemperatureReadingRecordParams) (TemperatureReading, error) {
+	row := q.db.QueryRowContext(ctx, temperatureReadingRecord, arg.ID, arg.FamilyID)
+	var i TemperatureReading
+	err := row.Scan(
+		&i.ID,
+		&i.FamilyID,
+		&i.ChildID,
+		&i.MeasuredAt,
+		&i.CentiCelsius,
+		&i.Note,
+		&i.Revision,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
 }
 
 const updateChild = `-- name: UpdateChild :exec
@@ -1307,6 +1456,33 @@ func (q *Queries) UpdateSleep(ctx context.Context, arg UpdateSleepParams) error 
 		arg.WakeMood,
 		arg.WakeReason,
 		arg.CaregiverIntervened,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.FamilyID,
+	)
+	return err
+}
+
+const updateTemperatureReading = `-- name: UpdateTemperatureReading :exec
+update temperature_readings set measured_at=?1, centi_celsius=?2,
+  note=?3, revision=revision+1, updated_at=?4
+where id=?5 and family_id=?6
+`
+
+type UpdateTemperatureReadingParams struct {
+	MeasuredAt   string `json:"measured_at"`
+	CentiCelsius int64  `json:"centi_celsius"`
+	Note         string `json:"note"`
+	UpdatedAt    string `json:"updated_at"`
+	ID           string `json:"id"`
+	FamilyID     string `json:"family_id"`
+}
+
+func (q *Queries) UpdateTemperatureReading(ctx context.Context, arg UpdateTemperatureReadingParams) error {
+	_, err := q.db.ExecContext(ctx, updateTemperatureReading,
+		arg.MeasuredAt,
+		arg.CentiCelsius,
+		arg.Note,
 		arg.UpdatedAt,
 		arg.ID,
 		arg.FamilyID,

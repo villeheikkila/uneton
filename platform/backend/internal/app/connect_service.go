@@ -503,6 +503,12 @@ func syncRequestFromProto(request *unetonv1.SyncRequest) (SyncRequest, map[strin
 			command.Kind, payload = "deleteGrowthMeasurement", struct {
 				ID string `json:"id"`
 			}{ID: item.DeleteGrowthMeasurement.GetId()}
+		case *unetonv1.Command_UpsertTemperatureReading:
+			command.Kind, payload = "upsertTemperatureReading", temperatureReadingPayloadFromProto(item.UpsertTemperatureReading.GetReading())
+		case *unetonv1.Command_DeleteTemperatureReading:
+			command.Kind, payload = "deleteTemperatureReading", struct {
+				ID string `json:"id"`
+			}{ID: item.DeleteTemperatureReading.GetId()}
 		default:
 			return SyncRequest{}, nil, errors.New("command payload is required")
 		}
@@ -550,6 +556,13 @@ func growthMeasurementPayloadFromProto(value *unetonv1.GrowthMeasurementInput) g
 		height = &item
 	}
 	return growthMeasurementPayload{ID: value.GetId(), ChildID: value.GetChildId(), MeasuredAt: value.GetMeasuredAt().AsTime(), WeightGrams: weight, HeightMillimeters: height, Note: value.GetNote()}
+}
+
+func temperatureReadingPayloadFromProto(value *unetonv1.TemperatureReadingInput) temperatureReadingPayload {
+	if value == nil {
+		return temperatureReadingPayload{}
+	}
+	return temperatureReadingPayload{ID: value.GetId(), ChildID: value.GetChildId(), MeasuredAt: value.GetMeasuredAt().AsTime(), CentiCelsius: int(value.GetCentiCelsius()), Note: value.GetNote()}
 }
 
 func timeFromProto(value *timestamppb.Timestamp) *time.Time {
@@ -605,6 +618,9 @@ func commandEntityType(kind string) string {
 	if strings.Contains(kind, "GrowthMeasurement") {
 		return "growthMeasurement"
 	}
+	if strings.Contains(kind, "TemperatureReading") {
+		return "temperatureReading"
+	}
 	return "sleepSession"
 }
 
@@ -623,6 +639,12 @@ func entityFromJSON(entityType string, payload []byte) *unetonv1.Entity {
 		var value growthMeasurementRecord
 		if json.Unmarshal(payload, &value) == nil && value.ChildID != "" {
 			return &unetonv1.Entity{Value: &unetonv1.Entity_GrowthMeasurement{GrowthMeasurement: growthMeasurementRecordToProto(value)}}
+		}
+	}
+	if entityType == "temperatureReading" {
+		var value temperatureReadingRecord
+		if json.Unmarshal(payload, &value) == nil && value.ChildID != "" {
+			return &unetonv1.Entity{Value: &unetonv1.Entity_TemperatureReading{TemperatureReading: temperatureReadingRecordToProto(value)}}
 		}
 	}
 	var value sleepRecord
@@ -692,12 +714,23 @@ func growthMeasurementRecordToProto(value growthMeasurementRecord) *unetonv1.Gro
 	return result
 }
 
+func temperatureReadingRecordToProto(value temperatureReadingRecord) *unetonv1.TemperatureReading {
+	result := &unetonv1.TemperatureReading{Id: value.ID, FamilyId: value.FamilyID, ChildId: value.ChildID, MeasuredAt: timestamppb.New(value.MeasuredAt), CentiCelsius: int32(value.CentiCelsius), Note: value.Note, Revision: int64(value.Revision), UpdatedAt: timestamppb.New(value.UpdatedAt)}
+	if value.DeletedAt != nil {
+		result.DeletedAt = timestamppb.New(*value.DeletedAt)
+	}
+	return result
+}
+
 func entityTypeToProto(value string) unetonv1.EntityType {
 	if value == "child" {
 		return unetonv1.EntityType_ENTITY_TYPE_CHILD
 	}
 	if value == "growthMeasurement" {
 		return unetonv1.EntityType_ENTITY_TYPE_GROWTH_MEASUREMENT
+	}
+	if value == "temperatureReading" {
+		return unetonv1.EntityType_ENTITY_TYPE_TEMPERATURE_READING
 	}
 	return unetonv1.EntityType_ENTITY_TYPE_SLEEP_SESSION
 }

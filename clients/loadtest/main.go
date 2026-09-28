@@ -332,6 +332,33 @@ func (s scenario) run(ctx context.Context) error {
 		if _, syncErr = s.sync(ctx, owner, nil); syncErr != nil {
 			return fmt.Errorf("cycle %d owner reconciliation: %w", cycle+1, syncErr)
 		}
+		// The phone's temperature diary uses the same durable command and pull path.
+		readingID := newID()
+		readingCommand := &unetonv1.Command{Id: newID(), Payload: &unetonv1.Command_UpsertTemperatureReading{
+			UpsertTemperatureReading: &unetonv1.UpsertTemperatureReading{Reading: &unetonv1.TemperatureReadingInput{
+				Id: readingID, ChildId: childID, MeasuredAt: timestamppb.New(endedAt), CentiCelsius: 3850,
+			}},
+		}}
+		reading, syncErr := s.sync(ctx, owner, []*unetonv1.Command{readingCommand})
+		if syncErr != nil {
+			return fmt.Errorf("cycle %d temperature: %w", cycle+1, syncErr)
+		}
+		if err := accepted(reading, 1); err != nil {
+			return fmt.Errorf("cycle %d temperature result: %w", cycle+1, err)
+		}
+		pulledTemperature, syncErr := s.sync(ctx, caregiver, nil)
+		if syncErr != nil {
+			return fmt.Errorf("cycle %d caregiver temperature pull: %w", cycle+1, syncErr)
+		}
+		foundTemperature := false
+		for _, event := range pulledTemperature.GetEvents() {
+			if event.GetEntityId() == readingID && event.GetEntity().GetTemperatureReading().GetCentiCelsius() == 3850 {
+				foundTemperature = true
+			}
+		}
+		if !foundTemperature {
+			return fmt.Errorf("cycle %d caregiver missing temperature reading", cycle+1)
+		}
 	}
 	return nil
 }

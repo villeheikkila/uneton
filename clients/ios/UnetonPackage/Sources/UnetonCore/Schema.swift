@@ -169,6 +169,33 @@ public struct GrowthMeasurement: Identifiable, Codable, Equatable, Sendable {
   }
 }
 
+@Table
+public struct TemperatureReading: Identifiable, Codable, Equatable, Sendable {
+  public let id: UUID
+  public var familyID: Family.ID
+  public var childID: Child.ID
+  public var measuredAt: Date
+  public var centiCelsius: Int
+  public var note: String
+  public var revision: Int
+  public var updatedAt: Date
+  public var deletedAt: Date?
+  public var pendingCommandID: UUID?
+
+  public init(id: UUID, familyID: Family.ID, childID: Child.ID, measuredAt: Date, centiCelsius: Int, note: String = "", revision: Int = 0, updatedAt: Date, deletedAt: Date? = nil, pendingCommandID: UUID? = nil) {
+    self.id = id
+    self.familyID = familyID
+    self.childID = childID
+    self.measuredAt = measuredAt
+    self.centiCelsius = centiCelsius
+    self.note = note
+    self.revision = revision
+    self.updatedAt = updatedAt
+    self.deletedAt = deletedAt
+    self.pendingCommandID = pendingCommandID
+  }
+}
+
 @Table("growthReferencePoints")
 public struct GrowthReferencePoint: Identifiable, Codable, Equatable, Sendable {
   public let id: String
@@ -509,6 +536,26 @@ extension DependencyValues {
       try #sql("""
         CREATE INDEX "index_acknowledgedCommands_on_familyID_acknowledgedAt"
         ON "acknowledgedCommands"("familyID", "acknowledgedAt")
+        """).execute(database)
+    }
+    migrator.registerMigration("Add temperature readings") { database in
+      try #sql("""
+        CREATE TABLE "temperatureReadings" (
+          "id" TEXT PRIMARY KEY NOT NULL ON CONFLICT REPLACE DEFAULT (uuid()),
+          "familyID" TEXT NOT NULL REFERENCES "families"("id") ON DELETE CASCADE,
+          "childID" TEXT NOT NULL REFERENCES "children"("id") ON DELETE CASCADE,
+          "measuredAt" TEXT NOT NULL,
+          "centiCelsius" INTEGER NOT NULL,
+          "note" TEXT NOT NULL DEFAULT '',
+          "revision" INTEGER NOT NULL DEFAULT 0,
+          "updatedAt" TEXT NOT NULL,
+          "deletedAt" TEXT,
+          "pendingCommandID" TEXT
+        ) STRICT
+        """).execute(database)
+      try #sql("""
+        CREATE INDEX "index_temperatureReadings_on_childID_measuredAt"
+        ON "temperatureReadings"("childID", "measuredAt" DESC)
         """).execute(database)
     }
     try migrator.migrate(database)

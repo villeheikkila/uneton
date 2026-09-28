@@ -205,6 +205,54 @@ struct SyncCoordinatorTests {
     #expect(pending.first?.kind == "updateChild")
   }
 
+  @Test func temperatureReadingReplaysPendingOverlay() async throws {
+    let familyID = UUID(-71)
+    let childID = UUID(-72)
+    let readingID = UUID(-73)
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    let authoritative = ServerTemperatureReadingPayload(id: readingID, familyID: familyID,
+      childID: childID, measuredAt: date(1_000), centiCelsius: 3810,
+      note: "Morning", revision: 2, updatedAt: date(1_000), deletedAt: nil)
+    let pending = TemperatureReadingCommandPayload(id: readingID, childID: childID,
+      measuredAt: date(2_000), centiCelsius: 3875, note: "Evening")
+    let authoritativeJSON = try JSONEncoder.uneton.encode(authoritative)
+    let pendingJSON = try JSONEncoder.uneton.encode(pending)
+    try await database.write { database in
+      try AuthoritativeRecord.insert {
+        AuthoritativeRecord(id: "temperatureReading:\(readingID)", familyID: familyID,
+          entityType: "temperatureReading", entityID: readingID, revision: 2,
+          operation: "upsert", payloadJSON: authoritativeJSON)
+      }.execute(database)
+      try PendingCommand.insert {
+        PendingCommand(id: UUID(-74), familyID: familyID, kind: "upsertTemperatureReading",
+          expectedRevision: 2, payloadJSON: pendingJSON, createdAt: date(3_000))
+      }.execute(database)
+      try Projection.rebuild(familyID: familyID, database: database)
+    }
+    let projected = try await database.read { try TemperatureReading.find(readingID).fetchOne($0) }
+    #expect(projected?.centiCelsius == 3875)
+    #expect(projected?.note == "Evening")
+    #expect(projected?.revision == 2)
+    #expect(projected?.pendingCommandID == UUID(-74))
+  }
+
+  @Test func temperatureEditsQueueSequentialRevisionsWhileOffline() async throws {
+    let familyID = UUID(-75)
+    let childID = UUID(-76)
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    let coordinator = SyncCoordinator(deviceID: UUID(-77), accessToken: { "token" })
+    try await coordinator.upsertTemperatureReading(familyID: familyID, childID: childID,
+      measuredAt: date(1_000), centiCelsius: 3800)
+    let reading = try #require(await database.read { try TemperatureReading.fetchAll($0).first })
+    try await coordinator.upsertTemperatureReading(familyID: familyID, childID: childID,
+      readingID: reading.id, measuredAt: date(2_000), centiCelsius: 3875)
+    try await coordinator.deleteTemperatureReading(familyID: familyID, readingID: reading.id)
+    let commands = try await database.read { try PendingCommand.fetchAll($0) }
+      .filter { $0.familyID == familyID }
+    #expect(commands.map(\.expectedRevision) == [nil, 1, 2])
+    #expect(try await database.read { try TemperatureReading.find(reading.id).fetchOne($0) } == nil)
+  }
+
   @Test func acceptedGrowthReferenceUpdatePersistsServerValue() async throws {
     let familyID = UUID(-67)
     let childID = UUID(-68)

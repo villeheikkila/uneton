@@ -94,6 +94,20 @@ create table growth_measurements (
 ) strict;
 create index growth_measurements_child_time on growth_measurements(child_id, measured_at desc);
 
+create table temperature_readings (
+  id text primary key not null,
+  family_id text not null references families(id) on delete cascade,
+  child_id text not null,
+  measured_at text not null,
+  centi_celsius integer not null check (centi_celsius between 2000 and 5000),
+  note text not null default '',
+  revision integer not null default 1,
+  updated_at text not null,
+  deleted_at text,
+  foreign key (family_id, child_id) references children(family_id, id) on delete cascade
+) strict;
+create index temperature_readings_child_time on temperature_readings(child_id, measured_at desc);
+
 -- Private, locally seeded reference data used to draw growth charts. It has no
 -- family ownership and is never emitted through the synchronization event log.
 create table growth_reference_points (

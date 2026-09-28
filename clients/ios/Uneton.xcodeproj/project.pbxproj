@@ -16,6 +16,7 @@
 		1FE1E4D54037C47A74F5F7C3 /* UnetonWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E559806C9EB49DB6CD0CB7B2 /* UnetonWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		277371375578159F4D765AAE /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93442058261D164D125FE85A /* SessionStore.swift */; };
 		27BDDD0B1DAF19C0D517BA04 /* GrowthEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423880E6A053D48080C50C45 /* GrowthEntry.swift */; };
+		2C26B83CC603AC626C6B7195 /* TemperatureEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B2C25DAD59C55EE96BD82B9 /* TemperatureEntry.swift */; };
 		316D502577DE587D9F1B1F0D /* PhoneWatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD9758664132AB21584A96AC /* PhoneWatchBridge.swift */; };
 		32E347573C4C49842ABB92CC /* SessionAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C28DF7DBFEC8C4705D78AB09 /* SessionAuthClient.swift */; };
 		358CD8F31FC926F168F67669 /* TimelineScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16F8A18EB8BF393F83693600 /* TimelineScreen.swift */; };
@@ -121,6 +122,7 @@
 		0355076EEF872FB482B7B4DA /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		15EA75C38B7B9913EFAF8D3C /* UnetonWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnetonWatchApp.swift; sourceTree = "<group>"; };
 		16F8A18EB8BF393F83693600 /* TimelineScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineScreen.swift; sourceTree = "<group>"; };
+		1B2C25DAD59C55EE96BD82B9 /* TemperatureEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemperatureEntry.swift; sourceTree = "<group>"; };
 		1DF29C953864C252FCF044CB /* FamilySharing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilySharing.swift; sourceTree = "<group>"; };
 		23D3449DAAACCCD6BDCA5AE5 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		2B3D56BB737E543E8EF49E5A /* Onboarding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Onboarding.swift; sourceTree = "<group>"; };
@@ -335,6 +337,7 @@
 				423880E6A053D48080C50C45 /* GrowthEntry.swift */,
 				E2F4A75ED9D0A2A724B618E2 /* SleepEntry.swift */,
 				8BFF0F8EAD4BC4114DEFF87D /* SleepEntrySheet.swift */,
+				1B2C25DAD59C55EE96BD82B9 /* TemperatureEntry.swift */,
 			);
 			path = Entry;
 			sourceTree = "<group>";
@@ -615,6 +618,7 @@
 				EEE0A15756165F4B81E941F0 /* SleepEntry.swift in Sources */,
 				3F67A8EC57D51FC25A4BE656 /* SleepEntrySheet.swift in Sources */,
 				9DE570FFDB97BFFA8D55A463 /* SyncConflictsSheet.swift in Sources */,
+				2C26B83CC603AC626C6B7195 /* TemperatureEntry.swift in Sources */,
 				358CD8F31FC926F168F67669 /* TimelineScreen.swift in Sources */,
 				936F390DF0F0C05C34C2AB43 /* TrendsView.swift in Sources */,
 				503C1297883A78D0B857765E /* UnetonApp.swift in Sources */,

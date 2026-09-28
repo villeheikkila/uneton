@@ -174,6 +174,35 @@ func TestFamilySyncAndInvite(t *testing.T) {
 		t.Fatalf("stale growth edit missing authoritative measurement: %+v", staleGrowth)
 	}
 
+	temperatureID := "30000000-0000-4000-8000-000000000003"
+	temperatureCommand := &unetonv1.Command{Id: "40000000-0000-4000-8000-000000000018", Payload: &unetonv1.Command_UpsertTemperatureReading{
+		UpsertTemperatureReading: &unetonv1.UpsertTemperatureReading{Reading: &unetonv1.TemperatureReadingInput{
+			Id: temperatureID, ChildId: childID, MeasuredAt: timestamppb.New(now), CentiCelsius: 3875, Note: "Evening",
+		}},
+	}}
+	temperature := syncFamily(t, ctx, client, owner.GetAccessToken(), &unetonv1.SyncRequest{
+		FamilyId: familyID, Cursor: staleGrowth.GetNextCursor(), Commands: []*unetonv1.Command{temperatureCommand},
+	})
+	if len(temperature.GetEvents()) != 1 || temperature.GetEvents()[0].GetEntityType() != unetonv1.EntityType_ENTITY_TYPE_TEMPERATURE_READING || temperature.GetEvents()[0].GetEntity().GetTemperatureReading().GetCentiCelsius() != 3875 {
+		t.Fatalf("temperature reading was not synchronized: %+v", temperature)
+	}
+	replayedTemperature := syncFamily(t, ctx, client, owner.GetAccessToken(), &unetonv1.SyncRequest{
+		FamilyId: familyID, Cursor: temperature.GetNextCursor(), Commands: []*unetonv1.Command{temperatureCommand},
+	})
+	if len(replayedTemperature.GetEvents()) != 0 || replayedTemperature.GetCommandResults()[0].GetEntity().GetTemperatureReading().GetRevision() != 1 {
+		t.Fatalf("temperature retry was not idempotent: %+v", replayedTemperature)
+	}
+	staleTemperatureRevision := int64(0)
+	staleTemperature := syncFamily(t, ctx, client, owner.GetAccessToken(), &unetonv1.SyncRequest{
+		FamilyId: familyID, Cursor: temperature.GetNextCursor(), Commands: []*unetonv1.Command{{
+			Id: "40000000-0000-4000-8000-000000000019", ExpectedRevision: &staleTemperatureRevision,
+			Payload: &unetonv1.Command_DeleteTemperatureReading{DeleteTemperatureReading: &unetonv1.DeleteTemperatureReading{Id: temperatureID}},
+		}},
+	})
+	if staleTemperature.GetCommandResults()[0].GetStatus() != unetonv1.CommandStatus_COMMAND_STATUS_REJECTED || staleTemperature.GetCommandResults()[0].GetEntity().GetTemperatureReading().GetCentiCelsius() != 3875 {
+		t.Fatalf("stale temperature delete missing authoritative reading: %+v", staleTemperature)
+	}
+
 	childRevision := int64(1)
 	growthReferenceUpdate := syncFamily(t, ctx, client, owner.GetAccessToken(), &unetonv1.SyncRequest{
 		FamilyId: familyID, Cursor: staleGrowth.GetNextCursor(),
@@ -204,8 +233,18 @@ func TestFamilySyncAndInvite(t *testing.T) {
 		t.Fatalf("idempotent invite retry failed: %v", err)
 	}
 	caregiverSync := syncFamily(t, ctx, client, caregiver.GetAccessToken(), &unetonv1.SyncRequest{FamilyId: familyID})
-	if len(caregiverSync.GetEvents()) != 5 {
+	if len(caregiverSync.GetEvents()) != 6 {
 		t.Fatalf("caregiver got %d events", len(caregiverSync.GetEvents()))
+	}
+	temperatureRevision := int64(1)
+	deletedTemperature := syncFamily(t, ctx, client, caregiver.GetAccessToken(), &unetonv1.SyncRequest{
+		FamilyId: familyID, Cursor: caregiverSync.GetNextCursor(), Commands: []*unetonv1.Command{{
+			Id: "40000000-0000-4000-8000-000000000020", ExpectedRevision: &temperatureRevision,
+			Payload: &unetonv1.Command_DeleteTemperatureReading{DeleteTemperatureReading: &unetonv1.DeleteTemperatureReading{Id: temperatureID}},
+		}},
+	})
+	if deletedTemperature.GetCommandResults()[0].GetStatus() != unetonv1.CommandStatus_COMMAND_STATUS_ACCEPTED || len(deletedTemperature.GetEvents()) != 1 || deletedTemperature.GetEvents()[0].GetOperation() != unetonv1.EventOperation_EVENT_OPERATION_DELETE {
+		t.Fatalf("temperature deletion was not synchronized: %+v", deletedTemperature)
 	}
 }
 
@@ -489,6 +528,8 @@ func TestSyncCompactsHistoryIntoSnapshot(t *testing.T) {
 	client := unetonv1connect.NewUnetonServiceClient(http.DefaultClient, server.URL)
 	owner := authenticate(t, context.Background(), client, "Snapshot owner", "81000000-0000-4000-8000-000000000001")
 	familyID, childID, sleepID := "82000000-0000-4000-8000-000000000001", "83000000-0000-4000-8000-000000000001", "84000000-0000-4000-8000-000000000001"
+	growthID, temperatureID := "84000000-0000-4000-8000-000000000002", "84000000-0000-4000-8000-000000000003"
+	weight := int32(6400)
 	createFamily := connect.NewRequest(&unetonv1.CreateFamilyRequest{Id: familyID, Name: "Snapshots"})
 	authorize(createFamily, owner.GetAccessToken())
 	if _, err := client.CreateFamily(context.Background(), createFamily); err != nil {
@@ -499,10 +540,24 @@ func TestSyncCompactsHistoryIntoSnapshot(t *testing.T) {
 		Commands: []*unetonv1.Command{
 			{Id: "85000000-0000-4000-8000-000000000001", Payload: &unetonv1.Command_CreateChild{CreateChild: &unetonv1.CreateChild{Child: &unetonv1.ChildInput{Id: childID, Nickname: "Muru", BirthDate: "2026-02-23"}}}},
 			{Id: "85000000-0000-4000-8000-000000000002", Payload: &unetonv1.Command_StartSleep{StartSleep: &unetonv1.StartSleep{Sleep: sleepInput(sleepID, childID, now, nil, "phone")}}},
+			{Id: "85000000-0000-4000-8000-000000000003", Payload: &unetonv1.Command_UpsertGrowthMeasurement{UpsertGrowthMeasurement: &unetonv1.UpsertGrowthMeasurement{Measurement: &unetonv1.GrowthMeasurementInput{Id: growthID, ChildId: childID, MeasuredAt: timestamppb.New(now), WeightGrams: &weight}}}},
+			{Id: "85000000-0000-4000-8000-000000000004", Payload: &unetonv1.Command_UpsertTemperatureReading{UpsertTemperatureReading: &unetonv1.UpsertTemperatureReading{Reading: &unetonv1.TemperatureReadingInput{Id: temperatureID, ChildId: childID, MeasuredAt: timestamppb.New(now), CentiCelsius: 3850}}}},
 		},
 	})
-	if response.GetSnapshot() == nil || len(response.GetSnapshot().GetEntities()) != 2 || len(response.GetEvents()) != 0 {
+	if response.GetSnapshot() == nil || len(response.GetSnapshot().GetEntities()) != 4 || len(response.GetEvents()) != 0 {
 		t.Fatalf("compacted response = %+v", response)
+	}
+	seenGrowth, seenTemperature := false, false
+	for _, entity := range response.GetSnapshot().GetEntities() {
+		if entity.GetEntityId() == growthID && entity.GetEntity().GetGrowthMeasurement() != nil {
+			seenGrowth = true
+		}
+		if entity.GetEntityId() == temperatureID && entity.GetEntity().GetTemperatureReading() != nil {
+			seenTemperature = true
+		}
+	}
+	if !seenGrowth || !seenTemperature {
+		t.Fatalf("snapshot omitted observations: %+v", response.GetSnapshot())
 	}
 	var eventCount, snapshotCount int
 	if err := database.DB.QueryRow("SELECT COUNT(*) FROM sync_events WHERE family_id=?", familyID).Scan(&eventCount); err != nil {
@@ -515,7 +570,7 @@ func TestSyncCompactsHistoryIntoSnapshot(t *testing.T) {
 		t.Fatalf("events=%d snapshots=%d", eventCount, snapshotCount)
 	}
 	late := syncFamily(t, context.Background(), client, owner.GetAccessToken(), &unetonv1.SyncRequest{FamilyId: familyID, Cursor: 0, Generation: database.SyncGeneration})
-	if late.GetSnapshot() == nil || len(late.GetSnapshot().GetEntities()) != 2 || late.GetNextCursor() != response.GetNextCursor() {
+	if late.GetSnapshot() == nil || len(late.GetSnapshot().GetEntities()) != 4 || late.GetNextCursor() != response.GetNextCursor() {
 		t.Fatalf("late client did not receive compacted snapshot: %+v", late)
 	}
 }
