@@ -7,13 +7,13 @@ struct FamilySetup {
         var birthDate = Calendar.current.date(byAdding: .month, value: -6, to: .now) ?? .now
         var childName = ""
         var errorMessage: String?
-        var growthReference: String?
+        var growthReference = "none"
         var isScanning = false
         @StoreTaskID var request
     }
 
     enum Action {
-        case createSleepDiaryButtonTapped
+        case addBabyButtonTapped
         case invitationCodeScanned(String)
         case scanInvitationButtonTapped
     }
@@ -23,9 +23,10 @@ struct FamilySetup {
     var body: some Feature {
         Update { state, action in
             switch action {
-            case .createSleepDiaryButtonTapped:
+            case .addBabyButtonTapped:
                 let name = state.childName.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !name.isEmpty, let growthReference = state.growthReference else { return }
+                guard !name.isEmpty else { return }
+                let growthReference = state.growthReference
                 let birthDate = state.birthDate
                 state.errorMessage = nil
                 store.addTask(id: state.request) {

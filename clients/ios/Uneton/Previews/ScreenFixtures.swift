@@ -15,6 +15,7 @@ enum ScreenFixtures {
         case invitationScannerSheet
         case sleepTab
         case growthTab
+        case temperatureTab
         case insightsTab
         case sleepEntrySheet
         case growthEntrySheet
@@ -188,6 +189,7 @@ enum ScreenFixtures {
             }
             let mode: TimelineScreen.Mode = switch scenario {
             case .growthTab, .growthEntrySheet: .growth
+            case .temperatureTab: .temperature
             case .insightsTab: .trends
             default: .timeline
             }

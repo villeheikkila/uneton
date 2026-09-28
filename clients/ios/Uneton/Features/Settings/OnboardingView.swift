@@ -24,7 +24,7 @@ struct OnboardingView: View {
                 VStack(spacing: 8) {
                     Text("Uneton")
                         .font(.largeTitle.bold())
-                    Text("A calmer way to keep track of sleep together.")
+                    Text("Track your baby’s sleep, growth and temperature together.")
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }

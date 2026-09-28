@@ -408,10 +408,10 @@ private struct EmptySleepCard: View {
             Image(systemName: "moon.zzz.fill")
                 .font(.system(size: 34))
                 .foregroundStyle(Color.sleepIndigo)
-            Text("Ready for sweet dreams")
+            Text("No sleep logged yet")
                 .font(.title3.weight(.bold))
                 .foregroundStyle(Color.sleepInk)
-            Text("Start the timer when \(child.nickname) falls asleep. The rhythm will appear here over time.")
+            Text("Start a sleep session when \(child.nickname) falls asleep. Their sleep history will build here.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -431,9 +431,9 @@ private struct TemperatureCard: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Label("Temperature diary", systemImage: "thermometer.medium")
+                    Label("Temperature", systemImage: "thermometer.medium")
                         .font(.title2.weight(.bold))
-                    Text("Keep a shared record of temperature readings when your child is unwell.")
+                    Text("Log readings and notes for your baby. Your family can see updates too.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -500,9 +500,9 @@ private struct GrowthCard: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Label("Growth card", systemImage: "ruler.fill")
+                    Label("Growth", systemImage: "ruler.fill")
                         .font(.title2.weight(.bold))
-                    Text("A shared record of measured height and weight. It stores observations only and does not provide medical assessment or percentiles.")
+                    Text("Keep height and weight in one place and see how they change over time.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -1200,5 +1200,6 @@ struct SleepSectionTitle: View {
 #if DEBUG
 #Preview("Sleep tab") { ScreenFixtures.preview(.sleepTab) }
 #Preview("Growth tab") { ScreenFixtures.preview(.growthTab) }
+#Preview("Temperature tab") { ScreenFixtures.preview(.temperatureTab) }
 #Preview("Growth entry sheet") { ScreenFixtures.preview(.growthEntrySheet) }
 #endif

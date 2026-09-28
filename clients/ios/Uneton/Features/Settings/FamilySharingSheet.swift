@@ -15,7 +15,7 @@ struct FamilySharingSheet: View {
                         .foregroundStyle(.indigo)
                     Text("Invite a caregiver")
                         .font(.title2.bold())
-                    Text("They can log and end sleep, and changes appear on both phones. The link expires in seven days and works once.")
+                    Text("Track sleep, growth and temperature together. This invitation works once and expires in seven days.")
                         .multilineTextAlignment(.center)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -96,7 +96,7 @@ struct FamilySharingSheet: View {
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This signs out every device. Families you own transfer to another caregiver when one is present; otherwise their diaries are deleted.")
+                Text("This signs out every device. Families you own transfer to another caregiver when one is present; otherwise their baby records are deleted.")
             }
         }
         .presentationDetents([.large])

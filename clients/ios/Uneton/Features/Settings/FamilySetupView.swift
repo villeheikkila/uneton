@@ -8,68 +8,91 @@ struct FamilySetupView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
-                    Image(systemName: "person.2.badge.plus")
-                        .font(.system(size: 52))
-                        .foregroundStyle(.indigo)
-                    Text("Set up your family")
-                        .font(.title.bold())
-                    Text("Create your child’s sleep diary, or scan a caregiver’s QR invitation to join theirs.")
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 30) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Image(systemName: "figure.child")
+                            .font(.system(size: 38, weight: .medium))
+                            .foregroundStyle(.indigo)
+                            .padding(.bottom, 4)
+                        Text("Add your baby")
+                            .font(.largeTitle.bold())
+                        Text("Keep sleep, growth and temperature in one shared place. Have an invitation? Scan it below.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
 
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Your baby")
-                            .font(.headline)
-                        TextField("Baby’s name", text: $store.childName)
-                            .textFieldStyle(.roundedBorder)
-                        DatePicker("Birthday", selection: $store.birthDate, in: ...Date.now, displayedComponents: .date)
+                    VStack(alignment: .leading, spacing: 22) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Baby’s name")
+                                .font(.subheadline.weight(.semibold))
+                            TextField("Name or nickname", text: $store.childName)
+                                .textContentType(.nickname)
+                                .textFieldStyle(.roundedBorder)
+                                .submitLabel(.done)
+                        }
+
+                        DatePicker("Date of birth", selection: $store.birthDate, in: ...Date.now, displayedComponents: .date)
 
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Gender")
-                                .font(.subheadline.weight(.medium))
-                            Picker("Gender", selection: $store.growthReference) {
-                                Text("Girl").tag(Optional("girl"))
-                                Text("Boy").tag(Optional("boy"))
+                            Text("Growth reference")
+                                .font(.subheadline.weight(.semibold))
+                            Picker("Growth reference", selection: $store.growthReference) {
+                                Text("None").tag("none")
+                                Text("Girl").tag("girl")
+                                Text("Boy").tag("boy")
                             }
                             .labelsHidden()
                             .pickerStyle(.segmented)
-                            Text("This selects the Finnish growth reference curves. You can change or turn them off later.")
+                            Text("Optional Finnish growth chart. You can change this later.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
-
-                        Button("Create sleep diary") {
-                            store.send(.createSleepDiaryButtonTapped)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(
-                            store.childName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                || store.growthReference == nil
-                                || store.request.isRunning
-                        )
                     }
-                    .padding(20)
-                    .background(.background.secondary, in: .rect(cornerRadius: 24))
 
-                    Divider()
-                    Button("Scan family invitation", systemImage: "qrcode.viewfinder") {
-                        store.send(.scanInvitationButtonTapped)
-                    }
-                    .buttonStyle(.bordered)
                     if store.request.isRunning { ProgressView() }
                     if let error = store.errorMessage { Text(error).font(.footnote).foregroundStyle(.red) }
                 }
-                .padding(24)
+                .padding(.horizontal, 24)
+                .padding(.top, 32)
+                .padding(.bottom, 24)
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .safeAreaBar(edge: .bottom) {
+                HStack(spacing: 12) {
+                    Button {
+                        store.send(.scanInvitationButtonTapped)
+                    } label: {
+                        Label("Scan invite", systemImage: "qrcode.viewfinder")
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                    }
+                    .buttonStyle(.glass)
+
+                    Button {
+                        store.send(.addBabyButtonTapped)
+                    } label: {
+                        Label("Add baby", systemImage: "plus")
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                    }
+                    .buttonStyle(.glassProminent)
+                    .tint(.indigo)
+                    .disabled(
+                        store.childName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            || store.request.isRunning
+                    )
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
             }
             .sheet(isPresented: $store.isScanning) {
                 QRCodeScanner { value in
                     store.send(.invitationCodeScanned(value))
                 }
                 .overlay(alignment: .bottom) {
-                    Text("Point the camera at a caregiver’s invitation QR code")
+                    Text("Point the camera at your family invitation code")
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
