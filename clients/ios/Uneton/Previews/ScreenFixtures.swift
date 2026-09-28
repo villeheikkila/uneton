@@ -30,45 +30,15 @@ enum ScreenFixtures {
         }
     }
 
-    static let now = Date(timeIntervalSince1970: 1_790_000_000)
-    private static let familyID = UUID(uuidString: "00000000-0000-4000-8000-000000000101")!
-    private static let childID = UUID(uuidString: "00000000-0000-4000-8000-000000000102")!
-    private static let sleepID = UUID(uuidString: "00000000-0000-4000-8000-000000000103")!
-    private static let growthID = UUID(uuidString: "00000000-0000-4000-8000-000000000104")!
+    static let now = ModelFixtures.now
     private static let databasePrepared: Void = {
         try! prepareDependencies { try $0.bootstrapDatabase() }
     }()
 
-    private static var family: Family {
-        Family(id: familyID, name: "Our family", role: "owner", updatedAt: now)
-    }
-
-    private static var child: Child {
-        Child(
-            id: childID, familyID: familyID, nickname: "Aino",
-            birthDate: now.addingTimeInterval(-180 * 86_400),
-            revision: 1, updatedAt: now
-        )
-    }
-
-    private static var sleep: SleepSession {
-        SleepSession(
-            id: sleepID, familyID: familyID, childID: childID,
-            startedAt: now.addingTimeInterval(-3_600 * 4),
-            endedAt: now.addingTimeInterval(-3_600 * 2),
-            revision: 1, authorID: UUID(uuidString: "00000000-0000-4000-8000-000000000105"),
-            updatedAt: now
-        )
-    }
-
-    private static var growth: GrowthMeasurement {
-        GrowthMeasurement(
-            id: growthID, familyID: familyID, childID: childID,
-            measuredAt: now.addingTimeInterval(-86_400),
-            weightGrams: 6_800, heightMillimeters: 660, note: "Neuvola",
-            revision: 1, updatedAt: now
-        )
-    }
+    private static var family: Family { ModelFixtures.family() }
+    private static var child: Child { ModelFixtures.child() }
+    private static var sleep: SleepSession { ModelFixtures.sleep() }
+    private static var growth: GrowthMeasurement { ModelFixtures.growth() }
 
     private struct ConflictTimes: Encodable {
         let startedAt: Date
@@ -94,12 +64,8 @@ enum ScreenFixtures {
             startedAt: now.addingTimeInterval(-5 * 3_600),
             endedAt: now.addingTimeInterval(-3 * 3_600)
         ))
-        let conflict = SyncConflict(
-            id: UUID(uuidString: "00000000-0000-4000-8000-000000000106")!,
-            familyID: familyID, entityType: "sleepSession", entityID: sleepID,
-            commandKind: "upsertSleep", expectedRevision: 1,
-            localPayloadJSON: localConflictJSON, serverPayloadJSON: serverConflictJSON,
-            reason: "stale revision", createdAt: now
+        let conflict = ModelFixtures.conflict(
+            localPayloadJSON: localConflictJSON, serverPayloadJSON: serverConflictJSON
         )
         try await database.write { database in
             try SyncConflict.delete().execute(database)

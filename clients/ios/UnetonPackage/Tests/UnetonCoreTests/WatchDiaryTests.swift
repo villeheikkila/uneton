@@ -38,12 +38,20 @@ struct WatchDiaryTests {
 
   @Test func snapshotSelectsTheRequestedChildAndRoundTrips() throws {
     let familyID = UUID()
-    let first = WatchDiaryChild(id: UUID(), familyID: familyID, familyName: "Family",
-      nickname: "First", activeSleepStartedAt: nil, readings: [])
-    let second = WatchDiaryChild(id: UUID(), familyID: familyID, familyName: "Family",
-      nickname: "Second", activeSleepStartedAt: .now,
-      readings: [WatchDiaryReading(id: UUID(), measuredAt: .now, centiCelsius: 3850,
-        note: "Evening", revision: 2, isPending: true)])
+    let family = ModelFixtures.family(id: familyID, name: "Family")
+    let first = ModelFixtures.watchChild(
+      from: ModelFixtures.child(id: UUID(), familyID: familyID, nickname: "First"),
+      family: family
+    )
+    let second = ModelFixtures.watchChild(
+      from: ModelFixtures.child(id: UUID(), familyID: familyID, nickname: "Second"),
+      family: family, activeSleepStartedAt: .now,
+      readings: [ModelFixtures.temperature(
+        id: UUID(), familyID: familyID, measuredAt: .now,
+        centiCelsius: 3_850, note: "Evening", revision: 2,
+        pendingCommandID: UUID()
+      )]
+    )
     let snapshot = WatchDiarySnapshot(children: [first, second])
     let decoded = try JSONDecoder().decode(WatchDiarySnapshot.self, from: JSONEncoder().encode(snapshot))
     #expect(decoded == snapshot)

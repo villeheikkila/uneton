@@ -80,7 +80,7 @@ struct SyncCoordinatorTests {
     let projected = try await database.read { try SleepSession.find(fixture.sessionID).fetchOne($0) }
     expectNoDifference(
       projected,
-      SleepSession(
+      ModelFixtures.sleep(
         id: fixture.sessionID,
         familyID: fixture.familyID,
         childID: fixture.childID,
@@ -419,17 +419,10 @@ struct SyncCoordinatorTests {
       )
     )
     let serverPayload = try JSONEncoder.uneton.encode(serverSleep(fixture: fixture, revision: 4, endedAt: date(3_600)))
-    let conflict = SyncConflict(
-      id: UUID(-20),
-      familyID: fixture.familyID,
-      entityType: "sleepSession",
-      entityID: fixture.sessionID,
-      commandKind: "upsertSleep",
-      expectedRevision: 3,
-      localPayloadJSON: localPayload,
-      serverPayloadJSON: serverPayload,
-      reason: "stale revision",
-      createdAt: date(5_000)
+    let conflict = ModelFixtures.conflict(
+      localPayloadJSON: localPayload, serverPayloadJSON: serverPayload,
+      id: UUID(-20), familyID: fixture.familyID, entityID: fixture.sessionID,
+      expectedRevision: 3, createdAt: date(5_000)
     )
     try await database.write { try SyncConflict.insert { conflict }.execute($0) }
 
@@ -681,7 +674,7 @@ struct SyncCoordinatorTests {
   @Test func offlineBacklogIsSentInBoundedBatches() async throws {
     let familyID = UUID(-1)
     try await database.write { database in
-      try Family.insert { Family(id: familyID, name: "Home", role: "owner", updatedAt: date(0)) }.execute(database)
+      try Family.insert { ModelFixtures.family(id: familyID, name: "Home", updatedAt: date(0)) }.execute(database)
       for index in 0..<101 {
         let childID = UUID(index + 1_000)
         let payload = ChildCommandPayload(
@@ -789,7 +782,7 @@ struct SyncCoordinatorTests {
     )
     let childJSON = try JSONEncoder.uneton.encode(child)
     try await database.write { database in
-      try Family.insert { Family(id: familyID, name: "Home", role: "owner", updatedAt: date(0)) }.execute(database)
+      try Family.insert { ModelFixtures.family(id: familyID, name: "Home", updatedAt: date(0)) }.execute(database)
       try AuthoritativeRecord.insert {
         AuthoritativeRecord(
           id: "child:\(childID)",

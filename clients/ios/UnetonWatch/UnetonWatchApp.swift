@@ -134,17 +134,13 @@ private enum WatchScreenshotFixture {
         guard let scenario = ProcessInfo.processInfo.environment["UNETON_WATCH_SCREENSHOT_SCENARIO"] else {
             return nil
         }
-        let familyID = UUID(uuidString: "00000000-0000-4000-8000-000000000101")!
-        let childID = UUID(uuidString: "00000000-0000-4000-8000-000000000102")!
-        let reading = WatchDiaryReading(
-            id: UUID(uuidString: "00000000-0000-4000-8000-000000000103")!,
-            measuredAt: Date(timeIntervalSince1970: 1_790_000_000),
-            centiCelsius: 3820, note: "After nap", revision: 1, isPending: false)
-        let child = WatchDiaryChild(
-            id: childID, familyID: familyID, familyName: "Our family", nickname: "Aino",
-            activeSleepStartedAt: scenario == "sleeping" ? .now.addingTimeInterval(-3600) : nil,
-            readings: scenario == "temperature" ? [reading] : [])
-        return WatchDiarySnapshot(children: [child])
+        let family = ModelFixtures.family()
+        let child = ModelFixtures.child()
+        return WatchDiarySnapshot(children: [ModelFixtures.watchChild(
+            from: child, family: family,
+            activeSleepStartedAt: scenario == "sleeping" ? .now.addingTimeInterval(-3_600) : nil,
+            readings: scenario == "temperature" ? [ModelFixtures.temperature()] : []
+        )])
     }
 }
 #else
