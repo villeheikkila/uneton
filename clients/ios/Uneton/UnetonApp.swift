@@ -13,7 +13,9 @@ struct UnetonApp: App {
         prepareDependencies {
             try! $0.bootstrapDatabase()
             #if DEBUG
-            $0.apiClient = .live(baseURL: URL(string: "http://127.0.0.1:8080")!)
+            let debugBaseURL = ProcessInfo.processInfo.environment["UNETON_API_BASE_URL"]
+                .flatMap(URL.init(string:)) ?? URL(string: "http://127.0.0.1:8080")!
+            $0.apiClient = .live(baseURL: debugBaseURL)
             #else
             $0.apiClient = .live(baseURL: URL(string: "https://api.uneton.app")!)
             #endif
