@@ -27,9 +27,6 @@ struct FamilySharing {
     enum Action {
         case deleteAccountButtonTapped
         case deleteAccountPromptButtonTapped
-        case liveActivitiesChanged(Bool)
-        case notificationsChanged(Bool)
-        case reminderLeadChanged(Int)
         case signOutButtonTapped
     }
 
@@ -49,15 +46,6 @@ struct FamilySharing {
                 }
             case .deleteAccountPromptButtonTapped:
                 state.isConfirmingAccountDeletion = true
-            case let .liveActivitiesChanged(enabled):
-                state.liveActivitiesEnabled = enabled
-                store.addTask { await sessionSharing.setLiveActivitiesEnabled(enabled) }
-            case let .notificationsChanged(enabled):
-                state.notificationsEnabled = enabled
-                store.addTask { await sessionSharing.setNotificationsEnabled(enabled) }
-            case let .reminderLeadChanged(minutes):
-                state.reminderLeadMinutes = minutes
-                store.addTask { await sessionSharing.setReminderLeadMinutes(minutes) }
             case .signOutButtonTapped:
                 state.errorMessage = nil
                 store.addTask(id: state.accountRequest) {
@@ -68,6 +56,18 @@ struct FamilySharing {
                     }
                 }
             }
+        }
+        .onChange(of: store.liveActivitiesEnabled) { state in
+            let enabled = state.liveActivitiesEnabled
+            store.addTask { await sessionSharing.setLiveActivitiesEnabled(enabled) }
+        }
+        .onChange(of: store.notificationsEnabled) { state in
+            let enabled = state.notificationsEnabled
+            store.addTask { await sessionSharing.setNotificationsEnabled(enabled) }
+        }
+        .onChange(of: store.reminderLeadMinutes) { state in
+            let minutes = state.reminderLeadMinutes
+            store.addTask { await sessionSharing.setReminderLeadMinutes(minutes) }
         }
         .onMount(id: store.familyID) { state in
             let familyID = state.familyID

@@ -20,15 +20,16 @@ struct GrowthEntry {
             familyID: Family.ID,
             childID: Child.ID,
             measurementID: GrowthMeasurement.ID? = nil,
-            measuredAt: Date = .now,
+            measuredAt: Date? = nil,
             weightGrams: Int? = nil,
             heightMillimeters: Int? = nil,
-            note: String = ""
+            note: String = "",
+            now: Date
         ) {
             self.familyID = familyID
             self.childID = childID
             self.measurementID = measurementID
-            self.measuredAt = measuredAt
+            self.measuredAt = measuredAt ?? now
             self.weight = weightGrams.map { String(format: "%.2f", Double($0) / 1_000) } ?? ""
             self.height = heightMillimeters.map { String(format: "%.1f", Double($0) / 10) } ?? ""
             self.note = note

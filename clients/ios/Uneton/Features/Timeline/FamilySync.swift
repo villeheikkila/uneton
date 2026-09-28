@@ -4,8 +4,15 @@ import UnetonCore
 
 @Feature
 struct FamilySync {
+    enum Tab: String, CaseIterable, Identifiable {
+        case timeline = "Sleep", trends = "Insights", growth = "Growth", temperature = "Temperature"
+        var id: Self { self }
+    }
+
     struct State {
         let familyID: Family.ID
+        var selectedTab: Tab = .timeline
+        var insightsRangeDays = 7
         var entry: SleepEntry.State?
         var errorMessage: String?
         var growthEntry: GrowthEntry.State?
@@ -42,6 +49,7 @@ struct FamilySync {
 
     @FeatureEnvironment(\.sessionSync) private var sessionSync
     @FeatureEnvironment(\.sessionDiary) private var sessionDiary
+    @FeatureEnvironment(\.date.now) private var now
 
     var body: some Feature {
         Update { state, action in
@@ -78,13 +86,13 @@ struct FamilySync {
                 break
             case let .temperatureReadingSelected(childID, readingID, measuredAt, centiCelsius, note):
                 state.temperatureEntry = TemperatureEntry.State(familyID: state.familyID, childID: childID,
-                    readingID: readingID, measuredAt: measuredAt, centiCelsius: centiCelsius, note: note)
+                    readingID: readingID, measuredAt: measuredAt, centiCelsius: centiCelsius, note: note, now: now)
             case let .newTemperatureReadingButtonTapped(childID):
-                state.temperatureEntry = TemperatureEntry.State(familyID: state.familyID, childID: childID)
+                state.temperatureEntry = TemperatureEntry.State(familyID: state.familyID, childID: childID, now: now)
             case let .growthMeasurementSelected(childID, measurementID, measuredAt, grams, millimeters, note):
                 state.growthEntry = GrowthEntry.State(
                     familyID: state.familyID, childID: childID, measurementID: measurementID,
-                    measuredAt: measuredAt, weightGrams: grams, heightMillimeters: millimeters, note: note
+                    measuredAt: measuredAt, weightGrams: grams, heightMillimeters: millimeters, note: note, now: now
                 )
             case let .growthReferenceChanged(childID, reference):
                 let familyID = state.familyID
@@ -94,12 +102,13 @@ struct FamilySync {
                     try store.modify { $0.errorMessage = error }
                 }
             case let .newGrowthMeasurementButtonTapped(childID):
-                state.growthEntry = GrowthEntry.State(familyID: state.familyID, childID: childID)
+                state.growthEntry = GrowthEntry.State(familyID: state.familyID, childID: childID, now: now)
             case let .newSleepButtonTapped(childID, childName):
                 state.entry = SleepEntry.State(
                     familyID: state.familyID,
                     childID: childID,
-                    childName: childName
+                    childName: childName,
+                    now: now
                 )
             case .refreshRequested:
                 let familyID = state.familyID
@@ -122,7 +131,8 @@ struct FamilySync {
                     childName: childName,
                     sessionID: sessionID,
                     startedAt: startedAt,
-                    endedAt: endedAt
+                    endedAt: endedAt,
+                    now: now
                 )
             }
         }

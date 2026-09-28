@@ -36,18 +36,9 @@ struct FamilySharingSheet: View {
 
                     VStack(alignment: .leading, spacing: 14) {
                         Text("This device").font(.headline)
-                        Toggle("Push notifications", isOn: Binding(
-                            get: { store.notificationsEnabled },
-                            set: { store.send(.notificationsChanged($0)) }
-                        ))
-                        Toggle("Live Activities", isOn: Binding(
-                            get: { store.liveActivitiesEnabled },
-                            set: { store.send(.liveActivitiesChanged($0)) }
-                        ))
-                        Picker("Sleep reminder", selection: Binding(
-                            get: { store.reminderLeadMinutes },
-                            set: { store.send(.reminderLeadChanged($0)) }
-                        )) {
+                        Toggle("Push notifications", isOn: $store.notificationsEnabled)
+                        Toggle("Live Activities", isOn: $store.liveActivitiesEnabled)
+                        Picker("Sleep reminder", selection: $store.reminderLeadMinutes) {
                             Text("At predicted time").tag(0)
                             Text("15 minutes before").tag(15)
                             Text("30 minutes before").tag(30)

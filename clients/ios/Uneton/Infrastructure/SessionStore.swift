@@ -14,6 +14,7 @@ final class SessionStore {
     @ObservationIgnored @Dependency(\.apiClient) private var apiClient
     @ObservationIgnored @Dependency(\.defaultDatabase) private var database
     @ObservationIgnored @Dependency(\.date.now) private var now
+    @ObservationIgnored @Dependency(\.continuousClock) private var clock
     @ObservationIgnored @Dependency(\.uuid) private var uuid
 
     private enum Key {
@@ -220,7 +221,8 @@ final class SessionStore {
         }
     }
 
-    func startSleep(familyID: Family.ID, childID: Child.ID, childName: String = "Child", startedAt: Date = .now) async {
+    func startSleep(familyID: Family.ID, childID: Child.ID, childName: String = "Child", startedAt: Date? = nil) async {
+        let startedAt = startedAt ?? now
         await perform {
             let sessionID = try await coordinator.startSleep(familyID: familyID, childID: childID, startedAt: startedAt)
             if liveActivitiesEnabled { await liveActivities.start(
@@ -234,7 +236,8 @@ final class SessionStore {
         }
     }
 
-    func endSleep(familyID: Family.ID, sessionID: SleepSession.ID, endedAt: Date = .now) async {
+    func endSleep(familyID: Family.ID, sessionID: SleepSession.ID, endedAt: Date? = nil) async {
+        let endedAt = endedAt ?? now
         await perform {
             try await coordinator.endSleep(familyID: familyID, sessionID: sessionID, endedAt: endedAt)
             await liveActivities.end(sessionID: sessionID, endedAt: endedAt)
@@ -336,7 +339,7 @@ final class SessionStore {
             } catch is CancellationError {
                 return
             } catch {
-                try? await Task.sleep(for: .seconds(retryDelay))
+                try? await clock.sleep(for: .seconds(retryDelay))
                 retryDelay = min(retryDelay * 2, 30)
             }
         }

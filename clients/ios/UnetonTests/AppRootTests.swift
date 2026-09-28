@@ -68,7 +68,7 @@ struct AppRootTests {
     @Test func `invalid sleep interval never enters the command queue`() async {
         let familyID = Family.ID(uuidString: "00000000-0000-4000-8000-000000000004")!
         let childID = Child.ID(uuidString: "00000000-0000-4000-8000-000000000005")!
-        var state = SleepEntry.State(familyID: familyID, childID: childID, childName: "Child")
+        var state = SleepEntry.State(familyID: familyID, childID: childID, childName: "Child", now: Date(timeIntervalSince1970: 2_000))
         state.usesCustomStart = true
         state.hasEnd = true
         state.startedAt = Date(timeIntervalSince1970: 1_000)
@@ -76,8 +76,35 @@ struct AppRootTests {
         let store = TestStore(initialState: state) { SleepEntry() }
 
         #expect(store.validationError == "End time must be after start time.")
-        store.send(.saveButtonTapped)
+        store.send(.saveButtonTapped) {
+            $0.errorMessage = "End time must be after start time."
+        }
         #expect(!store.save.isRunning)
+        await store.dismount()
+    }
+
+    @Test func `starting now uses the injected time at submission`() async {
+        let openedAt = Date(timeIntervalSince1970: 1_000)
+        let submittedAt = Date(timeIntervalSince1970: 1_060)
+        let familyID = Family.ID(uuidString: "00000000-0000-4000-8000-000000000006")!
+        let childID = Child.ID(uuidString: "00000000-0000-4000-8000-000000000007")!
+        var diary = SessionDiaryClient.unimplemented
+        diary.startSleep = { _, _, _, startedAt in
+            #expect(startedAt == submittedAt)
+            return nil
+        }
+        let store = TestStore(initialState: SleepEntry.State(
+            familyID: familyID, childID: childID, childName: "Child", now: openedAt
+        )) {
+            SleepEntry()
+                .environment(\.sessionDiary, diary)
+                .environment(\.date, .constant(submittedAt))
+        }
+
+        let task = store.send(.saveButtonTapped) {
+            $0.isSaved = true
+        }
+        await task?.value
         await store.dismount()
     }
 

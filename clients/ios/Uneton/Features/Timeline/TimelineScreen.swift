@@ -4,23 +4,19 @@ import UnetonCore
 import SQLiteData
 import SwiftUI
 
-struct TimelineScreen: View {
-    enum Mode: String, CaseIterable, Identifiable {
-        case timeline = "Sleep"
-        case trends = "Insights"
-        case growth = "Growth"
-        case temperature = "Temperature"
-        var id: Self { self }
-
-        var systemImage: String {
-            switch self {
-            case .timeline: "moon.stars.fill"
-            case .trends: "chart.xyaxis.line"
-            case .growth: "ruler.fill"
-            case .temperature: "thermometer.medium"
-            }
+private extension FamilySync.Tab {
+    var systemImage: String {
+        switch self {
+        case .timeline: "moon.stars.fill"
+        case .trends: "chart.xyaxis.line"
+        case .growth: "ruler.fill"
+        case .temperature: "thermometer.medium"
         }
     }
+}
+
+struct TimelineScreen: View {
+    typealias Mode = FamilySync.Tab
 
     @Environment(SessionStore.self) private var session
     @Environment(\.scenePhase) private var scenePhase
@@ -33,14 +29,12 @@ struct TimelineScreen: View {
     let family: Family
     let child: Child
 
-    @State private var mode: Mode
     @Namespace private var navigationNamespace
 
-    init(syncStore: StoreOf<FamilySync>, family: Family, child: Child, initialMode: Mode = .timeline) {
+    init(syncStore: StoreOf<FamilySync>, family: Family, child: Child) {
         self.syncStore = syncStore
         self.family = family
         self.child = child
-        self._mode = State(initialValue: initialMode)
     }
 
     private var conflicts: [SyncConflict] {
@@ -67,7 +61,7 @@ struct TimelineScreen: View {
 
     var body: some View {
         NavigationStack {
-            TabView(selection: $mode) {
+            TabView(selection: $syncStore.selectedTab) {
                 ZStack {
                     SleepBackground()
                     SleepTimeline(
@@ -122,14 +116,14 @@ struct TimelineScreen: View {
 
                 ZStack {
                     SleepBackground()
-                    TrendsView(sessions: sessions)
+                    TrendsView(sessions: sessions, range: $syncStore.insightsRangeDays)
                 }
                 .tag(Mode.trends)
                 .tabItem {
                     Label(Mode.trends.rawValue, systemImage: Mode.trends.systemImage)
                 }
             }
-            .tabViewBottomAccessory(isEnabled: mode == .timeline) {
+            .tabViewBottomAccessory(isEnabled: syncStore.selectedTab == .timeline) {
                 HStack {
                     Spacer(minLength: 44)
                     bottomControl
@@ -512,15 +506,11 @@ private struct GrowthCard: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Reference curves")
                         .font(.headline)
-                    Picker("Reference curves", selection: Binding(
-                        get: { child.growthReference },
-                        set: onReferenceChanged
-                    )) {
-                        Text("Off").tag("none")
-                        Text("Girl").tag("girl")
-                        Text("Boy").tag("boy")
+                    HStack(spacing: 8) {
+                        referenceButton("Off", value: "none")
+                        referenceButton("Girl", value: "girl")
+                        referenceButton("Boy", value: "boy")
                     }
-                    .pickerStyle(.segmented)
                     Text("The selected Finnish reference is a visual guide only, not a medical assessment.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -601,6 +591,14 @@ private struct GrowthCard: View {
         .compactMap { $0 }
         .joined(separator: " · ")
     }
+
+    private func referenceButton(_ title: String, value: String) -> some View {
+        Button(title) { onReferenceChanged(value) }
+            .buttonStyle(.bordered)
+            .tint(child.growthReference == value ? Color.sleepIndigo : .secondary)
+            .frame(maxWidth: .infinity)
+            .accessibilityAddTraits(child.growthReference == value ? .isSelected : [])
+    }
 }
 
 private struct GrowthReferenceCharts: View {
@@ -630,12 +628,7 @@ private struct GrowthReferenceCharts: View {
 }
 
 private struct GrowthReferenceChart: View {
-    private struct MeasurementPoint: Identifiable {
-        let id: GrowthMeasurement.ID
-        let ageMonths: Double
-        let value: Double
-    }
-
+    @Environment(\.calendar) private var calendar
     let child: Child
     let measurements: [GrowthMeasurement]
     let points: [GrowthReferencePoint]
@@ -644,43 +637,10 @@ private struct GrowthReferenceChart: View {
     private var isHeight: Bool { metric == "height" }
     private var title: String { isHeight ? "Height for age" : "Weight for age" }
     private var unit: String { isHeight ? "cm" : "kg" }
-    private var curvePoints: [GrowthReferencePoint] { points.filter { $0.metric == metric } }
+    private var chartData: GrowthChartData {
+        GrowthChartData(child: child, measurements: measurements, points: points, metric: metric, calendar: calendar)
+    }
     private var standardDeviations: [Int] { [-2, -1, 0, 1, 2] }
-
-    private var measurementPoints: [MeasurementPoint] {
-        let calendar = Calendar.current
-        return measurements.compactMap { measurement in
-            guard let raw = isHeight ? measurement.heightMillimeters : measurement.weightGrams else { return nil }
-            let months = max(0, calendar.dateComponents([.month], from: child.birthDate, to: measurement.measuredAt).month ?? 0)
-            return MeasurementPoint(
-                id: measurement.id,
-                ageMonths: Double(months),
-                value: isHeight ? Double(raw) / 10 : Double(raw) / 1_000
-            )
-        }
-        .sorted { $0.ageMonths < $1.ageMonths }
-    }
-
-    private var yDomain: ClosedRange<Double> {
-        let curveValues = curvePoints.map(displayValue)
-        let values = curveValues + measurementPoints.map(\.value)
-        guard let minimum = values.min(), let maximum = values.max() else { return 0...1 }
-        let padding = isHeight ? 2.5 : 0.75
-        let step = isHeight ? 5.0 : 1.0
-        let lower = floor((minimum - padding) / step) * step
-        let upper = ceil((maximum + padding) / step) * step
-        return lower...max(upper, lower + step)
-    }
-
-    private func points(for standardDeviation: Int) -> [GrowthReferencePoint] {
-        curvePoints
-            .filter { $0.sd == standardDeviation }
-            .sorted { $0.ageMonths < $1.ageMonths }
-    }
-
-    private func displayValue(_ point: GrowthReferencePoint) -> Double {
-        isHeight ? Double(point.value) / 10 : Double(point.value) / 1_000
-    }
 
     private func curveColor(for standardDeviation: Int) -> Color {
         standardDeviation == 0
@@ -705,16 +665,16 @@ private struct GrowthReferenceChart: View {
                     .padding(.vertical, 4)
                     .background(Color.sleepMoonlight.opacity(0.16), in: .capsule)
             }
-            if curvePoints.isEmpty {
+            if chartData.curves.isEmpty {
                 ContentUnavailableView("Reference is loading", systemImage: "arrow.triangle.2.circlepath")
                     .frame(height: 170)
             } else {
                 Chart {
                     ForEach(standardDeviations, id: \.self) { standardDeviation in
-                        ForEach(points(for: standardDeviation)) { point in
+                        ForEach(chartData.points(for: standardDeviation)) { point in
                             LineMark(
                                 x: .value("Age", point.ageMonths),
-                                y: .value(unit, displayValue(point))
+                                y: .value(unit, chartData.displayValue(point))
                             )
                             .foregroundStyle(by: .value("Series", curveLabel(for: standardDeviation)))
                             .lineStyle(
@@ -726,7 +686,7 @@ private struct GrowthReferenceChart: View {
                             .interpolationMethod(.catmullRom)
                         }
                     }
-                    ForEach(measurementPoints) { measurement in
+                    ForEach(chartData.measurements) { measurement in
                         LineMark(
                             x: .value("Age", measurement.ageMonths),
                             y: .value(unit, measurement.value)
@@ -741,7 +701,7 @@ private struct GrowthReferenceChart: View {
                 .chartXAxisLabel("Age (months)")
                 .chartYAxisLabel(isHeight ? "Height (cm)" : "Weight (kg)")
                 .chartXScale(domain: 0...24)
-                .chartYScale(domain: yDomain)
+                .chartYScale(domain: chartData.yDomain)
                 .chartForegroundStyleScale([
                     curveLabel(for: -2): curveColor(for: -2),
                     curveLabel(for: -1): curveColor(for: -1),
@@ -795,102 +755,6 @@ private struct GrowthReferenceChart: View {
         }
     }
 
-}
-
-private struct TemperatureEntrySheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Bindable var store: StoreOf<TemperatureEntry>
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Reading") {
-                    DatePicker("Measured", selection: $store.measuredAt, in: ...Date.now)
-                    TextField("Temperature (°C)", text: $store.temperature)
-                        .keyboardType(.decimalPad)
-                }
-                Section("Note") {
-                    TextField("Optional note", text: $store.note, axis: .vertical).lineLimit(2...4)
-                }
-                Section {
-                    Text("This is a shared observation, not a medical assessment. Contact a healthcare professional if you have concerns.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
-                if let error = store.errorMessage { Section { Text(error).foregroundStyle(.red) } }
-                if store.readingID != nil {
-                    Section {
-                        Button("Delete reading", role: .destructive) { store.send(.deleteButtonTapped) }
-                            .disabled(store.request.isRunning)
-                    }
-                }
-            }
-            .navigationTitle(store.readingID == nil ? "Add temperature" : "Edit temperature")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { store.send(.saveButtonTapped) }
-                        .disabled(store.centiCelsius == nil || store.request.isRunning)
-                }
-            }
-        }
-        .onChange(of: store.isSaved) { _, isSaved in if isSaved { dismiss() } }
-    }
-}
-
-private struct GrowthEntrySheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Bindable var store: StoreOf<GrowthEntry>
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Measurement") {
-                    DatePicker("Date", selection: $store.measuredAt, displayedComponents: .date)
-                    TextField("Weight (kg)", text: $store.weight)
-                        .keyboardType(.decimalPad)
-                    TextField("Height (cm)", text: $store.height)
-                        .keyboardType(.decimalPad)
-                }
-                Section("Note") {
-                    TextField("Optional note", text: $store.note, axis: .vertical)
-                        .lineLimit(2...4)
-                }
-                Section {
-                    Text("Values are saved in a shared family record. They are not a medical assessment; contact your neuvola or healthcare professional with concerns.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-                if let error = store.errorMessage {
-                    Section { Text(error).foregroundStyle(.red) }
-                }
-                if store.measurementID != nil {
-                    Section {
-                        Button("Delete measurement", role: .destructive) {
-                            store.send(.deleteButtonTapped)
-                        }
-                        .disabled(store.request.isRunning)
-                    }
-                }
-            }
-            .navigationTitle(store.measurementID == nil ? "Add measurement" : "Edit measurement")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        store.send(.saveButtonTapped)
-                    }
-                    .disabled((store.grams == nil && store.millimeters == nil) || store.request.isRunning)
-                }
-            }
-        }
-        .onChange(of: store.isSaved) { _, isSaved in
-            if isSaved { dismiss() }
-        }
-    }
 }
 
 private struct ContinuousSleepTimeline: View {

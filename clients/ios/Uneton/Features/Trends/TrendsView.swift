@@ -6,21 +6,9 @@ struct TrendsView: View {
     @Environment(\.calendar) private var calendar
     @Environment(\.unetonDisplayNow) private var displayNowOverride
     let sessions: [SleepSession]
-    @State private var range = 7
+    @Binding var range: Int
     private var now: Date { displayNowOverride ?? .now }
-
-    private var daily: [DailySleep] {
-        return (0..<range).reversed().compactMap { offset in
-            guard let day = calendar.date(byAdding: .day, value: -offset, to: calendar.startOfDay(for: now)),
-                  let end = calendar.date(byAdding: .day, value: 1, to: day)
-            else { return nil }
-            let matching = sessions.filter { $0.startedAt < end && ($0.endedAt ?? now) > day }
-            let seconds = matching.reduce(0.0) { result, session in
-                result + max(0, min(end, session.endedAt ?? now).timeIntervalSince(max(day, session.startedAt)))
-            }
-            return DailySleep(day: day, hours: seconds / 3_600, naps: matching.count)
-        }
-    }
+    private var summary: SleepTrends { SleepTrends(sessions: sessions, rangeDays: range, now: now, calendar: calendar) }
 
     var body: some View {
         ScrollView {
@@ -38,7 +26,7 @@ struct TrendsView: View {
                 HStack(spacing: 12) {
                     metricCard(
                         title: "Sleep sessions",
-                        value: "\(daily.reduce(0) { $0 + $1.naps })",
+                        value: "\(summary.sessionCount)",
                         detail: "in this period",
                         icon: "moon.zzz.fill",
                         color: .sleepIndigo
@@ -53,9 +41,9 @@ struct TrendsView: View {
                 }
 
                 chartCard("Sleep by day", detail: "hours") {
-                    Chart(daily) { value in
+                    Chart(summary.days) { value in
                         BarMark(
-                            x: .value("Day", value.day, unit: .day),
+                            x: .value("Day", value.date, unit: .day),
                             y: .value("Hours", value.hours)
                         )
                         .foregroundStyle(
@@ -81,10 +69,10 @@ struct TrendsView: View {
                 }
 
                 chartCard("Sleep rhythm", detail: "time of day") {
-                    Chart(sessionsInRange) { session in
+                    Chart(summary.completedSessions) { session in
                         BarMark(
-                            xStart: .value("Start", minuteOfDay(session.startedAt)),
-                            xEnd: .value("End", minuteOfDay(session.endedAt ?? now)),
+                            xStart: .value("Start", SleepTrends.minuteOfDay(session.startedAt, calendar: calendar)),
+                            xEnd: .value("End", SleepTrends.minuteOfDay(session.endedAt ?? now, calendar: calendar)),
                             y: .value("Day", calendar.startOfDay(for: session.startedAt), unit: .day)
                         )
                         .foregroundStyle(
@@ -110,11 +98,11 @@ struct TrendsView: View {
                 }
 
                 chartCard("Sessions per day", detail: "rhythm") {
-                    Chart(daily) { value in
-                        LineMark(x: .value("Day", value.day), y: .value("Naps", value.naps))
+                    Chart(summary.days) { value in
+                        LineMark(x: .value("Day", value.date), y: .value("Naps", value.sessions))
                             .foregroundStyle(Color.sleepDawn)
                             .lineStyle(.init(lineWidth: 3, lineCap: .round, lineJoin: .round))
-                        PointMark(x: .value("Day", value.day), y: .value("Naps", value.naps))
+                        PointMark(x: .value("Day", value.date), y: .value("Naps", value.sessions))
                             .foregroundStyle(Color.sleepDawn)
                     }
                 }
@@ -146,9 +134,9 @@ struct TrendsView: View {
                     .background(.white.opacity(0.12), in: .circle)
             }
 
-            Chart(daily) { value in
+            Chart(summary.days) { value in
                 AreaMark(
-                    x: .value("Day", value.day),
+                    x: .value("Day", value.date),
                     y: .value("Hours", value.hours)
                 )
                 .foregroundStyle(
@@ -159,7 +147,7 @@ struct TrendsView: View {
                     )
                 )
                 LineMark(
-                    x: .value("Day", value.day),
+                    x: .value("Day", value.date),
                     y: .value("Hours", value.hours)
                 )
                 .foregroundStyle(.white)
@@ -187,23 +175,14 @@ struct TrendsView: View {
     }
 
     private var totalDuration: String {
-        Duration.seconds(daily.reduce(0) { $0 + $1.hours * 3_600 })
+        Duration.seconds(summary.totalSeconds)
             .formatted(.units(allowed: [.hours, .minutes], width: .abbreviated))
     }
 
     private var averageDuration: String {
-        guard !daily.isEmpty else { return "—" }
-        let seconds = daily.reduce(0) { $0 + $1.hours * 3_600 } / Double(daily.count)
-        return Duration.seconds(seconds).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated))
-    }
-
-    private var sessionsInRange: [SleepSession] {
-        let cutoff = calendar.date(byAdding: .day, value: -range, to: now) ?? .distantPast
-        return sessions.filter { $0.startedAt >= cutoff && $0.endedAt != nil }
-    }
-
-    private func minuteOfDay(_ date: Date) -> Int {
-        calendar.component(.hour, from: date) * 60 + calendar.component(.minute, from: date)
+        guard !summary.days.isEmpty else { return "—" }
+        return Duration.seconds(summary.averageSeconds)
+            .formatted(.units(allowed: [.hours, .minutes], width: .abbreviated))
     }
 
     private func metricCard(title: String, value: String, detail: String, icon: String, color: Color) -> some View {
@@ -236,13 +215,6 @@ struct TrendsView: View {
         .padding(20)
         .glassEffect(.regular.tint(Color.sleepLavender.opacity(0.09)), in: .rect(cornerRadius: 28))
     }
-}
-
-private struct DailySleep: Identifiable {
-    var id: Date { day }
-    let day: Date
-    let hours: Double
-    let naps: Int
 }
 
 #if DEBUG

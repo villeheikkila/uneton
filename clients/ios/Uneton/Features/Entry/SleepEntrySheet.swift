@@ -39,7 +39,7 @@ struct SleepEntrySheet: View {
                     Button(store.sessionID == nil ? (store.hasEnd ? "Add" : "Start") : "Save") {
                         store.send(.saveButtonTapped)
                     }
-                    .disabled(store.validationError != nil || store.save.isRunning)
+                    .disabled(store.save.isRunning)
                 }
             }
         }

@@ -1,7 +1,6 @@
 import ComposableArchitecture2
 import Foundation
 import UnetonCore
-import UnetonCore
 
 @Feature
 struct TemperatureEntry {
@@ -17,11 +16,11 @@ struct TemperatureEntry {
         @StoreTaskID var request
 
         init(familyID: Family.ID, childID: Child.ID, readingID: TemperatureReading.ID? = nil,
-             measuredAt: Date = .now, centiCelsius: Int? = nil, note: String = "") {
+             measuredAt: Date? = nil, centiCelsius: Int? = nil, note: String = "", now: Date) {
             self.familyID = familyID
             self.childID = childID
             self.readingID = readingID
-            self.measuredAt = measuredAt
+            self.measuredAt = measuredAt ?? now
             self.temperature = centiCelsius.map { String(format: "%.2f", Double($0) / 100) } ?? ""
             self.note = note
         }

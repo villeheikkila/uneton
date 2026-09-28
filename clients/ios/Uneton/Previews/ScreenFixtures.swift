@@ -32,7 +32,7 @@ enum ScreenFixtures {
 
     static let now = ModelFixtures.now
     private static let databasePrepared: Void = {
-        try! prepareDependencies { try $0.bootstrapDatabase() }
+        try! prepareDependencies { try $0.bootstrapDatabase(inMemory: true) }
     }()
 
     private static var family: Family { ModelFixtures.family() }
@@ -84,8 +84,9 @@ enum ScreenFixtures {
     }
 
     static func makeView(_ scenario: Scenario) -> AnyView {
-        let session = SessionStore()
-        return AnyView(screen(scenario)
+        let session = SessionStore(demo: true)
+        let demo = DemoRuntime(session: session)
+        return AnyView(screen(scenario, demo: demo)
             .environment(session)
             .environment(\.locale, Locale(identifier: "en_US"))
             .environment(\.timeZone, TimeZone(secondsFromGMT: 0)!)
@@ -105,13 +106,15 @@ enum ScreenFixtures {
         return calendar
     }
 
-    private static func screen(_ scenario: Scenario) -> AnyView {
+    private static func screen(_ scenario: Scenario, demo: DemoRuntime) -> AnyView {
         let family = Self.family
         let child = Self.child
         let growth = Self.growth
         switch scenario {
         case .onboarding:
-            let store = Store(initialState: Onboarding.State()) { Onboarding() }
+            let store = Store(initialState: Onboarding.State()) {
+                Onboarding().environment(\.sessionAuth, demo.auth)
+            }
             return AnyView(OnboardingView(store: store, prepareAppleAuthorization: { _ in }))
         case .familySetup, .invitationScannerSheet:
             var state = FamilySetup.State()
@@ -119,19 +122,21 @@ enum ScreenFixtures {
             state.childName = child.nickname
             state.growthReference = "girl"
             state.isScanning = scenario == .invitationScannerSheet
-            let store = Store(initialState: state) { FamilySetup() }
+            let store = Store(initialState: state) {
+                FamilySetup().environment(\.sessionFamily, demo.family)
+            }
             return AnyView(FamilySetupView(store: store))
         default:
             var state = FamilySync.State(familyID: family.id)
             switch scenario {
             case .sleepEntrySheet:
-                state.entry = SleepEntry.State(familyID: family.id, childID: child.id, childName: child.nickname)
+                state.entry = SleepEntry.State(familyID: family.id, childID: child.id, childName: child.nickname, now: now)
             case .growthEntrySheet:
                 state.growthEntry = GrowthEntry.State(
                     familyID: family.id, childID: child.id,
                     measurementID: growth.id, measuredAt: growth.measuredAt,
                     weightGrams: growth.weightGrams, heightMillimeters: growth.heightMillimeters,
-                    note: growth.note
+                    note: growth.note, now: now
                 )
             case .familySharingSheet:
                 state.sharing = FamilySharing.State(
@@ -146,22 +151,21 @@ enum ScreenFixtures {
             var syncClient = SessionSyncClient.unimplemented
             syncClient.observe = { _ in }
             syncClient.refresh = { _ in }
-            var sharingClient = SessionSharingClient.unimplemented
+            var sharingClient = demo.sharing
             sharingClient.createInvite = { _ in (URL(string: "uneton://invite/snapshot-code"), nil) }
-            let store = Store(initialState: state) {
-                FamilySync()
-                    .environment(\.sessionSync, syncClient)
-                    .environment(\.sessionSharing, sharingClient)
-            }
-            let mode: TimelineScreen.Mode = switch scenario {
+            state.selectedTab = switch scenario {
             case .growthTab, .growthEntrySheet: .growth
             case .temperatureTab: .temperature
             case .insightsTab: .trends
             default: .timeline
             }
-            return AnyView(TimelineScreen(
-                syncStore: store, family: family, child: child, initialMode: mode
-            ))
+            let store = Store(initialState: state) {
+                FamilySync()
+                    .environment(\.sessionSync, syncClient)
+                    .environment(\.sessionSharing, sharingClient)
+                    .environment(\.sessionDiary, demo.diary)
+            }
+            return AnyView(TimelineScreen(syncStore: store, family: family, child: child))
         }
     }
 }
