@@ -28,14 +28,16 @@ struct OnboardingView: View {
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
-                SignInWithAppleButton(.continue) { request in
-                    prepareAppleAuthorization(request)
-                } onCompletion: { result in
-                    store.send(.appleAuthorizationCompleted(result))
+                if !AppMode.isDemo {
+                    SignInWithAppleButton(.continue) { request in
+                        prepareAppleAuthorization(request)
+                    } onCompletion: { result in
+                        store.send(.appleAuthorizationCompleted(result))
+                    }
+                    .signInWithAppleButtonStyle(.black)
+                    .frame(height: 52)
+                    .disabled(store.signIn.isRunning)
                 }
-                .signInWithAppleButtonStyle(.black)
-                .frame(height: 52)
-                .disabled(store.signIn.isRunning)
 
                 HStack(spacing: 20) {
                     Link("Privacy Policy", destination: LegalLinks.privacy)
@@ -44,9 +46,11 @@ struct OnboardingView: View {
                 .font(.footnote)
 
                 #if DEBUG
-                TextField("Local caregiver", text: $store.caregiverName)
-                    .textFieldStyle(.roundedBorder)
-                Button("Use local server") {
+                if !AppMode.isDemo {
+                    TextField("Local caregiver", text: $store.caregiverName)
+                        .textFieldStyle(.roundedBorder)
+                }
+                Button(AppMode.isDemo ? "Explore demo" : "Use local server") {
                     store.send(.developmentSignInButtonTapped)
                 }
                 .buttonStyle(.glass)

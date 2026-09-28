@@ -340,12 +340,14 @@ nonisolated func uuid() -> UUID {
 }
 
 extension DependencyValues {
-  public mutating func bootstrapDatabase() throws {
+  public mutating func bootstrapDatabase(inMemory: Bool = false) throws {
     var configuration = Configuration()
     configuration.prepareDatabase { database in
       database.add(function: $uuid)
     }
-    let database = try SQLiteData.defaultDatabase(configuration: configuration)
+    let database: any DatabaseWriter = inMemory
+      ? try DatabaseQueue(configuration: configuration)
+      : try SQLiteData.defaultDatabase(configuration: configuration)
     var migrator = DatabaseMigrator()
     #if DEBUG
       migrator.eraseDatabaseOnSchemaChange = true

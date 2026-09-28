@@ -1,5 +1,9 @@
 # Uneton system architecture
 
+## Backend-free UI demo (debug builds)
+
+`UNETON_DEMO_MODE=1` selects a separate TCA26 composition root at launch. It boots the same SQLite schema in memory and injects `DemoRuntime` implementations of the authentication, family, diary, sharing, and sync feature environments. Those adapters update only the ephemeral projection for interactive UI development. They create no pending commands, authoritative records, or cursor, and they do not attempt network, Apple credentials, Watch, push, or Live Activity work. The demo is a presentation sandbox; the production composition root continues to inject `SessionStore` adapters and uses `SyncCoordinator` as described below.
+
 This is the canonical overview of how Uneton keeps a shared family diary correct and fresh across iPhone, Apple Watch, widgets, background execution, and the backend. Detailed implementation policies are linked at the end.
 
 ## Architectural priority

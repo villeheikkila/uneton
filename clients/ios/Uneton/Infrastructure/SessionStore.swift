@@ -53,7 +53,16 @@ final class SessionStore {
     @ObservationIgnored private var pushToStartToken: String?
     @ObservationIgnored private var activityTokens: [UUID: String] = [:]
 
-    init() {
+    init(demo: Bool = false) {
+        if demo {
+            let demoDeviceID = UUID()
+            self.deviceID = demoDeviceID
+            self.notificationsEnabled = false
+            self.liveActivitiesEnabled = false
+            self.reminderLeadMinutes = 15
+            self.coordinator = SyncCoordinator(deviceID: demoDeviceID, accessToken: { nil })
+            return
+        }
         let defaults = UserDefaults.standard
         let deviceID: UUID
         if let stored = defaults.string(forKey: Key.deviceID).flatMap(UUID.init(uuidString:)) {
@@ -104,6 +113,12 @@ final class SessionStore {
 
     var accessToken: String? {
         credentials.value(for: Key.accessToken)
+    }
+
+    func demoAuthenticate() { isAuthenticated = true }
+    func demoSignOut() {
+        forecast = nil
+        isAuthenticated = false
     }
 
     func developmentAuthenticate(name: String) async {
