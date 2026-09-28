@@ -1065,3 +1065,9 @@ struct SleepSectionTitle: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Sleep tab") { ScreenFixtures.preview(.sleepTab) }
+#Preview("Growth tab") { ScreenFixtures.preview(.growthTab) }
+#Preview("Growth entry sheet") { ScreenFixtures.preview(.growthEntrySheet) }
+#endif

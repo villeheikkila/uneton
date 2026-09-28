@@ -83,6 +83,11 @@ struct FamilySetupView: View {
     }
 }
 
+#if DEBUG
+#Preview("Family setup") { ScreenFixtures.preview(.familySetup) }
+#Preview("Invitation scanner") { ScreenFixtures.preview(.invitationScannerSheet) }
+#endif
+
 private struct QRCodeScanner: UIViewControllerRepresentable {
     let onCode: (String) -> Void
 

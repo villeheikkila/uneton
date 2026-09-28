@@ -66,3 +66,7 @@ struct OnboardingView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Onboarding") { ScreenFixtures.preview(.onboarding) }
+#endif

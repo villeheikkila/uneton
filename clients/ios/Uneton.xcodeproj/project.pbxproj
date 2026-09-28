@@ -58,10 +58,12 @@
 		C5071F7322E5584706D06B10 /* UnetonWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBA9C6F0A3F7C533AFAA3988 /* UnetonWidgets.swift */; };
 		D507085F179846B6F3B6E444 /* FamilySharing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DF29C953864C252FCF044CB /* FamilySharing.swift */; };
 		D974E132D0CF32C73E16BA5D /* Onboarding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B3D56BB737E543E8EF49E5A /* Onboarding.swift */; };
+		E1018104A4399F3B84036C3E /* capture-_.invitationScannerSheet.png in Resources */ = {isa = PBXBuildFile; fileRef = FA2052494B4601933892ADB7 /* capture-_.invitationScannerSheet.png */; };
 		EC01897EBECD1DE0DD1AE199 /* AppleCredentialMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE597D474D61696F33CA8BF /* AppleCredentialMonitor.swift */; };
 		EEE0A15756165F4B81E941F0 /* SleepEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F4A75ED9D0A2A724B618E2 /* SleepEntry.swift */; };
 		F0E5C061F7BB4C7A4AD21404 /* UnetonCore in Frameworks */ = {isa = PBXBuildFile; productRef = DA4F68CF578D30CB531BB6B4 /* UnetonCore */; };
 		F20340D32620C4663C7D752B /* capture-_.sleepTab.png in Resources */ = {isa = PBXBuildFile; fileRef = 98FEF8EDC60C3CF7EB46791A /* capture-_.sleepTab.png */; };
+		F8EB13CC2F2F014D1E8710AE /* ScreenFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4DB8CAA3A832C30BCE05821 /* ScreenFixtures.swift */; };
 		FC6F5B262364DC730F996A0A /* capture-_.growthTab.png in Resources */ = {isa = PBXBuildFile; fileRef = D58380A9DCEFB4EB3EDA19ED /* capture-_.growthTab.png */; };
 /* End PBXBuildFile section */
 
@@ -164,11 +166,13 @@
 		E06D055826E7198BFF94D002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E1E26C7A93F782F73A9718C3 /* Uneton.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Uneton.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E2F4A75ED9D0A2A724B618E2 /* SleepEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepEntry.swift; sourceTree = "<group>"; };
+		E4DB8CAA3A832C30BCE05821 /* ScreenFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenFixtures.swift; sourceTree = "<group>"; };
 		E559806C9EB49DB6CD0CB7B2 /* UnetonWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = UnetonWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		EB9FA0F058D5FF590B3D101D /* FamilySetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilySetupView.swift; sourceTree = "<group>"; };
 		EBEE8C6312B8DF21A8E37969 /* capture-_.familySharingSheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_.familySharingSheet.png"; sourceTree = "<group>"; };
 		F28A7ECBEA73DC7BD3253911 /* FamilySetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilySetup.swift; sourceTree = "<group>"; };
 		F3F15C777BE34447380DD7B9 /* FamilySharingSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilySharingSheet.swift; sourceTree = "<group>"; };
+		FA2052494B4601933892ADB7 /* capture-_.invitationScannerSheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_.invitationScannerSheet.png"; sourceTree = "<group>"; };
 		FE4BF9CB614BD8383EA46E3C /* AppRoot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRoot.swift; sourceTree = "<group>"; };
 		FEF41DE4E9DE152F3E348674 /* SessionDiaryClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDiaryClient.swift; sourceTree = "<group>"; };
 		FFCE5078F862205198575D9A /* LegalLinks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalLinks.swift; sourceTree = "<group>"; };
@@ -214,6 +218,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		059C9551455BFF536951CE48 /* Previews */ = {
+			isa = PBXGroup;
+			children = (
+				E4DB8CAA3A832C30BCE05821 /* ScreenFixtures.swift */,
+			);
+			path = Previews;
+			sourceTree = "<group>";
+		};
 		177076334083D6EDC6C555A6 /* UnetonWidgets */ = {
 			isa = PBXGroup;
 			children = (
@@ -304,6 +316,7 @@
 				D31FE1C3ACB3CB882029856B /* UnetonApp.swift */,
 				CBBD18411B96398030F20EFA /* Features */,
 				2015CBE2F3D1B55447167A0E /* Infrastructure */,
+				059C9551455BFF536951CE48 /* Previews */,
 			);
 			path = Uneton;
 			sourceTree = "<group>";
@@ -381,6 +394,7 @@
 				4FC02C1D697CDD4E05DFC2CC /* capture-_.growthEntrySheet.png */,
 				D58380A9DCEFB4EB3EDA19ED /* capture-_.growthTab.png */,
 				8D288C99648B3BB2FA368168 /* capture-_.insightsTab.png */,
+				FA2052494B4601933892ADB7 /* capture-_.invitationScannerSheet.png */,
 				B36C2E2107DD081F376A34E1 /* capture-_.onboarding.png */,
 				3CC64DF0D2640D8A806E4A61 /* capture-_.sleepEntrySheet.png */,
 				98FEF8EDC60C3CF7EB46791A /* capture-_.sleepTab.png */,
@@ -539,6 +553,7 @@
 				B8DBF9D70A6713E52C0B647A /* capture-_.growthEntrySheet.png in Resources */,
 				FC6F5B262364DC730F996A0A /* capture-_.growthTab.png in Resources */,
 				3F35AE246D64A600D912FA43 /* capture-_.insightsTab.png in Resources */,
+				E1018104A4399F3B84036C3E /* capture-_.invitationScannerSheet.png in Resources */,
 				52DC98A03CFA511F2903B30E /* capture-_.onboarding.png in Resources */,
 				943A7AE56109F41DE68AE53F /* capture-_.sleepEntrySheet.png in Resources */,
 				F20340D32620C4663C7D752B /* capture-_.sleepTab.png in Resources */,
@@ -589,6 +604,7 @@
 				316D502577DE587D9F1B1F0D /* PhoneWatchBridge.swift in Sources */,
 				A7725E23F0EADF4E64BA85E6 /* PushRegistrationController.swift in Sources */,
 				0BA2287994E4486BC0EA1A4D /* ReminderController.swift in Sources */,
+				F8EB13CC2F2F014D1E8710AE /* ScreenFixtures.swift in Sources */,
 				32E347573C4C49842ABB92CC /* SessionAuthClient.swift in Sources */,
 				AA9927ED41D014DDAE28B040 /* SessionDiaryClient.swift in Sources */,
 				AD64E2DEAC71198676913138 /* SessionFamilyClient.swift in Sources */,

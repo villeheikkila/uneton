@@ -48,3 +48,7 @@ struct SleepEntrySheet: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Sleep entry sheet") { ScreenFixtures.preview(.sleepEntrySheet) }
+#endif

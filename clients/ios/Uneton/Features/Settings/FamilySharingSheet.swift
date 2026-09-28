@@ -106,6 +106,10 @@ struct FamilySharingSheet: View {
     }
 }
 
+#if DEBUG
+#Preview("Family sharing sheet") { ScreenFixtures.preview(.familySharingSheet) }
+#endif
+
 private struct QRCodeImage: View {
     let value: String
     private let context = CIContext()

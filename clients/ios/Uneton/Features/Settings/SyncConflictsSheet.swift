@@ -84,6 +84,10 @@ struct SyncConflictsSheet: View {
     }
 }
 
+#if DEBUG
+#Preview("Sync conflicts sheet") { ScreenFixtures.preview(.syncConflictsSheet) }
+#endif
+
 private struct ConflictVersionRow: View {
     let title: String
     let startedAt: Date

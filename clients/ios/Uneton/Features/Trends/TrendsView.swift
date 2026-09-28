@@ -244,3 +244,7 @@ private struct DailySleep: Identifiable {
     let hours: Double
     let naps: Int
 }
+
+#if DEBUG
+#Preview("Insights tab") { ScreenFixtures.preview(.insightsTab) }
+#endif
