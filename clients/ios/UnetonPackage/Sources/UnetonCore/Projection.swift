@@ -22,12 +22,18 @@ enum Projection {
       try applyAuthoritative(record, familyID: familyID, database: database)
     }
     for record in records where record.operation != "delete" && record.entityType == "sleepSession" {
+      let payload = try JSONDecoder.uneton.decode(ServerSleepPayload.self, from: record.payloadJSON)
+      guard try Child.find(payload.childID).fetchOne(database) != nil else { continue }
       try applyAuthoritative(record, familyID: familyID, database: database)
     }
     for record in records where record.operation != "delete" && record.entityType == "growthMeasurement" {
+      let payload = try JSONDecoder.uneton.decode(ServerGrowthMeasurementPayload.self, from: record.payloadJSON)
+      guard try Child.find(payload.childID).fetchOne(database) != nil else { continue }
       try applyAuthoritative(record, familyID: familyID, database: database)
     }
     for record in records where record.operation != "delete" && record.entityType == "temperatureReading" {
+      let payload = try JSONDecoder.uneton.decode(ServerTemperatureReadingPayload.self, from: record.payloadJSON)
+      guard try Child.find(payload.childID).fetchOne(database) != nil else { continue }
       try applyAuthoritative(record, familyID: familyID, database: database)
     }
     for command in commands {
@@ -43,6 +49,7 @@ enum Projection {
     switch record.entityType {
     case "child":
       let payload = try JSONDecoder.uneton.decode(ServerChildPayload.self, from: record.payloadJSON)
+      guard payload.deletedAt == nil else { return }
       guard let birthDate = SyncPayload.birthDateFormatter.date(from: payload.birthDate) else {
         throw SyncError.invalidServerPayload
       }
@@ -132,8 +139,12 @@ enum Projection {
           updatedAt: command.createdAt
         )
       }.execute(database)
+    case "deleteChild":
+      let payload = try JSONDecoder.uneton.decode(DeleteCommandPayload<Child.ID>.self, from: command.payloadJSON)
+      try Child.find(payload.id).delete().execute(database)
     case "startSleep", "upsertSleep", "endSleep":
       let payload = try JSONDecoder.uneton.decode(SleepCommandPayload.self, from: command.payloadJSON)
+      guard try Child.find(payload.childID).fetchOne(database) != nil else { return }
       var session = try SleepSession.find(payload.id).fetchOne(database) ?? {
         return SleepSession(
           id: payload.id,
@@ -162,6 +173,7 @@ enum Projection {
       try SleepSession.find(payload.id).delete().execute(database)
     case "upsertGrowthMeasurement":
       let payload = try JSONDecoder.uneton.decode(GrowthMeasurementCommandPayload.self, from: command.payloadJSON)
+      guard try Child.find(payload.childID).fetchOne(database) != nil else { return }
       let current = try GrowthMeasurement.find(payload.id).fetchOne(database)
       try GrowthMeasurement.upsert {
         GrowthMeasurement(
@@ -177,6 +189,7 @@ enum Projection {
       try GrowthMeasurement.find(payload.id).delete().execute(database)
     case "upsertTemperatureReading":
       let payload = try JSONDecoder.uneton.decode(TemperatureReadingCommandPayload.self, from: command.payloadJSON)
+      guard try Child.find(payload.childID).fetchOne(database) != nil else { return }
       let current = try TemperatureReading.find(payload.id).fetchOne(database)
       try TemperatureReading.upsert {
         TemperatureReading(id: payload.id, familyID: command.familyID, childID: payload.childID,

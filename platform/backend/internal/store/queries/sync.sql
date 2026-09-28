@@ -49,10 +49,14 @@ update children set
   updated_at=sqlc.arg(updated_at)
 where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
 
+-- name: DeleteChild :execrows
+update children set deleted_at=sqlc.arg(deleted_at), updated_at=sqlc.arg(updated_at), revision=revision+1
+where id=sqlc.arg(id) and family_id=sqlc.arg(family_id) and deleted_at is null;
+
 -- name: ChildRecord :one
 select id, family_id, nickname, birth_date, prediction_mode,
   manual_interval_minutes, quiet_hours_start_minutes,
-  quiet_hours_end_minutes, time_zone, growth_reference, revision, updated_at
+  quiet_hours_end_minutes, time_zone, growth_reference, revision, updated_at, deleted_at
 from children
 where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
 

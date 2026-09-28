@@ -10,6 +10,8 @@ public enum DeviceTag {}
 public typealias DeviceID = Tagged<DeviceTag, UUID>
 public enum EntityTag {}
 public typealias EntityID = Tagged<EntityTag, UUID>
+public enum FamilyInviteTag {}
+public typealias FamilyInviteID = Tagged<FamilyInviteTag, UUID>
 
 @Table
 public struct Family: Identifiable, Codable, Equatable, Sendable {

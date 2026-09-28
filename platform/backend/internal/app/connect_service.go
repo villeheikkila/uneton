@@ -486,6 +486,8 @@ func syncRequestFromProto(request *unetonv1.SyncRequest) (SyncRequest, map[strin
 			command.Kind, payload = "createChild", childPayloadFromProto(item.CreateChild.GetChild())
 		case *unetonv1.Command_UpdateChild:
 			command.Kind, payload = "updateChild", childPayloadFromProto(item.UpdateChild.GetChild())
+		case *unetonv1.Command_DeleteChild:
+			command.Kind, payload = "deleteChild", map[string]string{"id": item.DeleteChild.GetId()}
 		case *unetonv1.Command_StartSleep:
 			command.Kind, payload = "startSleep", sleepPayloadFromProto(item.StartSleep.GetSleep())
 		case *unetonv1.Command_EndSleep:
@@ -661,18 +663,19 @@ func entityFromJSON(entityType string, payload []byte) *unetonv1.Entity {
 }
 
 type childWire struct {
-	ID                     string    `json:"id"`
-	FamilyID               string    `json:"familyID"`
-	Nickname               string    `json:"nickname"`
-	BirthDate              string    `json:"birthDate"`
-	PredictionMode         string    `json:"predictionMode"`
-	ManualIntervalMinutes  *int      `json:"manualIntervalMinutes"`
-	QuietHoursStartMinutes int       `json:"quietHoursStartMinutes"`
-	QuietHoursEndMinutes   int       `json:"quietHoursEndMinutes"`
-	TimeZone               string    `json:"timeZone"`
-	GrowthReference        string    `json:"growthReference"`
-	Revision               int       `json:"revision"`
-	UpdatedAt              time.Time `json:"updatedAt"`
+	ID                     string     `json:"id"`
+	FamilyID               string     `json:"familyID"`
+	Nickname               string     `json:"nickname"`
+	BirthDate              string     `json:"birthDate"`
+	PredictionMode         string     `json:"predictionMode"`
+	ManualIntervalMinutes  *int       `json:"manualIntervalMinutes"`
+	QuietHoursStartMinutes int        `json:"quietHoursStartMinutes"`
+	QuietHoursEndMinutes   int        `json:"quietHoursEndMinutes"`
+	TimeZone               string     `json:"timeZone"`
+	GrowthReference        string     `json:"growthReference"`
+	Revision               int        `json:"revision"`
+	UpdatedAt              time.Time  `json:"updatedAt"`
+	DeletedAt              *time.Time `json:"deletedAt,omitempty"`
 }
 
 func (value childWire) proto() *unetonv1.Child {
@@ -680,6 +683,9 @@ func (value childWire) proto() *unetonv1.Child {
 	if value.ManualIntervalMinutes != nil {
 		item := int32(*value.ManualIntervalMinutes)
 		result.ManualIntervalMinutes = &item
+	}
+	if value.DeletedAt != nil {
+		result.DeletedAt = timestamppb.New(*value.DeletedAt)
 	}
 	return result
 }

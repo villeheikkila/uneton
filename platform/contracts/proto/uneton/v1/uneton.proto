@@ -17,6 +17,14 @@ service UnetonService {
   rpc CreateFamily(CreateFamilyRequest) returns (CreateFamilyResponse);
   rpc CreateInvite(CreateInviteRequest) returns (CreateInviteResponse);
   rpc AcceptInvite(AcceptInviteRequest) returns (AcceptInviteResponse);
+  rpc GetFamilyManagement(GetFamilyManagementRequest) returns (GetFamilyManagementResponse);
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse);
+  rpc RenameFamily(RenameFamilyRequest) returns (RenameFamilyResponse);
+  rpc RemoveFamilyMember(RemoveFamilyMemberRequest) returns (RemoveFamilyMemberResponse);
+  rpc LeaveFamily(LeaveFamilyRequest) returns (LeaveFamilyResponse);
+  rpc TransferFamilyOwnership(TransferFamilyOwnershipRequest) returns (TransferFamilyOwnershipResponse);
+  rpc RevokeInvite(RevokeInviteRequest) returns (RevokeInviteResponse);
+  rpc DeleteFamily(DeleteFamilyRequest) returns (DeleteFamilyResponse);
   rpc Sync(SyncRequest) returns (SyncResponse);
   rpc WatchFamily(WatchFamilyRequest) returns (stream WatchFamilyResponse);
 }
@@ -133,6 +141,46 @@ message AcceptInviteResponse {
   string role = 2;
 }
 
+message GetFamilyManagementRequest { string family_id = 1; }
+
+message FamilyMemberInfo {
+  string user_id = 1;
+  string display_name = 2;
+  string role = 3;
+  google.protobuf.Timestamp joined_at = 4;
+}
+
+message FamilyInviteInfo {
+  string id = 1;
+  google.protobuf.Timestamp expires_at = 2;
+  google.protobuf.Timestamp created_at = 3;
+}
+
+message GetFamilyManagementResponse {
+  string family_id = 1;
+  string family_name = 2;
+  string my_user_id = 3;
+  string my_display_name = 4;
+  string my_role = 5;
+  repeated FamilyMemberInfo members = 6;
+  repeated FamilyInviteInfo pending_invites = 7;
+}
+
+message UpdateProfileRequest { string display_name = 1; }
+message UpdateProfileResponse { string display_name = 1; }
+message RenameFamilyRequest { string family_id = 1; string name = 2; }
+message RenameFamilyResponse { string name = 1; }
+message RemoveFamilyMemberRequest { string family_id = 1; string user_id = 2; }
+message RemoveFamilyMemberResponse {}
+message LeaveFamilyRequest { string family_id = 1; }
+message LeaveFamilyResponse {}
+message TransferFamilyOwnershipRequest { string family_id = 1; string user_id = 2; }
+message TransferFamilyOwnershipResponse {}
+message RevokeInviteRequest { string family_id = 1; string invite_id = 2; }
+message RevokeInviteResponse {}
+message DeleteFamilyRequest { string family_id = 1; }
+message DeleteFamilyResponse {}
+
 message SyncRequest {
   string family_id = 1;
   int64 cursor = 2;
@@ -157,6 +205,7 @@ message Command {
     DeleteGrowthMeasurement delete_growth_measurement = 17;
     UpsertTemperatureReading upsert_temperature_reading = 18;
     DeleteTemperatureReading delete_temperature_reading = 19;
+    DeleteChild delete_child = 20;
   }
 }
 
@@ -167,6 +216,8 @@ message CreateChild {
 message UpdateChild {
   ChildInput child = 1;
 }
+
+message DeleteChild { string id = 1; }
 
 message ChildInput {
   string id = 1;
@@ -303,6 +354,7 @@ message Child {
   google.protobuf.Timestamp updated_at = 10;
   string time_zone = 11;
   string growth_reference = 12;
+  optional google.protobuf.Timestamp deleted_at = 13;
 }
 
 message SleepSession {

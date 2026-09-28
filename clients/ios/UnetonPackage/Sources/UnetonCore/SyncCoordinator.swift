@@ -227,24 +227,74 @@ public actor SyncCoordinator {
     childID: Child.ID,
     growthReference: String
   ) async throws {
-    guard ["none", "girl", "boy"].contains(growthReference) else { throw SyncError.invalidGrowthReference }
     let child = try await database.read { database in try Child.find(childID).fetchOne(database) }
     guard let child else { throw SyncError.missingChild }
-    let payload = try jsonValue(ChildCommandPayload(
-      id: child.id, nickname: child.nickname,
-      birthDate: SyncPayload.birthDateFormatter.string(from: child.birthDate),
-      predictionMode: child.predictionMode, manualIntervalMinutes: child.manualIntervalMinutes,
+    try await updateChild(familyID: familyID, childID: childID, nickname: child.nickname,
+      birthDate: child.birthDate, predictionMode: child.predictionMode,
+      manualIntervalMinutes: child.manualIntervalMinutes,
       quietHoursStartMinutes: child.quietHoursStartMinutes,
       quietHoursEndMinutes: child.quietHoursEndMinutes, timeZone: child.timeZone,
+      growthReference: growthReference)
+  }
+
+  public func updateChild(
+    familyID: Family.ID, childID: Child.ID, nickname: String, birthDate: Date,
+    predictionMode: String, manualIntervalMinutes: Int?,
+    quietHoursStartMinutes: Int, quietHoursEndMinutes: Int,
+    timeZone: String, growthReference: String
+  ) async throws {
+    guard !nickname.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw SyncError.invalidChild }
+    guard ["none", "girl", "boy"].contains(growthReference) else { throw SyncError.invalidGrowthReference }
+    guard ["adaptive", "manual"].contains(predictionMode),
+      predictionMode != "manual" || (manualIntervalMinutes ?? 0) > 0 else { throw SyncError.invalidChild }
+    guard (0..<1_440).contains(quietHoursStartMinutes), (0..<1_440).contains(quietHoursEndMinutes),
+      TimeZone(identifier: timeZone) != nil else { throw SyncError.invalidChild }
+    let child = try await database.read { database in try Child.find(childID).fetchOne(database) }
+    guard let child, child.familyID == familyID else { throw SyncError.missingChild }
+    let payload = try jsonValue(ChildCommandPayload(
+      id: child.id, nickname: nickname.trimmingCharacters(in: .whitespacesAndNewlines),
+      birthDate: SyncPayload.birthDateFormatter.string(from: birthDate),
+      predictionMode: predictionMode, manualIntervalMinutes: manualIntervalMinutes,
+      quietHoursStartMinutes: quietHoursStartMinutes,
+      quietHoursEndMinutes: quietHoursEndMinutes, timeZone: timeZone,
       growthReference: growthReference
     ))
     let pending = try pendingCommand(
       id: nextID(), familyID: familyID, kind: "updateChild",
-      expectedRevision: child.revision == 0 ? nil : child.revision, payload: payload
+      expectedRevision: try await pendingChildRevision(familyID: familyID, childID: childID)
+        ?? (child.revision == 0 ? nil : child.revision), payload: payload
     )
     try await database.write { database in
       try PendingCommand.insert { pending }.execute(database)
       try Projection.rebuild(familyID: familyID, database: database)
+    }
+  }
+
+  public func deleteChild(familyID: Family.ID, childID: Child.ID) async throws {
+    let child = try await database.read { database in try Child.find(childID).fetchOne(database) }
+    guard let child, child.familyID == familyID else { throw SyncError.missingChild }
+    let payload = try jsonValue(DeleteCommandPayload(id: childID))
+    let pending = try pendingCommand(id: nextID(), familyID: familyID, kind: "deleteChild",
+      expectedRevision: try await pendingChildRevision(familyID: familyID, childID: childID)
+        ?? max(1, child.revision), payload: payload)
+    try await database.write { database in
+      try PendingCommand.insert { pending }.execute(database)
+      try Projection.rebuild(familyID: familyID, database: database)
+    }
+  }
+
+  private func pendingChildRevision(familyID: Family.ID, childID: Child.ID) async throws -> Int? {
+    try await database.read { database in
+      let commands = try PendingCommand.where { $0.familyID.eq(familyID) }.fetchAll(database)
+        .sorted { ($0.createdAt, $0.id.uuidString) < ($1.createdAt, $1.id.uuidString) }
+      let matching = commands.filter { command in
+        guard command.kind == "createChild" || command.kind == "updateChild",
+          let payload = try? JSONDecoder.uneton.decode(ChildCommandPayload.self, from: command.payloadJSON)
+        else { return false }
+        return payload.id == childID
+      }
+      guard let last = matching.last else { return nil }
+      return (last.expectedRevision ?? 0) + 1
     }
   }
 
@@ -527,7 +577,7 @@ public actor SyncCoordinator {
 
   private nonisolated static func entityType(for kind: String) -> String? {
     switch kind {
-    case "createChild", "updateChild", "updatePredictionSettings": "child"
+    case "createChild", "updateChild", "updatePredictionSettings", "deleteChild": "child"
     case "startSleep", "endSleep", "upsertSleep", "deleteSleep": "sleepSession"
     case "upsertGrowthMeasurement", "deleteGrowthMeasurement": "growthMeasurement"
     case "upsertTemperatureReading", "deleteTemperatureReading": "temperatureReading"
@@ -603,7 +653,7 @@ public actor SyncCoordinator {
         entityType: identity.entityType,
         entityID: entityID,
         revision: revision,
-        operation: "upsert",
+        operation: result.status == "accepted" && command.kind.hasPrefix("delete") ? "delete" : "upsert",
         payloadJSON: payloadData
       )
     }.execute(database)
@@ -652,6 +702,12 @@ public actor SyncCoordinator {
         createdAt: appliedAt,
         rebaseAttempt: 1
       ))
+    case "deleteChild":
+      let server = try JSONDecoder.uneton.decode(ServerChildPayload.self, from: serverData)
+      guard server.deletedAt == nil else { return .serverWins }
+      return .retry(PendingCommand(id: replacementID, familyID: command.familyID,
+        kind: command.kind, expectedRevision: serverRevision,
+        payloadJSON: command.payloadJSON, createdAt: appliedAt, rebaseAttempt: 1))
     case "endSleep":
       let local = try JSONDecoder.uneton.decode(SleepCommandPayload.self, from: command.payloadJSON)
       let server = try JSONDecoder.uneton.decode(ServerSleepPayload.self, from: serverData)
@@ -688,6 +744,8 @@ public actor SyncCoordinator {
     switch command.kind {
     case "createChild", "updateChild", "updatePredictionSettings":
       return ("child", try EntityID(rawValue: JSONDecoder.uneton.decode(ChildCommandPayload.self, from: command.payloadJSON).id.rawValue))
+    case "deleteChild":
+      return ("child", try EntityID(rawValue: JSONDecoder.uneton.decode(DeleteCommandPayload<Child.ID>.self, from: command.payloadJSON).id.rawValue))
     case "startSleep", "endSleep", "upsertSleep":
       return ("sleepSession", try EntityID(rawValue: JSONDecoder.uneton.decode(SleepCommandPayload.self, from: command.payloadJSON).id.rawValue))
     case "deleteSleep":
@@ -770,6 +828,7 @@ public enum SyncError: Error, Equatable {
   case invalidTemperatureReading
   case missingTemperatureReading
   case missingChild
+  case invalidChild
   case invalidGrowthReference
   case incompleteSynchronization
 }
@@ -833,6 +892,7 @@ struct ServerChildPayload: Codable {
   var growthReference: String = "none"
   var revision: Int
   var updatedAt: Date
+  var deletedAt: Date?
 }
 
 struct ServerSleepPayload: Codable {

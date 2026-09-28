@@ -14,6 +14,13 @@ final class DemoRuntime {
     @Dependency(\.uuid) private var uuid
 
     let session: SessionStore
+    private var profileName = "Alex"
+    private var familyName = "Our family"
+    private var invitedCaregiverIsPresent = true
+    private var currentRole = "owner"
+    private var pendingInvites: [ManagedFamilyInvite] = []
+    private let demoUserID = UserID(uuidString: "11111111-1111-1111-1111-111111111111")!
+    private let caregiverID = UserID(uuidString: "22222222-2222-2222-2222-222222222222")!
 
     init(session: SessionStore) {
         self.session = session
@@ -130,12 +137,81 @@ final class DemoRuntime {
 
     var sharing: SessionSharingClient {
         SessionSharingClient(
-            createInvite: { _ in (URL(string: "uneton://invite/demo"), nil) },
             deleteAccount: { [self] in (await clear(), nil) },
             setLiveActivitiesEnabled: { [self] in session.liveActivitiesEnabled = $0 },
             setNotificationsEnabled: { [self] in session.notificationsEnabled = $0 },
             setReminderLeadMinutes: { [self] in session.reminderLeadMinutes = $0 },
             signOut: { [self] in (await clear(), nil) }
+        )
+    }
+
+    var management: SessionFamilyManagementClient {
+        SessionFamilyManagementClient(
+            load: { [self] familyID in
+                let localFamily = try await database.read { db in try Family.find(familyID).fetchOne(db) }
+                let role = localFamily?.role ?? currentRole
+                var members = [ManagedFamilyMember(id: demoUserID, displayName: profileName,
+                    role: role, joinedAt: now.addingTimeInterval(-86_400 * 90))]
+                if invitedCaregiverIsPresent {
+                    members.append(ManagedFamilyMember(id: caregiverID, displayName: "Sam",
+                        role: role == "owner" ? "caregiver" : "owner",
+                        joinedAt: now.addingTimeInterval(-86_400 * 30)))
+                }
+                return FamilyManagementSnapshot(familyID: familyID, familyName: localFamily?.name ?? familyName,
+                    myUserID: demoUserID, myDisplayName: profileName, myRole: role,
+                    members: members, pendingInvites: pendingInvites)
+            },
+            updateProfile: { [self] name in profileName = name },
+            renameFamily: { [self] familyID, name in
+                familyName = name
+                try await database.write { db in
+                    if var family = try Family.find(familyID).fetchOne(db) {
+                        family.name = name
+                        try Family.upsert { family }.execute(db)
+                    }
+                }
+            },
+            removeMember: { [self] _, _ in invitedCaregiverIsPresent = false },
+            transferOwnership: { [self] familyID, _ in
+                currentRole = "caregiver"
+                try await database.write { db in
+                    if var family = try Family.find(familyID).fetchOne(db) {
+                        family.role = "caregiver"
+                        try Family.upsert { family }.execute(db)
+                    }
+                }
+            },
+            revokeInvite: { [self] _, inviteID in pendingInvites.removeAll { $0.id == inviteID } },
+            leaveFamily: { [self] familyID in
+                try await database.write { db in try Family.find(familyID).delete().execute(db) }
+            },
+            deleteFamily: { [self] familyID in
+                try await database.write { db in try Family.find(familyID).delete().execute(db) }
+            },
+            invite: { [self] _ in
+                pendingInvites.append(ManagedFamilyInvite(id: FamilyInviteID(rawValue: uuid()),
+                    expiresAt: now.addingTimeInterval(7 * 86_400), createdAt: now))
+                return URL(string: "uneton://invite/demo")!
+            },
+            addChild: { [self] familyID, name, birthDate, reference in
+                let child = Child(id: Child.ID(rawValue: uuid()), familyID: familyID, nickname: name,
+                    birthDate: birthDate, growthReference: reference, revision: 1, updatedAt: now)
+                try await database.write { db in try Child.insert { child }.execute(db) }
+            },
+            createFamily: { [self] familyID, name in
+                let family = Family(id: familyID, name: name, role: "owner", updatedAt: now)
+                try await database.write { db in try Family.insert { family }.execute(db) }
+            },
+            updateChild: { [self] child in
+                var updated = child
+                updated.revision += 1
+                updated.updatedAt = now
+                let saved = updated
+                try await database.write { db in try Child.upsert { saved }.execute(db) }
+            },
+            deleteChild: { [self] child in
+                try await database.write { db in try Child.find(child.id).delete().execute(db) }
+            }
         )
     }
 

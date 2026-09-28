@@ -19,6 +19,7 @@ struct FamilySync {
         var temperatureEntry: TemperatureEntry.State?
         var isForeground = false
         var isPresentingConflicts = false
+        var management: FamilyManagement.State?
         var sharing: FamilySharing.State?
         @StoreTaskID var observation
         @StoreTaskID var refresh
@@ -30,7 +31,7 @@ struct FamilySync {
     enum Action {
         case endSleepButtonTapped(SleepSession.ID)
         case entry(SleepEntry.Action)
-        case familyButtonTapped(Bool, Bool, Int)
+        case familyButtonTapped
         case foregroundChanged(Bool)
         case conflictListButtonTapped
         case growthEntry(GrowthEntry.Action)
@@ -44,6 +45,7 @@ struct FamilySync {
         case refreshRequested
         case resolveConflictButtonTapped(SyncConflict.ID, SyncConflictResolution)
         case sharing(FamilySharing.Action)
+        case management(FamilyManagement.Action)
         case sleepSelected(Child.ID, String, SleepSession.ID, Date, Date?)
     }
 
@@ -65,13 +67,8 @@ struct FamilySync {
                 break
             case .conflictListButtonTapped:
                 state.isPresentingConflicts = true
-            case let .familyButtonTapped(notificationsEnabled, liveActivitiesEnabled, reminderLeadMinutes):
-                state.sharing = FamilySharing.State(
-                    familyID: state.familyID,
-                    notificationsEnabled: notificationsEnabled,
-                    liveActivitiesEnabled: liveActivitiesEnabled,
-                    reminderLeadMinutes: reminderLeadMinutes
-                )
+            case .familyButtonTapped:
+                state.management = FamilyManagement.State(familyID: state.familyID)
             case let .foregroundChanged(isForeground):
                 state.isForeground = isForeground
                 if !isForeground {
@@ -124,6 +121,8 @@ struct FamilySync {
                 }
             case .sharing:
                 break
+            case .management:
+                break
             case let .sleepSelected(childID, childName, sessionID, startedAt, endedAt):
                 state.entry = SleepEntry.State(
                     familyID: state.familyID,
@@ -140,6 +139,7 @@ struct FamilySync {
         .ifLet(\.growthEntry) { GrowthEntry() }
         .ifLet(\.temperatureEntry) { TemperatureEntry() }
         .ifLet(\.sharing) { FamilySharing() }
+        .ifLet(\.management) { FamilyManagement() }
         .onMount(id: store.isForeground ? store.familyID : nil) { state in
             guard state.isForeground else { return }
             let familyID = state.familyID

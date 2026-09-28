@@ -239,6 +239,11 @@ func currentCommandEntity(ctx context.Context, tx *sql.Tx, familyID string, comm
 		if err == nil {
 			return identity.ID, payload
 		}
+	case "deleteChild":
+		payload, _, err := childJSON(ctx, tx, familyID, identity.ID)
+		if err == nil {
+			return identity.ID, payload
+		}
 	case "startSleep", "endSleep", "upsertSleep", "deleteSleep":
 		payload, _, err := sleepJSON(ctx, tx, familyID, identity.ID)
 		if err == nil {
@@ -279,6 +284,8 @@ func (s *Server) applyCommand(ctx context.Context, tx *sql.Tx, familyID, userID,
 		return s.createChild(ctx, tx, familyID, command)
 	case "updateChild", "updatePredictionSettings":
 		return s.updateChild(ctx, tx, familyID, command)
+	case "deleteChild":
+		return s.deleteChild(ctx, tx, familyID, command)
 	case "startSleep":
 		return s.startSleep(ctx, tx, familyID, userID, deviceID, command)
 	case "endSleep":
@@ -371,6 +378,41 @@ func (s *Server) updateChild(ctx context.Context, tx *sql.Tx, familyID string, c
 	encoded, revision, err := childJSON(ctx, tx, familyID, payload.ID)
 	if err == nil {
 		err = appendEvent(ctx, q, familyID, "child", payload.ID, "upsert", revision, encoded, now)
+	}
+	return CommandResult{ID: command.ID, Status: "accepted", EntityID: payload.ID, Payload: encoded}, err
+}
+
+func (s *Server) deleteChild(ctx context.Context, tx *sql.Tx, familyID string, command Command) (CommandResult, error) {
+	var payload struct {
+		ID string `json:"id"`
+	}
+	if json.Unmarshal(command.Payload, &payload) != nil || payload.ID == "" {
+		return CommandResult{ID: command.ID}, errors.New("invalid child")
+	}
+	q := s.store.Queries.WithTx(tx)
+	revision, err := q.ChildRevision(ctx, storedb.ChildRevisionParams{ID: payload.ID, FamilyID: familyID})
+	if err != nil {
+		return CommandResult{ID: command.ID}, errors.New("child not found")
+	}
+	if command.ExpectedRevision == nil || *command.ExpectedRevision != int(revision) {
+		return CommandResult{ID: command.ID}, errors.New("stale revision")
+	}
+	if _, activeErr := q.ActiveSleepForChild(ctx, storedb.ActiveSleepForChildParams{FamilyID: familyID, ChildID: payload.ID}); activeErr == nil {
+		return CommandResult{ID: command.ID}, errors.New("end the active sleep before deleting the child")
+	} else if !errors.Is(activeErr, sql.ErrNoRows) {
+		return CommandResult{ID: command.ID}, activeErr
+	}
+	now := formatTime(s.now().UTC())
+	rows, err := q.DeleteChild(ctx, storedb.DeleteChildParams{DeletedAt: sql.NullString{String: now, Valid: true}, UpdatedAt: now, ID: payload.ID, FamilyID: familyID})
+	if err != nil {
+		return CommandResult{ID: command.ID}, err
+	}
+	if rows != 1 {
+		return CommandResult{ID: command.ID}, errors.New("child not found")
+	}
+	encoded, newRevision, err := childJSON(ctx, tx, familyID, payload.ID)
+	if err == nil {
+		err = appendEvent(ctx, q, familyID, "child", payload.ID, "delete", newRevision, encoded, now)
 	}
 	return CommandResult{ID: command.ID, Status: "accepted", EntityID: payload.ID, Payload: encoded}, err
 }
@@ -708,6 +750,9 @@ func childJSON(ctx context.Context, tx *sql.Tx, familyID, id string) (json.RawMe
 	value := map[string]any{"id": row.ID, "familyID": row.FamilyID, "nickname": row.Nickname, "birthDate": row.BirthDate, "predictionMode": row.PredictionMode, "quietHoursStartMinutes": row.QuietHoursStartMinutes, "quietHoursEndMinutes": row.QuietHoursEndMinutes, "timeZone": row.TimeZone, "growthReference": row.GrowthReference, "revision": row.Revision, "updatedAt": row.UpdatedAt}
 	if row.ManualIntervalMinutes.Valid {
 		value["manualIntervalMinutes"] = row.ManualIntervalMinutes.Int64
+	}
+	if row.DeletedAt.Valid {
+		value["deletedAt"] = row.DeletedAt.String
 	}
 	encoded, err := json.Marshal(value)
 	return encoded, int(row.Revision), err

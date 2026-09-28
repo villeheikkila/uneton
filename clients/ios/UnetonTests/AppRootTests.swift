@@ -7,6 +7,74 @@ import UnetonCore
 
 @MainActor
 struct AppRootTests {
+    @Test func `baby settings save through the injected family client`() async {
+        let child = ModelFixtures.child()
+        var management = SessionFamilyManagementClient.unimplemented
+        management.updateChild = { received in
+            #expect(received == child)
+        }
+        let store = TestStore(initialState: ChildEditor.State(child: child)) {
+            ChildEditor().environment(\.sessionFamilyManagement, management)
+        }
+        let task = store.send(.save) { $0.isFinished = true }
+        await task?.value
+        await store.dismount()
+    }
+
+    @Test func `manual prediction requires an interval before saving`() async {
+        var child = ModelFixtures.child()
+        child.predictionMode = "manual"
+        let store = TestStore(initialState: ChildEditor.State(child: child)) { ChildEditor() }
+        #expect(store.validationMessage == "Choose a manual interval.")
+        store.send(.save) { $0.errorMessage = "Choose a manual interval." }
+        #expect(!store.request.isRunning)
+        await store.dismount()
+    }
+
+    @Test func `family management keeps an empty baby form recoverable`() async {
+        let familyID = ModelFixtures.familyID
+        var management = SessionFamilyManagementClient.unimplemented
+        management.load = { id in
+            FamilyManagementSnapshot(familyID: id, familyName: "Home",
+                myUserID: ModelFixtures.authorID, myDisplayName: "Alex",
+                myRole: "owner", members: [], pendingInvites: [])
+        }
+        let store = TestStore(initialState: FamilyManagement.State(familyID: familyID)) {
+            FamilyManagement().environment(\.sessionFamilyManagement, management)
+        }
+        store.send(.addChild) { $0.isAddingChild = true }
+        store.send(.saveNewChild) { $0.errorMessage = "Enter your baby’s name." }
+        store.send(.scanInvitation) { $0.isScanning = true }
+        store.send(.invitationCodeScanned("https://example.com")) {
+            $0.isScanning = false
+            $0.errorMessage = "Invalid family invitation."
+        }
+        await store.dismount()
+    }
+
+    @Test func `owner removal is confirmed and routed through the management client`() async {
+        let familyID = ModelFixtures.familyID
+        let caregiverID = UserID(uuidString: "00000000-0000-4000-8000-000000000120")!
+        let snapshot = FamilyManagementSnapshot(familyID: familyID, familyName: "Home",
+            myUserID: ModelFixtures.authorID, myDisplayName: "Alex",
+            myRole: "owner", members: [], pendingInvites: [])
+        var client = SessionFamilyManagementClient.unimplemented
+        client.removeMember = { id, userID in
+            #expect(id == familyID)
+            #expect(userID == caregiverID)
+        }
+        client.load = { _ in snapshot }
+        var state = FamilyManagement.State(familyID: familyID)
+        state.snapshot = snapshot
+        let store = TestStore(initialState: state) {
+            FamilyManagement().environment(\.sessionFamilyManagement, client)
+        }
+        store.send(.prompt(.remove(caregiverID))) { $0.confirmation = .remove(caregiverID) }
+        let task = store.send(.confirmationAccepted(.remove(caregiverID))) { $0.confirmation = nil }
+        await task?.value
+        await store.dismount()
+    }
+
     @Test func `selection follows authentication and family changes`() async {
         let firstFamily = Family.ID(uuidString: "00000000-0000-4000-8000-000000000001")!
         let secondFamily = Family.ID(uuidString: "00000000-0000-4000-8000-000000000002")!
@@ -16,13 +84,16 @@ struct AppRootTests {
 
         store.send(.familySelected(firstFamily)) {
             $0.familySync = FamilySync.State.DebugSnapshot(familyID: firstFamily)
+            $0.selectedFamilyID = firstFamily
         }
         store.send(.familySelected(secondFamily)) {
             $0.familySync = FamilySync.State.DebugSnapshot(familyID: secondFamily)
+            $0.selectedFamilyID = secondFamily
         }
         store.send(.authenticationChanged(false)) {
             $0.isAuthenticated = false
             $0.familySync = nil
+            $0.selectedFamilyID = nil
         }
         store.send(.familySelected(firstFamily))
         await store.dismount()

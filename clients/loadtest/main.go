@@ -360,6 +360,54 @@ func (s scenario) run(ctx context.Context) error {
 			return fmt.Errorf("cycle %d caregiver missing temperature reading", cycle+1)
 		}
 	}
+	childRevision := int64(1)
+	manualInterval := int32(150)
+	settings := &unetonv1.Command{Id: newID(), ExpectedRevision: &childRevision,
+		Payload: &unetonv1.Command_UpdateChild{UpdateChild: &unetonv1.UpdateChild{Child: &unetonv1.ChildInput{
+			Id: childID, Nickname: "Muru updated", BirthDate: time.Now().AddDate(0, -6, 0).Format(time.DateOnly),
+			PredictionMode: "manual", ManualIntervalMinutes: &manualInterval,
+			QuietHoursStartMinutes: 1200, QuietHoursEndMinutes: 360, TimeZone: "Europe/Helsinki",
+		}}}}
+	updatedChild, err := s.sync(ctx, owner, []*unetonv1.Command{settings})
+	if err != nil {
+		return fmt.Errorf("update child: %w", err)
+	}
+	if err := accepted(updatedChild, 1); err != nil {
+		return fmt.Errorf("update child result: %w", err)
+	}
+	if _, err := s.sync(ctx, caregiver, nil); err != nil {
+		return fmt.Errorf("caregiver child settings pull: %w", err)
+	}
+	childRevision = 2
+	deletion := &unetonv1.Command{Id: newID(), ExpectedRevision: &childRevision,
+		Payload: &unetonv1.Command_DeleteChild{DeleteChild: &unetonv1.DeleteChild{Id: childID}}}
+	deletedChild, err := s.sync(ctx, owner, []*unetonv1.Command{deletion})
+	if err != nil {
+		return fmt.Errorf("delete child: %w", err)
+	}
+	if err := accepted(deletedChild, 1); err != nil {
+		return fmt.Errorf("delete child result: %w", err)
+	}
+	retriedDelete, err := s.sync(ctx, owner, []*unetonv1.Command{deletion})
+	if err != nil {
+		return fmt.Errorf("retry child deletion: %w", err)
+	}
+	if err := accepted(retriedDelete, 1); err != nil {
+		return fmt.Errorf("retry child deletion result: %w", err)
+	}
+	caregiverDelete, err := s.sync(ctx, caregiver, nil)
+	if err != nil {
+		return fmt.Errorf("caregiver child deletion pull: %w", err)
+	}
+	foundDeletion := false
+	for _, event := range caregiverDelete.GetEvents() {
+		if event.GetEntityId() == childID && event.GetOperation() == unetonv1.EventOperation_EVENT_OPERATION_DELETE {
+			foundDeletion = true
+		}
+	}
+	if !foundDeletion {
+		return errors.New("caregiver missed child deletion")
+	}
 	return nil
 }
 

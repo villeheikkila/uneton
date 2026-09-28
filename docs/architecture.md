@@ -2,7 +2,7 @@
 
 ## Backend-free UI demo (debug builds)
 
-`UNETON_DEMO_MODE=1` selects a separate TCA26 composition root at launch. It boots the same SQLite schema in memory and injects `DemoRuntime` implementations of the authentication, family, diary, sharing, and sync feature environments. Those adapters update only the ephemeral projection for interactive UI development. They create no pending commands, authoritative records, or cursor, and they do not attempt network, Apple credentials, Watch, push, or Live Activity work. The demo is a presentation sandbox; the production composition root continues to inject `SessionStore` adapters and uses `SyncCoordinator` as described below.
+`UNETON_DEMO_MODE=1` selects a separate TCA26 composition root at launch. It boots the same SQLite schema in memory and injects `DemoRuntime` implementations of the authentication, family, family management, diary, sharing, and sync feature environments. Those adapters update only the ephemeral projection for interactive UI development. They create no pending commands, authoritative records, or cursor, and they do not attempt network, Apple credentials, Watch, push, or Live Activity work. The demo is a presentation sandbox; the production composition root continues to inject `SessionStore` adapters and uses `SyncCoordinator` as described below.
 
 This is the canonical overview of how Uneton keeps a shared family diary correct and fresh across iPhone, Apple Watch, widgets, background execution, and the backend. Detailed implementation policies are linked at the end.
 
@@ -43,7 +43,7 @@ No foreground stream, push payload, Live Activity, widget, Watch message, or pre
       └───────────┘   └────────────────┘
 ```
 
-The production deployment runs one API writer behind Caddy with a durable SQLite volume and Litestream replication. The single-writer topology is intentional; the correctness model does not depend on in-memory stream delivery. The iPhone app's TCA26 root owns active-family selection and the foreground observation task. `SessionStore` remains the Apple-framework runtime adapter, and `SyncCoordinator` remains the only client path that applies authoritative events or changes the local cursor.
+The production deployment runs one API writer behind Caddy with a durable SQLite volume and Litestream replication. The single-writer topology is intentional; the correctness model does not depend on in-memory stream delivery. The iPhone app's TCA26 root owns active-family and active-child selection and the foreground observation task. `SessionStore` remains the Apple-framework runtime adapter, and `SyncCoordinator` remains the only client path that applies authoritative events or changes the local cursor.
 
 ## Ownership and boundaries
 
@@ -76,7 +76,7 @@ The visible child, sleep-session, growth-measurement, and temperature-reading pr
 
 ### iPhone feature ownership
 
-The app uses TCA26 for presentation and lifecycle orchestration. `AppRoot` owns authentication visibility, onboarding, family setup, and the selected family's `FamilySync` feature. `FamilySync` observes that family only while the scene is active; its task is cancelled when the app backgrounds, the selected family changes, or authentication ends. Manual refresh, sleep and growth entry, waking, conflict resolution, and family sharing actions enter the existing `SessionStore`/`SyncCoordinator` path through feature environment adapters. Feature tests can control these effects without a server.
+The app uses TCA26 for presentation and lifecycle orchestration. `AppRoot` owns authentication visibility, onboarding, family setup, active-family and active-child selection, and the selected family's `FamilySync` feature. `FamilyManagement` owns caregiver, invitation, profile, family, and baby settings forms. Its data is fetched from the authenticated management API; diary edits still enter the durable `SyncCoordinator` command path. `FamilySync` observes that family only while the scene is active; its task is cancelled when the app backgrounds, the selected family changes, or authentication ends. Manual refresh, sleep and growth entry, waking, conflict resolution, and baby settings enter the existing `SessionStore`/`SyncCoordinator` path through feature environment adapters. Caregiver membership, invitations, profile names, and family names use authenticated control-plane methods through their own feature environment adapter. Feature tests can control these effects without a server.
 
 SQLiteData remains the durable read source. TCA feature state holds selection, presentation, loading, and form workflow state, not a second copy of authoritative diary records or a second command queue. The `SessionStore` runtime still handles Apple frameworks, the Watch bridge, background push registration, and existing sync effects. Moving further actions into features must preserve optimistic command insertion and the complete `SyncCoordinator` reconciliation path described below.
 
@@ -276,3 +276,11 @@ The highest-value tests exercise invariants rather than transport syntax:
 - [Sweet-spot inference](sweetspot.md)
 - [Operations, restore, and constrained VM testing](operations.md)
 - [ADR 0001: one module with explicit boundaries](decisions/0001-one-module-explicit-boundaries.md)
+
+## Family management and membership freshness
+
+The authenticated `GetFamilyManagement` API provides a small control-plane view of caregiver names and roles and unclaimed invitations. Profile edits, family names, caregiver removal, ownership transfer, invitation revocation, leaving, and family deletion use dedicated ConnectRPC mutations with server-side role checks. Ownership transfer updates the family owner and both membership roles in one SQLite transaction. Deleting a family requires one active owner and no other active caregivers. A caregiver cannot leave while owning the family; they transfer ownership or remove the other caregivers and delete the family.
+
+Membership and profile changes are not diary entities and do not advance the diary cursor. The client refreshes authentication on foreground observation and after its own membership changes, then shows only families in the refreshed membership list. If Sync or WatchFamily denies access, the client refreshes membership and stops observing that family. The Watch snapshot is filtered by the same membership list. A revoked caregiver's offline commands remain durable in the local database. A new invitation for the same family restores the sync route for those commands; the client never silently discards them during a membership refresh. When no families remain, setup explains that unsent changes are retained and offers invitation scanning. Control-plane screens can be refreshed independently because they do not apply diary state or advance a sync cursor.
+
+Baby creation, settings edits, and deletion use durable child commands. Settings edits carry expected revisions; multiple offline edits reserve sequential expected revisions. Child deletion creates a tombstone and a delete event on the server. The local projection hides the child and its diary immediately while retaining the pending command. Snapshot recovery recognizes child tombstones and does not recreate deleted children. The server keeps child and diary records for event-log recovery until the family is deleted, consistent with the retention policy.

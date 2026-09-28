@@ -1,9 +1,7 @@
 import ComposableArchitecture2
 import Foundation
-import UnetonCore
 
 struct SessionSharingClient: Sendable {
-    var createInvite: @MainActor @Sendable (Family.ID) async -> (URL?, String?)
     var deleteAccount: @MainActor @Sendable () async -> (Bool, String?)
     var setLiveActivitiesEnabled: @MainActor @Sendable (Bool) async -> Void
     var setNotificationsEnabled: @MainActor @Sendable (Bool) async -> Void
@@ -13,11 +11,6 @@ struct SessionSharingClient: Sendable {
     @MainActor
     static func live(session: SessionStore) -> Self {
         Self(
-            createInvite: { familyID in
-                session.errorMessage = nil
-                let url = await session.createInvite(familyID: familyID)
-                return (url, session.errorMessage)
-            },
             deleteAccount: {
                 let succeeded = await session.deleteAccount()
                 return (succeeded, session.errorMessage)
@@ -33,7 +26,6 @@ struct SessionSharingClient: Sendable {
     }
 
     static let unimplemented = Self(
-        createInvite: { _ in fatalError("SessionSharingClient.createInvite is not configured") },
         deleteAccount: { fatalError("SessionSharingClient.deleteAccount is not configured") },
         setLiveActivitiesEnabled: { _ in fatalError("SessionSharingClient.setLiveActivitiesEnabled is not configured") },
         setNotificationsEnabled: { _ in fatalError("SessionSharingClient.setNotificationsEnabled is not configured") },

@@ -61,6 +61,30 @@ const (
 	// UnetonServiceAcceptInviteProcedure is the fully-qualified name of the UnetonService's
 	// AcceptInvite RPC.
 	UnetonServiceAcceptInviteProcedure = "/uneton.v1.UnetonService/AcceptInvite"
+	// UnetonServiceGetFamilyManagementProcedure is the fully-qualified name of the UnetonService's
+	// GetFamilyManagement RPC.
+	UnetonServiceGetFamilyManagementProcedure = "/uneton.v1.UnetonService/GetFamilyManagement"
+	// UnetonServiceUpdateProfileProcedure is the fully-qualified name of the UnetonService's
+	// UpdateProfile RPC.
+	UnetonServiceUpdateProfileProcedure = "/uneton.v1.UnetonService/UpdateProfile"
+	// UnetonServiceRenameFamilyProcedure is the fully-qualified name of the UnetonService's
+	// RenameFamily RPC.
+	UnetonServiceRenameFamilyProcedure = "/uneton.v1.UnetonService/RenameFamily"
+	// UnetonServiceRemoveFamilyMemberProcedure is the fully-qualified name of the UnetonService's
+	// RemoveFamilyMember RPC.
+	UnetonServiceRemoveFamilyMemberProcedure = "/uneton.v1.UnetonService/RemoveFamilyMember"
+	// UnetonServiceLeaveFamilyProcedure is the fully-qualified name of the UnetonService's LeaveFamily
+	// RPC.
+	UnetonServiceLeaveFamilyProcedure = "/uneton.v1.UnetonService/LeaveFamily"
+	// UnetonServiceTransferFamilyOwnershipProcedure is the fully-qualified name of the UnetonService's
+	// TransferFamilyOwnership RPC.
+	UnetonServiceTransferFamilyOwnershipProcedure = "/uneton.v1.UnetonService/TransferFamilyOwnership"
+	// UnetonServiceRevokeInviteProcedure is the fully-qualified name of the UnetonService's
+	// RevokeInvite RPC.
+	UnetonServiceRevokeInviteProcedure = "/uneton.v1.UnetonService/RevokeInvite"
+	// UnetonServiceDeleteFamilyProcedure is the fully-qualified name of the UnetonService's
+	// DeleteFamily RPC.
+	UnetonServiceDeleteFamilyProcedure = "/uneton.v1.UnetonService/DeleteFamily"
 	// UnetonServiceSyncProcedure is the fully-qualified name of the UnetonService's Sync RPC.
 	UnetonServiceSyncProcedure = "/uneton.v1.UnetonService/Sync"
 	// UnetonServiceWatchFamilyProcedure is the fully-qualified name of the UnetonService's WatchFamily
@@ -80,6 +104,14 @@ type UnetonServiceClient interface {
 	CreateFamily(context.Context, *connect.Request[v1.CreateFamilyRequest]) (*connect.Response[v1.CreateFamilyResponse], error)
 	CreateInvite(context.Context, *connect.Request[v1.CreateInviteRequest]) (*connect.Response[v1.CreateInviteResponse], error)
 	AcceptInvite(context.Context, *connect.Request[v1.AcceptInviteRequest]) (*connect.Response[v1.AcceptInviteResponse], error)
+	GetFamilyManagement(context.Context, *connect.Request[v1.GetFamilyManagementRequest]) (*connect.Response[v1.GetFamilyManagementResponse], error)
+	UpdateProfile(context.Context, *connect.Request[v1.UpdateProfileRequest]) (*connect.Response[v1.UpdateProfileResponse], error)
+	RenameFamily(context.Context, *connect.Request[v1.RenameFamilyRequest]) (*connect.Response[v1.RenameFamilyResponse], error)
+	RemoveFamilyMember(context.Context, *connect.Request[v1.RemoveFamilyMemberRequest]) (*connect.Response[v1.RemoveFamilyMemberResponse], error)
+	LeaveFamily(context.Context, *connect.Request[v1.LeaveFamilyRequest]) (*connect.Response[v1.LeaveFamilyResponse], error)
+	TransferFamilyOwnership(context.Context, *connect.Request[v1.TransferFamilyOwnershipRequest]) (*connect.Response[v1.TransferFamilyOwnershipResponse], error)
+	RevokeInvite(context.Context, *connect.Request[v1.RevokeInviteRequest]) (*connect.Response[v1.RevokeInviteResponse], error)
+	DeleteFamily(context.Context, *connect.Request[v1.DeleteFamilyRequest]) (*connect.Response[v1.DeleteFamilyResponse], error)
 	Sync(context.Context, *connect.Request[v1.SyncRequest]) (*connect.Response[v1.SyncResponse], error)
 	WatchFamily(context.Context, *connect.Request[v1.WatchFamilyRequest]) (*connect.ServerStreamForClient[v1.WatchFamilyResponse], error)
 }
@@ -155,6 +187,54 @@ func NewUnetonServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(unetonServiceMethods.ByName("AcceptInvite")),
 			connect.WithClientOptions(opts...),
 		),
+		getFamilyManagement: connect.NewClient[v1.GetFamilyManagementRequest, v1.GetFamilyManagementResponse](
+			httpClient,
+			baseURL+UnetonServiceGetFamilyManagementProcedure,
+			connect.WithSchema(unetonServiceMethods.ByName("GetFamilyManagement")),
+			connect.WithClientOptions(opts...),
+		),
+		updateProfile: connect.NewClient[v1.UpdateProfileRequest, v1.UpdateProfileResponse](
+			httpClient,
+			baseURL+UnetonServiceUpdateProfileProcedure,
+			connect.WithSchema(unetonServiceMethods.ByName("UpdateProfile")),
+			connect.WithClientOptions(opts...),
+		),
+		renameFamily: connect.NewClient[v1.RenameFamilyRequest, v1.RenameFamilyResponse](
+			httpClient,
+			baseURL+UnetonServiceRenameFamilyProcedure,
+			connect.WithSchema(unetonServiceMethods.ByName("RenameFamily")),
+			connect.WithClientOptions(opts...),
+		),
+		removeFamilyMember: connect.NewClient[v1.RemoveFamilyMemberRequest, v1.RemoveFamilyMemberResponse](
+			httpClient,
+			baseURL+UnetonServiceRemoveFamilyMemberProcedure,
+			connect.WithSchema(unetonServiceMethods.ByName("RemoveFamilyMember")),
+			connect.WithClientOptions(opts...),
+		),
+		leaveFamily: connect.NewClient[v1.LeaveFamilyRequest, v1.LeaveFamilyResponse](
+			httpClient,
+			baseURL+UnetonServiceLeaveFamilyProcedure,
+			connect.WithSchema(unetonServiceMethods.ByName("LeaveFamily")),
+			connect.WithClientOptions(opts...),
+		),
+		transferFamilyOwnership: connect.NewClient[v1.TransferFamilyOwnershipRequest, v1.TransferFamilyOwnershipResponse](
+			httpClient,
+			baseURL+UnetonServiceTransferFamilyOwnershipProcedure,
+			connect.WithSchema(unetonServiceMethods.ByName("TransferFamilyOwnership")),
+			connect.WithClientOptions(opts...),
+		),
+		revokeInvite: connect.NewClient[v1.RevokeInviteRequest, v1.RevokeInviteResponse](
+			httpClient,
+			baseURL+UnetonServiceRevokeInviteProcedure,
+			connect.WithSchema(unetonServiceMethods.ByName("RevokeInvite")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteFamily: connect.NewClient[v1.DeleteFamilyRequest, v1.DeleteFamilyResponse](
+			httpClient,
+			baseURL+UnetonServiceDeleteFamilyProcedure,
+			connect.WithSchema(unetonServiceMethods.ByName("DeleteFamily")),
+			connect.WithClientOptions(opts...),
+		),
 		sync: connect.NewClient[v1.SyncRequest, v1.SyncResponse](
 			httpClient,
 			baseURL+UnetonServiceSyncProcedure,
@@ -182,6 +262,14 @@ type unetonServiceClient struct {
 	createFamily             *connect.Client[v1.CreateFamilyRequest, v1.CreateFamilyResponse]
 	createInvite             *connect.Client[v1.CreateInviteRequest, v1.CreateInviteResponse]
 	acceptInvite             *connect.Client[v1.AcceptInviteRequest, v1.AcceptInviteResponse]
+	getFamilyManagement      *connect.Client[v1.GetFamilyManagementRequest, v1.GetFamilyManagementResponse]
+	updateProfile            *connect.Client[v1.UpdateProfileRequest, v1.UpdateProfileResponse]
+	renameFamily             *connect.Client[v1.RenameFamilyRequest, v1.RenameFamilyResponse]
+	removeFamilyMember       *connect.Client[v1.RemoveFamilyMemberRequest, v1.RemoveFamilyMemberResponse]
+	leaveFamily              *connect.Client[v1.LeaveFamilyRequest, v1.LeaveFamilyResponse]
+	transferFamilyOwnership  *connect.Client[v1.TransferFamilyOwnershipRequest, v1.TransferFamilyOwnershipResponse]
+	revokeInvite             *connect.Client[v1.RevokeInviteRequest, v1.RevokeInviteResponse]
+	deleteFamily             *connect.Client[v1.DeleteFamilyRequest, v1.DeleteFamilyResponse]
 	sync                     *connect.Client[v1.SyncRequest, v1.SyncResponse]
 	watchFamily              *connect.Client[v1.WatchFamilyRequest, v1.WatchFamilyResponse]
 }
@@ -236,6 +324,46 @@ func (c *unetonServiceClient) AcceptInvite(ctx context.Context, req *connect.Req
 	return c.acceptInvite.CallUnary(ctx, req)
 }
 
+// GetFamilyManagement calls uneton.v1.UnetonService.GetFamilyManagement.
+func (c *unetonServiceClient) GetFamilyManagement(ctx context.Context, req *connect.Request[v1.GetFamilyManagementRequest]) (*connect.Response[v1.GetFamilyManagementResponse], error) {
+	return c.getFamilyManagement.CallUnary(ctx, req)
+}
+
+// UpdateProfile calls uneton.v1.UnetonService.UpdateProfile.
+func (c *unetonServiceClient) UpdateProfile(ctx context.Context, req *connect.Request[v1.UpdateProfileRequest]) (*connect.Response[v1.UpdateProfileResponse], error) {
+	return c.updateProfile.CallUnary(ctx, req)
+}
+
+// RenameFamily calls uneton.v1.UnetonService.RenameFamily.
+func (c *unetonServiceClient) RenameFamily(ctx context.Context, req *connect.Request[v1.RenameFamilyRequest]) (*connect.Response[v1.RenameFamilyResponse], error) {
+	return c.renameFamily.CallUnary(ctx, req)
+}
+
+// RemoveFamilyMember calls uneton.v1.UnetonService.RemoveFamilyMember.
+func (c *unetonServiceClient) RemoveFamilyMember(ctx context.Context, req *connect.Request[v1.RemoveFamilyMemberRequest]) (*connect.Response[v1.RemoveFamilyMemberResponse], error) {
+	return c.removeFamilyMember.CallUnary(ctx, req)
+}
+
+// LeaveFamily calls uneton.v1.UnetonService.LeaveFamily.
+func (c *unetonServiceClient) LeaveFamily(ctx context.Context, req *connect.Request[v1.LeaveFamilyRequest]) (*connect.Response[v1.LeaveFamilyResponse], error) {
+	return c.leaveFamily.CallUnary(ctx, req)
+}
+
+// TransferFamilyOwnership calls uneton.v1.UnetonService.TransferFamilyOwnership.
+func (c *unetonServiceClient) TransferFamilyOwnership(ctx context.Context, req *connect.Request[v1.TransferFamilyOwnershipRequest]) (*connect.Response[v1.TransferFamilyOwnershipResponse], error) {
+	return c.transferFamilyOwnership.CallUnary(ctx, req)
+}
+
+// RevokeInvite calls uneton.v1.UnetonService.RevokeInvite.
+func (c *unetonServiceClient) RevokeInvite(ctx context.Context, req *connect.Request[v1.RevokeInviteRequest]) (*connect.Response[v1.RevokeInviteResponse], error) {
+	return c.revokeInvite.CallUnary(ctx, req)
+}
+
+// DeleteFamily calls uneton.v1.UnetonService.DeleteFamily.
+func (c *unetonServiceClient) DeleteFamily(ctx context.Context, req *connect.Request[v1.DeleteFamilyRequest]) (*connect.Response[v1.DeleteFamilyResponse], error) {
+	return c.deleteFamily.CallUnary(ctx, req)
+}
+
 // Sync calls uneton.v1.UnetonService.Sync.
 func (c *unetonServiceClient) Sync(ctx context.Context, req *connect.Request[v1.SyncRequest]) (*connect.Response[v1.SyncResponse], error) {
 	return c.sync.CallUnary(ctx, req)
@@ -258,6 +386,14 @@ type UnetonServiceHandler interface {
 	CreateFamily(context.Context, *connect.Request[v1.CreateFamilyRequest]) (*connect.Response[v1.CreateFamilyResponse], error)
 	CreateInvite(context.Context, *connect.Request[v1.CreateInviteRequest]) (*connect.Response[v1.CreateInviteResponse], error)
 	AcceptInvite(context.Context, *connect.Request[v1.AcceptInviteRequest]) (*connect.Response[v1.AcceptInviteResponse], error)
+	GetFamilyManagement(context.Context, *connect.Request[v1.GetFamilyManagementRequest]) (*connect.Response[v1.GetFamilyManagementResponse], error)
+	UpdateProfile(context.Context, *connect.Request[v1.UpdateProfileRequest]) (*connect.Response[v1.UpdateProfileResponse], error)
+	RenameFamily(context.Context, *connect.Request[v1.RenameFamilyRequest]) (*connect.Response[v1.RenameFamilyResponse], error)
+	RemoveFamilyMember(context.Context, *connect.Request[v1.RemoveFamilyMemberRequest]) (*connect.Response[v1.RemoveFamilyMemberResponse], error)
+	LeaveFamily(context.Context, *connect.Request[v1.LeaveFamilyRequest]) (*connect.Response[v1.LeaveFamilyResponse], error)
+	TransferFamilyOwnership(context.Context, *connect.Request[v1.TransferFamilyOwnershipRequest]) (*connect.Response[v1.TransferFamilyOwnershipResponse], error)
+	RevokeInvite(context.Context, *connect.Request[v1.RevokeInviteRequest]) (*connect.Response[v1.RevokeInviteResponse], error)
+	DeleteFamily(context.Context, *connect.Request[v1.DeleteFamilyRequest]) (*connect.Response[v1.DeleteFamilyResponse], error)
 	Sync(context.Context, *connect.Request[v1.SyncRequest]) (*connect.Response[v1.SyncResponse], error)
 	WatchFamily(context.Context, *connect.Request[v1.WatchFamilyRequest], *connect.ServerStream[v1.WatchFamilyResponse]) error
 }
@@ -329,6 +465,54 @@ func NewUnetonServiceHandler(svc UnetonServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(unetonServiceMethods.ByName("AcceptInvite")),
 		connect.WithHandlerOptions(opts...),
 	)
+	unetonServiceGetFamilyManagementHandler := connect.NewUnaryHandler(
+		UnetonServiceGetFamilyManagementProcedure,
+		svc.GetFamilyManagement,
+		connect.WithSchema(unetonServiceMethods.ByName("GetFamilyManagement")),
+		connect.WithHandlerOptions(opts...),
+	)
+	unetonServiceUpdateProfileHandler := connect.NewUnaryHandler(
+		UnetonServiceUpdateProfileProcedure,
+		svc.UpdateProfile,
+		connect.WithSchema(unetonServiceMethods.ByName("UpdateProfile")),
+		connect.WithHandlerOptions(opts...),
+	)
+	unetonServiceRenameFamilyHandler := connect.NewUnaryHandler(
+		UnetonServiceRenameFamilyProcedure,
+		svc.RenameFamily,
+		connect.WithSchema(unetonServiceMethods.ByName("RenameFamily")),
+		connect.WithHandlerOptions(opts...),
+	)
+	unetonServiceRemoveFamilyMemberHandler := connect.NewUnaryHandler(
+		UnetonServiceRemoveFamilyMemberProcedure,
+		svc.RemoveFamilyMember,
+		connect.WithSchema(unetonServiceMethods.ByName("RemoveFamilyMember")),
+		connect.WithHandlerOptions(opts...),
+	)
+	unetonServiceLeaveFamilyHandler := connect.NewUnaryHandler(
+		UnetonServiceLeaveFamilyProcedure,
+		svc.LeaveFamily,
+		connect.WithSchema(unetonServiceMethods.ByName("LeaveFamily")),
+		connect.WithHandlerOptions(opts...),
+	)
+	unetonServiceTransferFamilyOwnershipHandler := connect.NewUnaryHandler(
+		UnetonServiceTransferFamilyOwnershipProcedure,
+		svc.TransferFamilyOwnership,
+		connect.WithSchema(unetonServiceMethods.ByName("TransferFamilyOwnership")),
+		connect.WithHandlerOptions(opts...),
+	)
+	unetonServiceRevokeInviteHandler := connect.NewUnaryHandler(
+		UnetonServiceRevokeInviteProcedure,
+		svc.RevokeInvite,
+		connect.WithSchema(unetonServiceMethods.ByName("RevokeInvite")),
+		connect.WithHandlerOptions(opts...),
+	)
+	unetonServiceDeleteFamilyHandler := connect.NewUnaryHandler(
+		UnetonServiceDeleteFamilyProcedure,
+		svc.DeleteFamily,
+		connect.WithSchema(unetonServiceMethods.ByName("DeleteFamily")),
+		connect.WithHandlerOptions(opts...),
+	)
 	unetonServiceSyncHandler := connect.NewUnaryHandler(
 		UnetonServiceSyncProcedure,
 		svc.Sync,
@@ -363,6 +547,22 @@ func NewUnetonServiceHandler(svc UnetonServiceHandler, opts ...connect.HandlerOp
 			unetonServiceCreateInviteHandler.ServeHTTP(w, r)
 		case UnetonServiceAcceptInviteProcedure:
 			unetonServiceAcceptInviteHandler.ServeHTTP(w, r)
+		case UnetonServiceGetFamilyManagementProcedure:
+			unetonServiceGetFamilyManagementHandler.ServeHTTP(w, r)
+		case UnetonServiceUpdateProfileProcedure:
+			unetonServiceUpdateProfileHandler.ServeHTTP(w, r)
+		case UnetonServiceRenameFamilyProcedure:
+			unetonServiceRenameFamilyHandler.ServeHTTP(w, r)
+		case UnetonServiceRemoveFamilyMemberProcedure:
+			unetonServiceRemoveFamilyMemberHandler.ServeHTTP(w, r)
+		case UnetonServiceLeaveFamilyProcedure:
+			unetonServiceLeaveFamilyHandler.ServeHTTP(w, r)
+		case UnetonServiceTransferFamilyOwnershipProcedure:
+			unetonServiceTransferFamilyOwnershipHandler.ServeHTTP(w, r)
+		case UnetonServiceRevokeInviteProcedure:
+			unetonServiceRevokeInviteHandler.ServeHTTP(w, r)
+		case UnetonServiceDeleteFamilyProcedure:
+			unetonServiceDeleteFamilyHandler.ServeHTTP(w, r)
 		case UnetonServiceSyncProcedure:
 			unetonServiceSyncHandler.ServeHTTP(w, r)
 		case UnetonServiceWatchFamilyProcedure:
@@ -414,6 +614,38 @@ func (UnimplementedUnetonServiceHandler) CreateInvite(context.Context, *connect.
 
 func (UnimplementedUnetonServiceHandler) AcceptInvite(context.Context, *connect.Request[v1.AcceptInviteRequest]) (*connect.Response[v1.AcceptInviteResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("uneton.v1.UnetonService.AcceptInvite is not implemented"))
+}
+
+func (UnimplementedUnetonServiceHandler) GetFamilyManagement(context.Context, *connect.Request[v1.GetFamilyManagementRequest]) (*connect.Response[v1.GetFamilyManagementResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("uneton.v1.UnetonService.GetFamilyManagement is not implemented"))
+}
+
+func (UnimplementedUnetonServiceHandler) UpdateProfile(context.Context, *connect.Request[v1.UpdateProfileRequest]) (*connect.Response[v1.UpdateProfileResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("uneton.v1.UnetonService.UpdateProfile is not implemented"))
+}
+
+func (UnimplementedUnetonServiceHandler) RenameFamily(context.Context, *connect.Request[v1.RenameFamilyRequest]) (*connect.Response[v1.RenameFamilyResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("uneton.v1.UnetonService.RenameFamily is not implemented"))
+}
+
+func (UnimplementedUnetonServiceHandler) RemoveFamilyMember(context.Context, *connect.Request[v1.RemoveFamilyMemberRequest]) (*connect.Response[v1.RemoveFamilyMemberResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("uneton.v1.UnetonService.RemoveFamilyMember is not implemented"))
+}
+
+func (UnimplementedUnetonServiceHandler) LeaveFamily(context.Context, *connect.Request[v1.LeaveFamilyRequest]) (*connect.Response[v1.LeaveFamilyResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("uneton.v1.UnetonService.LeaveFamily is not implemented"))
+}
+
+func (UnimplementedUnetonServiceHandler) TransferFamilyOwnership(context.Context, *connect.Request[v1.TransferFamilyOwnershipRequest]) (*connect.Response[v1.TransferFamilyOwnershipResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("uneton.v1.UnetonService.TransferFamilyOwnership is not implemented"))
+}
+
+func (UnimplementedUnetonServiceHandler) RevokeInvite(context.Context, *connect.Request[v1.RevokeInviteRequest]) (*connect.Response[v1.RevokeInviteResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("uneton.v1.UnetonService.RevokeInvite is not implemented"))
+}
+
+func (UnimplementedUnetonServiceHandler) DeleteFamily(context.Context, *connect.Request[v1.DeleteFamilyRequest]) (*connect.Response[v1.DeleteFamilyResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("uneton.v1.UnetonService.DeleteFamily is not implemented"))
 }
 
 func (UnimplementedUnetonServiceHandler) Sync(context.Context, *connect.Request[v1.SyncRequest]) (*connect.Response[v1.SyncResponse], error) {

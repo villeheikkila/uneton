@@ -606,6 +606,24 @@ func (q *Queries) UpdateDevicePushSettings(ctx context.Context, arg UpdateDevice
 	return result.RowsAffected()
 }
 
+const updateUserDisplayName = `-- name: UpdateUserDisplayName :execrows
+update users set display_name=?1
+where id=?2 and deleted_at is null
+`
+
+type UpdateUserDisplayNameParams struct {
+	DisplayName string `json:"display_name"`
+	ID          string `json:"id"`
+}
+
+func (q *Queries) UpdateUserDisplayName(ctx context.Context, arg UpdateUserDisplayNameParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateUserDisplayName, arg.DisplayName, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const upsertDevice = `-- name: UpsertDevice :exec
 insert into devices(id, user_id, refresh_token_hash, refresh_expires_at, last_seen_at)
 values (?1, ?2, ?3, ?4, ?5)
@@ -645,6 +663,17 @@ func (q *Queries) UserAppleRefreshToken(ctx context.Context, id string) ([]byte,
 	var apple_refresh_token_ciphertext []byte
 	err := row.Scan(&apple_refresh_token_ciphertext)
 	return apple_refresh_token_ciphertext, err
+}
+
+const userDisplayName = `-- name: UserDisplayName :one
+select display_name from users where id=?1 and deleted_at is null
+`
+
+func (q *Queries) UserDisplayName(ctx context.Context, id string) (string, error) {
+	row := q.db.QueryRowContext(ctx, userDisplayName, id)
+	var display_name string
+	err := row.Scan(&display_name)
+	return display_name, err
 }
 
 const userIDByAppleSubject = `-- name: UserIDByAppleSubject :one

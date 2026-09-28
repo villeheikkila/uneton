@@ -5,6 +5,7 @@ import Dependencies
 import Foundation
 import Observation
 import SQLiteData
+import Tagged
 import UnetonActivity
 import UnetonCore
 
@@ -25,6 +26,7 @@ final class SessionStore {
         static let notificationsEnabled = "push.notificationsEnabled"
         static let liveActivitiesEnabled = "push.liveActivitiesEnabled"
         static let reminderLeadMinutes = "push.reminderLeadMinutes"
+        static let pendingInitialFamilyID = "session.pendingInitialFamilyID"
     }
 
     private let credentials = CredentialStore()
@@ -34,6 +36,7 @@ final class SessionStore {
 
     var isWorking = false
     private(set) var isAuthenticated = false
+    private(set) var memberships: [AuthenticatedFamily]?
     var errorMessage: String?
     var forecast: SleepForecast?
     var prediction: SleepPrediction? { forecast?.nextSleepEstimate }
@@ -120,6 +123,185 @@ final class SessionStore {
     func demoSignOut() {
         forecast = nil
         isAuthenticated = false
+    }
+
+    func managementSnapshot(familyID: Family.ID) async throws -> FamilyManagementSnapshot {
+        guard let accessToken else { throw SessionError.notAuthenticated }
+        let snapshot: FamilyManagementSnapshot
+        do {
+            snapshot = try await apiClient.getFamilyManagement(familyID, accessToken)
+        } catch {
+            if isPermissionDeniedAPIError(error) { try? await refreshAuthentication() }
+            throw error
+        }
+        let updatedAt = now
+        try await database.write { db in
+            try Family.upsert {
+                Family(id: familyID, name: snapshot.familyName, role: snapshot.myRole, updatedAt: updatedAt)
+            }.execute(db)
+        }
+        return snapshot
+    }
+
+    func updateProfile(_ name: String) async throws {
+        guard let accessToken else { throw SessionError.notAuthenticated }
+        _ = try await apiClient.updateProfile(name, accessToken)
+    }
+
+    func renameFamily(_ familyID: Family.ID, name: String) async throws {
+        guard let accessToken else { throw SessionError.notAuthenticated }
+        let saved: String
+        do {
+            saved = try await apiClient.renameFamily(familyID, name, accessToken)
+        } catch {
+            guard let snapshot = try? await managementSnapshot(familyID: familyID),
+                  snapshot.familyName == name else { throw error }
+            saved = snapshot.familyName
+        }
+        let updatedAt = now
+        try await database.write { db in
+            if var family = try Family.find(familyID).fetchOne(db) {
+                family.name = saved
+                family.updatedAt = updatedAt
+                try Family.upsert { family }.execute(db)
+            }
+        }
+        do { try await refreshAuthentication() }
+        catch {
+            if let index = memberships?.firstIndex(where: { $0.id == familyID }) {
+                memberships?[index].name = saved
+            }
+        }
+    }
+
+    func removeFamilyMember(_ familyID: Family.ID, userID: UserID) async throws {
+        guard let accessToken else { throw SessionError.notAuthenticated }
+        do {
+            try await apiClient.removeFamilyMember(familyID, userID, accessToken)
+        } catch {
+            guard let snapshot = try? await managementSnapshot(familyID: familyID),
+                  !snapshot.members.contains(where: { $0.id == userID }) else { throw error }
+        }
+    }
+
+    func transferFamilyOwnership(_ familyID: Family.ID, userID: UserID) async throws {
+        guard let accessToken else { throw SessionError.notAuthenticated }
+        do {
+            try await apiClient.transferFamilyOwnership(familyID, userID, accessToken)
+        } catch {
+            guard let snapshot = try? await managementSnapshot(familyID: familyID),
+                  snapshot.myRole == "caregiver",
+                  snapshot.members.contains(where: { $0.id == userID && $0.role == "owner" }) else { throw error }
+        }
+        do { try await refreshAuthentication() }
+        catch {
+            if let index = memberships?.firstIndex(where: { $0.id == familyID }) {
+                memberships?[index].role = "caregiver"
+            }
+            let updatedAt = now
+            try? await database.write { db in
+                if var family = try Family.find(familyID).fetchOne(db) {
+                    family.role = "caregiver"
+                    family.updatedAt = updatedAt
+                    try Family.upsert { family }.execute(db)
+                }
+            }
+        }
+    }
+
+    func revokeInvite(_ familyID: Family.ID, inviteID: FamilyInviteID) async throws {
+        guard let accessToken else { throw SessionError.notAuthenticated }
+        do {
+            try await apiClient.revokeInvite(familyID, inviteID, accessToken)
+        } catch {
+            guard let snapshot = try? await managementSnapshot(familyID: familyID),
+                  !snapshot.pendingInvites.contains(where: { $0.id == inviteID }) else { throw error }
+        }
+    }
+
+    func leaveFamily(_ familyID: Family.ID) async throws {
+        guard let accessToken else { throw SessionError.notAuthenticated }
+        do {
+            _ = try await synchronizeWithRefresh(familyID: familyID)
+        } catch {
+            if await membershipWasRemoved(familyID) { return }
+            throw error
+        }
+        guard !(await hasUnresolvedSyncState(familyID: familyID)) else { throw SessionError.unsyncedChanges }
+        do {
+            try await apiClient.leaveFamily(familyID, accessToken)
+        } catch {
+            if !(await membershipWasRemoved(familyID)) { throw error }
+        }
+        do { try await refreshAuthentication() }
+        catch { memberships?.removeAll { $0.id == familyID } }
+        await watchBridge.publishSnapshot()
+    }
+
+    func deleteFamily(_ familyID: Family.ID) async throws {
+        guard let accessToken else { throw SessionError.notAuthenticated }
+        do {
+            _ = try await synchronizeWithRefresh(familyID: familyID)
+        } catch {
+            if await membershipWasRemoved(familyID) { return }
+            throw error
+        }
+        guard !(await hasUnresolvedSyncState(familyID: familyID)) else { throw SessionError.unsyncedChanges }
+        do {
+            try await apiClient.deleteFamily(familyID, accessToken)
+        } catch {
+            if !(await membershipWasRemoved(familyID)) { throw error }
+        }
+        do { try await refreshAuthentication() }
+        catch { memberships?.removeAll { $0.id == familyID } }
+        await watchBridge.publishSnapshot()
+    }
+
+    private func membershipWasRemoved(_ familyID: Family.ID) async -> Bool {
+        do { try await refreshAuthentication() } catch { return false }
+        return memberships?.contains(where: { $0.id == familyID }) == false
+    }
+
+    func addChild(_ familyID: Family.ID, name: String, birthDate: Date, reference: String) async throws {
+        _ = try await coordinator.createChild(familyID: familyID, nickname: name, birthDate: birthDate,
+            growthReference: reference)
+        if let prediction = try? await synchronizeWithRefresh(familyID: familyID) {
+            await setPrediction(prediction)
+        }
+    }
+
+    func createFamily(_ familyID: Family.ID, name: String) async throws {
+        guard let accessToken else { throw SessionError.notAuthenticated }
+        try await apiClient.createFamily(familyID, name, accessToken)
+        let family = Family(id: familyID, name: name, role: "owner", updatedAt: now)
+        try await database.write { db in try Family.upsert { family }.execute(db) }
+        try await refreshAuthentication()
+    }
+
+    func updateChild(_ child: Child) async throws {
+        try await coordinator.updateChild(familyID: child.familyID, childID: child.id,
+            nickname: child.nickname, birthDate: child.birthDate, predictionMode: child.predictionMode,
+            manualIntervalMinutes: child.manualIntervalMinutes, quietHoursStartMinutes: child.quietHoursStartMinutes,
+            quietHoursEndMinutes: child.quietHoursEndMinutes, timeZone: child.timeZone,
+            growthReference: child.growthReference)
+        if let prediction = try? await synchronizeWithRefresh(familyID: child.familyID) {
+            await setPrediction(prediction)
+        }
+    }
+
+    func deleteChild(_ child: Child) async throws {
+        let hasActiveSleep = try await database.read { db in
+            try SleepSession.where {
+                $0.childID.eq(child.id) && $0.endedAt.is(nil)
+                    && $0.deletedAt.is(nil) && $0.supersededByID.is(nil)
+            }
+                .fetchCount(db) > 0
+        }
+        guard !hasActiveSleep else { throw SessionError.activeSleep }
+        try await coordinator.deleteChild(familyID: child.familyID, childID: child.id)
+        if let prediction = try? await synchronizeWithRefresh(familyID: child.familyID) {
+            await setPrediction(prediction)
+        }
     }
 
     func developmentAuthenticate(name: String) async {
@@ -211,6 +393,11 @@ final class SessionStore {
         isWorking = true
         errorMessage = nil
         defer { isWorking = false }
+        if await hasUnresolvedSyncState() { _ = await synchronizeAllInBackground() }
+        guard !(await hasUnresolvedSyncState()) else {
+            errorMessage = "Sync or resolve pending changes before deleting your account."
+            return false
+        }
         do {
             try await apiClient.deleteAccount(accessToken)
             await clearLocalSession()
@@ -328,7 +515,9 @@ final class SessionStore {
 
     func observeChanges(familyID: Family.ID) async {
         var retryDelay = 1
+        try? await refreshAuthentication()
         while !Task.isCancelled {
+            if let memberships, !memberships.contains(where: { $0.id == familyID }) { return }
             do {
                 await setPrediction(try await synchronizeWithRefresh(familyID: familyID))
                 let cursor = try await coordinator.cursor(familyID: familyID)
@@ -339,6 +528,10 @@ final class SessionStore {
             } catch is CancellationError {
                 return
             } catch {
+                if isPermissionDeniedAPIError(error) {
+                    try? await refreshAuthentication()
+                    return
+                }
                 try? await clock.sleep(for: .seconds(retryDelay))
                 retryDelay = min(retryDelay * 2, 30)
             }
@@ -438,8 +631,10 @@ final class SessionStore {
 
     func watchDiarySnapshot() async throws -> WatchDiarySnapshot {
         guard isAuthenticated else { return WatchDiarySnapshot() }
+        let allowedFamilyIDs = memberships.map { Set($0.map(\.id)) }
         return try await database.read { database in
             let families = try Family.order { $0.updatedAt.desc() }.fetchAll(database)
+                .filter { allowedFamilyIDs?.contains($0.id) ?? true }
             let children = try Child.fetchAll(database)
             let sessions = try SleepSession.fetchAll(database)
             let readings = try TemperatureReading.order { $0.measuredAt.desc() }.fetchAll(database)
@@ -558,9 +753,9 @@ final class SessionStore {
         growthReference: String
     ) async throws {
         guard let accessToken else { throw SessionError.notAuthenticated }
-        let familyID = try await database.read { database in
-            try Family.order(by: { $0.updatedAt.desc() }).fetchOne(database)?.id
-        } ?? Family.ID(rawValue: uuid())
+        let familyID = UserDefaults.standard.string(forKey: Key.pendingInitialFamilyID)
+            .flatMap(Family.ID.init(uuidString:)) ?? Family.ID(rawValue: uuid())
+        UserDefaults.standard.set(familyID.uuidString, forKey: Key.pendingInitialFamilyID)
         let family = Family(id: familyID, name: "Our family", role: "owner", updatedAt: now)
         try await database.write { database in
             try Family.upsert { family }.execute(database)
@@ -576,6 +771,7 @@ final class SessionStore {
         )
         await reminders.requestAuthorization()
         await setPrediction(try await synchronizeWithRefresh(familyID: familyID))
+        UserDefaults.standard.removeObject(forKey: Key.pendingInitialFamilyID)
     }
 
     private func save(_ authentication: AuthenticationResponse) {
@@ -583,6 +779,7 @@ final class SessionStore {
         credentials.set(authentication.refreshToken, for: Key.refreshToken)
         UserDefaults.standard.set(authentication.deviceID.uuidString, forKey: Key.deviceID)
         isAuthenticated = true
+        memberships = authentication.families
     }
 
     private func configurePushRegistration() async {
@@ -625,6 +822,7 @@ final class SessionStore {
         credentials.removeValue(for: Key.accessToken)
         credentials.removeValue(for: Key.refreshToken)
         credentials.removeValue(for: Key.appleUserID)
+        UserDefaults.standard.removeObject(forKey: Key.pendingInitialFamilyID)
         forecast = nil
         await reminders.schedule(nil, leadMinutes: reminderLeadMinutes)
         try? await database.write { database in
@@ -640,6 +838,7 @@ final class SessionStore {
             try Family.delete().execute(database)
         }
         isAuthenticated = false
+        memberships = nil
         await watchBridge.publishSnapshot()
     }
 
@@ -659,12 +858,14 @@ final class SessionStore {
     }
 
     private func restoreAuthenticatedFamily(_ authentication: AuthenticationResponse) async throws -> Family.ID? {
-        guard let membership = authentication.families.first else { return nil }
-        let family = Family(id: membership.id, name: membership.name, role: membership.role, updatedAt: now)
+        let updatedAt = now
         try await database.write { database in
-            try Family.upsert { family }.execute(database)
+            for membership in authentication.families {
+                let family = Family(id: membership.id, name: membership.name, role: membership.role, updatedAt: updatedAt)
+                try Family.upsert { family }.execute(database)
+            }
         }
-        return family.id
+        return authentication.families.first?.id
     }
 
     private func setPrediction(_ value: SleepForecast?) async {
@@ -677,6 +878,10 @@ final class SessionStore {
         do {
             result = try await coordinator.synchronize(familyID: familyID)
         } catch {
+            if isPermissionDeniedAPIError(error) {
+                try? await refreshAuthentication()
+                throw error
+            }
             guard isUnauthenticatedAPIError(error) else { throw error }
             try await refreshAuthentication()
             result = try await coordinator.synchronize(familyID: familyID)
@@ -697,9 +902,10 @@ final class SessionStore {
 
     private func synchronizeAllInBackground() async -> Bool {
         guard accessToken != nil else { return false }
+        let allowedFamilyIDs = memberships.map { Set($0.map(\.id)) }
         let familyIDs = (try? await database.read { database in
             try Family.select(\.id).fetchAll(database)
-        }) ?? []
+        })?.filter { allowedFamilyIDs?.contains($0) ?? true } ?? []
         guard !familyIDs.isEmpty else { return true }
         var success = true
         for familyID in familyIDs where !Task.isCancelled {
@@ -714,10 +920,20 @@ final class SessionStore {
         }) ?? true
     }
 
+    private func hasUnresolvedSyncState(familyID: Family.ID) async -> Bool {
+        (try? await database.read { database in
+            try PendingCommand.where { $0.familyID.eq(familyID) }.fetchCount(database) > 0
+                || SyncConflict.where { $0.familyID.eq(familyID) }.fetchCount(database) > 0
+        }) ?? true
+    }
+
     private func refreshAuthentication() async throws {
         if let refreshTask {
-            save(try await refreshTask.value)
+            let authentication = try await refreshTask.value
+            save(authentication)
+            _ = try await restoreAuthenticatedFamily(authentication)
             await configurePushRegistration()
+            await watchBridge.publishSnapshot()
             return
         }
         guard let refreshToken = credentials.value(for: Key.refreshToken) else {
@@ -726,8 +942,11 @@ final class SessionStore {
         let task = Task { try await apiClient.refreshAuth(deviceID, refreshToken) }
         refreshTask = task
         defer { refreshTask = nil }
-        save(try await task.value)
+        let authentication = try await task.value
+        save(authentication)
+        _ = try await restoreAuthenticatedFamily(authentication)
         await configurePushRegistration()
+        await watchBridge.publishSnapshot()
     }
 
     private func perform(_ operation: () async throws -> Void) async {
@@ -748,4 +967,18 @@ enum SessionError: Error {
     case missingAppleNonce
     case couldNotCreateNonce
     case notAuthenticated
+    case unsyncedChanges
+    case activeSleep
+}
+
+extension SessionError: LocalizedError {
+    var errorDescription: String? {
+        switch self {
+        case .unsyncedChanges: "Sync or resolve this family’s pending changes before leaving or deleting it."
+        case .activeSleep: "End this baby’s active sleep before deleting their records."
+        case .notAuthenticated: "Sign in to manage this family."
+        case .invalidAppleCredential: "Your Apple sign in has expired."
+        case .missingAppleNonce, .couldNotCreateNonce: "Could not start Apple sign in. Try again."
+        }
+    }
 }

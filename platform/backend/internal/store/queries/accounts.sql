@@ -5,6 +5,13 @@ select id from users where apple_subject = sqlc.arg(apple_subject);
 insert into users(id, apple_subject, display_name, apple_refresh_token_ciphertext, created_at)
 values (sqlc.arg(id), sqlc.arg(apple_subject), sqlc.arg(display_name), sqlc.arg(apple_refresh_token_ciphertext), sqlc.arg(created_at));
 
+-- name: UserDisplayName :one
+select display_name from users where id=sqlc.arg(id) and deleted_at is null;
+
+-- name: UpdateUserDisplayName :execrows
+update users set display_name=sqlc.arg(display_name)
+where id=sqlc.arg(id) and deleted_at is null;
+
 -- name: UpdateAppleRefreshToken :exec
 update users set apple_refresh_token_ciphertext=sqlc.arg(apple_refresh_token_ciphertext)
 where id=sqlc.arg(id) and deleted_at is null;

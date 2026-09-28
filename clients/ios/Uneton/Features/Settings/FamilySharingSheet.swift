@@ -1,4 +1,3 @@
-import CoreImage.CIFilterBuiltins
 import ComposableArchitecture2
 import SwiftUI
 
@@ -10,29 +9,11 @@ struct FamilySharingSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 22) {
-                    Image(systemName: "person.2.badge.plus")
+                    Image(systemName: "gearshape")
                         .font(.system(size: 48))
                         .foregroundStyle(.indigo)
-                    Text("Invite a caregiver")
+                    Text("Device and account")
                         .font(.title2.bold())
-                    Text("Track sleep, growth and temperature together. This invitation works once and expires in seven days.")
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    if let inviteURL = store.inviteURL {
-                        QRCodeImage(value: inviteURL.absoluteString)
-                            .frame(width: 180, height: 180)
-                            .accessibilityLabel("Family invitation QR code")
-                        ShareLink(item: inviteURL, subject: Text("Join our Uneton family")) {
-                            Label("Share invitation", systemImage: "square.and.arrow.up")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                    } else {
-                        ProgressView("Creating secure invitation…")
-                    }
-                    Divider()
 
                     VStack(alignment: .leading, spacing: 14) {
                         Text("This device").font(.headline)
@@ -74,7 +55,7 @@ struct FamilySharingSheet: View {
                 }
                 .padding(24)
             }
-            .navigationTitle("Family")
+            .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { Button("Done") { dismiss() } }
             .confirmationDialog(
@@ -98,29 +79,5 @@ struct FamilySharingSheet: View {
 }
 
 #if DEBUG
-#Preview("Family sharing sheet") { ScreenFixtures.preview(.familySharingSheet) }
+#Preview("Device and account settings") { ScreenFixtures.preview(.familySharingSheet) }
 #endif
-
-private struct QRCodeImage: View {
-    let value: String
-    private let context = CIContext()
-    private let filter = CIFilter.qrCodeGenerator()
-
-    var body: some View {
-        if let image = image {
-            Image(uiImage: image)
-                .interpolation(.none)
-                .resizable()
-                .scaledToFit()
-        }
-    }
-
-    private var image: UIImage? {
-        filter.message = Data(value.utf8)
-        filter.correctionLevel = "M"
-        guard let output = filter.outputImage?.transformed(by: CGAffineTransform(scaleX: 12, y: 12)),
-              let cgImage = context.createCGImage(output, from: output.extent)
-        else { return nil }
-        return UIImage(cgImage: cgImage)
-    }
-}

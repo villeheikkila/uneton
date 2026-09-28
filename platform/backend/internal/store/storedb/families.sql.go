@@ -10,6 +10,61 @@ import (
 	"database/sql"
 )
 
+const activeFamilyMemberCount = `-- name: ActiveFamilyMemberCount :one
+select count(*) from family_members
+where family_id=?1 and removed_at is null
+`
+
+func (q *Queries) ActiveFamilyMemberCount(ctx context.Context, familyID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, activeFamilyMemberCount, familyID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const activeFamilyMembers = `-- name: ActiveFamilyMembers :many
+select fm.user_id, u.display_name, fm.role, fm.joined_at
+from family_members as fm
+join users as u on u.id=fm.user_id
+where fm.family_id=?1 and fm.removed_at is null and u.deleted_at is null
+order by case fm.role when 'owner' then 0 else 1 end, fm.joined_at, fm.user_id
+`
+
+type ActiveFamilyMembersRow struct {
+	UserID      string `json:"user_id"`
+	DisplayName string `json:"display_name"`
+	Role        string `json:"role"`
+	JoinedAt    string `json:"joined_at"`
+}
+
+func (q *Queries) ActiveFamilyMembers(ctx context.Context, familyID string) ([]ActiveFamilyMembersRow, error) {
+	rows, err := q.db.QueryContext(ctx, activeFamilyMembers, familyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ActiveFamilyMembersRow{}
+	for rows.Next() {
+		var i ActiveFamilyMembersRow
+		if err := rows.Scan(
+			&i.UserID,
+			&i.DisplayName,
+			&i.Role,
+			&i.JoinedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const addCaregiver = `-- name: AddCaregiver :exec
 insert into family_members(family_id, user_id, role, joined_at)
 values (?1, ?2, 'caregiver', ?3)
@@ -130,6 +185,44 @@ func (q *Queries) DeleteFamilyOwnedBy(ctx context.Context, arg DeleteFamilyOwned
 	return result.RowsAffected()
 }
 
+const deleteSoleOwnerFamily = `-- name: DeleteSoleOwnerFamily :execrows
+delete from families
+where id=?1 and owner_id=?2
+  and (select count(*) from family_members where family_id=?1 and removed_at is null)=1
+`
+
+type DeleteSoleOwnerFamilyParams struct {
+	ID      string `json:"id"`
+	OwnerID string `json:"owner_id"`
+}
+
+func (q *Queries) DeleteSoleOwnerFamily(ctx context.Context, arg DeleteSoleOwnerFamilyParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteSoleOwnerFamily, arg.ID, arg.OwnerID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const demoteFamilyOwner = `-- name: DemoteFamilyOwner :execrows
+update family_members set role='caregiver'
+where family_id=?1 and user_id=?2
+  and role='owner' and removed_at is null
+`
+
+type DemoteFamilyOwnerParams struct {
+	FamilyID string `json:"family_id"`
+	UserID   string `json:"user_id"`
+}
+
+func (q *Queries) DemoteFamilyOwner(ctx context.Context, arg DemoteFamilyOwnerParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, demoteFamilyOwner, arg.FamilyID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const familiesForUser = `-- name: FamiliesForUser :many
 select f.id, f.name, fm.role
 from families as f
@@ -182,6 +275,23 @@ func (q *Queries) FamilyByID(ctx context.Context, id string) (FamilyByIDRow, err
 	var i FamilyByIDRow
 	err := row.Scan(&i.ID, &i.Name, &i.OwnerID)
 	return i, err
+}
+
+const familyMemberRole = `-- name: FamilyMemberRole :one
+select role from family_members
+where family_id=?1 and user_id=?2 and removed_at is null
+`
+
+type FamilyMemberRoleParams struct {
+	FamilyID string `json:"family_id"`
+	UserID   string `json:"user_id"`
+}
+
+func (q *Queries) FamilyMemberRole(ctx context.Context, arg FamilyMemberRoleParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, familyMemberRole, arg.FamilyID, arg.UserID)
+	var role string
+	err := row.Scan(&role)
+	return role, err
 }
 
 const familyOwnershipSuccessor = `-- name: FamilyOwnershipSuccessor :one
@@ -305,6 +415,46 @@ func (q *Queries) OwnedFamilyIDs(ctx context.Context, ownerID string) ([]string,
 	return items, nil
 }
 
+const pendingFamilyInvites = `-- name: PendingFamilyInvites :many
+select id, expires_at, created_at from invites
+where family_id=?1 and claimed_at is null and expires_at>?2
+order by created_at desc, id
+`
+
+type PendingFamilyInvitesParams struct {
+	FamilyID string `json:"family_id"`
+	Now      string `json:"now"`
+}
+
+type PendingFamilyInvitesRow struct {
+	ID        string `json:"id"`
+	ExpiresAt string `json:"expires_at"`
+	CreatedAt string `json:"created_at"`
+}
+
+func (q *Queries) PendingFamilyInvites(ctx context.Context, arg PendingFamilyInvitesParams) ([]PendingFamilyInvitesRow, error) {
+	rows, err := q.db.QueryContext(ctx, pendingFamilyInvites, arg.FamilyID, arg.Now)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []PendingFamilyInvitesRow{}
+	for rows.Next() {
+		var i PendingFamilyInvitesRow
+		if err := rows.Scan(&i.ID, &i.ExpiresAt, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const promoteFamilyOwner = `-- name: PromoteFamilyOwner :execrows
 update family_members set role='owner'
 where family_id=?1
@@ -319,6 +469,72 @@ type PromoteFamilyOwnerParams struct {
 
 func (q *Queries) PromoteFamilyOwner(ctx context.Context, arg PromoteFamilyOwnerParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, promoteFamilyOwner, arg.FamilyID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const removeCaregiver = `-- name: RemoveCaregiver :execrows
+update family_members set removed_at=?1
+where family_id=?2 and user_id=?3
+  and role='caregiver' and removed_at is null
+  and exists (select 1 from families where id=?2
+    and (owner_id=?4 or ?4=?3))
+`
+
+type RemoveCaregiverParams struct {
+	RemovedAt sql.NullString `json:"removed_at"`
+	FamilyID  string         `json:"family_id"`
+	UserID    string         `json:"user_id"`
+	ActorID   string         `json:"actor_id"`
+}
+
+func (q *Queries) RemoveCaregiver(ctx context.Context, arg RemoveCaregiverParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, removeCaregiver,
+		arg.RemovedAt,
+		arg.FamilyID,
+		arg.UserID,
+		arg.ActorID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const renameFamily = `-- name: RenameFamily :execrows
+update families set name=?1
+where id=?2 and owner_id=?3
+`
+
+type RenameFamilyParams struct {
+	Name    string `json:"name"`
+	ID      string `json:"id"`
+	OwnerID string `json:"owner_id"`
+}
+
+func (q *Queries) RenameFamily(ctx context.Context, arg RenameFamilyParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, renameFamily, arg.Name, arg.ID, arg.OwnerID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const revokePendingInvite = `-- name: RevokePendingInvite :execrows
+delete from invites as i where i.id=?1 and i.family_id=?2 and i.claimed_at is null
+  and exists (select 1 from families as f where f.id=?2 and f.owner_id=?3)
+`
+
+type RevokePendingInviteParams struct {
+	ID       string `json:"id"`
+	FamilyID string `json:"family_id"`
+	OwnerID  string `json:"owner_id"`
+}
+
+func (q *Queries) RevokePendingInvite(ctx context.Context, arg RevokePendingInviteParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, revokePendingInvite, arg.ID, arg.FamilyID, arg.OwnerID)
 	if err != nil {
 		return 0, err
 	}

@@ -20,11 +20,13 @@ enum ScreenFixtures {
         case sleepEntrySheet
         case growthEntrySheet
         case familySharingSheet
+        case familyManagementSheet
+        case childEditorSheet
         case syncConflictsSheet
 
         var hasSheet: Bool {
             switch self {
-            case .invitationScannerSheet, .sleepEntrySheet, .growthEntrySheet, .familySharingSheet, .syncConflictsSheet: true
+            case .invitationScannerSheet, .sleepEntrySheet, .growthEntrySheet, .familySharingSheet, .familyManagementSheet, .childEditorSheet, .syncConflictsSheet: true
             default: false
             }
         }
@@ -32,7 +34,11 @@ enum ScreenFixtures {
 
     static let now = ModelFixtures.now
     private static let databasePrepared: Void = {
-        try! prepareDependencies { try $0.bootstrapDatabase(inMemory: true) }
+        try! prepareDependencies {
+            try $0.bootstrapDatabase(inMemory: true)
+            $0.date = .constant(now)
+            $0.uuid = .incrementing
+        }
     }()
 
     private static var family: Family { ModelFixtures.family() }
@@ -69,6 +75,7 @@ enum ScreenFixtures {
         )
         try await database.write { database in
             try SyncConflict.delete().execute(database)
+            try PendingCommand.delete().execute(database)
             try GrowthMeasurement.delete().execute(database)
             try SleepSession.delete().execute(database)
             try Child.delete().execute(database)
@@ -140,9 +147,25 @@ enum ScreenFixtures {
                 )
             case .familySharingSheet:
                 state.sharing = FamilySharing.State(
-                    familyID: family.id, notificationsEnabled: true,
+                    notificationsEnabled: true,
                     liveActivitiesEnabled: true, reminderLeadMinutes: 15
                 )
+            case .familyManagementSheet, .childEditorSheet:
+                state.management = FamilyManagement.State(familyID: family.id)
+                state.management?.snapshot = FamilyManagementSnapshot(
+                    familyID: family.id, familyName: family.name,
+                    myUserID: ModelFixtures.authorID, myDisplayName: "Alex", myRole: "owner",
+                    members: [
+                        ManagedFamilyMember(id: ModelFixtures.authorID, displayName: "Alex", role: "owner",
+                            joinedAt: now.addingTimeInterval(-90 * 86_400)),
+                        ManagedFamilyMember(id: UserID(uuidString: "00000000-0000-4000-8000-000000000108")!,
+                            displayName: "Sam", role: "caregiver", joinedAt: now.addingTimeInterval(-30 * 86_400))
+                    ], pendingInvites: [])
+                state.management?.profileName = "Alex"
+                state.management?.familyName = family.name
+                if scenario == .childEditorSheet {
+                    state.management?.childEditor = ChildEditor.State(child: child)
+                }
             case .syncConflictsSheet:
                 state.isPresentingConflicts = true
             default:
@@ -151,8 +174,7 @@ enum ScreenFixtures {
             var syncClient = SessionSyncClient.unimplemented
             syncClient.observe = { _ in }
             syncClient.refresh = { _ in }
-            var sharingClient = demo.sharing
-            sharingClient.createInvite = { _ in (URL(string: "uneton://invite/snapshot-code"), nil) }
+            let sharingClient = demo.sharing
             state.selectedTab = switch scenario {
             case .growthTab, .growthEntrySheet: .growth
             case .temperatureTab: .temperature
@@ -164,8 +186,11 @@ enum ScreenFixtures {
                     .environment(\.sessionSync, syncClient)
                     .environment(\.sessionSharing, sharingClient)
                     .environment(\.sessionDiary, demo.diary)
+                    .environment(\.sessionFamilyManagement, demo.management)
+                    .environment(\.sessionFamily, demo.family)
             }
-            return AnyView(TimelineScreen(syncStore: store, family: family, child: child))
+            return AnyView(TimelineScreen(syncStore: store, family: family, child: child,
+                families: [family], children: [child]))
         }
     }
 }

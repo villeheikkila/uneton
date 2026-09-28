@@ -28,13 +28,24 @@ struct TimelineScreen: View {
     @FetchAll(SyncConflict.order { $0.createdAt.desc() }) private var allConflicts
     let family: Family
     let child: Child
+    let families: [Family]
+    let children: [Child]
+    let selectFamily: (Family.ID) -> Void
+    let selectChild: (Child.ID) -> Void
 
     @Namespace private var navigationNamespace
 
-    init(syncStore: StoreOf<FamilySync>, family: Family, child: Child) {
+    init(syncStore: StoreOf<FamilySync>, family: Family, child: Child,
+         families: [Family] = [], children: [Child] = [],
+         selectFamily: @escaping (Family.ID) -> Void = { _ in },
+         selectChild: @escaping (Child.ID) -> Void = { _ in }) {
         self.syncStore = syncStore
         self.family = family
         self.child = child
+        self.families = families
+        self.children = children
+        self.selectFamily = selectFamily
+        self.selectChild = selectChild
     }
 
     private var conflicts: [SyncConflict] {
@@ -136,12 +147,28 @@ struct TimelineScreen: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Family", systemImage: "person.2.fill") {
-                        syncStore.send(.familyButtonTapped(
-                            session.notificationsEnabled,
-                            session.liveActivitiesEnabled,
-                            session.reminderLeadMinutes
-                        ))
+                    Menu("Family", systemImage: "person.2.fill") {
+                        if families.count > 1 {
+                            Section("Families") {
+                                ForEach(families) { item in
+                                    Button(item.name, systemImage: item.id == family.id ? "checkmark" : "house") {
+                                        selectFamily(item.id)
+                                    }
+                                }
+                            }
+                        }
+                        if children.count > 1 {
+                            Section("Babies") {
+                                ForEach(children) { item in
+                                    Button(item.nickname, systemImage: item.id == child.id ? "checkmark" : "figure.child") {
+                                        selectChild(item.id)
+                                    }
+                                }
+                            }
+                        }
+                        Button("Manage family", systemImage: "person.2") {
+                            syncStore.send(.familyButtonTapped)
+                        }
                     }
                 }
 
@@ -161,6 +188,9 @@ struct TimelineScreen: View {
             }
             .sheet(item: $syncStore.scope(\.sharing)) { sharingStore in
                 FamilySharingSheet(store: sharingStore)
+            }
+            .sheet(item: $syncStore.scope(\.management)) { managementStore in
+                FamilyManagementView(store: managementStore, children: children)
             }
             .sheet(isPresented: $syncStore.isPresentingConflicts) {
                 SyncConflictsSheet(conflicts: conflicts, syncStore: syncStore)

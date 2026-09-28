@@ -17,6 +17,108 @@ import Testing
 struct SyncCoordinatorTests {
   @Dependency(\.defaultDatabase) var database
 
+  @Test func childSettingsQueueOneDurableOptimisticUpdate() async throws {
+    let familyID = Family.ID(rawValue: UUID(-201))
+    let childID = Child.ID(rawValue: UUID(-202))
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-203)), accessToken: { "token" })
+    try await coordinator.updateChild(familyID: familyID, childID: childID,
+      nickname: "New name", birthDate: date(1_000), predictionMode: "manual",
+      manualIntervalMinutes: 150, quietHoursStartMinutes: 1_260,
+      quietHoursEndMinutes: 420, timeZone: "Europe/Helsinki", growthReference: "girl")
+    let state = try await database.read { db in
+      (try Child.find(childID).fetchOne(db), try PendingCommand.fetchAll(db))
+    }
+    #expect(state.0?.nickname == "New name")
+    #expect(state.0?.predictionMode == "manual")
+    #expect(state.0?.manualIntervalMinutes == 150)
+    #expect(state.0?.timeZone == "Europe/Helsinki")
+    #expect(state.1.count == 1)
+    #expect(state.1[0].kind == "updateChild")
+    try await coordinator.updateChild(familyID: familyID, childID: childID,
+      nickname: "Second name", birthDate: date(1_000), predictionMode: "manual",
+      manualIntervalMinutes: 180, quietHoursStartMinutes: 1_260,
+      quietHoursEndMinutes: 420, timeZone: "Europe/Helsinki", growthReference: "girl")
+    let commands = try await database.read { db in
+      try PendingCommand.where { $0.familyID.eq(familyID) }.fetchAll(db)
+    }
+    #expect(Set(commands.compactMap(\.expectedRevision)) == Set([1, 2]))
+  }
+
+  @Test func deletingChildHidesDiaryButKeepsTheCommandForSync() async throws {
+    let familyID = Family.ID(rawValue: UUID(-211))
+    let childID = Child.ID(rawValue: UUID(-212))
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    let sleep = ModelFixtures.sleep(id: SleepSession.ID(rawValue: UUID(-213)),
+      familyID: familyID, childID: childID)
+    try await database.write { db in try SleepSession.insert { sleep }.execute(db) }
+    let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-214)), accessToken: { "token" })
+    try await coordinator.deleteChild(familyID: familyID, childID: childID)
+    let state = try await database.read { db in
+      (try Child.find(childID).fetchOne(db), try SleepSession.find(sleep.id).fetchOne(db),
+        try PendingCommand.fetchAll(db))
+    }
+    #expect(state.0 == nil)
+    #expect(state.1 == nil)
+    #expect(state.2.count == 1)
+    #expect(state.2[0].kind == "deleteChild")
+  }
+
+  @Test func snapshotChildTombstoneDoesNotResurrectTheBaby() async throws {
+    let familyID = Family.ID(rawValue: UUID(-221))
+    let childID = Child.ID(rawValue: UUID(-222))
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    var tombstone = ServerChildPayload(id: childID, nickname: "Muru",
+      birthDate: "2026-02-23", predictionMode: "adaptive",
+      quietHoursStartMinutes: 1_200, quietHoursEndMinutes: 360,
+      revision: 2, updatedAt: date(2_000))
+    tombstone.deletedAt = date(2_000)
+    let data = try JSONEncoder.uneton.encode(tombstone)
+    try await database.write { db in
+      try AuthoritativeRecord.upsert {
+        AuthoritativeRecord(id: "child:\(childID.uuidString)", familyID: familyID,
+          entityType: "child", entityID: EntityID(rawValue: childID.rawValue),
+          revision: 2, operation: "upsert", payloadJSON: data)
+      }.execute(db)
+      try Projection.rebuild(familyID: familyID, database: db)
+    }
+    #expect(try await database.read { try Child.find(childID).fetchOne($0) } == nil)
+  }
+
+  @Test func acceptedChildDeletionRemovesThePendingCommandAndProjection() async throws {
+    let familyID = Family.ID(rawValue: UUID(-231))
+    let childID = Child.ID(rawValue: UUID(-232))
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    var tombstone = ServerChildPayload(id: childID, nickname: "Muru",
+      birthDate: "2026-02-23", predictionMode: "adaptive",
+      quietHoursStartMinutes: 1_200, quietHoursEndMinutes: 360,
+      revision: 2, updatedAt: date(2_000))
+    tombstone.deletedAt = date(2_000)
+    let deletedPayload = tombstone
+    var api = APIClient.testValue
+    api.sync = { _, _, request in
+      let command = try #require(request.commands.first)
+      let payload = try jsonValue(deletedPayload)
+      return SyncResponse(
+        commandResults: [APICommandResult(id: command.id, status: "accepted",
+          entityID: EntityID(rawValue: childID.rawValue), payload: payload)],
+        events: [SyncEvent(cursor: 1, entityType: "child",
+          entityID: EntityID(rawValue: childID.rawValue), operation: "delete",
+          revision: 2, payload: payload, createdAt: date(2_000))],
+        nextCursor: 1, hasMore: false, serverTime: date(2_000))
+    }
+    try await withDependencies { $0.apiClient = api } operation: {
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-233)), accessToken: { "token" })
+      try await coordinator.deleteChild(familyID: familyID, childID: childID)
+      _ = try await coordinator.synchronize(familyID: familyID)
+    }
+    let state = try await database.read { db in
+      (try Child.find(childID).fetchOne(db), try PendingCommand.fetchCount(db))
+    }
+    #expect(state.0 == nil)
+    #expect(state.1 == 0)
+  }
+
   @Test func synchronizationReturnsTheServerForecast() async throws {
     let familyID = Family.ID(rawValue: UUID(-1))
     let childID = Child.ID(rawValue: UUID(-2))

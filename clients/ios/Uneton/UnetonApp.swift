@@ -46,6 +46,7 @@ struct UnetonApp: App {
                     .environment(\.sessionFamily, demo.family)
                     .environment(\.sessionDiary, demo.diary)
                     .environment(\.sessionSharing, demo.sharing)
+                    .environment(\.sessionFamilyManagement, demo.management)
             })
             return
         }
@@ -57,6 +58,7 @@ struct UnetonApp: App {
                 .environment(\.sessionFamily, .live(session: session))
                 .environment(\.sessionDiary, .live(session: session))
                 .environment(\.sessionSharing, .live(session: session))
+                .environment(\.sessionFamilyManagement, .live(session: session))
         })
     }
 

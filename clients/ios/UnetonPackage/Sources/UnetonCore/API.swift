@@ -1,6 +1,7 @@
 import Connect
 import Dependencies
 import Foundation
+import Tagged
 import UnetonAPI
 import SwiftProtobuf
 
@@ -194,6 +195,54 @@ public struct AcceptedInvite: Codable, Equatable, Sendable {
   public var role: String
 }
 
+public struct ManagedFamilyMember: Identifiable, Codable, Equatable, Sendable {
+  public var id: UserID
+  public var displayName: String
+  public var role: String
+  public var joinedAt: Date
+
+  public init(id: UserID, displayName: String, role: String, joinedAt: Date) {
+    self.id = id
+    self.displayName = displayName
+    self.role = role
+    self.joinedAt = joinedAt
+  }
+}
+
+public struct ManagedFamilyInvite: Identifiable, Codable, Equatable, Sendable {
+  public var id: FamilyInviteID
+  public var expiresAt: Date
+  public var createdAt: Date
+
+  public init(id: FamilyInviteID, expiresAt: Date, createdAt: Date) {
+    self.id = id
+    self.expiresAt = expiresAt
+    self.createdAt = createdAt
+  }
+}
+
+public struct FamilyManagementSnapshot: Codable, Equatable, Sendable {
+  public var familyID: Family.ID
+  public var familyName: String
+  public var myUserID: UserID
+  public var myDisplayName: String
+  public var myRole: String
+  public var members: [ManagedFamilyMember]
+  public var pendingInvites: [ManagedFamilyInvite]
+
+  public init(familyID: Family.ID, familyName: String, myUserID: UserID,
+              myDisplayName: String, myRole: String, members: [ManagedFamilyMember],
+              pendingInvites: [ManagedFamilyInvite]) {
+    self.familyID = familyID
+    self.familyName = familyName
+    self.myUserID = myUserID
+    self.myDisplayName = myDisplayName
+    self.myRole = myRole
+    self.members = members
+    self.pendingInvites = pendingInvites
+  }
+}
+
 public struct DevicePushSettings: Codable, Equatable, Sendable {
   public var notificationsEnabled: Bool
   public var liveActivitiesEnabled: Bool
@@ -217,6 +266,14 @@ public struct APIClient: Sendable {
   public var createFamily: @Sendable (_ id: Family.ID, _ name: String, _ accessToken: String) async throws -> Void
   public var createInvite: @Sendable (_ familyID: Family.ID, _ accessToken: String) async throws -> FamilyInvite
   public var acceptInvite: @Sendable (_ token: String, _ accessToken: String) async throws -> AcceptedInvite
+  public var getFamilyManagement: @Sendable (Family.ID, String) async throws -> FamilyManagementSnapshot
+  public var updateProfile: @Sendable (String, String) async throws -> String
+  public var renameFamily: @Sendable (Family.ID, String, String) async throws -> String
+  public var removeFamilyMember: @Sendable (Family.ID, UserID, String) async throws -> Void
+  public var leaveFamily: @Sendable (Family.ID, String) async throws -> Void
+  public var transferFamilyOwnership: @Sendable (Family.ID, UserID, String) async throws -> Void
+  public var revokeInvite: @Sendable (Family.ID, FamilyInviteID, String) async throws -> Void
+  public var deleteFamily: @Sendable (Family.ID, String) async throws -> Void
   public var waitForChange: @Sendable (_ familyID: Family.ID, _ afterCursor: Int64, _ generation: String, _ accessToken: String) async throws -> Void
   public var sync: @Sendable (_ familyID: Family.ID, _ accessToken: String, _ request: SyncRequest) async throws -> SyncResponse
 
@@ -231,6 +288,14 @@ public struct APIClient: Sendable {
     createFamily: @escaping @Sendable (Family.ID, String, String) async throws -> Void,
     createInvite: @escaping @Sendable (Family.ID, String) async throws -> FamilyInvite,
     acceptInvite: @escaping @Sendable (String, String) async throws -> AcceptedInvite,
+    getFamilyManagement: @escaping @Sendable (Family.ID, String) async throws -> FamilyManagementSnapshot,
+    updateProfile: @escaping @Sendable (String, String) async throws -> String,
+    renameFamily: @escaping @Sendable (Family.ID, String, String) async throws -> String,
+    removeFamilyMember: @escaping @Sendable (Family.ID, UserID, String) async throws -> Void,
+    leaveFamily: @escaping @Sendable (Family.ID, String) async throws -> Void,
+    transferFamilyOwnership: @escaping @Sendable (Family.ID, UserID, String) async throws -> Void,
+    revokeInvite: @escaping @Sendable (Family.ID, FamilyInviteID, String) async throws -> Void,
+    deleteFamily: @escaping @Sendable (Family.ID, String) async throws -> Void,
     waitForChange: @escaping @Sendable (Family.ID, Int64, String, String) async throws -> Void,
     sync: @escaping @Sendable (Family.ID, String, SyncRequest) async throws -> SyncResponse
   ) {
@@ -244,6 +309,14 @@ public struct APIClient: Sendable {
     self.createFamily = createFamily
     self.createInvite = createInvite
     self.acceptInvite = acceptInvite
+    self.getFamilyManagement = getFamilyManagement
+    self.updateProfile = updateProfile
+    self.renameFamily = renameFamily
+    self.removeFamilyMember = removeFamilyMember
+    self.leaveFamily = leaveFamily
+    self.transferFamilyOwnership = transferFamilyOwnership
+    self.revokeInvite = revokeInvite
+    self.deleteFamily = deleteFamily
     self.waitForChange = waitForChange
     self.sync = sync
   }
@@ -262,6 +335,14 @@ extension APIClient: TestDependencyKey {
       createFamily: { _, _, _ in },
       createInvite: { _, _ in FamilyInvite(token: "invite", expiresAt: .distantFuture) },
       acceptInvite: { _, _ in AcceptedInvite(familyID: Family.ID(rawValue: UUID(0)), role: "caregiver") },
+      getFamilyManagement: { familyID, _ in FamilyManagementSnapshot(familyID: familyID, familyName: "Our family", myUserID: UserID(rawValue: UUID(0)), myDisplayName: "Caregiver", myRole: "owner", members: [], pendingInvites: []) },
+      updateProfile: { name, _ in name },
+      renameFamily: { _, name, _ in name },
+      removeFamilyMember: { _, _, _ in },
+      leaveFamily: { _, _ in },
+      transferFamilyOwnership: { _, _, _ in },
+      revokeInvite: { _, _, _ in },
+      deleteFamily: { _, _ in },
       waitForChange: { _, _, _, _ in try await Task.sleep(for: .seconds(60)) },
       sync: { _, _, request in SyncResponse(commandResults: [], events: [], nextCursor: request.cursor, hasMore: false, serverTime: Date(timeIntervalSince1970: 0)) }
     )
@@ -358,6 +439,69 @@ extension APIClient {
         guard let familyID = Family.ID(uuidString: response.familyID) else { throw APIError.invalidResponse("Invalid family identifier") }
         return AcceptedInvite(familyID: familyID, role: response.role)
       },
+      getFamilyManagement: { familyID, token in
+        var request = Uneton_V1_GetFamilyManagementRequest()
+        request.familyID = familyID.uuidString
+        let response = try await generated.getFamilyManagement(request: request, headers: authorization(token)).result.get()
+        guard let responseFamilyID = Family.ID(uuidString: response.familyID), responseFamilyID == familyID,
+              let myUserID = UserID(uuidString: response.myUserID) else {
+          throw APIError.invalidResponse("Invalid family management identity")
+        }
+        let members = try response.members.map { member in
+          guard let id = UserID(uuidString: member.userID), member.hasJoinedAt else {
+            throw APIError.invalidResponse("Invalid caregiver")
+          }
+          return ManagedFamilyMember(id: id, displayName: member.displayName, role: member.role, joinedAt: member.joinedAt.date)
+        }
+        let invites = try response.pendingInvites.map { invite in
+          guard let id = FamilyInviteID(uuidString: invite.id), invite.hasExpiresAt, invite.hasCreatedAt else {
+            throw APIError.invalidResponse("Invalid invitation")
+          }
+          return ManagedFamilyInvite(id: id, expiresAt: invite.expiresAt.date, createdAt: invite.createdAt.date)
+        }
+        return FamilyManagementSnapshot(familyID: familyID, familyName: response.familyName,
+          myUserID: myUserID, myDisplayName: response.myDisplayName, myRole: response.myRole,
+          members: members, pendingInvites: invites)
+      },
+      updateProfile: { name, token in
+        var request = Uneton_V1_UpdateProfileRequest()
+        request.displayName = name
+        return try await generated.updateProfile(request: request, headers: authorization(token)).result.get().displayName
+      },
+      renameFamily: { familyID, name, token in
+        var request = Uneton_V1_RenameFamilyRequest()
+        request.familyID = familyID.uuidString
+        request.name = name
+        return try await generated.renameFamily(request: request, headers: authorization(token)).result.get().name
+      },
+      removeFamilyMember: { familyID, userID, token in
+        var request = Uneton_V1_RemoveFamilyMemberRequest()
+        request.familyID = familyID.uuidString
+        request.userID = userID.uuidString
+        _ = try await generated.removeFamilyMember(request: request, headers: authorization(token)).result.get()
+      },
+      leaveFamily: { familyID, token in
+        var request = Uneton_V1_LeaveFamilyRequest()
+        request.familyID = familyID.uuidString
+        _ = try await generated.leaveFamily(request: request, headers: authorization(token)).result.get()
+      },
+      transferFamilyOwnership: { familyID, userID, token in
+        var request = Uneton_V1_TransferFamilyOwnershipRequest()
+        request.familyID = familyID.uuidString
+        request.userID = userID.uuidString
+        _ = try await generated.transferFamilyOwnership(request: request, headers: authorization(token)).result.get()
+      },
+      revokeInvite: { familyID, inviteID, token in
+        var request = Uneton_V1_RevokeInviteRequest()
+        request.familyID = familyID.uuidString
+        request.inviteID = inviteID.uuidString
+        _ = try await generated.revokeInvite(request: request, headers: authorization(token)).result.get()
+      },
+      deleteFamily: { familyID, token in
+        var request = Uneton_V1_DeleteFamilyRequest()
+        request.familyID = familyID.uuidString
+        _ = try await generated.deleteFamily(request: request, headers: authorization(token)).result.get()
+      },
       waitForChange: { familyID, afterCursor, generation, token in
         let stream = generated.watchFamily(headers: authorization(token))
         defer { stream.cancel() }
@@ -390,6 +534,10 @@ extension APIClient {
 
 public func isUnauthenticatedAPIError(_ error: any Error) -> Bool {
   (error as? ConnectError)?.code == .unauthenticated
+}
+
+public func isPermissionDeniedAPIError(_ error: any Error) -> Bool {
+  (error as? ConnectError)?.code == .permissionDenied
 }
 
 private func authorization(_ token: String) -> Connect.Headers { ["Authorization": ["Bearer \(token)"]] }
@@ -432,6 +580,11 @@ private func protoCommand(_ command: APICommand) throws -> Uneton_V1_Command {
     var payload = Uneton_V1_UpdateChild()
     payload.child = try childInput(JSONDecoder.uneton.decode(ChildCommandPayload.self, from: data))
     result.payload = .updateChild(payload)
+  case "deleteChild":
+    let value = try JSONDecoder.uneton.decode(DeleteCommandPayload<Child.ID>.self, from: data)
+    var payload = Uneton_V1_DeleteChild()
+    payload.id = value.id.uuidString
+    result.payload = .deleteChild(payload)
   case "startSleep":
     var payload = Uneton_V1_StartSleep()
     payload.sleep = try sleepInput(JSONDecoder.uneton.decode(SleepCommandPayload.self, from: data))
@@ -624,6 +777,7 @@ private func entityJSON(_ entity: Uneton_V1_Entity) -> JSONValue {
       "revision": .number(Double(value.revision)), "updatedAt": .string(dateString(value.updatedAt.date)),
     ]
     if value.hasManualIntervalMinutes { object["manualIntervalMinutes"] = .number(Double(value.manualIntervalMinutes)) }
+    if value.hasDeletedAt { object["deletedAt"] = .string(dateString(value.deletedAt.date)) }
     return .object(object)
   case let .sleepSession(value):
     var object: [String: JSONValue] = [

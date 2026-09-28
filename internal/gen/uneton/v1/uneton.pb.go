@@ -1347,6 +1347,878 @@ func (x *AcceptInviteResponse) GetRole() string {
 	return ""
 }
 
+type GetFamilyManagementRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FamilyId      string                 `protobuf:"bytes,1,opt,name=family_id,json=familyId,proto3" json:"family_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFamilyManagementRequest) Reset() {
+	*x = GetFamilyManagementRequest{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFamilyManagementRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFamilyManagementRequest) ProtoMessage() {}
+
+func (x *GetFamilyManagementRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFamilyManagementRequest.ProtoReflect.Descriptor instead.
+func (*GetFamilyManagementRequest) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *GetFamilyManagementRequest) GetFamilyId() string {
+	if x != nil {
+		return x.FamilyId
+	}
+	return ""
+}
+
+type FamilyMemberInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	Role          string                 `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"`
+	JoinedAt      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=joined_at,json=joinedAt,proto3" json:"joined_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FamilyMemberInfo) Reset() {
+	*x = FamilyMemberInfo{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FamilyMemberInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FamilyMemberInfo) ProtoMessage() {}
+
+func (x *FamilyMemberInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FamilyMemberInfo.ProtoReflect.Descriptor instead.
+func (*FamilyMemberInfo) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *FamilyMemberInfo) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *FamilyMemberInfo) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+func (x *FamilyMemberInfo) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *FamilyMemberInfo) GetJoinedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.JoinedAt
+	}
+	return nil
+}
+
+type FamilyInviteInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FamilyInviteInfo) Reset() {
+	*x = FamilyInviteInfo{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FamilyInviteInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FamilyInviteInfo) ProtoMessage() {}
+
+func (x *FamilyInviteInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FamilyInviteInfo.ProtoReflect.Descriptor instead.
+func (*FamilyInviteInfo) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *FamilyInviteInfo) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *FamilyInviteInfo) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+func (x *FamilyInviteInfo) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type GetFamilyManagementResponse struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	FamilyId       string                 `protobuf:"bytes,1,opt,name=family_id,json=familyId,proto3" json:"family_id,omitempty"`
+	FamilyName     string                 `protobuf:"bytes,2,opt,name=family_name,json=familyName,proto3" json:"family_name,omitempty"`
+	MyUserId       string                 `protobuf:"bytes,3,opt,name=my_user_id,json=myUserId,proto3" json:"my_user_id,omitempty"`
+	MyDisplayName  string                 `protobuf:"bytes,4,opt,name=my_display_name,json=myDisplayName,proto3" json:"my_display_name,omitempty"`
+	MyRole         string                 `protobuf:"bytes,5,opt,name=my_role,json=myRole,proto3" json:"my_role,omitempty"`
+	Members        []*FamilyMemberInfo    `protobuf:"bytes,6,rep,name=members,proto3" json:"members,omitempty"`
+	PendingInvites []*FamilyInviteInfo    `protobuf:"bytes,7,rep,name=pending_invites,json=pendingInvites,proto3" json:"pending_invites,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *GetFamilyManagementResponse) Reset() {
+	*x = GetFamilyManagementResponse{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFamilyManagementResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFamilyManagementResponse) ProtoMessage() {}
+
+func (x *GetFamilyManagementResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFamilyManagementResponse.ProtoReflect.Descriptor instead.
+func (*GetFamilyManagementResponse) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *GetFamilyManagementResponse) GetFamilyId() string {
+	if x != nil {
+		return x.FamilyId
+	}
+	return ""
+}
+
+func (x *GetFamilyManagementResponse) GetFamilyName() string {
+	if x != nil {
+		return x.FamilyName
+	}
+	return ""
+}
+
+func (x *GetFamilyManagementResponse) GetMyUserId() string {
+	if x != nil {
+		return x.MyUserId
+	}
+	return ""
+}
+
+func (x *GetFamilyManagementResponse) GetMyDisplayName() string {
+	if x != nil {
+		return x.MyDisplayName
+	}
+	return ""
+}
+
+func (x *GetFamilyManagementResponse) GetMyRole() string {
+	if x != nil {
+		return x.MyRole
+	}
+	return ""
+}
+
+func (x *GetFamilyManagementResponse) GetMembers() []*FamilyMemberInfo {
+	if x != nil {
+		return x.Members
+	}
+	return nil
+}
+
+func (x *GetFamilyManagementResponse) GetPendingInvites() []*FamilyInviteInfo {
+	if x != nil {
+		return x.PendingInvites
+	}
+	return nil
+}
+
+type UpdateProfileRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DisplayName   string                 `protobuf:"bytes,1,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateProfileRequest) Reset() {
+	*x = UpdateProfileRequest{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateProfileRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateProfileRequest) ProtoMessage() {}
+
+func (x *UpdateProfileRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateProfileRequest.ProtoReflect.Descriptor instead.
+func (*UpdateProfileRequest) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *UpdateProfileRequest) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+type UpdateProfileResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DisplayName   string                 `protobuf:"bytes,1,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateProfileResponse) Reset() {
+	*x = UpdateProfileResponse{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateProfileResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateProfileResponse) ProtoMessage() {}
+
+func (x *UpdateProfileResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateProfileResponse.ProtoReflect.Descriptor instead.
+func (*UpdateProfileResponse) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *UpdateProfileResponse) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+type RenameFamilyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FamilyId      string                 `protobuf:"bytes,1,opt,name=family_id,json=familyId,proto3" json:"family_id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RenameFamilyRequest) Reset() {
+	*x = RenameFamilyRequest{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RenameFamilyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RenameFamilyRequest) ProtoMessage() {}
+
+func (x *RenameFamilyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RenameFamilyRequest.ProtoReflect.Descriptor instead.
+func (*RenameFamilyRequest) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *RenameFamilyRequest) GetFamilyId() string {
+	if x != nil {
+		return x.FamilyId
+	}
+	return ""
+}
+
+func (x *RenameFamilyRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type RenameFamilyResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RenameFamilyResponse) Reset() {
+	*x = RenameFamilyResponse{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RenameFamilyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RenameFamilyResponse) ProtoMessage() {}
+
+func (x *RenameFamilyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RenameFamilyResponse.ProtoReflect.Descriptor instead.
+func (*RenameFamilyResponse) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *RenameFamilyResponse) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type RemoveFamilyMemberRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FamilyId      string                 `protobuf:"bytes,1,opt,name=family_id,json=familyId,proto3" json:"family_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveFamilyMemberRequest) Reset() {
+	*x = RemoveFamilyMemberRequest{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveFamilyMemberRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveFamilyMemberRequest) ProtoMessage() {}
+
+func (x *RemoveFamilyMemberRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveFamilyMemberRequest.ProtoReflect.Descriptor instead.
+func (*RemoveFamilyMemberRequest) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *RemoveFamilyMemberRequest) GetFamilyId() string {
+	if x != nil {
+		return x.FamilyId
+	}
+	return ""
+}
+
+func (x *RemoveFamilyMemberRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type RemoveFamilyMemberResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveFamilyMemberResponse) Reset() {
+	*x = RemoveFamilyMemberResponse{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveFamilyMemberResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveFamilyMemberResponse) ProtoMessage() {}
+
+func (x *RemoveFamilyMemberResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveFamilyMemberResponse.ProtoReflect.Descriptor instead.
+func (*RemoveFamilyMemberResponse) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{32}
+}
+
+type LeaveFamilyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FamilyId      string                 `protobuf:"bytes,1,opt,name=family_id,json=familyId,proto3" json:"family_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LeaveFamilyRequest) Reset() {
+	*x = LeaveFamilyRequest{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeaveFamilyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeaveFamilyRequest) ProtoMessage() {}
+
+func (x *LeaveFamilyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeaveFamilyRequest.ProtoReflect.Descriptor instead.
+func (*LeaveFamilyRequest) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *LeaveFamilyRequest) GetFamilyId() string {
+	if x != nil {
+		return x.FamilyId
+	}
+	return ""
+}
+
+type LeaveFamilyResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LeaveFamilyResponse) Reset() {
+	*x = LeaveFamilyResponse{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LeaveFamilyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LeaveFamilyResponse) ProtoMessage() {}
+
+func (x *LeaveFamilyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LeaveFamilyResponse.ProtoReflect.Descriptor instead.
+func (*LeaveFamilyResponse) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{34}
+}
+
+type TransferFamilyOwnershipRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FamilyId      string                 `protobuf:"bytes,1,opt,name=family_id,json=familyId,proto3" json:"family_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TransferFamilyOwnershipRequest) Reset() {
+	*x = TransferFamilyOwnershipRequest{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TransferFamilyOwnershipRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransferFamilyOwnershipRequest) ProtoMessage() {}
+
+func (x *TransferFamilyOwnershipRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransferFamilyOwnershipRequest.ProtoReflect.Descriptor instead.
+func (*TransferFamilyOwnershipRequest) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *TransferFamilyOwnershipRequest) GetFamilyId() string {
+	if x != nil {
+		return x.FamilyId
+	}
+	return ""
+}
+
+func (x *TransferFamilyOwnershipRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type TransferFamilyOwnershipResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TransferFamilyOwnershipResponse) Reset() {
+	*x = TransferFamilyOwnershipResponse{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TransferFamilyOwnershipResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TransferFamilyOwnershipResponse) ProtoMessage() {}
+
+func (x *TransferFamilyOwnershipResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TransferFamilyOwnershipResponse.ProtoReflect.Descriptor instead.
+func (*TransferFamilyOwnershipResponse) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{36}
+}
+
+type RevokeInviteRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FamilyId      string                 `protobuf:"bytes,1,opt,name=family_id,json=familyId,proto3" json:"family_id,omitempty"`
+	InviteId      string                 `protobuf:"bytes,2,opt,name=invite_id,json=inviteId,proto3" json:"invite_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeInviteRequest) Reset() {
+	*x = RevokeInviteRequest{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeInviteRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeInviteRequest) ProtoMessage() {}
+
+func (x *RevokeInviteRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeInviteRequest.ProtoReflect.Descriptor instead.
+func (*RevokeInviteRequest) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *RevokeInviteRequest) GetFamilyId() string {
+	if x != nil {
+		return x.FamilyId
+	}
+	return ""
+}
+
+func (x *RevokeInviteRequest) GetInviteId() string {
+	if x != nil {
+		return x.InviteId
+	}
+	return ""
+}
+
+type RevokeInviteResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeInviteResponse) Reset() {
+	*x = RevokeInviteResponse{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeInviteResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeInviteResponse) ProtoMessage() {}
+
+func (x *RevokeInviteResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeInviteResponse.ProtoReflect.Descriptor instead.
+func (*RevokeInviteResponse) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{38}
+}
+
+type DeleteFamilyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FamilyId      string                 `protobuf:"bytes,1,opt,name=family_id,json=familyId,proto3" json:"family_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteFamilyRequest) Reset() {
+	*x = DeleteFamilyRequest{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteFamilyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteFamilyRequest) ProtoMessage() {}
+
+func (x *DeleteFamilyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteFamilyRequest.ProtoReflect.Descriptor instead.
+func (*DeleteFamilyRequest) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *DeleteFamilyRequest) GetFamilyId() string {
+	if x != nil {
+		return x.FamilyId
+	}
+	return ""
+}
+
+type DeleteFamilyResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteFamilyResponse) Reset() {
+	*x = DeleteFamilyResponse{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteFamilyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteFamilyResponse) ProtoMessage() {}
+
+func (x *DeleteFamilyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteFamilyResponse.ProtoReflect.Descriptor instead.
+func (*DeleteFamilyResponse) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{40}
+}
+
 type SyncRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FamilyId      string                 `protobuf:"bytes,1,opt,name=family_id,json=familyId,proto3" json:"family_id,omitempty"`
@@ -1360,7 +2232,7 @@ type SyncRequest struct {
 
 func (x *SyncRequest) Reset() {
 	*x = SyncRequest{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[23]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1372,7 +2244,7 @@ func (x *SyncRequest) String() string {
 func (*SyncRequest) ProtoMessage() {}
 
 func (x *SyncRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[23]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1385,7 +2257,7 @@ func (x *SyncRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncRequest.ProtoReflect.Descriptor instead.
 func (*SyncRequest) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{23}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *SyncRequest) GetFamilyId() string {
@@ -1439,6 +2311,7 @@ type Command struct {
 	//	*Command_DeleteGrowthMeasurement
 	//	*Command_UpsertTemperatureReading
 	//	*Command_DeleteTemperatureReading
+	//	*Command_DeleteChild
 	Payload       isCommand_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1446,7 +2319,7 @@ type Command struct {
 
 func (x *Command) Reset() {
 	*x = Command{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[24]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1458,7 +2331,7 @@ func (x *Command) String() string {
 func (*Command) ProtoMessage() {}
 
 func (x *Command) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[24]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1471,7 +2344,7 @@ func (x *Command) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Command.ProtoReflect.Descriptor instead.
 func (*Command) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{24}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *Command) GetId() string {
@@ -1585,6 +2458,15 @@ func (x *Command) GetDeleteTemperatureReading() *DeleteTemperatureReading {
 	return nil
 }
 
+func (x *Command) GetDeleteChild() *DeleteChild {
+	if x != nil {
+		if x, ok := x.Payload.(*Command_DeleteChild); ok {
+			return x.DeleteChild
+		}
+	}
+	return nil
+}
+
 type isCommand_Payload interface {
 	isCommand_Payload()
 }
@@ -1629,6 +2511,10 @@ type Command_DeleteTemperatureReading struct {
 	DeleteTemperatureReading *DeleteTemperatureReading `protobuf:"bytes,19,opt,name=delete_temperature_reading,json=deleteTemperatureReading,proto3,oneof"`
 }
 
+type Command_DeleteChild struct {
+	DeleteChild *DeleteChild `protobuf:"bytes,20,opt,name=delete_child,json=deleteChild,proto3,oneof"`
+}
+
 func (*Command_CreateChild) isCommand_Payload() {}
 
 func (*Command_UpdateChild) isCommand_Payload() {}
@@ -1649,6 +2535,8 @@ func (*Command_UpsertTemperatureReading) isCommand_Payload() {}
 
 func (*Command_DeleteTemperatureReading) isCommand_Payload() {}
 
+func (*Command_DeleteChild) isCommand_Payload() {}
+
 type CreateChild struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Child         *ChildInput            `protobuf:"bytes,1,opt,name=child,proto3" json:"child,omitempty"`
@@ -1658,7 +2546,7 @@ type CreateChild struct {
 
 func (x *CreateChild) Reset() {
 	*x = CreateChild{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[25]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1670,7 +2558,7 @@ func (x *CreateChild) String() string {
 func (*CreateChild) ProtoMessage() {}
 
 func (x *CreateChild) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[25]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1683,7 +2571,7 @@ func (x *CreateChild) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateChild.ProtoReflect.Descriptor instead.
 func (*CreateChild) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{25}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *CreateChild) GetChild() *ChildInput {
@@ -1702,7 +2590,7 @@ type UpdateChild struct {
 
 func (x *UpdateChild) Reset() {
 	*x = UpdateChild{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[26]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1714,7 +2602,7 @@ func (x *UpdateChild) String() string {
 func (*UpdateChild) ProtoMessage() {}
 
 func (x *UpdateChild) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[26]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1727,7 +2615,7 @@ func (x *UpdateChild) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateChild.ProtoReflect.Descriptor instead.
 func (*UpdateChild) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{26}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *UpdateChild) GetChild() *ChildInput {
@@ -1735,6 +2623,50 @@ func (x *UpdateChild) GetChild() *ChildInput {
 		return x.Child
 	}
 	return nil
+}
+
+type DeleteChild struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteChild) Reset() {
+	*x = DeleteChild{}
+	mi := &file_uneton_v1_uneton_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteChild) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteChild) ProtoMessage() {}
+
+func (x *DeleteChild) ProtoReflect() protoreflect.Message {
+	mi := &file_uneton_v1_uneton_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteChild.ProtoReflect.Descriptor instead.
+func (*DeleteChild) Descriptor() ([]byte, []int) {
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *DeleteChild) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
 }
 
 type ChildInput struct {
@@ -1754,7 +2686,7 @@ type ChildInput struct {
 
 func (x *ChildInput) Reset() {
 	*x = ChildInput{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[27]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1766,7 +2698,7 @@ func (x *ChildInput) String() string {
 func (*ChildInput) ProtoMessage() {}
 
 func (x *ChildInput) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[27]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1779,7 +2711,7 @@ func (x *ChildInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChildInput.ProtoReflect.Descriptor instead.
 func (*ChildInput) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{27}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *ChildInput) GetId() string {
@@ -1854,7 +2786,7 @@ type StartSleep struct {
 
 func (x *StartSleep) Reset() {
 	*x = StartSleep{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[28]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1866,7 +2798,7 @@ func (x *StartSleep) String() string {
 func (*StartSleep) ProtoMessage() {}
 
 func (x *StartSleep) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[28]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1879,7 +2811,7 @@ func (x *StartSleep) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartSleep.ProtoReflect.Descriptor instead.
 func (*StartSleep) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{28}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *StartSleep) GetSleep() *SleepInput {
@@ -1903,7 +2835,7 @@ type EndSleep struct {
 
 func (x *EndSleep) Reset() {
 	*x = EndSleep{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[29]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1915,7 +2847,7 @@ func (x *EndSleep) String() string {
 func (*EndSleep) ProtoMessage() {}
 
 func (x *EndSleep) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[29]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1928,7 +2860,7 @@ func (x *EndSleep) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EndSleep.ProtoReflect.Descriptor instead.
 func (*EndSleep) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{29}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *EndSleep) GetId() string {
@@ -1982,7 +2914,7 @@ type UpsertSleep struct {
 
 func (x *UpsertSleep) Reset() {
 	*x = UpsertSleep{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[30]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1994,7 +2926,7 @@ func (x *UpsertSleep) String() string {
 func (*UpsertSleep) ProtoMessage() {}
 
 func (x *UpsertSleep) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[30]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2007,7 +2939,7 @@ func (x *UpsertSleep) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertSleep.ProtoReflect.Descriptor instead.
 func (*UpsertSleep) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{30}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *UpsertSleep) GetSleep() *SleepInput {
@@ -2026,7 +2958,7 @@ type DeleteSleep struct {
 
 func (x *DeleteSleep) Reset() {
 	*x = DeleteSleep{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[31]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2038,7 +2970,7 @@ func (x *DeleteSleep) String() string {
 func (*DeleteSleep) ProtoMessage() {}
 
 func (x *DeleteSleep) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[31]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2051,7 +2983,7 @@ func (x *DeleteSleep) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSleep.ProtoReflect.Descriptor instead.
 func (*DeleteSleep) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{31}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *DeleteSleep) GetId() string {
@@ -2070,7 +3002,7 @@ type UpsertGrowthMeasurement struct {
 
 func (x *UpsertGrowthMeasurement) Reset() {
 	*x = UpsertGrowthMeasurement{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[32]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2082,7 +3014,7 @@ func (x *UpsertGrowthMeasurement) String() string {
 func (*UpsertGrowthMeasurement) ProtoMessage() {}
 
 func (x *UpsertGrowthMeasurement) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[32]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2095,7 +3027,7 @@ func (x *UpsertGrowthMeasurement) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertGrowthMeasurement.ProtoReflect.Descriptor instead.
 func (*UpsertGrowthMeasurement) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{32}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *UpsertGrowthMeasurement) GetMeasurement() *GrowthMeasurementInput {
@@ -2114,7 +3046,7 @@ type DeleteGrowthMeasurement struct {
 
 func (x *DeleteGrowthMeasurement) Reset() {
 	*x = DeleteGrowthMeasurement{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[33]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2126,7 +3058,7 @@ func (x *DeleteGrowthMeasurement) String() string {
 func (*DeleteGrowthMeasurement) ProtoMessage() {}
 
 func (x *DeleteGrowthMeasurement) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[33]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2139,7 +3071,7 @@ func (x *DeleteGrowthMeasurement) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteGrowthMeasurement.ProtoReflect.Descriptor instead.
 func (*DeleteGrowthMeasurement) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{33}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *DeleteGrowthMeasurement) GetId() string {
@@ -2163,7 +3095,7 @@ type GrowthMeasurementInput struct {
 
 func (x *GrowthMeasurementInput) Reset() {
 	*x = GrowthMeasurementInput{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[34]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2175,7 +3107,7 @@ func (x *GrowthMeasurementInput) String() string {
 func (*GrowthMeasurementInput) ProtoMessage() {}
 
 func (x *GrowthMeasurementInput) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[34]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2188,7 +3120,7 @@ func (x *GrowthMeasurementInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GrowthMeasurementInput.ProtoReflect.Descriptor instead.
 func (*GrowthMeasurementInput) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{34}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *GrowthMeasurementInput) GetId() string {
@@ -2242,7 +3174,7 @@ type UpsertTemperatureReading struct {
 
 func (x *UpsertTemperatureReading) Reset() {
 	*x = UpsertTemperatureReading{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[35]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2254,7 +3186,7 @@ func (x *UpsertTemperatureReading) String() string {
 func (*UpsertTemperatureReading) ProtoMessage() {}
 
 func (x *UpsertTemperatureReading) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[35]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2267,7 +3199,7 @@ func (x *UpsertTemperatureReading) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertTemperatureReading.ProtoReflect.Descriptor instead.
 func (*UpsertTemperatureReading) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{35}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *UpsertTemperatureReading) GetReading() *TemperatureReadingInput {
@@ -2286,7 +3218,7 @@ type DeleteTemperatureReading struct {
 
 func (x *DeleteTemperatureReading) Reset() {
 	*x = DeleteTemperatureReading{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[36]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2298,7 +3230,7 @@ func (x *DeleteTemperatureReading) String() string {
 func (*DeleteTemperatureReading) ProtoMessage() {}
 
 func (x *DeleteTemperatureReading) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[36]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2311,7 +3243,7 @@ func (x *DeleteTemperatureReading) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTemperatureReading.ProtoReflect.Descriptor instead.
 func (*DeleteTemperatureReading) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{36}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *DeleteTemperatureReading) GetId() string {
@@ -2334,7 +3266,7 @@ type TemperatureReadingInput struct {
 
 func (x *TemperatureReadingInput) Reset() {
 	*x = TemperatureReadingInput{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[37]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2346,7 +3278,7 @@ func (x *TemperatureReadingInput) String() string {
 func (*TemperatureReadingInput) ProtoMessage() {}
 
 func (x *TemperatureReadingInput) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[37]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2359,7 +3291,7 @@ func (x *TemperatureReadingInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TemperatureReadingInput.ProtoReflect.Descriptor instead.
 func (*TemperatureReadingInput) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{37}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *TemperatureReadingInput) GetId() string {
@@ -2416,7 +3348,7 @@ type SleepInput struct {
 
 func (x *SleepInput) Reset() {
 	*x = SleepInput{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[38]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2428,7 +3360,7 @@ func (x *SleepInput) String() string {
 func (*SleepInput) ProtoMessage() {}
 
 func (x *SleepInput) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[38]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2441,7 +3373,7 @@ func (x *SleepInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SleepInput.ProtoReflect.Descriptor instead.
 func (*SleepInput) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{38}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *SleepInput) GetId() string {
@@ -2534,7 +3466,7 @@ type CommandResult struct {
 
 func (x *CommandResult) Reset() {
 	*x = CommandResult{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[39]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2546,7 +3478,7 @@ func (x *CommandResult) String() string {
 func (*CommandResult) ProtoMessage() {}
 
 func (x *CommandResult) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[39]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2559,7 +3491,7 @@ func (x *CommandResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommandResult.ProtoReflect.Descriptor instead.
 func (*CommandResult) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{39}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *CommandResult) GetId() string {
@@ -2613,7 +3545,7 @@ type Entity struct {
 
 func (x *Entity) Reset() {
 	*x = Entity{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[40]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2625,7 +3557,7 @@ func (x *Entity) String() string {
 func (*Entity) ProtoMessage() {}
 
 func (x *Entity) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[40]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2638,7 +3570,7 @@ func (x *Entity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Entity.ProtoReflect.Descriptor instead.
 func (*Entity) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{40}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *Entity) GetValue() isEntity_Value {
@@ -2736,7 +3668,7 @@ type DeletedEntity struct {
 
 func (x *DeletedEntity) Reset() {
 	*x = DeletedEntity{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[41]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2748,7 +3680,7 @@ func (x *DeletedEntity) String() string {
 func (*DeletedEntity) ProtoMessage() {}
 
 func (x *DeletedEntity) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[41]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2761,7 +3693,7 @@ func (x *DeletedEntity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeletedEntity.ProtoReflect.Descriptor instead.
 func (*DeletedEntity) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{41}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *DeletedEntity) GetId() string {
@@ -2785,13 +3717,14 @@ type Child struct {
 	UpdatedAt              *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	TimeZone               string                 `protobuf:"bytes,11,opt,name=time_zone,json=timeZone,proto3" json:"time_zone,omitempty"`
 	GrowthReference        string                 `protobuf:"bytes,12,opt,name=growth_reference,json=growthReference,proto3" json:"growth_reference,omitempty"`
+	DeletedAt              *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=deleted_at,json=deletedAt,proto3,oneof" json:"deleted_at,omitempty"`
 	unknownFields          protoimpl.UnknownFields
 	sizeCache              protoimpl.SizeCache
 }
 
 func (x *Child) Reset() {
 	*x = Child{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[42]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2803,7 +3736,7 @@ func (x *Child) String() string {
 func (*Child) ProtoMessage() {}
 
 func (x *Child) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[42]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2816,7 +3749,7 @@ func (x *Child) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Child.ProtoReflect.Descriptor instead.
 func (*Child) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{42}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *Child) GetId() string {
@@ -2903,6 +3836,13 @@ func (x *Child) GetGrowthReference() string {
 	return ""
 }
 
+func (x *Child) GetDeletedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DeletedAt
+	}
+	return nil
+}
+
 type SleepSession struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	Id                  string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -2928,7 +3868,7 @@ type SleepSession struct {
 
 func (x *SleepSession) Reset() {
 	*x = SleepSession{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[43]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2940,7 +3880,7 @@ func (x *SleepSession) String() string {
 func (*SleepSession) ProtoMessage() {}
 
 func (x *SleepSession) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[43]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2953,7 +3893,7 @@ func (x *SleepSession) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SleepSession.ProtoReflect.Descriptor instead.
 func (*SleepSession) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{43}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *SleepSession) GetId() string {
@@ -3093,7 +4033,7 @@ type GrowthMeasurement struct {
 
 func (x *GrowthMeasurement) Reset() {
 	*x = GrowthMeasurement{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[44]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3105,7 +4045,7 @@ func (x *GrowthMeasurement) String() string {
 func (*GrowthMeasurement) ProtoMessage() {}
 
 func (x *GrowthMeasurement) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[44]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3118,7 +4058,7 @@ func (x *GrowthMeasurement) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GrowthMeasurement.ProtoReflect.Descriptor instead.
 func (*GrowthMeasurement) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{44}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *GrowthMeasurement) GetId() string {
@@ -3208,7 +4148,7 @@ type TemperatureReading struct {
 
 func (x *TemperatureReading) Reset() {
 	*x = TemperatureReading{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[45]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3220,7 +4160,7 @@ func (x *TemperatureReading) String() string {
 func (*TemperatureReading) ProtoMessage() {}
 
 func (x *TemperatureReading) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[45]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3233,7 +4173,7 @@ func (x *TemperatureReading) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TemperatureReading.ProtoReflect.Descriptor instead.
 func (*TemperatureReading) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{45}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *TemperatureReading) GetId() string {
@@ -3314,7 +4254,7 @@ type SyncEvent struct {
 
 func (x *SyncEvent) Reset() {
 	*x = SyncEvent{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[46]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3326,7 +4266,7 @@ func (x *SyncEvent) String() string {
 func (*SyncEvent) ProtoMessage() {}
 
 func (x *SyncEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[46]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3339,7 +4279,7 @@ func (x *SyncEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncEvent.ProtoReflect.Descriptor instead.
 func (*SyncEvent) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{46}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *SyncEvent) GetCursor() int64 {
@@ -3403,7 +4343,7 @@ type SnapshotEntity struct {
 
 func (x *SnapshotEntity) Reset() {
 	*x = SnapshotEntity{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[47]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3415,7 +4355,7 @@ func (x *SnapshotEntity) String() string {
 func (*SnapshotEntity) ProtoMessage() {}
 
 func (x *SnapshotEntity) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[47]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3428,7 +4368,7 @@ func (x *SnapshotEntity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotEntity.ProtoReflect.Descriptor instead.
 func (*SnapshotEntity) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{47}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *SnapshotEntity) GetEntityType() EntityType {
@@ -3470,7 +4410,7 @@ type FamilySnapshot struct {
 
 func (x *FamilySnapshot) Reset() {
 	*x = FamilySnapshot{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[48]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3482,7 +4422,7 @@ func (x *FamilySnapshot) String() string {
 func (*FamilySnapshot) ProtoMessage() {}
 
 func (x *FamilySnapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[48]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3495,7 +4435,7 @@ func (x *FamilySnapshot) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FamilySnapshot.ProtoReflect.Descriptor instead.
 func (*FamilySnapshot) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{48}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *FamilySnapshot) GetCursor() int64 {
@@ -3535,7 +4475,7 @@ type SleepPrediction struct {
 
 func (x *SleepPrediction) Reset() {
 	*x = SleepPrediction{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[49]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3547,7 +4487,7 @@ func (x *SleepPrediction) String() string {
 func (*SleepPrediction) ProtoMessage() {}
 
 func (x *SleepPrediction) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[49]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3560,7 +4500,7 @@ func (x *SleepPrediction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SleepPrediction.ProtoReflect.Descriptor instead.
 func (*SleepPrediction) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{49}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *SleepPrediction) GetTargetAt() *timestamppb.Timestamp {
@@ -3632,7 +4572,7 @@ type SleepForecast struct {
 
 func (x *SleepForecast) Reset() {
 	*x = SleepForecast{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[50]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3644,7 +4584,7 @@ func (x *SleepForecast) String() string {
 func (*SleepForecast) ProtoMessage() {}
 
 func (x *SleepForecast) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[50]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3657,7 +4597,7 @@ func (x *SleepForecast) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SleepForecast.ProtoReflect.Descriptor instead.
 func (*SleepForecast) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{50}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *SleepForecast) GetChildId() string {
@@ -3708,7 +4648,7 @@ type GrowthReferencePoint struct {
 
 func (x *GrowthReferencePoint) Reset() {
 	*x = GrowthReferencePoint{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[51]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3720,7 +4660,7 @@ func (x *GrowthReferencePoint) String() string {
 func (*GrowthReferencePoint) ProtoMessage() {}
 
 func (x *GrowthReferencePoint) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[51]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3733,7 +4673,7 @@ func (x *GrowthReferencePoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GrowthReferencePoint.ProtoReflect.Descriptor instead.
 func (*GrowthReferencePoint) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{51}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *GrowthReferencePoint) GetReference() string {
@@ -3790,7 +4730,7 @@ type SyncResponse struct {
 
 func (x *SyncResponse) Reset() {
 	*x = SyncResponse{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[52]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3802,7 +4742,7 @@ func (x *SyncResponse) String() string {
 func (*SyncResponse) ProtoMessage() {}
 
 func (x *SyncResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[52]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3815,7 +4755,7 @@ func (x *SyncResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncResponse.ProtoReflect.Descriptor instead.
 func (*SyncResponse) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{52}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *SyncResponse) GetCommandResults() []*CommandResult {
@@ -3906,7 +4846,7 @@ type WatchFamilyRequest struct {
 
 func (x *WatchFamilyRequest) Reset() {
 	*x = WatchFamilyRequest{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[53]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[72]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3918,7 +4858,7 @@ func (x *WatchFamilyRequest) String() string {
 func (*WatchFamilyRequest) ProtoMessage() {}
 
 func (x *WatchFamilyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[53]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[72]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3931,7 +4871,7 @@ func (x *WatchFamilyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchFamilyRequest.ProtoReflect.Descriptor instead.
 func (*WatchFamilyRequest) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{53}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{72}
 }
 
 func (x *WatchFamilyRequest) GetFamilyId() string {
@@ -3966,7 +4906,7 @@ type WatchFamilyResponse struct {
 
 func (x *WatchFamilyResponse) Reset() {
 	*x = WatchFamilyResponse{}
-	mi := &file_uneton_v1_uneton_proto_msgTypes[54]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[73]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3978,7 +4918,7 @@ func (x *WatchFamilyResponse) String() string {
 func (*WatchFamilyResponse) ProtoMessage() {}
 
 func (x *WatchFamilyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_uneton_v1_uneton_proto_msgTypes[54]
+	mi := &file_uneton_v1_uneton_proto_msgTypes[73]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3991,7 +4931,7 @@ func (x *WatchFamilyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchFamilyResponse.ProtoReflect.Descriptor instead.
 func (*WatchFamilyResponse) Descriptor() ([]byte, []int) {
-	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{54}
+	return file_uneton_v1_uneton_proto_rawDescGZIP(), []int{73}
 }
 
 func (x *WatchFamilyResponse) GetCursor() int64 {
@@ -4094,7 +5034,57 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x05token\x18\x01 \x01(\tR\x05token\"G\n" +
 	"\x14AcceptInviteResponse\x12\x1b\n" +
 	"\tfamily_id\x18\x01 \x01(\tR\bfamilyId\x12\x12\n" +
-	"\x04role\x18\x02 \x01(\tR\x04role\"\xb9\x01\n" +
+	"\x04role\x18\x02 \x01(\tR\x04role\"9\n" +
+	"\x1aGetFamilyManagementRequest\x12\x1b\n" +
+	"\tfamily_id\x18\x01 \x01(\tR\bfamilyId\"\x9b\x01\n" +
+	"\x10FamilyMemberInfo\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12!\n" +
+	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12\x12\n" +
+	"\x04role\x18\x03 \x01(\tR\x04role\x127\n" +
+	"\tjoined_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bjoinedAt\"\x98\x01\n" +
+	"\x10FamilyInviteInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x129\n" +
+	"\n" +
+	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x129\n" +
+	"\n" +
+	"created_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xb7\x02\n" +
+	"\x1bGetFamilyManagementResponse\x12\x1b\n" +
+	"\tfamily_id\x18\x01 \x01(\tR\bfamilyId\x12\x1f\n" +
+	"\vfamily_name\x18\x02 \x01(\tR\n" +
+	"familyName\x12\x1c\n" +
+	"\n" +
+	"my_user_id\x18\x03 \x01(\tR\bmyUserId\x12&\n" +
+	"\x0fmy_display_name\x18\x04 \x01(\tR\rmyDisplayName\x12\x17\n" +
+	"\amy_role\x18\x05 \x01(\tR\x06myRole\x125\n" +
+	"\amembers\x18\x06 \x03(\v2\x1b.uneton.v1.FamilyMemberInfoR\amembers\x12D\n" +
+	"\x0fpending_invites\x18\a \x03(\v2\x1b.uneton.v1.FamilyInviteInfoR\x0ependingInvites\"9\n" +
+	"\x14UpdateProfileRequest\x12!\n" +
+	"\fdisplay_name\x18\x01 \x01(\tR\vdisplayName\":\n" +
+	"\x15UpdateProfileResponse\x12!\n" +
+	"\fdisplay_name\x18\x01 \x01(\tR\vdisplayName\"F\n" +
+	"\x13RenameFamilyRequest\x12\x1b\n" +
+	"\tfamily_id\x18\x01 \x01(\tR\bfamilyId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"*\n" +
+	"\x14RenameFamilyResponse\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"Q\n" +
+	"\x19RemoveFamilyMemberRequest\x12\x1b\n" +
+	"\tfamily_id\x18\x01 \x01(\tR\bfamilyId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\x1c\n" +
+	"\x1aRemoveFamilyMemberResponse\"1\n" +
+	"\x12LeaveFamilyRequest\x12\x1b\n" +
+	"\tfamily_id\x18\x01 \x01(\tR\bfamilyId\"\x15\n" +
+	"\x13LeaveFamilyResponse\"V\n" +
+	"\x1eTransferFamilyOwnershipRequest\x12\x1b\n" +
+	"\tfamily_id\x18\x01 \x01(\tR\bfamilyId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"!\n" +
+	"\x1fTransferFamilyOwnershipResponse\"O\n" +
+	"\x13RevokeInviteRequest\x12\x1b\n" +
+	"\tfamily_id\x18\x01 \x01(\tR\bfamilyId\x12\x1b\n" +
+	"\tinvite_id\x18\x02 \x01(\tR\binviteId\"\x16\n" +
+	"\x14RevokeInviteResponse\"2\n" +
+	"\x13DeleteFamilyRequest\x12\x1b\n" +
+	"\tfamily_id\x18\x01 \x01(\tR\bfamilyId\"\x16\n" +
+	"\x14DeleteFamilyResponse\"\xb9\x01\n" +
 	"\vSyncRequest\x12\x1b\n" +
 	"\tfamily_id\x18\x01 \x01(\tR\bfamilyId\x12\x16\n" +
 	"\x06cursor\x18\x02 \x01(\x03R\x06cursor\x12.\n" +
@@ -4102,7 +5092,7 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x05limit\x18\x05 \x01(\x05R\x05limit\x12\x1e\n" +
 	"\n" +
 	"generation\x18\x06 \x01(\tR\n" +
-	"generationJ\x04\b\x03\x10\x04R\tdevice_id\"\xdc\x06\n" +
+	"generationJ\x04\b\x03\x10\x04R\tdevice_id\"\x99\a\n" +
 	"\aCommand\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x120\n" +
 	"\x11expected_revision\x18\x02 \x01(\x03H\x01R\x10expectedRevision\x88\x01\x01\x12;\n" +
@@ -4117,13 +5107,16 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x19upsert_growth_measurement\x18\x10 \x01(\v2\".uneton.v1.UpsertGrowthMeasurementH\x00R\x17upsertGrowthMeasurement\x12`\n" +
 	"\x19delete_growth_measurement\x18\x11 \x01(\v2\".uneton.v1.DeleteGrowthMeasurementH\x00R\x17deleteGrowthMeasurement\x12c\n" +
 	"\x1aupsert_temperature_reading\x18\x12 \x01(\v2#.uneton.v1.UpsertTemperatureReadingH\x00R\x18upsertTemperatureReading\x12c\n" +
-	"\x1adelete_temperature_reading\x18\x13 \x01(\v2#.uneton.v1.DeleteTemperatureReadingH\x00R\x18deleteTemperatureReadingB\t\n" +
+	"\x1adelete_temperature_reading\x18\x13 \x01(\v2#.uneton.v1.DeleteTemperatureReadingH\x00R\x18deleteTemperatureReading\x12;\n" +
+	"\fdelete_child\x18\x14 \x01(\v2\x16.uneton.v1.DeleteChildH\x00R\vdeleteChildB\t\n" +
 	"\apayloadB\x14\n" +
 	"\x12_expected_revision\":\n" +
 	"\vCreateChild\x12+\n" +
 	"\x05child\x18\x01 \x01(\v2\x15.uneton.v1.ChildInputR\x05child\":\n" +
 	"\vUpdateChild\x12+\n" +
-	"\x05child\x18\x01 \x01(\v2\x15.uneton.v1.ChildInputR\x05child\"\x93\x03\n" +
+	"\x05child\x18\x01 \x01(\v2\x15.uneton.v1.ChildInputR\x05child\"\x1d\n" +
+	"\vDeleteChild\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x93\x03\n" +
 	"\n" +
 	"ChildInput\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
@@ -4210,7 +5203,7 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x13temperature_reading\x18\x05 \x01(\v2\x1d.uneton.v1.TemperatureReadingH\x00R\x12temperatureReadingB\a\n" +
 	"\x05value\"\x1f\n" +
 	"\rDeletedEntity\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\x82\x04\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xd1\x04\n" +
 	"\x05Child\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tfamily_id\x18\x02 \x01(\tR\bfamilyId\x12\x1a\n" +
@@ -4226,8 +5219,11 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"updated_at\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x1b\n" +
 	"\ttime_zone\x18\v \x01(\tR\btimeZone\x12)\n" +
-	"\x10growth_reference\x18\f \x01(\tR\x0fgrowthReferenceB\x1a\n" +
-	"\x18_manual_interval_minutes\"\xfd\x05\n" +
+	"\x10growth_reference\x18\f \x01(\tR\x0fgrowthReference\x12>\n" +
+	"\n" +
+	"deleted_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampH\x01R\tdeletedAt\x88\x01\x01B\x1a\n" +
+	"\x18_manual_interval_minutesB\r\n" +
+	"\v_deleted_at\"\xfd\x05\n" +
 	"\fSleepSession\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tfamily_id\x18\x02 \x01(\tR\bfamilyId\x12\x19\n" +
@@ -4382,7 +5378,7 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x0eEventOperation\x12\x1f\n" +
 	"\x1bEVENT_OPERATION_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16EVENT_OPERATION_UPSERT\x10\x01\x12\x1a\n" +
-	"\x16EVENT_OPERATION_DELETE\x10\x022\xef\a\n" +
+	"\x16EVENT_OPERATION_DELETE\x10\x022\xbf\r\n" +
 	"\rUnetonService\x12X\n" +
 	"\x0fDevelopmentAuth\x12!.uneton.v1.DevelopmentAuthRequest\x1a\".uneton.v1.DevelopmentAuthResponse\x12F\n" +
 	"\tAppleAuth\x12\x1b.uneton.v1.AppleAuthRequest\x1a\x1c.uneton.v1.AppleAuthResponse\x12L\n" +
@@ -4393,7 +5389,15 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x14RegisterLiveActivity\x12&.uneton.v1.RegisterLiveActivityRequest\x1a'.uneton.v1.RegisterLiveActivityResponse\x12O\n" +
 	"\fCreateFamily\x12\x1e.uneton.v1.CreateFamilyRequest\x1a\x1f.uneton.v1.CreateFamilyResponse\x12O\n" +
 	"\fCreateInvite\x12\x1e.uneton.v1.CreateInviteRequest\x1a\x1f.uneton.v1.CreateInviteResponse\x12O\n" +
-	"\fAcceptInvite\x12\x1e.uneton.v1.AcceptInviteRequest\x1a\x1f.uneton.v1.AcceptInviteResponse\x127\n" +
+	"\fAcceptInvite\x12\x1e.uneton.v1.AcceptInviteRequest\x1a\x1f.uneton.v1.AcceptInviteResponse\x12d\n" +
+	"\x13GetFamilyManagement\x12%.uneton.v1.GetFamilyManagementRequest\x1a&.uneton.v1.GetFamilyManagementResponse\x12R\n" +
+	"\rUpdateProfile\x12\x1f.uneton.v1.UpdateProfileRequest\x1a .uneton.v1.UpdateProfileResponse\x12O\n" +
+	"\fRenameFamily\x12\x1e.uneton.v1.RenameFamilyRequest\x1a\x1f.uneton.v1.RenameFamilyResponse\x12a\n" +
+	"\x12RemoveFamilyMember\x12$.uneton.v1.RemoveFamilyMemberRequest\x1a%.uneton.v1.RemoveFamilyMemberResponse\x12L\n" +
+	"\vLeaveFamily\x12\x1d.uneton.v1.LeaveFamilyRequest\x1a\x1e.uneton.v1.LeaveFamilyResponse\x12p\n" +
+	"\x17TransferFamilyOwnership\x12).uneton.v1.TransferFamilyOwnershipRequest\x1a*.uneton.v1.TransferFamilyOwnershipResponse\x12O\n" +
+	"\fRevokeInvite\x12\x1e.uneton.v1.RevokeInviteRequest\x1a\x1f.uneton.v1.RevokeInviteResponse\x12O\n" +
+	"\fDeleteFamily\x12\x1e.uneton.v1.DeleteFamilyRequest\x1a\x1f.uneton.v1.DeleteFamilyResponse\x127\n" +
 	"\x04Sync\x12\x16.uneton.v1.SyncRequest\x1a\x17.uneton.v1.SyncResponse\x12N\n" +
 	"\vWatchFamily\x12\x1d.uneton.v1.WatchFamilyRequest\x1a\x1e.uneton.v1.WatchFamilyResponse0\x01B<Z:solutions.bytesized/uneton/internal/gen/uneton/v1;unetonv1b\x06proto3"
 
@@ -4410,7 +5414,7 @@ func file_uneton_v1_uneton_proto_rawDescGZIP() []byte {
 }
 
 var file_uneton_v1_uneton_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_uneton_v1_uneton_proto_msgTypes = make([]protoimpl.MessageInfo, 55)
+var file_uneton_v1_uneton_proto_msgTypes = make([]protoimpl.MessageInfo, 74)
 var file_uneton_v1_uneton_proto_goTypes = []any{
 	(CommandStatus)(0),                       // 0: uneton.v1.CommandStatus
 	(EntityType)(0),                          // 1: uneton.v1.EntityType
@@ -4438,39 +5442,58 @@ var file_uneton_v1_uneton_proto_goTypes = []any{
 	(*CreateInviteResponse)(nil),             // 23: uneton.v1.CreateInviteResponse
 	(*AcceptInviteRequest)(nil),              // 24: uneton.v1.AcceptInviteRequest
 	(*AcceptInviteResponse)(nil),             // 25: uneton.v1.AcceptInviteResponse
-	(*SyncRequest)(nil),                      // 26: uneton.v1.SyncRequest
-	(*Command)(nil),                          // 27: uneton.v1.Command
-	(*CreateChild)(nil),                      // 28: uneton.v1.CreateChild
-	(*UpdateChild)(nil),                      // 29: uneton.v1.UpdateChild
-	(*ChildInput)(nil),                       // 30: uneton.v1.ChildInput
-	(*StartSleep)(nil),                       // 31: uneton.v1.StartSleep
-	(*EndSleep)(nil),                         // 32: uneton.v1.EndSleep
-	(*UpsertSleep)(nil),                      // 33: uneton.v1.UpsertSleep
-	(*DeleteSleep)(nil),                      // 34: uneton.v1.DeleteSleep
-	(*UpsertGrowthMeasurement)(nil),          // 35: uneton.v1.UpsertGrowthMeasurement
-	(*DeleteGrowthMeasurement)(nil),          // 36: uneton.v1.DeleteGrowthMeasurement
-	(*GrowthMeasurementInput)(nil),           // 37: uneton.v1.GrowthMeasurementInput
-	(*UpsertTemperatureReading)(nil),         // 38: uneton.v1.UpsertTemperatureReading
-	(*DeleteTemperatureReading)(nil),         // 39: uneton.v1.DeleteTemperatureReading
-	(*TemperatureReadingInput)(nil),          // 40: uneton.v1.TemperatureReadingInput
-	(*SleepInput)(nil),                       // 41: uneton.v1.SleepInput
-	(*CommandResult)(nil),                    // 42: uneton.v1.CommandResult
-	(*Entity)(nil),                           // 43: uneton.v1.Entity
-	(*DeletedEntity)(nil),                    // 44: uneton.v1.DeletedEntity
-	(*Child)(nil),                            // 45: uneton.v1.Child
-	(*SleepSession)(nil),                     // 46: uneton.v1.SleepSession
-	(*GrowthMeasurement)(nil),                // 47: uneton.v1.GrowthMeasurement
-	(*TemperatureReading)(nil),               // 48: uneton.v1.TemperatureReading
-	(*SyncEvent)(nil),                        // 49: uneton.v1.SyncEvent
-	(*SnapshotEntity)(nil),                   // 50: uneton.v1.SnapshotEntity
-	(*FamilySnapshot)(nil),                   // 51: uneton.v1.FamilySnapshot
-	(*SleepPrediction)(nil),                  // 52: uneton.v1.SleepPrediction
-	(*SleepForecast)(nil),                    // 53: uneton.v1.SleepForecast
-	(*GrowthReferencePoint)(nil),             // 54: uneton.v1.GrowthReferencePoint
-	(*SyncResponse)(nil),                     // 55: uneton.v1.SyncResponse
-	(*WatchFamilyRequest)(nil),               // 56: uneton.v1.WatchFamilyRequest
-	(*WatchFamilyResponse)(nil),              // 57: uneton.v1.WatchFamilyResponse
-	(*timestamppb.Timestamp)(nil),            // 58: google.protobuf.Timestamp
+	(*GetFamilyManagementRequest)(nil),       // 26: uneton.v1.GetFamilyManagementRequest
+	(*FamilyMemberInfo)(nil),                 // 27: uneton.v1.FamilyMemberInfo
+	(*FamilyInviteInfo)(nil),                 // 28: uneton.v1.FamilyInviteInfo
+	(*GetFamilyManagementResponse)(nil),      // 29: uneton.v1.GetFamilyManagementResponse
+	(*UpdateProfileRequest)(nil),             // 30: uneton.v1.UpdateProfileRequest
+	(*UpdateProfileResponse)(nil),            // 31: uneton.v1.UpdateProfileResponse
+	(*RenameFamilyRequest)(nil),              // 32: uneton.v1.RenameFamilyRequest
+	(*RenameFamilyResponse)(nil),             // 33: uneton.v1.RenameFamilyResponse
+	(*RemoveFamilyMemberRequest)(nil),        // 34: uneton.v1.RemoveFamilyMemberRequest
+	(*RemoveFamilyMemberResponse)(nil),       // 35: uneton.v1.RemoveFamilyMemberResponse
+	(*LeaveFamilyRequest)(nil),               // 36: uneton.v1.LeaveFamilyRequest
+	(*LeaveFamilyResponse)(nil),              // 37: uneton.v1.LeaveFamilyResponse
+	(*TransferFamilyOwnershipRequest)(nil),   // 38: uneton.v1.TransferFamilyOwnershipRequest
+	(*TransferFamilyOwnershipResponse)(nil),  // 39: uneton.v1.TransferFamilyOwnershipResponse
+	(*RevokeInviteRequest)(nil),              // 40: uneton.v1.RevokeInviteRequest
+	(*RevokeInviteResponse)(nil),             // 41: uneton.v1.RevokeInviteResponse
+	(*DeleteFamilyRequest)(nil),              // 42: uneton.v1.DeleteFamilyRequest
+	(*DeleteFamilyResponse)(nil),             // 43: uneton.v1.DeleteFamilyResponse
+	(*SyncRequest)(nil),                      // 44: uneton.v1.SyncRequest
+	(*Command)(nil),                          // 45: uneton.v1.Command
+	(*CreateChild)(nil),                      // 46: uneton.v1.CreateChild
+	(*UpdateChild)(nil),                      // 47: uneton.v1.UpdateChild
+	(*DeleteChild)(nil),                      // 48: uneton.v1.DeleteChild
+	(*ChildInput)(nil),                       // 49: uneton.v1.ChildInput
+	(*StartSleep)(nil),                       // 50: uneton.v1.StartSleep
+	(*EndSleep)(nil),                         // 51: uneton.v1.EndSleep
+	(*UpsertSleep)(nil),                      // 52: uneton.v1.UpsertSleep
+	(*DeleteSleep)(nil),                      // 53: uneton.v1.DeleteSleep
+	(*UpsertGrowthMeasurement)(nil),          // 54: uneton.v1.UpsertGrowthMeasurement
+	(*DeleteGrowthMeasurement)(nil),          // 55: uneton.v1.DeleteGrowthMeasurement
+	(*GrowthMeasurementInput)(nil),           // 56: uneton.v1.GrowthMeasurementInput
+	(*UpsertTemperatureReading)(nil),         // 57: uneton.v1.UpsertTemperatureReading
+	(*DeleteTemperatureReading)(nil),         // 58: uneton.v1.DeleteTemperatureReading
+	(*TemperatureReadingInput)(nil),          // 59: uneton.v1.TemperatureReadingInput
+	(*SleepInput)(nil),                       // 60: uneton.v1.SleepInput
+	(*CommandResult)(nil),                    // 61: uneton.v1.CommandResult
+	(*Entity)(nil),                           // 62: uneton.v1.Entity
+	(*DeletedEntity)(nil),                    // 63: uneton.v1.DeletedEntity
+	(*Child)(nil),                            // 64: uneton.v1.Child
+	(*SleepSession)(nil),                     // 65: uneton.v1.SleepSession
+	(*GrowthMeasurement)(nil),                // 66: uneton.v1.GrowthMeasurement
+	(*TemperatureReading)(nil),               // 67: uneton.v1.TemperatureReading
+	(*SyncEvent)(nil),                        // 68: uneton.v1.SyncEvent
+	(*SnapshotEntity)(nil),                   // 69: uneton.v1.SnapshotEntity
+	(*FamilySnapshot)(nil),                   // 70: uneton.v1.FamilySnapshot
+	(*SleepPrediction)(nil),                  // 71: uneton.v1.SleepPrediction
+	(*SleepForecast)(nil),                    // 72: uneton.v1.SleepForecast
+	(*GrowthReferencePoint)(nil),             // 73: uneton.v1.GrowthReferencePoint
+	(*SyncResponse)(nil),                     // 74: uneton.v1.SyncResponse
+	(*WatchFamilyRequest)(nil),               // 75: uneton.v1.WatchFamilyRequest
+	(*WatchFamilyResponse)(nil),              // 76: uneton.v1.WatchFamilyResponse
+	(*timestamppb.Timestamp)(nil),            // 77: google.protobuf.Timestamp
 }
 var file_uneton_v1_uneton_proto_depIdxs = []int32{
 	10, // 0: uneton.v1.UpdateDevicePushSettingsResponse.settings:type_name -> uneton.v1.DevicePushSettings
@@ -4478,96 +5501,119 @@ var file_uneton_v1_uneton_proto_depIdxs = []int32{
 	15, // 2: uneton.v1.DevelopmentAuthResponse.authentication:type_name -> uneton.v1.AuthenticationResponse
 	15, // 3: uneton.v1.AppleAuthResponse.authentication:type_name -> uneton.v1.AuthenticationResponse
 	15, // 4: uneton.v1.RefreshAuthResponse.authentication:type_name -> uneton.v1.AuthenticationResponse
-	58, // 5: uneton.v1.CreateInviteResponse.expires_at:type_name -> google.protobuf.Timestamp
-	27, // 6: uneton.v1.SyncRequest.commands:type_name -> uneton.v1.Command
-	28, // 7: uneton.v1.Command.create_child:type_name -> uneton.v1.CreateChild
-	29, // 8: uneton.v1.Command.update_child:type_name -> uneton.v1.UpdateChild
-	31, // 9: uneton.v1.Command.start_sleep:type_name -> uneton.v1.StartSleep
-	32, // 10: uneton.v1.Command.end_sleep:type_name -> uneton.v1.EndSleep
-	33, // 11: uneton.v1.Command.upsert_sleep:type_name -> uneton.v1.UpsertSleep
-	34, // 12: uneton.v1.Command.delete_sleep:type_name -> uneton.v1.DeleteSleep
-	35, // 13: uneton.v1.Command.upsert_growth_measurement:type_name -> uneton.v1.UpsertGrowthMeasurement
-	36, // 14: uneton.v1.Command.delete_growth_measurement:type_name -> uneton.v1.DeleteGrowthMeasurement
-	38, // 15: uneton.v1.Command.upsert_temperature_reading:type_name -> uneton.v1.UpsertTemperatureReading
-	39, // 16: uneton.v1.Command.delete_temperature_reading:type_name -> uneton.v1.DeleteTemperatureReading
-	30, // 17: uneton.v1.CreateChild.child:type_name -> uneton.v1.ChildInput
-	30, // 18: uneton.v1.UpdateChild.child:type_name -> uneton.v1.ChildInput
-	41, // 19: uneton.v1.StartSleep.sleep:type_name -> uneton.v1.SleepInput
-	58, // 20: uneton.v1.EndSleep.ended_at:type_name -> google.protobuf.Timestamp
-	41, // 21: uneton.v1.UpsertSleep.sleep:type_name -> uneton.v1.SleepInput
-	37, // 22: uneton.v1.UpsertGrowthMeasurement.measurement:type_name -> uneton.v1.GrowthMeasurementInput
-	58, // 23: uneton.v1.GrowthMeasurementInput.measured_at:type_name -> google.protobuf.Timestamp
-	40, // 24: uneton.v1.UpsertTemperatureReading.reading:type_name -> uneton.v1.TemperatureReadingInput
-	58, // 25: uneton.v1.TemperatureReadingInput.measured_at:type_name -> google.protobuf.Timestamp
-	58, // 26: uneton.v1.SleepInput.started_at:type_name -> google.protobuf.Timestamp
-	58, // 27: uneton.v1.SleepInput.ended_at:type_name -> google.protobuf.Timestamp
-	0,  // 28: uneton.v1.CommandResult.status:type_name -> uneton.v1.CommandStatus
-	43, // 29: uneton.v1.CommandResult.entity:type_name -> uneton.v1.Entity
-	45, // 30: uneton.v1.Entity.child:type_name -> uneton.v1.Child
-	46, // 31: uneton.v1.Entity.sleep_session:type_name -> uneton.v1.SleepSession
-	44, // 32: uneton.v1.Entity.deleted:type_name -> uneton.v1.DeletedEntity
-	47, // 33: uneton.v1.Entity.growth_measurement:type_name -> uneton.v1.GrowthMeasurement
-	48, // 34: uneton.v1.Entity.temperature_reading:type_name -> uneton.v1.TemperatureReading
-	58, // 35: uneton.v1.Child.updated_at:type_name -> google.protobuf.Timestamp
-	58, // 36: uneton.v1.SleepSession.started_at:type_name -> google.protobuf.Timestamp
-	58, // 37: uneton.v1.SleepSession.ended_at:type_name -> google.protobuf.Timestamp
-	58, // 38: uneton.v1.SleepSession.updated_at:type_name -> google.protobuf.Timestamp
-	58, // 39: uneton.v1.SleepSession.deleted_at:type_name -> google.protobuf.Timestamp
-	58, // 40: uneton.v1.GrowthMeasurement.measured_at:type_name -> google.protobuf.Timestamp
-	58, // 41: uneton.v1.GrowthMeasurement.updated_at:type_name -> google.protobuf.Timestamp
-	58, // 42: uneton.v1.GrowthMeasurement.deleted_at:type_name -> google.protobuf.Timestamp
-	58, // 43: uneton.v1.TemperatureReading.measured_at:type_name -> google.protobuf.Timestamp
-	58, // 44: uneton.v1.TemperatureReading.updated_at:type_name -> google.protobuf.Timestamp
-	58, // 45: uneton.v1.TemperatureReading.deleted_at:type_name -> google.protobuf.Timestamp
-	1,  // 46: uneton.v1.SyncEvent.entity_type:type_name -> uneton.v1.EntityType
-	2,  // 47: uneton.v1.SyncEvent.operation:type_name -> uneton.v1.EventOperation
-	43, // 48: uneton.v1.SyncEvent.entity:type_name -> uneton.v1.Entity
-	58, // 49: uneton.v1.SyncEvent.created_at:type_name -> google.protobuf.Timestamp
-	1,  // 50: uneton.v1.SnapshotEntity.entity_type:type_name -> uneton.v1.EntityType
-	43, // 51: uneton.v1.SnapshotEntity.entity:type_name -> uneton.v1.Entity
-	50, // 52: uneton.v1.FamilySnapshot.entities:type_name -> uneton.v1.SnapshotEntity
-	58, // 53: uneton.v1.FamilySnapshot.created_at:type_name -> google.protobuf.Timestamp
-	58, // 54: uneton.v1.SleepPrediction.target_at:type_name -> google.protobuf.Timestamp
-	58, // 55: uneton.v1.SleepPrediction.range_start_at:type_name -> google.protobuf.Timestamp
-	58, // 56: uneton.v1.SleepPrediction.range_end_at:type_name -> google.protobuf.Timestamp
-	52, // 57: uneton.v1.SleepForecast.wake_estimate:type_name -> uneton.v1.SleepPrediction
-	52, // 58: uneton.v1.SleepForecast.next_sleep_estimate:type_name -> uneton.v1.SleepPrediction
-	42, // 59: uneton.v1.SyncResponse.command_results:type_name -> uneton.v1.CommandResult
-	49, // 60: uneton.v1.SyncResponse.events:type_name -> uneton.v1.SyncEvent
-	52, // 61: uneton.v1.SyncResponse.next_sleep_estimate:type_name -> uneton.v1.SleepPrediction
-	58, // 62: uneton.v1.SyncResponse.server_time:type_name -> google.protobuf.Timestamp
-	53, // 63: uneton.v1.SyncResponse.sleep_forecast:type_name -> uneton.v1.SleepForecast
-	51, // 64: uneton.v1.SyncResponse.snapshot:type_name -> uneton.v1.FamilySnapshot
-	54, // 65: uneton.v1.SyncResponse.growth_reference_points:type_name -> uneton.v1.GrowthReferencePoint
-	3,  // 66: uneton.v1.UnetonService.DevelopmentAuth:input_type -> uneton.v1.DevelopmentAuthRequest
-	4,  // 67: uneton.v1.UnetonService.AppleAuth:input_type -> uneton.v1.AppleAuthRequest
-	5,  // 68: uneton.v1.UnetonService.RefreshAuth:input_type -> uneton.v1.RefreshAuthRequest
-	6,  // 69: uneton.v1.UnetonService.SignOut:input_type -> uneton.v1.SignOutRequest
-	8,  // 70: uneton.v1.UnetonService.DeleteAccount:input_type -> uneton.v1.DeleteAccountRequest
-	11, // 71: uneton.v1.UnetonService.UpdateDevicePushSettings:input_type -> uneton.v1.UpdateDevicePushSettingsRequest
-	13, // 72: uneton.v1.UnetonService.RegisterLiveActivity:input_type -> uneton.v1.RegisterLiveActivityRequest
-	20, // 73: uneton.v1.UnetonService.CreateFamily:input_type -> uneton.v1.CreateFamilyRequest
-	22, // 74: uneton.v1.UnetonService.CreateInvite:input_type -> uneton.v1.CreateInviteRequest
-	24, // 75: uneton.v1.UnetonService.AcceptInvite:input_type -> uneton.v1.AcceptInviteRequest
-	26, // 76: uneton.v1.UnetonService.Sync:input_type -> uneton.v1.SyncRequest
-	56, // 77: uneton.v1.UnetonService.WatchFamily:input_type -> uneton.v1.WatchFamilyRequest
-	17, // 78: uneton.v1.UnetonService.DevelopmentAuth:output_type -> uneton.v1.DevelopmentAuthResponse
-	18, // 79: uneton.v1.UnetonService.AppleAuth:output_type -> uneton.v1.AppleAuthResponse
-	19, // 80: uneton.v1.UnetonService.RefreshAuth:output_type -> uneton.v1.RefreshAuthResponse
-	7,  // 81: uneton.v1.UnetonService.SignOut:output_type -> uneton.v1.SignOutResponse
-	9,  // 82: uneton.v1.UnetonService.DeleteAccount:output_type -> uneton.v1.DeleteAccountResponse
-	12, // 83: uneton.v1.UnetonService.UpdateDevicePushSettings:output_type -> uneton.v1.UpdateDevicePushSettingsResponse
-	14, // 84: uneton.v1.UnetonService.RegisterLiveActivity:output_type -> uneton.v1.RegisterLiveActivityResponse
-	21, // 85: uneton.v1.UnetonService.CreateFamily:output_type -> uneton.v1.CreateFamilyResponse
-	23, // 86: uneton.v1.UnetonService.CreateInvite:output_type -> uneton.v1.CreateInviteResponse
-	25, // 87: uneton.v1.UnetonService.AcceptInvite:output_type -> uneton.v1.AcceptInviteResponse
-	55, // 88: uneton.v1.UnetonService.Sync:output_type -> uneton.v1.SyncResponse
-	57, // 89: uneton.v1.UnetonService.WatchFamily:output_type -> uneton.v1.WatchFamilyResponse
-	78, // [78:90] is the sub-list for method output_type
-	66, // [66:78] is the sub-list for method input_type
-	66, // [66:66] is the sub-list for extension type_name
-	66, // [66:66] is the sub-list for extension extendee
-	0,  // [0:66] is the sub-list for field type_name
+	77, // 5: uneton.v1.CreateInviteResponse.expires_at:type_name -> google.protobuf.Timestamp
+	77, // 6: uneton.v1.FamilyMemberInfo.joined_at:type_name -> google.protobuf.Timestamp
+	77, // 7: uneton.v1.FamilyInviteInfo.expires_at:type_name -> google.protobuf.Timestamp
+	77, // 8: uneton.v1.FamilyInviteInfo.created_at:type_name -> google.protobuf.Timestamp
+	27, // 9: uneton.v1.GetFamilyManagementResponse.members:type_name -> uneton.v1.FamilyMemberInfo
+	28, // 10: uneton.v1.GetFamilyManagementResponse.pending_invites:type_name -> uneton.v1.FamilyInviteInfo
+	45, // 11: uneton.v1.SyncRequest.commands:type_name -> uneton.v1.Command
+	46, // 12: uneton.v1.Command.create_child:type_name -> uneton.v1.CreateChild
+	47, // 13: uneton.v1.Command.update_child:type_name -> uneton.v1.UpdateChild
+	50, // 14: uneton.v1.Command.start_sleep:type_name -> uneton.v1.StartSleep
+	51, // 15: uneton.v1.Command.end_sleep:type_name -> uneton.v1.EndSleep
+	52, // 16: uneton.v1.Command.upsert_sleep:type_name -> uneton.v1.UpsertSleep
+	53, // 17: uneton.v1.Command.delete_sleep:type_name -> uneton.v1.DeleteSleep
+	54, // 18: uneton.v1.Command.upsert_growth_measurement:type_name -> uneton.v1.UpsertGrowthMeasurement
+	55, // 19: uneton.v1.Command.delete_growth_measurement:type_name -> uneton.v1.DeleteGrowthMeasurement
+	57, // 20: uneton.v1.Command.upsert_temperature_reading:type_name -> uneton.v1.UpsertTemperatureReading
+	58, // 21: uneton.v1.Command.delete_temperature_reading:type_name -> uneton.v1.DeleteTemperatureReading
+	48, // 22: uneton.v1.Command.delete_child:type_name -> uneton.v1.DeleteChild
+	49, // 23: uneton.v1.CreateChild.child:type_name -> uneton.v1.ChildInput
+	49, // 24: uneton.v1.UpdateChild.child:type_name -> uneton.v1.ChildInput
+	60, // 25: uneton.v1.StartSleep.sleep:type_name -> uneton.v1.SleepInput
+	77, // 26: uneton.v1.EndSleep.ended_at:type_name -> google.protobuf.Timestamp
+	60, // 27: uneton.v1.UpsertSleep.sleep:type_name -> uneton.v1.SleepInput
+	56, // 28: uneton.v1.UpsertGrowthMeasurement.measurement:type_name -> uneton.v1.GrowthMeasurementInput
+	77, // 29: uneton.v1.GrowthMeasurementInput.measured_at:type_name -> google.protobuf.Timestamp
+	59, // 30: uneton.v1.UpsertTemperatureReading.reading:type_name -> uneton.v1.TemperatureReadingInput
+	77, // 31: uneton.v1.TemperatureReadingInput.measured_at:type_name -> google.protobuf.Timestamp
+	77, // 32: uneton.v1.SleepInput.started_at:type_name -> google.protobuf.Timestamp
+	77, // 33: uneton.v1.SleepInput.ended_at:type_name -> google.protobuf.Timestamp
+	0,  // 34: uneton.v1.CommandResult.status:type_name -> uneton.v1.CommandStatus
+	62, // 35: uneton.v1.CommandResult.entity:type_name -> uneton.v1.Entity
+	64, // 36: uneton.v1.Entity.child:type_name -> uneton.v1.Child
+	65, // 37: uneton.v1.Entity.sleep_session:type_name -> uneton.v1.SleepSession
+	63, // 38: uneton.v1.Entity.deleted:type_name -> uneton.v1.DeletedEntity
+	66, // 39: uneton.v1.Entity.growth_measurement:type_name -> uneton.v1.GrowthMeasurement
+	67, // 40: uneton.v1.Entity.temperature_reading:type_name -> uneton.v1.TemperatureReading
+	77, // 41: uneton.v1.Child.updated_at:type_name -> google.protobuf.Timestamp
+	77, // 42: uneton.v1.Child.deleted_at:type_name -> google.protobuf.Timestamp
+	77, // 43: uneton.v1.SleepSession.started_at:type_name -> google.protobuf.Timestamp
+	77, // 44: uneton.v1.SleepSession.ended_at:type_name -> google.protobuf.Timestamp
+	77, // 45: uneton.v1.SleepSession.updated_at:type_name -> google.protobuf.Timestamp
+	77, // 46: uneton.v1.SleepSession.deleted_at:type_name -> google.protobuf.Timestamp
+	77, // 47: uneton.v1.GrowthMeasurement.measured_at:type_name -> google.protobuf.Timestamp
+	77, // 48: uneton.v1.GrowthMeasurement.updated_at:type_name -> google.protobuf.Timestamp
+	77, // 49: uneton.v1.GrowthMeasurement.deleted_at:type_name -> google.protobuf.Timestamp
+	77, // 50: uneton.v1.TemperatureReading.measured_at:type_name -> google.protobuf.Timestamp
+	77, // 51: uneton.v1.TemperatureReading.updated_at:type_name -> google.protobuf.Timestamp
+	77, // 52: uneton.v1.TemperatureReading.deleted_at:type_name -> google.protobuf.Timestamp
+	1,  // 53: uneton.v1.SyncEvent.entity_type:type_name -> uneton.v1.EntityType
+	2,  // 54: uneton.v1.SyncEvent.operation:type_name -> uneton.v1.EventOperation
+	62, // 55: uneton.v1.SyncEvent.entity:type_name -> uneton.v1.Entity
+	77, // 56: uneton.v1.SyncEvent.created_at:type_name -> google.protobuf.Timestamp
+	1,  // 57: uneton.v1.SnapshotEntity.entity_type:type_name -> uneton.v1.EntityType
+	62, // 58: uneton.v1.SnapshotEntity.entity:type_name -> uneton.v1.Entity
+	69, // 59: uneton.v1.FamilySnapshot.entities:type_name -> uneton.v1.SnapshotEntity
+	77, // 60: uneton.v1.FamilySnapshot.created_at:type_name -> google.protobuf.Timestamp
+	77, // 61: uneton.v1.SleepPrediction.target_at:type_name -> google.protobuf.Timestamp
+	77, // 62: uneton.v1.SleepPrediction.range_start_at:type_name -> google.protobuf.Timestamp
+	77, // 63: uneton.v1.SleepPrediction.range_end_at:type_name -> google.protobuf.Timestamp
+	71, // 64: uneton.v1.SleepForecast.wake_estimate:type_name -> uneton.v1.SleepPrediction
+	71, // 65: uneton.v1.SleepForecast.next_sleep_estimate:type_name -> uneton.v1.SleepPrediction
+	61, // 66: uneton.v1.SyncResponse.command_results:type_name -> uneton.v1.CommandResult
+	68, // 67: uneton.v1.SyncResponse.events:type_name -> uneton.v1.SyncEvent
+	71, // 68: uneton.v1.SyncResponse.next_sleep_estimate:type_name -> uneton.v1.SleepPrediction
+	77, // 69: uneton.v1.SyncResponse.server_time:type_name -> google.protobuf.Timestamp
+	72, // 70: uneton.v1.SyncResponse.sleep_forecast:type_name -> uneton.v1.SleepForecast
+	70, // 71: uneton.v1.SyncResponse.snapshot:type_name -> uneton.v1.FamilySnapshot
+	73, // 72: uneton.v1.SyncResponse.growth_reference_points:type_name -> uneton.v1.GrowthReferencePoint
+	3,  // 73: uneton.v1.UnetonService.DevelopmentAuth:input_type -> uneton.v1.DevelopmentAuthRequest
+	4,  // 74: uneton.v1.UnetonService.AppleAuth:input_type -> uneton.v1.AppleAuthRequest
+	5,  // 75: uneton.v1.UnetonService.RefreshAuth:input_type -> uneton.v1.RefreshAuthRequest
+	6,  // 76: uneton.v1.UnetonService.SignOut:input_type -> uneton.v1.SignOutRequest
+	8,  // 77: uneton.v1.UnetonService.DeleteAccount:input_type -> uneton.v1.DeleteAccountRequest
+	11, // 78: uneton.v1.UnetonService.UpdateDevicePushSettings:input_type -> uneton.v1.UpdateDevicePushSettingsRequest
+	13, // 79: uneton.v1.UnetonService.RegisterLiveActivity:input_type -> uneton.v1.RegisterLiveActivityRequest
+	20, // 80: uneton.v1.UnetonService.CreateFamily:input_type -> uneton.v1.CreateFamilyRequest
+	22, // 81: uneton.v1.UnetonService.CreateInvite:input_type -> uneton.v1.CreateInviteRequest
+	24, // 82: uneton.v1.UnetonService.AcceptInvite:input_type -> uneton.v1.AcceptInviteRequest
+	26, // 83: uneton.v1.UnetonService.GetFamilyManagement:input_type -> uneton.v1.GetFamilyManagementRequest
+	30, // 84: uneton.v1.UnetonService.UpdateProfile:input_type -> uneton.v1.UpdateProfileRequest
+	32, // 85: uneton.v1.UnetonService.RenameFamily:input_type -> uneton.v1.RenameFamilyRequest
+	34, // 86: uneton.v1.UnetonService.RemoveFamilyMember:input_type -> uneton.v1.RemoveFamilyMemberRequest
+	36, // 87: uneton.v1.UnetonService.LeaveFamily:input_type -> uneton.v1.LeaveFamilyRequest
+	38, // 88: uneton.v1.UnetonService.TransferFamilyOwnership:input_type -> uneton.v1.TransferFamilyOwnershipRequest
+	40, // 89: uneton.v1.UnetonService.RevokeInvite:input_type -> uneton.v1.RevokeInviteRequest
+	42, // 90: uneton.v1.UnetonService.DeleteFamily:input_type -> uneton.v1.DeleteFamilyRequest
+	44, // 91: uneton.v1.UnetonService.Sync:input_type -> uneton.v1.SyncRequest
+	75, // 92: uneton.v1.UnetonService.WatchFamily:input_type -> uneton.v1.WatchFamilyRequest
+	17, // 93: uneton.v1.UnetonService.DevelopmentAuth:output_type -> uneton.v1.DevelopmentAuthResponse
+	18, // 94: uneton.v1.UnetonService.AppleAuth:output_type -> uneton.v1.AppleAuthResponse
+	19, // 95: uneton.v1.UnetonService.RefreshAuth:output_type -> uneton.v1.RefreshAuthResponse
+	7,  // 96: uneton.v1.UnetonService.SignOut:output_type -> uneton.v1.SignOutResponse
+	9,  // 97: uneton.v1.UnetonService.DeleteAccount:output_type -> uneton.v1.DeleteAccountResponse
+	12, // 98: uneton.v1.UnetonService.UpdateDevicePushSettings:output_type -> uneton.v1.UpdateDevicePushSettingsResponse
+	14, // 99: uneton.v1.UnetonService.RegisterLiveActivity:output_type -> uneton.v1.RegisterLiveActivityResponse
+	21, // 100: uneton.v1.UnetonService.CreateFamily:output_type -> uneton.v1.CreateFamilyResponse
+	23, // 101: uneton.v1.UnetonService.CreateInvite:output_type -> uneton.v1.CreateInviteResponse
+	25, // 102: uneton.v1.UnetonService.AcceptInvite:output_type -> uneton.v1.AcceptInviteResponse
+	29, // 103: uneton.v1.UnetonService.GetFamilyManagement:output_type -> uneton.v1.GetFamilyManagementResponse
+	31, // 104: uneton.v1.UnetonService.UpdateProfile:output_type -> uneton.v1.UpdateProfileResponse
+	33, // 105: uneton.v1.UnetonService.RenameFamily:output_type -> uneton.v1.RenameFamilyResponse
+	35, // 106: uneton.v1.UnetonService.RemoveFamilyMember:output_type -> uneton.v1.RemoveFamilyMemberResponse
+	37, // 107: uneton.v1.UnetonService.LeaveFamily:output_type -> uneton.v1.LeaveFamilyResponse
+	39, // 108: uneton.v1.UnetonService.TransferFamilyOwnership:output_type -> uneton.v1.TransferFamilyOwnershipResponse
+	41, // 109: uneton.v1.UnetonService.RevokeInvite:output_type -> uneton.v1.RevokeInviteResponse
+	43, // 110: uneton.v1.UnetonService.DeleteFamily:output_type -> uneton.v1.DeleteFamilyResponse
+	74, // 111: uneton.v1.UnetonService.Sync:output_type -> uneton.v1.SyncResponse
+	76, // 112: uneton.v1.UnetonService.WatchFamily:output_type -> uneton.v1.WatchFamilyResponse
+	93, // [93:113] is the sub-list for method output_type
+	73, // [73:93] is the sub-list for method input_type
+	73, // [73:73] is the sub-list for extension type_name
+	73, // [73:73] is the sub-list for extension extendee
+	0,  // [0:73] is the sub-list for field type_name
 }
 
 func init() { file_uneton_v1_uneton_proto_init() }
@@ -4576,7 +5622,7 @@ func file_uneton_v1_uneton_proto_init() {
 		return
 	}
 	file_uneton_v1_uneton_proto_msgTypes[8].OneofWrappers = []any{}
-	file_uneton_v1_uneton_proto_msgTypes[24].OneofWrappers = []any{
+	file_uneton_v1_uneton_proto_msgTypes[42].OneofWrappers = []any{
 		(*Command_CreateChild)(nil),
 		(*Command_UpdateChild)(nil),
 		(*Command_StartSleep)(nil),
@@ -4587,31 +5633,32 @@ func file_uneton_v1_uneton_proto_init() {
 		(*Command_DeleteGrowthMeasurement)(nil),
 		(*Command_UpsertTemperatureReading)(nil),
 		(*Command_DeleteTemperatureReading)(nil),
+		(*Command_DeleteChild)(nil),
 	}
-	file_uneton_v1_uneton_proto_msgTypes[27].OneofWrappers = []any{}
-	file_uneton_v1_uneton_proto_msgTypes[29].OneofWrappers = []any{}
-	file_uneton_v1_uneton_proto_msgTypes[34].OneofWrappers = []any{}
-	file_uneton_v1_uneton_proto_msgTypes[38].OneofWrappers = []any{}
-	file_uneton_v1_uneton_proto_msgTypes[40].OneofWrappers = []any{
+	file_uneton_v1_uneton_proto_msgTypes[46].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[48].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[53].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[57].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[59].OneofWrappers = []any{
 		(*Entity_Child)(nil),
 		(*Entity_SleepSession)(nil),
 		(*Entity_Deleted)(nil),
 		(*Entity_GrowthMeasurement)(nil),
 		(*Entity_TemperatureReading)(nil),
 	}
-	file_uneton_v1_uneton_proto_msgTypes[42].OneofWrappers = []any{}
-	file_uneton_v1_uneton_proto_msgTypes[43].OneofWrappers = []any{}
-	file_uneton_v1_uneton_proto_msgTypes[44].OneofWrappers = []any{}
-	file_uneton_v1_uneton_proto_msgTypes[45].OneofWrappers = []any{}
-	file_uneton_v1_uneton_proto_msgTypes[50].OneofWrappers = []any{}
-	file_uneton_v1_uneton_proto_msgTypes[52].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[61].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[62].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[63].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[64].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[69].OneofWrappers = []any{}
+	file_uneton_v1_uneton_proto_msgTypes[71].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_uneton_v1_uneton_proto_rawDesc), len(file_uneton_v1_uneton_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   55,
+			NumMessages:   74,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

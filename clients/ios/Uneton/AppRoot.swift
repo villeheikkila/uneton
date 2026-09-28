@@ -9,6 +9,9 @@ struct AppRoot {
         var familySync: FamilySync.State?
         var isAuthenticated: Bool
         var onboarding = Onboarding.State()
+        var selectedFamilyID: Family.ID?
+        var selectedChildID: Child.ID?
+        var management: FamilyManagement.State?
     }
 
     enum Action {
@@ -19,6 +22,10 @@ struct AppRoot {
         case familySync(FamilySync.Action)
         case onboarding(Onboarding.Action)
         case openedURL(URL)
+        case selectFamily(Family.ID)
+        case selectChild(Child.ID)
+        case showFamilyManagement(Family.ID)
+        case management(FamilyManagement.Action)
     }
 
     @FeatureEnvironment(\.sessionSync) private var sessionSync
@@ -29,7 +36,12 @@ struct AppRoot {
                 switch action {
                 case let .authenticationChanged(isAuthenticated):
                     state.isAuthenticated = isAuthenticated
-                    if !isAuthenticated { state.familySync = nil }
+                    if !isAuthenticated {
+                        state.familySync = nil
+                        state.selectedFamilyID = nil
+                        state.selectedChildID = nil
+                        state.management = nil
+                    }
                 case .credentialValidationRequested:
                     store.addTask {
                         await sessionSync.validateCredential()
@@ -38,11 +50,26 @@ struct AppRoot {
                 case let .familySelected(familyID):
                     guard state.isAuthenticated, let familyID else {
                         state.familySync = nil
+                        state.selectedFamilyID = nil
+                        state.selectedChildID = nil
                         return
+                    }
+                    if state.selectedFamilyID != familyID {
+                        state.selectedFamilyID = familyID
+                        state.selectedChildID = nil
                     }
                     if state.familySync?.familyID != familyID {
                         state.familySync = FamilySync.State(familyID: familyID)
                     }
+                case let .selectFamily(id):
+                    state.selectedFamilyID = id
+                    state.selectedChildID = nil
+                case let .selectChild(id):
+                    state.selectedChildID = id
+                case let .showFamilyManagement(id):
+                    state.management = FamilyManagement.State(familyID: id)
+                case .management:
+                    break
                 case .familySetup, .familySync, .onboarding:
                     break
                 case let .openedURL(url):
@@ -62,5 +89,6 @@ struct AppRoot {
         .ifLet(\.familySync) {
             FamilySync()
         }
+        .ifLet(\.management) { FamilyManagement() }
     }
 }

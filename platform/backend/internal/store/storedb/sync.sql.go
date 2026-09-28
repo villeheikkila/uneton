@@ -118,7 +118,7 @@ func (q *Queries) AppendEvent(ctx context.Context, arg AppendEventParams) error 
 const childRecord = `-- name: ChildRecord :one
 select id, family_id, nickname, birth_date, prediction_mode,
   manual_interval_minutes, quiet_hours_start_minutes,
-  quiet_hours_end_minutes, time_zone, growth_reference, revision, updated_at
+  quiet_hours_end_minutes, time_zone, growth_reference, revision, updated_at, deleted_at
 from children
 where id=?1 and family_id=?2
 `
@@ -128,24 +128,9 @@ type ChildRecordParams struct {
 	FamilyID string `json:"family_id"`
 }
 
-type ChildRecordRow struct {
-	ID                     string        `json:"id"`
-	FamilyID               string        `json:"family_id"`
-	Nickname               string        `json:"nickname"`
-	BirthDate              string        `json:"birth_date"`
-	PredictionMode         string        `json:"prediction_mode"`
-	ManualIntervalMinutes  sql.NullInt64 `json:"manual_interval_minutes"`
-	QuietHoursStartMinutes int64         `json:"quiet_hours_start_minutes"`
-	QuietHoursEndMinutes   int64         `json:"quiet_hours_end_minutes"`
-	TimeZone               string        `json:"time_zone"`
-	GrowthReference        string        `json:"growth_reference"`
-	Revision               int64         `json:"revision"`
-	UpdatedAt              string        `json:"updated_at"`
-}
-
-func (q *Queries) ChildRecord(ctx context.Context, arg ChildRecordParams) (ChildRecordRow, error) {
+func (q *Queries) ChildRecord(ctx context.Context, arg ChildRecordParams) (Child, error) {
 	row := q.db.QueryRowContext(ctx, childRecord, arg.ID, arg.FamilyID)
-	var i ChildRecordRow
+	var i Child
 	err := row.Scan(
 		&i.ID,
 		&i.FamilyID,
@@ -159,6 +144,7 @@ func (q *Queries) ChildRecord(ctx context.Context, arg ChildRecordParams) (Child
 		&i.GrowthReference,
 		&i.Revision,
 		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
@@ -427,6 +413,31 @@ func (q *Queries) CreateTemperatureReading(ctx context.Context, arg CreateTemper
 		arg.UpdatedAt,
 	)
 	return err
+}
+
+const deleteChild = `-- name: DeleteChild :execrows
+update children set deleted_at=?1, updated_at=?2, revision=revision+1
+where id=?3 and family_id=?4 and deleted_at is null
+`
+
+type DeleteChildParams struct {
+	DeletedAt sql.NullString `json:"deleted_at"`
+	UpdatedAt string         `json:"updated_at"`
+	ID        string         `json:"id"`
+	FamilyID  string         `json:"family_id"`
+}
+
+func (q *Queries) DeleteChild(ctx context.Context, arg DeleteChildParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteChild,
+		arg.DeletedAt,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.FamilyID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 const deleteFamilyEventsThrough = `-- name: DeleteFamilyEventsThrough :exec

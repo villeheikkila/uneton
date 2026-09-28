@@ -13,10 +13,12 @@
 		0B91E39FC61F020E77DF8521 /* capture-_.familySetup.png in Resources */ = {isa = PBXBuildFile; fileRef = 3C8893A3594EB823C661CF83 /* capture-_.familySetup.png */; };
 		0BA2287994E4486BC0EA1A4D /* ReminderController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B794393108E5A174E3327F /* ReminderController.swift */; };
 		0D8DA5E00B5F06B8947F7A50 /* Tagged in Frameworks */ = {isa = PBXBuildFile; productRef = 2D7F139B42F265E12A43CFEC /* Tagged */; };
+		130F4B4B302ECD46F5C30144 /* capture-_.familyManagementSheet.png in Resources */ = {isa = PBXBuildFile; fileRef = B126AFF572A9B3185BA16C37 /* capture-_.familyManagementSheet.png */; };
 		1FAC62EB3331253BBB63FCEC /* FamilySetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D67A960B662346DAFA52918F /* FamilySetup.swift */; };
 		1FE1E4D54037C47A74F5F7C3 /* UnetonWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E559806C9EB49DB6CD0CB7B2 /* UnetonWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		277371375578159F4D765AAE /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93442058261D164D125FE85A /* SessionStore.swift */; };
 		27BDDD0B1DAF19C0D517BA04 /* GrowthEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423880E6A053D48080C50C45 /* GrowthEntry.swift */; };
+		29C1F854C1AB5BA96CFDE9FE /* capture-_.childEditorSheet.png in Resources */ = {isa = PBXBuildFile; fileRef = 3271E7652D9B314F4E6546FC /* capture-_.childEditorSheet.png */; };
 		2A50BABCAE347A1F309FEE8F /* DemoRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28A5777B90BA88C36670DCB1 /* DemoRuntime.swift */; };
 		2C26B83CC603AC626C6B7195 /* TemperatureEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B2C25DAD59C55EE96BD82B9 /* TemperatureEntry.swift */; };
 		31435D6C1E99F573422650FB /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 98FF8790ABA3E818C0847C23 /* SnapshotTesting */; };
@@ -41,6 +43,7 @@
 		5C8FD5987FFF4A94DBCADC76 /* capture-_.syncConflictsSheet.png in Resources */ = {isa = PBXBuildFile; fileRef = A813E55B8E67F20DEC32C945 /* capture-_.syncConflictsSheet.png */; };
 		676259D2761A25E5EEE0415D /* SyncConflictsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCA4BA7AF40DB25E721915A1 /* SyncConflictsSheet.swift */; };
 		6A5A5E350452019851ECF0B0 /* Onboarding.swift in Sources */ = {isa = PBXBuildFile; fileRef = C449A99D10D28759FD0E4F13 /* Onboarding.swift */; };
+		6C871D010C72683AE72B3F59 /* FamilyManagement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 539E981CF395ADD8FB6F4A7B /* FamilyManagement.swift */; };
 		6DCAA7A90DD049D71141218E /* DisplayClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82803025A1AFBF44B863CFC7 /* DisplayClock.swift */; };
 		6E6D55F9E412E08C2DADE3F8 /* FamilySync.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F945BC674777D2A0DEB1BA /* FamilySync.swift */; };
 		707080C16FCA4B9794586321 /* capture-_-size-name.lockScreen.png in Resources */ = {isa = PBXBuildFile; fileRef = EFB649923BF006E6AF9B4F23 /* capture-_-size-name.lockScreen.png */; };
@@ -48,9 +51,11 @@
 		7552C6C49492BC08F2098244 /* capture-_-size-name.expandedIsland.png in Resources */ = {isa = PBXBuildFile; fileRef = 38376736129AAB287CA94BA0 /* capture-_-size-name.expandedIsland.png */; };
 		776E41E259D54BB9647721BB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57CD1A2D27F650526FE3F833 /* Assets.xcassets */; };
 		7B0AC7E48D6CA990D4C033C3 /* LiveActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95FC0EB3F083AB0587264171 /* LiveActivityController.swift */; };
+		7B57111B8737418AFA486CE6 /* FamilyManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4527DA3A60F647DE5F65A302 /* FamilyManagementView.swift */; };
 		7EE9F7B1BE2D150CC89A5B30 /* UnetonActivity in Frameworks */ = {isa = PBXBuildFile; productRef = E8389CBA533E782935A9D730 /* UnetonActivity */; };
 		80D8EAD7366BA3498D2CA583 /* SessionSyncClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37BBA6E529FDA150CF89123E /* SessionSyncClient.swift */; };
 		8200EDDC66C07FAAC8CC554F /* AppRootTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABFE71EE585F9949FCABD7B /* AppRootTests.swift */; };
+		8E2711AC8695F397CD65A426 /* QRCodeImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B9EB5E1E7CFB04D29881E5E /* QRCodeImage.swift */; };
 		8EE54E1B5A784BE1C400AD74 /* capture-_.familySharingSheet.png in Resources */ = {isa = PBXBuildFile; fileRef = EBEE8C6312B8DF21A8E37969 /* capture-_.familySharingSheet.png */; };
 		936F390DF0F0C05C34C2AB43 /* TrendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAB609F8585FE0509A18A8E8 /* TrendsView.swift */; };
 		93BC36FF9698B9C2384B8700 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0355076EEF872FB482B7B4DA /* ContentView.swift */; };
@@ -72,6 +77,7 @@
 		D8DCE27E0D3B93B596D70457 /* FamilySetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52CAFE9F48549066A86A59E2 /* FamilySetupView.swift */; };
 		E1018104A4399F3B84036C3E /* capture-_.invitationScannerSheet.png in Resources */ = {isa = PBXBuildFile; fileRef = FA2052494B4601933892ADB7 /* capture-_.invitationScannerSheet.png */; };
 		EC01897EBECD1DE0DD1AE199 /* AppleCredentialMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAE597D474D61696F33CA8BF /* AppleCredentialMonitor.swift */; };
+		EC1E4DD48E43C5823839F3B5 /* SessionFamilyManagementClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EAAA4CB8504298797ECDDCD /* SessionFamilyManagementClient.swift */; };
 		EE1ADB9F3E5D5E74266732FE /* DemoRuntimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 019129055CD5E615545FAF11 /* DemoRuntimeTests.swift */; };
 		EEE0A15756165F4B81E941F0 /* SleepEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F4A75ED9D0A2A724B618E2 /* SleepEntry.swift */; };
 		F0E5C061F7BB4C7A4AD21404 /* UnetonCore in Frameworks */ = {isa = PBXBuildFile; productRef = DA4F68CF578D30CB531BB6B4 /* UnetonCore */; };
@@ -141,6 +147,7 @@
 		023508B3AC21DEDB2315129E /* UnetonTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = UnetonTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0355076EEF872FB482B7B4DA /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		0568021077504D52C0EF97B3 /* GrowthEntrySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrowthEntrySheet.swift; sourceTree = "<group>"; };
+		0B9EB5E1E7CFB04D29881E5E /* QRCodeImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeImage.swift; sourceTree = "<group>"; };
 		10202B305F3615FE103CAC95 /* ActivitySnapshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivitySnapshots.swift; sourceTree = "<group>"; };
 		15EA75C38B7B9913EFAF8D3C /* UnetonWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnetonWatchApp.swift; sourceTree = "<group>"; };
 		16F8A18EB8BF393F83693600 /* TimelineScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineScreen.swift; sourceTree = "<group>"; };
@@ -149,16 +156,20 @@
 		1DF29C953864C252FCF044CB /* FamilySharing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilySharing.swift; sourceTree = "<group>"; };
 		28A5777B90BA88C36670DCB1 /* DemoRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoRuntime.swift; sourceTree = "<group>"; };
 		31B794393108E5A174E3327F /* ReminderController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderController.swift; sourceTree = "<group>"; };
+		3271E7652D9B314F4E6546FC /* capture-_.childEditorSheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_.childEditorSheet.png"; sourceTree = "<group>"; };
 		37BBA6E529FDA150CF89123E /* SessionSyncClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSyncClient.swift; sourceTree = "<group>"; };
 		38376736129AAB287CA94BA0 /* capture-_-size-name.expandedIsland.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_-size-name.expandedIsland.png"; sourceTree = "<group>"; };
 		3C8893A3594EB823C661CF83 /* capture-_.familySetup.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_.familySetup.png"; sourceTree = "<group>"; };
 		3CC64DF0D2640D8A806E4A61 /* capture-_.sleepEntrySheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_.sleepEntrySheet.png"; sourceTree = "<group>"; };
 		3D896FB7D71440107A4ABABE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		423880E6A053D48080C50C45 /* GrowthEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrowthEntry.swift; sourceTree = "<group>"; };
+		4527DA3A60F647DE5F65A302 /* FamilyManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyManagementView.swift; sourceTree = "<group>"; };
 		45B1DF3CCB9251A6A1E1DBE6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		4EAAA4CB8504298797ECDDCD /* SessionFamilyManagementClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionFamilyManagementClient.swift; sourceTree = "<group>"; };
 		4FC02C1D697CDD4E05DFC2CC /* capture-_.growthEntrySheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_.growthEntrySheet.png"; sourceTree = "<group>"; };
 		52CAFE9F48549066A86A59E2 /* FamilySetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilySetupView.swift; sourceTree = "<group>"; };
 		52E6E2D69BBCABC069653151 /* UnetonWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UnetonWatch.entitlements; sourceTree = "<group>"; };
+		539E981CF395ADD8FB6F4A7B /* FamilyManagement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyManagement.swift; sourceTree = "<group>"; };
 		560D7F8F4187D61F197D1609 /* UnetonWatchUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UnetonWatchUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		57CD1A2D27F650526FE3F833 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5BA61613A67C5F9CB1A059CB /* TemperatureEntrySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemperatureEntrySheet.swift; sourceTree = "<group>"; };
@@ -179,6 +190,7 @@
 		AABFE71EE585F9949FCABD7B /* AppRootTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootTests.swift; sourceTree = "<group>"; };
 		AD9758664132AB21584A96AC /* PhoneWatchBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneWatchBridge.swift; sourceTree = "<group>"; };
 		B095ADAA98D2DA6DE3FD15CD /* PushRegistrationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushRegistrationController.swift; sourceTree = "<group>"; };
+		B126AFF572A9B3185BA16C37 /* capture-_.familyManagementSheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_.familyManagementSheet.png"; sourceTree = "<group>"; };
 		B293649851B1A89B1E172B15 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		B36C2E2107DD081F376A34E1 /* capture-_.onboarding.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_.onboarding.png"; sourceTree = "<group>"; };
 		B5F945BC674777D2A0DEB1BA /* FamilySync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilySync.swift; sourceTree = "<group>"; };
@@ -260,6 +272,16 @@
 			path = Previews;
 			sourceTree = "<group>";
 		};
+		06FF4AC35D102CE4A923098C /* FamilyManagement */ = {
+			isa = PBXGroup;
+			children = (
+				539E981CF395ADD8FB6F4A7B /* FamilyManagement.swift */,
+				4527DA3A60F647DE5F65A302 /* FamilyManagementView.swift */,
+				0B9EB5E1E7CFB04D29881E5E /* QRCodeImage.swift */,
+			);
+			path = FamilyManagement;
+			sourceTree = "<group>";
+		};
 		177076334083D6EDC6C555A6 /* UnetonWidgets */ = {
 			isa = PBXGroup;
 			children = (
@@ -286,6 +308,7 @@
 				C28DF7DBFEC8C4705D78AB09 /* SessionAuthClient.swift */,
 				FEF41DE4E9DE152F3E348674 /* SessionDiaryClient.swift */,
 				671EF5C0D472AEFBBE04C34A /* SessionFamilyClient.swift */,
+				4EAAA4CB8504298797ECDDCD /* SessionFamilyManagementClient.swift */,
 				8A0DADBE7FF9017AE001C683 /* SessionSharingClient.swift */,
 				93442058261D164D125FE85A /* SessionStore.swift */,
 				37BBA6E529FDA150CF89123E /* SessionSyncClient.swift */,
@@ -447,6 +470,7 @@
 			isa = PBXGroup;
 			children = (
 				B23594979E14249D43D345D8 /* Entry */,
+				06FF4AC35D102CE4A923098C /* FamilyManagement */,
 				C8DD159053CA3EABCC814290 /* Settings */,
 				5CC93C1043ADE9C563855900 /* Setup */,
 				25409B695ED232396BDAEFEB /* Timeline */,
@@ -458,6 +482,8 @@
 		CCEDA6E0C98A2C4821154502 /* ScreenSnapshots */ = {
 			isa = PBXGroup;
 			children = (
+				3271E7652D9B314F4E6546FC /* capture-_.childEditorSheet.png */,
+				B126AFF572A9B3185BA16C37 /* capture-_.familyManagementSheet.png */,
 				3C8893A3594EB823C661CF83 /* capture-_.familySetup.png */,
 				EBEE8C6312B8DF21A8E37969 /* capture-_.familySharingSheet.png */,
 				4FC02C1D697CDD4E05DFC2CC /* capture-_.growthEntrySheet.png */,
@@ -646,6 +672,8 @@
 			files = (
 				7552C6C49492BC08F2098244 /* capture-_-size-name.expandedIsland.png in Resources */,
 				707080C16FCA4B9794586321 /* capture-_-size-name.lockScreen.png in Resources */,
+				29C1F854C1AB5BA96CFDE9FE /* capture-_.childEditorSheet.png in Resources */,
+				130F4B4B302ECD46F5C30144 /* capture-_.familyManagementSheet.png in Resources */,
 				0B91E39FC61F020E77DF8521 /* capture-_.familySetup.png in Resources */,
 				8EE54E1B5A784BE1C400AD74 /* capture-_.familySharingSheet.png in Resources */,
 				B8DBF9D70A6713E52C0B647A /* capture-_.growthEntrySheet.png in Resources */,
@@ -694,6 +722,8 @@
 				505EBAA33B21B2743A28CAD7 /* CredentialStore.swift in Sources */,
 				2A50BABCAE347A1F309FEE8F /* DemoRuntime.swift in Sources */,
 				6DCAA7A90DD049D71141218E /* DisplayClock.swift in Sources */,
+				6C871D010C72683AE72B3F59 /* FamilyManagement.swift in Sources */,
+				7B57111B8737418AFA486CE6 /* FamilyManagementView.swift in Sources */,
 				1FAC62EB3331253BBB63FCEC /* FamilySetup.swift in Sources */,
 				D8DCE27E0D3B93B596D70457 /* FamilySetupView.swift in Sources */,
 				D507085F179846B6F3B6E444 /* FamilySharing.swift in Sources */,
@@ -707,11 +737,13 @@
 				57A1B60B1B857FD9B331A12A /* OnboardingView.swift in Sources */,
 				316D502577DE587D9F1B1F0D /* PhoneWatchBridge.swift in Sources */,
 				A7725E23F0EADF4E64BA85E6 /* PushRegistrationController.swift in Sources */,
+				8E2711AC8695F397CD65A426 /* QRCodeImage.swift in Sources */,
 				0BA2287994E4486BC0EA1A4D /* ReminderController.swift in Sources */,
 				F8EB13CC2F2F014D1E8710AE /* ScreenFixtures.swift in Sources */,
 				32E347573C4C49842ABB92CC /* SessionAuthClient.swift in Sources */,
 				AA9927ED41D014DDAE28B040 /* SessionDiaryClient.swift in Sources */,
 				AD64E2DEAC71198676913138 /* SessionFamilyClient.swift in Sources */,
+				EC1E4DD48E43C5823839F3B5 /* SessionFamilyManagementClient.swift in Sources */,
 				A59550D2F837669BA623FF23 /* SessionSharingClient.swift in Sources */,
 				277371375578159F4D765AAE /* SessionStore.swift in Sources */,
 				80D8EAD7366BA3498D2CA583 /* SessionSyncClient.swift in Sources */,

@@ -1,9 +1,12 @@
 import AVFoundation
 import ComposableArchitecture2
+import SQLiteData
 import SwiftUI
+import UnetonCore
 
 struct FamilySetupView: View {
     @Bindable var store: StoreOf<FamilySetup>
+    @FetchAll(PendingCommand.order { $0.createdAt.desc() }) private var pendingCommands
 
     var body: some View {
         NavigationStack {
@@ -20,6 +23,13 @@ struct FamilySetupView: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    if !pendingCommands.isEmpty {
+                        Label("Unsent changes are saved on this device. Scan a new invitation from that family to restore access and sync them.",
+                              systemImage: "arrow.triangle.2.circlepath")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
 
                     VStack(alignment: .leading, spacing: 22) {
@@ -111,7 +121,7 @@ struct FamilySetupView: View {
 #Preview("Invitation scanner") { ScreenFixtures.preview(.invitationScannerSheet) }
 #endif
 
-private struct QRCodeScanner: UIViewControllerRepresentable {
+struct QRCodeScanner: UIViewControllerRepresentable {
     let onCode: (String) -> Void
 
     func makeUIViewController(context: Context) -> ScannerController {
@@ -123,7 +133,7 @@ private struct QRCodeScanner: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: ScannerController, context: Context) {}
 }
 
-private final class ScannerController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
+final class ScannerController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
     var onCode: ((String) -> Void)?
     private let session = AVCaptureSession()
 

@@ -42,6 +42,30 @@ public protocol Uneton_V1_UnetonServiceClientInterface: Sendable {
     func `acceptInvite`(request: Uneton_V1_AcceptInviteRequest, headers: Connect.Headers) async -> ResponseMessage<Uneton_V1_AcceptInviteResponse>
 
     @available(iOS 13, *)
+    func `getFamilyManagement`(request: Uneton_V1_GetFamilyManagementRequest, headers: Connect.Headers) async -> ResponseMessage<Uneton_V1_GetFamilyManagementResponse>
+
+    @available(iOS 13, *)
+    func `updateProfile`(request: Uneton_V1_UpdateProfileRequest, headers: Connect.Headers) async -> ResponseMessage<Uneton_V1_UpdateProfileResponse>
+
+    @available(iOS 13, *)
+    func `renameFamily`(request: Uneton_V1_RenameFamilyRequest, headers: Connect.Headers) async -> ResponseMessage<Uneton_V1_RenameFamilyResponse>
+
+    @available(iOS 13, *)
+    func `removeFamilyMember`(request: Uneton_V1_RemoveFamilyMemberRequest, headers: Connect.Headers) async -> ResponseMessage<Uneton_V1_RemoveFamilyMemberResponse>
+
+    @available(iOS 13, *)
+    func `leaveFamily`(request: Uneton_V1_LeaveFamilyRequest, headers: Connect.Headers) async -> ResponseMessage<Uneton_V1_LeaveFamilyResponse>
+
+    @available(iOS 13, *)
+    func `transferFamilyOwnership`(request: Uneton_V1_TransferFamilyOwnershipRequest, headers: Connect.Headers) async -> ResponseMessage<Uneton_V1_TransferFamilyOwnershipResponse>
+
+    @available(iOS 13, *)
+    func `revokeInvite`(request: Uneton_V1_RevokeInviteRequest, headers: Connect.Headers) async -> ResponseMessage<Uneton_V1_RevokeInviteResponse>
+
+    @available(iOS 13, *)
+    func `deleteFamily`(request: Uneton_V1_DeleteFamilyRequest, headers: Connect.Headers) async -> ResponseMessage<Uneton_V1_DeleteFamilyResponse>
+
+    @available(iOS 13, *)
     func `sync`(request: Uneton_V1_SyncRequest, headers: Connect.Headers) async -> ResponseMessage<Uneton_V1_SyncResponse>
 
     @available(iOS 13, *)
@@ -107,6 +131,46 @@ public final class Uneton_V1_UnetonServiceClient: Uneton_V1_UnetonServiceClientI
     }
 
     @available(iOS 13, *)
+    public func `getFamilyManagement`(request: Uneton_V1_GetFamilyManagementRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Uneton_V1_GetFamilyManagementResponse> {
+        return await self.client.unary(path: "/uneton.v1.UnetonService/GetFamilyManagement", idempotencyLevel: .unknown, request: request, headers: headers)
+    }
+
+    @available(iOS 13, *)
+    public func `updateProfile`(request: Uneton_V1_UpdateProfileRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Uneton_V1_UpdateProfileResponse> {
+        return await self.client.unary(path: "/uneton.v1.UnetonService/UpdateProfile", idempotencyLevel: .unknown, request: request, headers: headers)
+    }
+
+    @available(iOS 13, *)
+    public func `renameFamily`(request: Uneton_V1_RenameFamilyRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Uneton_V1_RenameFamilyResponse> {
+        return await self.client.unary(path: "/uneton.v1.UnetonService/RenameFamily", idempotencyLevel: .unknown, request: request, headers: headers)
+    }
+
+    @available(iOS 13, *)
+    public func `removeFamilyMember`(request: Uneton_V1_RemoveFamilyMemberRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Uneton_V1_RemoveFamilyMemberResponse> {
+        return await self.client.unary(path: "/uneton.v1.UnetonService/RemoveFamilyMember", idempotencyLevel: .unknown, request: request, headers: headers)
+    }
+
+    @available(iOS 13, *)
+    public func `leaveFamily`(request: Uneton_V1_LeaveFamilyRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Uneton_V1_LeaveFamilyResponse> {
+        return await self.client.unary(path: "/uneton.v1.UnetonService/LeaveFamily", idempotencyLevel: .unknown, request: request, headers: headers)
+    }
+
+    @available(iOS 13, *)
+    public func `transferFamilyOwnership`(request: Uneton_V1_TransferFamilyOwnershipRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Uneton_V1_TransferFamilyOwnershipResponse> {
+        return await self.client.unary(path: "/uneton.v1.UnetonService/TransferFamilyOwnership", idempotencyLevel: .unknown, request: request, headers: headers)
+    }
+
+    @available(iOS 13, *)
+    public func `revokeInvite`(request: Uneton_V1_RevokeInviteRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Uneton_V1_RevokeInviteResponse> {
+        return await self.client.unary(path: "/uneton.v1.UnetonService/RevokeInvite", idempotencyLevel: .unknown, request: request, headers: headers)
+    }
+
+    @available(iOS 13, *)
+    public func `deleteFamily`(request: Uneton_V1_DeleteFamilyRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Uneton_V1_DeleteFamilyResponse> {
+        return await self.client.unary(path: "/uneton.v1.UnetonService/DeleteFamily", idempotencyLevel: .unknown, request: request, headers: headers)
+    }
+
+    @available(iOS 13, *)
     public func `sync`(request: Uneton_V1_SyncRequest, headers: Connect.Headers = [:]) async -> ResponseMessage<Uneton_V1_SyncResponse> {
         return await self.client.unary(path: "/uneton.v1.UnetonService/Sync", idempotencyLevel: .unknown, request: request, headers: headers)
     }
@@ -128,6 +192,14 @@ public final class Uneton_V1_UnetonServiceClient: Uneton_V1_UnetonServiceClientI
             public static let createFamily = Connect.MethodSpec(name: "CreateFamily", service: "uneton.v1.UnetonService", type: .unary)
             public static let createInvite = Connect.MethodSpec(name: "CreateInvite", service: "uneton.v1.UnetonService", type: .unary)
             public static let acceptInvite = Connect.MethodSpec(name: "AcceptInvite", service: "uneton.v1.UnetonService", type: .unary)
+            public static let getFamilyManagement = Connect.MethodSpec(name: "GetFamilyManagement", service: "uneton.v1.UnetonService", type: .unary)
+            public static let updateProfile = Connect.MethodSpec(name: "UpdateProfile", service: "uneton.v1.UnetonService", type: .unary)
+            public static let renameFamily = Connect.MethodSpec(name: "RenameFamily", service: "uneton.v1.UnetonService", type: .unary)
+            public static let removeFamilyMember = Connect.MethodSpec(name: "RemoveFamilyMember", service: "uneton.v1.UnetonService", type: .unary)
+            public static let leaveFamily = Connect.MethodSpec(name: "LeaveFamily", service: "uneton.v1.UnetonService", type: .unary)
+            public static let transferFamilyOwnership = Connect.MethodSpec(name: "TransferFamilyOwnership", service: "uneton.v1.UnetonService", type: .unary)
+            public static let revokeInvite = Connect.MethodSpec(name: "RevokeInvite", service: "uneton.v1.UnetonService", type: .unary)
+            public static let deleteFamily = Connect.MethodSpec(name: "DeleteFamily", service: "uneton.v1.UnetonService", type: .unary)
             public static let sync = Connect.MethodSpec(name: "Sync", service: "uneton.v1.UnetonService", type: .unary)
             public static let watchFamily = Connect.MethodSpec(name: "WatchFamily", service: "uneton.v1.UnetonService", type: .serverStream)
         }
