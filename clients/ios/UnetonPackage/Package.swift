@@ -45,7 +45,11 @@ let package = Package(
         .product(name: "Tagged", package: "swift-tagged"),
       ]
     ),
-    .target(name: "UnetonActivity", dependencies: ["UnetonIdentity"]),
+    .target(
+      name: "UnetonActivity",
+      dependencies: ["UnetonIdentity"],
+      resources: [.process("Localizable.xcstrings")]
+    ),
     .testTarget(
       name: "UnetonCoreTests",
       dependencies: [

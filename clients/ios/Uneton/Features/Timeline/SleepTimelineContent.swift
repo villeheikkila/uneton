@@ -87,7 +87,7 @@ private struct SleepSummary: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Label(isSleeping ? "Sleeping now" : "Awake now", systemImage: isSleeping ? "moon.zzz.fill" : "sun.max.fill")
+                        Label(isSleeping ? LocalizedStringResource("locSleepingNow", defaultValue: "Sleeping now", comment: "Label in Timeline: Sleeping now") : LocalizedStringResource("locAwakeNow", defaultValue: "Awake now", comment: "Label in Timeline: Awake now"), systemImage: isSleeping ? "moon.zzz.fill" : "sun.max.fill")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.secondary)
 
@@ -115,10 +115,13 @@ private struct SleepSummary: View {
                             .frame(width: 24)
 
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(isSleeping ? "Expected wake-up" : "Next sweet spot")
+                            Text(isSleeping ? LocalizedStringResource("locExpectedWakeUp", defaultValue: "Expected wake-up", comment: "Text in Timeline: Expected wake-up") : LocalizedStringResource("locNextSweetSpot", defaultValue: "Next sweet spot", comment: "Text in Timeline: Next sweet spot"))
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
-                            Text("Likely \(prediction.rangeStartAt.formatted(date: .omitted, time: .shortened))–\(prediction.rangeEndAt.formatted(date: .omitted, time: .shortened))")
+                            Text(.locLikelyRange(
+                                prediction.rangeStartAt.formatted(date: .omitted, time: .shortened),
+                                prediction.rangeEndAt.formatted(date: .omitted, time: .shortened)
+                            ))
                                 .font(.caption2.monospacedDigit())
                                 .foregroundStyle(.secondary)
                         }
@@ -131,15 +134,15 @@ private struct SleepSummary: View {
                 }
 
                 HStack(spacing: 12) {
-                    summaryMetric("Today", value: compactDuration(todayTotal))
+                    summaryMetric(String(localized: LocalizedStringResource("locToday", defaultValue: "Today", comment: "Message in Timeline: Today")), value: compactDuration(todayTotal))
                     metricDivider
-                    summaryMetric("Sleeps", value: "\(todaySessions.count)")
+                    summaryMetric(String(localized: LocalizedStringResource("locSleeps", defaultValue: "Sleeps", comment: "Message in Timeline: Sleeps")), value: "\(todaySessions.count)")
                     if let longest = todaySessions.compactMap({ session -> TimeInterval? in
                         guard let end = session.endedAt else { return nil }
                         return end.timeIntervalSince(session.startedAt)
                     }).max() {
                         metricDivider
-                        summaryMetric("Longest", value: compactDuration(longest))
+                        summaryMetric(String(localized: LocalizedStringResource("locLongest", defaultValue: "Longest", comment: "Message in Timeline: Longest")), value: compactDuration(longest))
                     }
                 }
             }
@@ -192,10 +195,10 @@ private struct EmptySleepCard: View {
             Image(systemName: "moon.zzz.fill")
                 .font(.system(size: 34))
                 .foregroundStyle(Color.sleepIndigo)
-            Text("No sleep logged yet")
+            Text("locNoSleepLoggedYet", comment: "Text in Timeline: No sleep logged yet")
                 .font(.title3.weight(.bold))
                 .foregroundStyle(Color.sleepInk)
-            Text("Start a sleep session when \(childName) falls asleep. Their sleep history will build here.")
+            Text(.locEmptySleepDescription(childName))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -271,7 +274,7 @@ private struct ContinuousSleepTimeline: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            SleepSectionTitle(title: "Hourly rhythm", detail: historyDetail)
+            SleepSectionTitle(title: String(localized: LocalizedStringResource("locHourlyRhythm", defaultValue: "Hourly rhythm", comment: "Message in Timeline: Hourly rhythm")), detail: historyDetail)
 
             GeometryReader { proxy in
                 ZStack(alignment: .topLeading) {
@@ -294,7 +297,7 @@ private struct ContinuousSleepTimeline: View {
 
     private var historyDetail: String {
         let days = max(1, Int(ceil(pageEnd.timeIntervalSince(pageStart) / 86_400)))
-        return days == 1 ? "1 day" : "\(days) days"
+        return days == 1 ? String(localized: .loc1Day) : String(localized: .locDaysCount(String(days)))
     }
 
     private func hourMarker(_ hour: Int, width: CGFloat) -> some View {
@@ -350,7 +353,7 @@ private struct ContinuousSleepTimeline: View {
                     HStack(spacing: 8) {
                         Image(systemName: sleeping ? "moon.fill" : "sun.max.fill")
                             .font(.caption.weight(.bold))
-                        Text(sleeping ? "Sleep" : "Awake")
+                        Text(sleeping ? LocalizedStringResource("locSleep", defaultValue: "Sleep", comment: "Text in Timeline: Sleep") : LocalizedStringResource("locAwake", defaultValue: "Awake", comment: "Text in Timeline: Awake"))
                             .font(.caption.weight(.semibold))
                         Text(duration(period.fullDuration))
                             .font(.caption.monospacedDigit().weight(.bold))
@@ -383,8 +386,12 @@ private struct ContinuousSleepTimeline: View {
         )
         .offset(x: 50, y: y)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(sleeping ? "Sleep" : "Awake"), \(duration(period.fullDuration)), from \(period.start.formatted(date: .abbreviated, time: .shortened))")
-        .accessibilityHint(sleeping ? "Opens this sleep for editing" : "")
+        .accessibilityLabel(Text(.locPeriodAccessibility(
+            sleeping ? String(localized: LocalizedStringResource("locSleep", defaultValue: "Sleep", comment: "Message in Timeline: Sleep")) : String(localized: LocalizedStringResource("locAwake", defaultValue: "Awake", comment: "Message in Timeline: Awake")),
+            duration(period.fullDuration),
+            period.start.formatted(date: .abbreviated, time: .shortened)
+        )))
+        .accessibilityHint(sleeping ? String(localized: LocalizedStringResource("locOpensThisSleepForEditing", defaultValue: "Opens this sleep for editing", comment: "Message in Timeline: Opens this sleep for editing")) : "")
     }
 
     @ViewBuilder
@@ -416,7 +423,7 @@ private struct ContinuousSleepTimeline: View {
                     .frame(height: 2)
             }
 
-            Text("NOW")
+            Text("locNOW", comment: "Text in Timeline: NOW")
                 .font(.caption2.weight(.black))
                 .foregroundStyle(Color.sleepDawn)
                 .padding(.horizontal, 6)
@@ -447,7 +454,7 @@ private struct ContinuousSleepTimeline: View {
 
     private func periodRange(_ period: Period) -> String {
         let start = period.start.formatted(date: .omitted, time: .shortened)
-        let end = period.isCurrent ? "now" : period.end.formatted(date: .omitted, time: .shortened)
+        let end = period.isCurrent ? String(localized: LocalizedStringResource("locNowLowercase", defaultValue: "now", comment: "Message in Timeline: now")) : period.end.formatted(date: .omitted, time: .shortened)
         return "\(start)–\(end)"
     }
 }

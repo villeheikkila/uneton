@@ -43,7 +43,7 @@ struct FamilySetup {
                       url.scheme == "uneton",
                       url.host == "invite",
                       url.pathComponents.dropFirst().first != nil else {
-                    state.errorMessage = "Invalid family invitation"
+                    state.errorMessage = String(localized: LocalizedStringResource("locInvalidFamilyInvitation", defaultValue: "Invalid family invitation", comment: "Message in Setup: Invalid family invitation"))
                     return
                 }
                 state.errorMessage = nil

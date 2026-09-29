@@ -8,14 +8,14 @@ struct SleepEntrySheet: View {
     var body: some View {
         NavigationStack {
             SleepEntryContent(store: store)
-                .navigationTitle(store.sessionID == nil ? (store.hasEnd ? "Log sleep" : "Start sleep") : "Edit sleep")
+                .navigationTitle(store.sessionID == nil ? (store.hasEnd ? LocalizedStringResource("locLogSleep", defaultValue: "Log sleep", comment: "Screen title in Entry: Log sleep") : LocalizedStringResource("locStartSleep", defaultValue: "Start sleep", comment: "Screen title in Entry: Start sleep")) : LocalizedStringResource("locEditSleep", defaultValue: "Edit sleep", comment: "Screen title in Entry: Edit sleep"))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(LocalizedStringResource("locCancel", defaultValue: "Cancel", comment: "Button title in Entry: Cancel")) { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(store.sessionID == nil ? (store.hasEnd ? "Add" : "Start") : "Save") {
+                    Button(store.sessionID == nil ? (store.hasEnd ? LocalizedStringResource("locAdd", defaultValue: "Add", comment: "Button title in Entry: Add") : LocalizedStringResource("locStart", defaultValue: "Start", comment: "Button action that starts a new sleep session")) : LocalizedStringResource("locSave", defaultValue: "Save", comment: "Button title in Entry: Save")) {
                         store.send(.saveButtonTapped)
                     }
                     .disabled(store.save.isRunning)

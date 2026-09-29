@@ -13,7 +13,7 @@ struct FamilySetupScreen: View {
                     Button {
                         store.send(.scanInvitationButtonTapped)
                     } label: {
-                        Label("Scan invite", systemImage: "qrcode.viewfinder")
+                        Label(LocalizedStringResource("locScanInvite", defaultValue: "Scan invite", comment: "Label in Setup: Scan invite"), systemImage: "qrcode.viewfinder")
                             .frame(maxWidth: .infinity)
                             .frame(height: 48)
                     }
@@ -22,7 +22,7 @@ struct FamilySetupScreen: View {
                     Button {
                         store.send(.addBabyButtonTapped)
                     } label: {
-                        Label("Add baby", systemImage: "plus")
+                        Label(LocalizedStringResource("locAddBaby", defaultValue: "Add baby", comment: "Label in Setup: Add baby"), systemImage: "plus")
                             .frame(maxWidth: .infinity)
                             .frame(height: 48)
                     }

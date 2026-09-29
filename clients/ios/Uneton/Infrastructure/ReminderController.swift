@@ -14,8 +14,8 @@ struct ReminderController: Sendable {
         let fireDate = prediction.targetAt.addingTimeInterval(-Double(leadMinutes) * 60)
         guard fireDate > .now else { return }
         let content = UNMutableNotificationContent()
-        content.title = "Sleep window is approaching"
-        content.body = prediction.explanation
+        content.title = String(localized: LocalizedStringResource("locSleepWindowIsApproaching", defaultValue: "Sleep window is approaching", comment: "Message in ReminderController: Sleep window is approaching"))
+        content.body = String(localized: LocalizedStringResource("locYourBabyMayBeReadyForSleepSoon", defaultValue: "Your baby may be ready for sleep soon.", comment: "Brief sleep reminder; the server's explanation is not localized"))
         content.sound = .default
         let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
         try? await center.add(UNNotificationRequest(

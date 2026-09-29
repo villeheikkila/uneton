@@ -1,0 +1,42 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "locWakeUp": {
+      "comment": "Action in Watch and Live Activity that records that the baby woke up.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wake up"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Merkitse hereille"
+          }
+        }
+      }
+    },
+    "locChildIsSleeping": {
+      "comment": "Live Activity status; placeholder is the baby’s name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is sleeping"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ nukkuu"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

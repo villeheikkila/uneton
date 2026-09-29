@@ -75,7 +75,7 @@ final class WatchBridge: NSObject, WCSessionDelegate {
         guard WCSession.isSupported(), WCSession.default.activationState == .activated,
               WCSession.default.isReachable else {
             if request.action != .status { pendingRequest = request }
-            errorMessage = "Open Uneton on your iPhone to continue."
+            errorMessage = String(localized: LocalizedStringResource("locOpenUnetonOnYourIPhoneToContinue", defaultValue: "Open Uneton on your iPhone to continue.", comment: "Message in UnetonWatchApp: Open Uneton on your iPhone to continue."))
             return
         }
         do {
@@ -89,7 +89,7 @@ final class WatchBridge: NSObject, WCSessionDelegate {
                     guard let self else { return }
                     self.isWorking = false
                     guard let response = try? JSONDecoder().decode(WatchDiaryResponse.self, from: data) else {
-                        self.errorMessage = "Could not read the iPhone reply. Retry the action."
+                        self.errorMessage = String(localized: LocalizedStringResource("locCouldNotReadTheIPhoneReplyRetryTheAction", defaultValue: "Could not read the iPhone reply. Retry the action.", comment: "Message in UnetonWatchApp: Could not read the iPhone reply. Retry the action."))
                         return
                     }
                     self.accept(response.snapshot)
@@ -100,11 +100,11 @@ final class WatchBridge: NSObject, WCSessionDelegate {
             }, errorHandler: { [weak self] _ in
                 Task { @MainActor [weak self] in
                     self?.isWorking = false
-                    self?.errorMessage = "iPhone did not reply. Retry the action."
+                    self?.errorMessage = String(localized: LocalizedStringResource("locIPhoneDidNotReplyRetryTheAction", defaultValue: "iPhone did not reply. Retry the action.", comment: "Message in UnetonWatchApp: iPhone did not reply. Retry the action."))
                 }
             })
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated"))
         }
     }
 
@@ -175,9 +175,9 @@ private struct WatchDiaryView: View {
                         Text(timerInterval: startedAt...Date.distantFuture, countsDown: false)
                             .font(.title3.monospacedDigit())
                     } else {
-                        Text("Awake").font(.headline)
+                        Text("locAwake", comment: "Text in UnetonWatchApp: Awake").font(.headline)
                     }
-                    Button(child.activeSleepStartedAt == nil ? "Start sleep" : "Wake up") {
+                    Button(child.activeSleepStartedAt == nil ? LocalizedStringResource("locStartSleep", defaultValue: "Start sleep", comment: "Button title in UnetonWatchApp: Start sleep") : LocalizedStringResource("locWakeUp", defaultValue: "Wake up", comment: "Action in Watch and Live Activity that records that the baby woke up")) {
                         bridge.send(WatchDiaryRequest(
                             action: child.activeSleepStartedAt == nil ? .startSleep : .endSleep,
                             familyID: child.familyID, childID: child.id))
@@ -188,7 +188,7 @@ private struct WatchDiaryView: View {
 
                     Divider()
                     Button { showingNewTemperature = true } label: {
-                        Label("Log temperature", systemImage: "thermometer.medium")
+                        Label(LocalizedStringResource("locLogTemperature", defaultValue: "Log temperature", comment: "Label in UnetonWatchApp: Log temperature"), systemImage: "thermometer.medium")
                     }
                     .disabled(bridge.isWorking || bridge.pendingRequest != nil)
                     ForEach(child.readings) { reading in
@@ -197,11 +197,11 @@ private struct WatchDiaryView: View {
                         } label: {
                             HStack {
                                 VStack(alignment: .leading) {
-                                    Text(String(format: "%.2f °C", Double(reading.centiCelsius) / 100))
+                                    Text(String(format: "%.2f °C", locale: .current, Double(reading.centiCelsius) / 100))
                                         .font(.headline.monospacedDigit())
                                     Text(reading.measuredAt, format: .dateTime.month().day().hour().minute())
                                         .font(.caption2)
-                                    if reading.isPending { Text("Sync pending").font(.caption2) }
+                                    if reading.isPending { Text("locSyncPending", comment: "Text in UnetonWatchApp: Sync pending").font(.caption2) }
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.right").font(.caption2)
@@ -210,7 +210,7 @@ private struct WatchDiaryView: View {
                         .disabled(bridge.isWorking || bridge.pendingRequest != nil)
                     }
                 } else {
-                    ContentUnavailableView("Set up Uneton on iPhone", systemImage: "iphone")
+                    ContentUnavailableView(LocalizedStringResource("locSetUpUnetonOnIPhone", defaultValue: "Set up Uneton on iPhone", comment: "Text in UnetonWatchApp: Set up Uneton on iPhone"), systemImage: "iphone")
                 }
 
                 if let error = bridge.errorMessage {
@@ -220,9 +220,9 @@ private struct WatchDiaryView: View {
                     Text(notice).font(.caption2).foregroundStyle(.secondary)
                 }
                 if bridge.pendingRequest != nil && !bridge.isWorking {
-                    Button("Retry last action") { bridge.retry() }
+                    Button(LocalizedStringResource("locRetryLastAction", defaultValue: "Retry last action", comment: "Button title in UnetonWatchApp: Retry last action")) { bridge.retry() }
                 }
-                Button("Refresh") { bridge.refresh() }
+                Button(LocalizedStringResource("locRefresh", defaultValue: "Refresh", comment: "Button title in UnetonWatchApp: Refresh")) { bridge.refresh() }
                     .disabled(bridge.isWorking || bridge.pendingRequest != nil)
                     .font(.caption)
             }
@@ -238,12 +238,12 @@ private struct WatchDiaryView: View {
         .sheet(isPresented: $showingChildPicker) {
             NavigationStack {
                 List(bridge.snapshot.children) { option in
-                    Button("\(option.nickname) · \(option.familyName)") {
+                    Button(.locWatchChildOption(option.nickname, option.familyName)) {
                         bridge.selectChild(option.id)
                         showingChildPicker = false
                     }
                 }
-                .navigationTitle("Choose child")
+                .navigationTitle(LocalizedStringResource("locChooseChild", defaultValue: "Choose child", comment: "Screen title in UnetonWatchApp: Choose child"))
             }
         }
         .sheet(item: $editingReading) { reading in
@@ -276,21 +276,21 @@ private struct WatchTemperatureSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                TextField("Temperature °C", text: $temperature)
-                DatePicker("Measured", selection: $measuredAt, in: ...Date.now)
-                TextField("Note (optional)", text: $note)
+                TextField(LocalizedStringResource("locTemperatureWatchUnit", defaultValue: "Temperature °C", comment: "Text field placeholder in UnetonWatchApp: Temperature °C"), text: $temperature)
+                DatePicker(LocalizedStringResource("locMeasured", defaultValue: "Measured", comment: "Picker title in UnetonWatchApp: Measured"), selection: $measuredAt, in: ...Date.now)
+                TextField(LocalizedStringResource("locNoteOptional", defaultValue: "Note (optional)", comment: "Text field placeholder in UnetonWatchApp: Note (optional)"), text: $note)
                 if let reading {
-                    Button("Delete reading", role: .destructive) {
+                    Button(LocalizedStringResource("locDeleteReading", defaultValue: "Delete reading", comment: "Button title in UnetonWatchApp: Delete reading"), role: .destructive) {
                         send(WatchDiaryRequest(action: .deleteTemperature, familyID: child.familyID,
                             childID: child.id, readingID: reading.id, expectedRevision: reading.revision))
                         dismiss()
                     }
                 }
             }
-            .navigationTitle(reading == nil ? "Temperature" : "Edit reading")
+            .navigationTitle(reading == nil ? LocalizedStringResource("locTemperature", defaultValue: "Temperature", comment: "Temperature tracking tab or Watch screen title; this is body temperature") : LocalizedStringResource("locEditReading", defaultValue: "Edit reading", comment: "Screen title in UnetonWatchApp: Edit reading"))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button(LocalizedStringResource("locSave", defaultValue: "Save", comment: "Button title in UnetonWatchApp: Save")) {
                         guard let centiCelsius = TemperatureValue.centiCelsius(from: temperature) else { return }
                         send(WatchDiaryRequest(action: .upsertTemperature, familyID: child.familyID,
                             childID: child.id, readingID: reading?.id ?? newReadingID,

@@ -60,7 +60,7 @@ struct SessionFamilyManagementClient: Sendable {
 
 private enum FamilyManagementError: LocalizedError {
     case invitationFailed
-    var errorDescription: String? { "Could not create an invitation." }
+    var errorDescription: String? { String(localized: LocalizedStringResource("locCouldNotCreateAnInvitation", defaultValue: "Could not create an invitation.", comment: "Message in SessionFamilyManagementClient: Could not create an invitation.")) }
 }
 
 nonisolated extension FeatureEnvironmentValues {

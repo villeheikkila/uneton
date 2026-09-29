@@ -22,9 +22,9 @@ struct OnboardingContent: View {
                     .foregroundStyle(.indigo)
                     .symbolEffect(.breathe)
                 VStack(spacing: 8) {
-                    Text("Uneton")
+                    Text("locUneton", comment: "Text in Setup: Uneton")
                         .font(.largeTitle.bold())
-                    Text("Track your baby’s sleep, growth and temperature together.")
+                    Text("locTrackYourBabySSleepGrowthAndTemperatureTogether", comment: "Text in Setup: Track your baby’s sleep, growth and temperature together.")
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
@@ -40,17 +40,17 @@ struct OnboardingContent: View {
                 }
 
                 HStack(spacing: 20) {
-                    Link("Privacy Policy", destination: LegalLinks.privacy)
-                    Link("Terms of Service", destination: LegalLinks.terms)
+                    Link(LocalizedStringResource("locPrivacyPolicy", defaultValue: "Privacy Policy", comment: "Link title in Setup: Privacy Policy"), destination: LegalLinks.privacy)
+                    Link(LocalizedStringResource("locTermsOfService", defaultValue: "Terms of Service", comment: "Link title in Setup: Terms of Service"), destination: LegalLinks.terms)
                 }
                 .font(.footnote)
 
                 #if DEBUG
                 if !AppMode.isDemo {
-                    TextField("Local caregiver", text: $store.caregiverName)
+                    TextField(LocalizedStringResource("locLocalCaregiver", defaultValue: "Local caregiver", comment: "Text field placeholder in Setup: Local caregiver"), text: $store.caregiverName)
                         .textFieldStyle(.roundedBorder)
                 }
-                Button(AppMode.isDemo ? "Explore demo" : "Use local server") {
+                Button(AppMode.isDemo ? LocalizedStringResource("locExploreDemo", defaultValue: "Explore demo", comment: "Button title in Setup: Explore demo") : LocalizedStringResource("locUseLocalServer", defaultValue: "Use local server", comment: "Button title in Setup: Use local server")) {
                     store.send(.developmentSignInButtonTapped)
                 }
                 .buttonStyle(.glass)

@@ -12,16 +12,16 @@ struct FamilySetupContent: View {
                         .font(.system(size: 38, weight: .medium))
                         .foregroundStyle(.indigo)
                         .padding(.bottom, 4)
-                    Text("Add your baby")
+                    Text("locAddYourBaby", comment: "Text in Setup: Add your baby")
                         .font(.largeTitle.bold())
-                    Text("Keep sleep, growth and temperature in one shared place. Have an invitation? Scan it below.")
+                    Text("locKeepSleepGrowthAndTemperatureInOneSharedPlaceHaveAnInvitationScanItBelow", comment: "Text in Setup: Keep sleep, growth and temperature in one shared place. Have an invitation? Scan it below.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if store.pendingCommandCount > 0 {
-                    Label("Unsent changes are saved on this device. Scan a new invitation from that family to restore access and sync them.",
+                    Label(LocalizedStringResource("locUnsentChangesAreSavedOnThisDeviceScanANewInvitationFromThatFamilyToRestoreAccessAndSyncThem", defaultValue: "Unsent changes are saved on this device. Scan a new invitation from that family to restore access and sync them.", comment: "Label in Setup: Unsent changes are saved on this device. Scan a new invitation from that family to restore access and sync them."),
                           systemImage: "arrow.triangle.2.circlepath")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -29,27 +29,27 @@ struct FamilySetupContent: View {
 
                 VStack(alignment: .leading, spacing: 22) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Baby’s name")
+                        Text("locBabySName", comment: "Text in Setup: Baby’s name")
                             .font(.subheadline.weight(.semibold))
-                        TextField("Name or nickname", text: $store.childName)
+                        TextField(LocalizedStringResource("locNameOrNickname", defaultValue: "Name or nickname", comment: "Text field placeholder in Setup: Name or nickname"), text: $store.childName)
                             .textContentType(.nickname)
                             .textFieldStyle(.roundedBorder)
                             .submitLabel(.done)
                     }
 
-                    DatePicker("Date of birth", selection: $store.birthDate, in: ...Date.now, displayedComponents: .date)
+                    DatePicker(LocalizedStringResource("locDateOfBirth", defaultValue: "Date of birth", comment: "Picker title in Setup: Date of birth"), selection: $store.birthDate, in: ...Date.now, displayedComponents: .date)
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Growth reference")
+                        Text("locGrowthReference", comment: "Text in Setup: Growth reference")
                             .font(.subheadline.weight(.semibold))
-                        Picker("Growth reference", selection: $store.growthReference) {
-                            Text("None").tag("none")
-                            Text("Girl").tag("girl")
-                            Text("Boy").tag("boy")
+                        Picker(LocalizedStringResource("locGrowthReference", defaultValue: "Growth reference", comment: "Picker title in Setup: Growth reference"), selection: $store.growthReference) {
+                            Text("locNone", comment: "Text in Setup: None").tag("none")
+                            Text("locGirl", comment: "Text in Setup: Girl").tag("girl")
+                            Text("locBoy", comment: "Text in Setup: Boy").tag("boy")
                         }
                         .labelsHidden()
                         .pickerStyle(.segmented)
-                        Text("Optional Finnish growth chart. You can change this later.")
+                        Text("locOptionalFinnishGrowthChartYouCanChangeThisLater", comment: "Text in Setup: Optional Finnish growth chart. You can change this later.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)

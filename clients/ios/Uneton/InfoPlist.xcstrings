@@ -1,0 +1,24 @@
+{
+  "sourceLanguage": "en",
+  "version": "1.0",
+  "strings": {
+    "NSCameraUsageDescription": {
+      "comment": "System camera permission prompt when scanning a family invitation QR code.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan a caregiver’s Uneton family invitation QR code."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skannaa huoltajan Uneton-perhekutsun QR-koodi."
+          }
+        }
+      }
+    }
+  }
+}

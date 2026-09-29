@@ -7,17 +7,17 @@ struct SleepEntryContent: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Choose start time", isOn: $store.usesCustomStart)
+                Toggle(LocalizedStringResource("locChooseStartTime", defaultValue: "Choose start time", comment: "Text in Entry: Choose start time"), isOn: $store.usesCustomStart)
                 if store.usesCustomStart {
-                    DatePicker("Started", selection: $store.startedAt)
+                    DatePicker(LocalizedStringResource("locStarted", defaultValue: "Started", comment: "Picker title in Entry: Started"), selection: $store.startedAt)
                 } else {
-                    LabeledContent("Started", value: "Now")
+                    LabeledContent(LocalizedStringResource("locStarted", defaultValue: "Started", comment: "Text in Entry: Started"), value: String(localized: LocalizedStringResource("locNow", defaultValue: "Now", comment: "Message in Entry: Now")))
                 }
-                Toggle("Already woke up", isOn: $store.hasEnd)
+                Toggle(LocalizedStringResource("locAlreadyWokeUp", defaultValue: "Already woke up", comment: "Text in Entry: Already woke up"), isOn: $store.hasEnd)
                 if store.hasEnd {
-                    DatePicker("Ended", selection: $store.endedAt, in: (store.usesCustomStart ? store.startedAt : .distantPast)...Date.now)
+                    DatePicker(LocalizedStringResource("locEnded", defaultValue: "Ended", comment: "Picker title in Entry: Ended"), selection: $store.endedAt, in: (store.usesCustomStart ? store.startedAt : .distantPast)...Date.now)
                 } else {
-                    LabeledContent("Status", value: "Still sleeping")
+                    LabeledContent(LocalizedStringResource("locStatus", defaultValue: "Status", comment: "Text in Entry: Status"), value: String(localized: LocalizedStringResource("locStillSleeping", defaultValue: "Still sleeping", comment: "Message in Entry: Still sleeping")))
                 }
             }
             if let error = store.validationError ?? store.errorMessage {

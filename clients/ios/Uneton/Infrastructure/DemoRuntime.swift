@@ -15,7 +15,7 @@ final class DemoRuntime {
 
     let session: SessionStore
     private var profileName = "Alex"
-    private var familyName = "Our family"
+    private var familyName = String(localized: LocalizedStringResource("locOurFamily", defaultValue: "Our family", comment: "Message in DemoRuntime: Our family"))
     private var invitedCaregiverIsPresent = true
     private var currentRole = "owner"
     private var pendingInvites: [ManagedFamilyInvite] = []
@@ -28,7 +28,7 @@ final class DemoRuntime {
 
     var auth: SessionAuthClient {
         SessionAuthClient(
-            completeAppleAuthorization: { _ in "Use the demo sign in button to explore without an account." },
+            completeAppleAuthorization: { _ in String(localized: LocalizedStringResource("locUseTheDemoSignInButtonToExploreWithoutAnAccount", defaultValue: "Use the demo sign in button to explore without an account.", comment: "Message in DemoRuntime: Use the demo sign in button to explore without an account.")) },
             developmentAuthenticate: { [self] _ in
                 session.demoAuthenticate()
                 return nil
@@ -40,7 +40,7 @@ final class DemoRuntime {
         SessionFamilyClient(
             createChildFamily: { [self] name, birthDate, reference in
                 await result {
-                    let family = Family(id: Family.ID(rawValue: uuid()), name: "Our family", role: "owner", updatedAt: now)
+                    let family = Family(id: Family.ID(rawValue: uuid()), name: String(localized: LocalizedStringResource("locOurFamily", defaultValue: "Our family", comment: "Message in DemoRuntime: Our family")), role: "owner", updatedAt: now)
                     let child = Child(id: Child.ID(rawValue: uuid()), familyID: family.id, nickname: name,
                                       birthDate: birthDate, growthReference: reference,
                                       revision: 1, updatedAt: now)
@@ -52,7 +52,7 @@ final class DemoRuntime {
             },
             handleInvitation: { [self] url in
                 guard url.scheme == "uneton", url.host == "invite", url.lastPathComponent == "demo" else {
-                    return "Only demo invitations work in demo mode."
+                    return String(localized: LocalizedStringResource("locOnlyDemoInvitationsWorkInDemoMode", defaultValue: "Only demo invitations work in demo mode.", comment: "Message in DemoRuntime: Only demo invitations work in demo mode."))
                 }
                 return await family.createChildFamily("Aino", now.addingTimeInterval(-180 * 86_400), "none")
             }
@@ -232,7 +232,7 @@ final class DemoRuntime {
             try await operation()
             return nil
         } catch {
-            return error.localizedDescription
+            return String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated"))
         }
     }
 
@@ -255,6 +255,6 @@ final class DemoRuntime {
 
 private enum DemoError: LocalizedError {
     case missingRecord
-    var errorDescription: String? { "This demo entry is no longer available." }
+    var errorDescription: String? { String(localized: LocalizedStringResource("locThisDemoEntryIsNoLongerAvailable", defaultValue: "This demo entry is no longer available.", comment: "Message in DemoRuntime: This demo entry is no longer available.")) }
 }
 #endif

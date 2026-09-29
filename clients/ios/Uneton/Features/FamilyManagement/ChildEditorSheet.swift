@@ -11,16 +11,16 @@ struct ChildEditorSheet: View {
                 .navigationTitle(store.child.nickname)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(LocalizedStringResource("locCancel", defaultValue: "Cancel", comment: "Button title in FamilyManagement: Cancel")) { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { store.send(.save) }
+                    Button(LocalizedStringResource("locSave", defaultValue: "Save", comment: "Button title in FamilyManagement: Save")) { store.send(.save) }
                         .disabled(store.request.isRunning || store.validationMessage != nil)
                 }
             }
-            .confirmationDialog("Delete \(store.child.nickname)?", isPresented: $store.isConfirmingDeletion) {
-                Button("Delete baby and records", role: .destructive) { store.send(.delete) }
-                Button("Cancel", role: .cancel) {}
-            } message: { Text("This removes this baby’s sleep, growth and temperature records for everyone in the family.") }
+            .confirmationDialog(.locDeleteChildQuestion(store.child.nickname), isPresented: $store.isConfirmingDeletion) {
+                Button(LocalizedStringResource("locDeleteBabyAndRecords", defaultValue: "Delete baby and records", comment: "Button title in FamilyManagement: Delete baby and records"), role: .destructive) { store.send(.delete) }
+                Button(LocalizedStringResource("locCancel", defaultValue: "Cancel", comment: "Button title in FamilyManagement: Cancel"), role: .cancel) {}
+            } message: { Text("locThisRemovesThisBabySSleepGrowthAndTemperatureRecordsForEveryoneInTheFamily", comment: "Text in FamilyManagement: This removes this baby’s sleep, growth and temperature records for everyone in the family.") }
         }
         .onChange(of: store.isFinished) { _, finished in if finished { dismiss() } }
     }

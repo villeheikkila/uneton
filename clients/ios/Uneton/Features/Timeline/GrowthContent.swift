@@ -28,9 +28,9 @@ private struct GrowthCard: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Label("Growth", systemImage: "ruler.fill")
+                    Label(LocalizedStringResource("locGrowth", defaultValue: "Growth", comment: "Label in Timeline: Growth"), systemImage: "ruler.fill")
                         .font(.title2.weight(.bold))
-                    Text("Keep height and weight in one place and see how they change over time.")
+                    Text("locKeepHeightAndWeightInOnePlaceAndSeeHowTheyChangeOverTime", comment: "Text in Timeline: Keep height and weight in one place and see how they change over time.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -38,14 +38,14 @@ private struct GrowthCard: View {
                 .glassEffect(.regular.tint(Color.sleepMoonlight.opacity(0.12)), in: .rect(cornerRadius: 24))
 
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Reference curves")
+                    Text("locReferenceCurves", comment: "Text in Timeline: Reference curves")
                         .font(.headline)
                     HStack(spacing: 8) {
-                        referenceButton("Off", value: "none")
-                        referenceButton("Girl", value: "girl")
-                        referenceButton("Boy", value: "boy")
+                        referenceButton(LocalizedStringResource("locOff", defaultValue: "Off", comment: "Button title in Timeline: Off"), value: "none")
+                        referenceButton(LocalizedStringResource("locGirl", defaultValue: "Girl", comment: "Button title in Timeline: Girl"), value: "girl")
+                        referenceButton(LocalizedStringResource("locBoy", defaultValue: "Boy", comment: "Button title in Timeline: Boy"), value: "boy")
                     }
-                    Text("The selected Finnish reference is a visual guide only, not a medical assessment.")
+                    Text("locTheSelectedFinnishReferenceIsAVisualGuideOnlyNotAMedicalAssessment", comment: "Text in Timeline: The selected Finnish reference is a visual guide only, not a medical assessment.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -61,7 +61,7 @@ private struct GrowthCard: View {
                 }
 
                 Button(action: onAdd) {
-                    Label("Add measurement", systemImage: "plus.circle.fill")
+                    Label(LocalizedStringResource("locAddMeasurement", defaultValue: "Add measurement", comment: "Label in Timeline: Add measurement"), systemImage: "plus.circle.fill")
                         .font(.headline.weight(.semibold))
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)
@@ -71,9 +71,9 @@ private struct GrowthCard: View {
 
                 if measurements.isEmpty {
                     ContentUnavailableView(
-                        "No measurements yet",
+                        LocalizedStringResource("locNoMeasurementsYet", defaultValue: "No measurements yet", comment: "Text in Timeline: No measurements yet"),
                         systemImage: "heart.text.square",
-                        description: Text("Add the measurements from a neuvola visit or home scale.")
+                        description: Text("locAddTheMeasurementsFromANeuvolaVisitOrHomeScale", comment: "Text in Timeline: Add the measurements from a neuvola visit or home scale.")
                     )
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 36)
@@ -119,15 +119,15 @@ private struct GrowthCard: View {
 
     private func measurementValues(_ measurement: GrowthMeasurement) -> String {
         [
-            measurement.weightGrams.map { String(format: "%.2f kg", Double($0) / 1_000) },
-            measurement.heightMillimeters.map { String(format: "%.1f cm", Double($0) / 10) },
+            measurement.weightGrams.map { String(format: "%.2f kg", locale: .current, Double($0) / 1_000) },
+            measurement.heightMillimeters.map { String(format: "%.1f cm", locale: .current, Double($0) / 10) },
         ]
         .compactMap { $0 }
         .joined(separator: " · ")
     }
 
-    private func referenceButton(_ title: String, value: String) -> some View {
-        Button(title) { onReferenceChanged(value) }
+    private func referenceButton(_ title: LocalizedStringResource, value: String) -> some View {
+        Button { onReferenceChanged(value) } label: { Text(title) }
             .buttonStyle(.bordered)
             .tint(child.growthReference == value ? Color.sleepIndigo : .secondary)
             .frame(maxWidth: .infinity)
@@ -143,14 +143,14 @@ private struct GrowthReferenceCharts: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline) {
-                Label("Growth curves", systemImage: "chart.xyaxis.line")
+                Label(LocalizedStringResource("locGrowthCurves", defaultValue: "Growth curves", comment: "Label in Timeline: Growth curves"), systemImage: "chart.xyaxis.line")
                     .font(.title3.weight(.bold))
                 Spacer()
-                Text("0–2 years")
+                Text(.loc02Years)
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.secondary)
             }
-            Text("Finnish reference curves with your recorded measurements.")
+            Text("locFinnishReferenceCurvesWithYourRecordedMeasurements", comment: "Text in Timeline: Finnish reference curves with your recorded measurements.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             GrowthReferenceChart(child: child, measurements: measurements, points: points, metric: "height")
@@ -169,7 +169,7 @@ private struct GrowthReferenceChart: View {
     let metric: String
 
     private var isHeight: Bool { metric == "height" }
-    private var title: String { isHeight ? "Height for age" : "Weight for age" }
+    private var title: String { isHeight ? String(localized: LocalizedStringResource("locHeightForAge", defaultValue: "Height for age", comment: "Message in Timeline: Height for age")) : String(localized: LocalizedStringResource("locWeightForAge", defaultValue: "Weight for age", comment: "Message in Timeline: Weight for age")) }
     private var unit: String { isHeight ? "cm" : "kg" }
     private var chartData: GrowthChartData {
         GrowthChartData(child: child, measurements: measurements, points: points, metric: metric, calendar: calendar)
@@ -200,17 +200,17 @@ private struct GrowthReferenceChart: View {
                     .background(Color.sleepMoonlight.opacity(0.16), in: .capsule)
             }
             if chartData.curves.isEmpty {
-                ContentUnavailableView("Reference is loading", systemImage: "arrow.triangle.2.circlepath")
+                ContentUnavailableView(LocalizedStringResource("locReferenceIsLoading", defaultValue: "Reference is loading", comment: "Text in Timeline: Reference is loading"), systemImage: "arrow.triangle.2.circlepath")
                     .frame(height: 170)
             } else {
                 Chart {
                     ForEach(standardDeviations, id: \.self) { standardDeviation in
                         ForEach(chartData.points(for: standardDeviation)) { point in
                             LineMark(
-                                x: .value("Age", point.ageMonths),
+                                x: .value(String(localized: LocalizedStringResource("locAge", defaultValue: "Age", comment: "Message in Timeline: Age")), point.ageMonths),
                                 y: .value(unit, chartData.displayValue(point))
                             )
-                            .foregroundStyle(by: .value("Series", curveLabel(for: standardDeviation)))
+                            .foregroundStyle(by: .value(String(localized: LocalizedStringResource("locSeries", defaultValue: "Series", comment: "Message in Timeline: Series")), curveLabel(for: standardDeviation)))
                             .lineStyle(
                                 StrokeStyle(
                                     lineWidth: standardDeviation == 0 ? 2.5 : 1.15,
@@ -222,20 +222,20 @@ private struct GrowthReferenceChart: View {
                     }
                     ForEach(chartData.measurements) { measurement in
                         LineMark(
-                            x: .value("Age", measurement.ageMonths),
+                            x: .value(String(localized: LocalizedStringResource("locAge", defaultValue: "Age", comment: "Message in Timeline: Age")), measurement.ageMonths),
                             y: .value(unit, measurement.value)
                         )
-                        .foregroundStyle(by: .value("Series", "Measurement"))
+                        .foregroundStyle(by: .value(String(localized: LocalizedStringResource("locSeries", defaultValue: "Series", comment: "Message in Timeline: Series")), String(localized: LocalizedStringResource("locMeasurement", defaultValue: "Measurement", comment: "Message in Timeline: Measurement"))))
                         .lineStyle(StrokeStyle(lineWidth: 1.5))
                     }
                     ForEach(chartData.measurements) { measurement in
-                        PointMark(x: .value("Age", measurement.ageMonths), y: .value(unit, measurement.value))
-                            .foregroundStyle(by: .value("Series", "Measurement"))
+                        PointMark(x: .value(String(localized: LocalizedStringResource("locAge", defaultValue: "Age", comment: "Message in Timeline: Age")), measurement.ageMonths), y: .value(unit, measurement.value))
+                            .foregroundStyle(by: .value(String(localized: LocalizedStringResource("locSeries", defaultValue: "Series", comment: "Message in Timeline: Series")), String(localized: LocalizedStringResource("locMeasurement", defaultValue: "Measurement", comment: "Message in Timeline: Measurement"))))
                             .symbolSize(58)
                     }
                 }
-                .chartXAxisLabel("Age (months)")
-                .chartYAxisLabel(isHeight ? "Height (cm)" : "Weight (kg)")
+                .chartXAxisLabel(LocalizedStringResource("locAgeMonths", defaultValue: "Age (months)", comment: "Label in Timeline: Age (months)"))
+                .chartYAxisLabel(isHeight ? LocalizedStringResource("locHeightCm", defaultValue: "Height (cm)", comment: "Label in Timeline: Height (cm)") : LocalizedStringResource("locWeightKg", defaultValue: "Weight (kg)", comment: "Label in Timeline: Weight (kg)"))
                 .chartXScale(domain: 0...24)
                 .chartYScale(domain: chartData.yDomain)
                 .chartForegroundStyleScale([
@@ -244,7 +244,7 @@ private struct GrowthReferenceChart: View {
                     curveLabel(for: 0): curveColor(for: 0),
                     curveLabel(for: 1): curveColor(for: 1),
                     curveLabel(for: 2): curveColor(for: 2),
-                    "Measurement": Color.sleepIndigo,
+                    String(localized: LocalizedStringResource("locMeasurement", defaultValue: "Measurement", comment: "Message in Timeline: Measurement")): Color.sleepIndigo,
                 ])
                 .chartXAxis {
                     AxisMarks(values: .stride(by: 3)) { value in
@@ -253,7 +253,7 @@ private struct GrowthReferenceChart: View {
                         AxisTick(stroke: StrokeStyle(lineWidth: 0.8))
                         AxisValueLabel {
                             if let month = value.as(Int.self) {
-                                Text(month == 0 ? "Birth" : "\(month)m")
+                                Text(month == 0 ? LocalizedStringResource("locBirth", defaultValue: "Birth", comment: "Growth chart age axis, with age in months") : .locMonthShort(String(month)))
                             }
                         }
                     }

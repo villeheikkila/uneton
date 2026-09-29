@@ -19,7 +19,7 @@ public struct SleepActivityLockScreenView: View {
         .font(.title2)
         .foregroundStyle(.indigo)
       VStack(alignment: .leading, spacing: 3) {
-        Text("\(childName) is sleeping")
+        Text(.locChildIsSleeping(childName))
           .font(.headline)
         elapsed
           .font(.subheadline.monospacedDigit())
@@ -27,7 +27,7 @@ public struct SleepActivityLockScreenView: View {
       }
       Spacer()
       Link(destination: endURL) {
-        Text("Wake up")
+        Text("locWakeUp", bundle: .module, comment: "Wake up ends the current sleep")
           .font(.subheadline.weight(.semibold))
           .padding(.horizontal, 13)
           .padding(.vertical, 9)
@@ -55,7 +55,7 @@ public struct SleepActivityExpandedBottomView: View {
   public init(childName: String) { self.childName = childName }
 
   public var body: some View {
-    Text("\(childName) is sleeping")
+    Text(.locChildIsSleeping(childName))
       .foregroundStyle(.secondary)
   }
 }

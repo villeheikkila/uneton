@@ -11,31 +11,30 @@ struct SyncConflictsContent: View {
         Group {
             if conflicts.isEmpty {
                 ContentUnavailableView(
-                    "All changes reconciled",
+                    LocalizedStringResource("locAllChangesReconciled", defaultValue: "All changes reconciled", comment: "Text in Timeline: All changes reconciled"),
                     systemImage: "checkmark.circle",
-                    description: Text("There are no changes that need your decision.")
+                    description: Text("locThereAreNoChangesThatNeedYourDecision", comment: "Text in Timeline: There are no changes that need your decision.")
                 )
             } else {
                 List(conflicts) { conflict in
                     VStack(alignment: .leading, spacing: 12) {
                         Label(title(for: conflict), systemImage: "arrow.trianglehead.2.clockwise.rotate.90")
                             .font(.headline)
-                        Text(conflict.reason)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Text("Another caregiver changed this record before your offline change reached the server.")
+                        Text(conflict.reason == "stale revision"
+                            ? LocalizedStringResource("locAnotherCaregiverChangedThisRecordBeforeYourOfflineChangeReachedTheServer", defaultValue: "Another caregiver changed this record before your offline change reached the server.", comment: "Text in Timeline: Another caregiver changed this record before your offline change reached the server.")
+                            : LocalizedStringResource("locThisChangeCouldNotBeAppliedReviewBothVersionsBeforeDeciding", defaultValue: "This change could not be applied. Review both versions before deciding.", comment: "Text in Timeline: This change could not be applied. Review both versions before deciding."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         if let comparison = SleepConflictComparison(conflict: conflict) {
                             VStack(spacing: 8) {
                                 ConflictVersionRow(
-                                    title: "My change",
+                                    title: String(localized: LocalizedStringResource("locMyChange", defaultValue: "My change", comment: "Message in Timeline: My change")),
                                     startedAt: comparison.local.startedAt,
                                     endedAt: comparison.local.endedAt,
                                     tint: .indigo
                                 )
                                 ConflictVersionRow(
-                                    title: "Server version",
+                                    title: String(localized: LocalizedStringResource("locServerVersion", defaultValue: "Server version", comment: "Message in Timeline: Server version")),
                                     startedAt: comparison.server.startedAt,
                                     endedAt: comparison.server.endedAt,
                                     tint: .orange
@@ -43,12 +42,12 @@ struct SyncConflictsContent: View {
                             }
                         }
                         HStack {
-                            Button("Use server version") {
+                            Button(LocalizedStringResource("locUseServerVersion", defaultValue: "Use server version", comment: "Button title in Timeline: Use server version")) {
                                 resolve(conflict, as: .keepServer)
                             }
                             .buttonStyle(.bordered)
                             Spacer()
-                            Button("Keep my change") {
+                            Button(LocalizedStringResource("locKeepMyChange", defaultValue: "Keep my change", comment: "Button title in Timeline: Keep my change")) {
                                 resolve(conflict, as: .keepMine)
                             }
                             .buttonStyle(.borderedProminent)
@@ -66,9 +65,9 @@ struct SyncConflictsContent: View {
 
     private func title(for conflict: SyncConflict) -> String {
         switch conflict.commandKind {
-        case "upsertSleep", "endSleep": "Sleep time changed in two places"
-        case "deleteSleep": "Sleep was edited and deleted"
-        default: "Change needs review"
+        case "upsertSleep", "endSleep": String(localized: LocalizedStringResource("locSleepTimeChangedInTwoPlaces", defaultValue: "Sleep time changed in two places", comment: "Message in Timeline: Sleep time changed in two places"))
+        case "deleteSleep": String(localized: LocalizedStringResource("locSleepWasEditedAndDeleted", defaultValue: "Sleep was edited and deleted", comment: "Message in Timeline: Sleep was edited and deleted"))
+        default: String(localized: LocalizedStringResource("locChangeNeedsReview", defaultValue: "Change needs review", comment: "Message in Timeline: Change needs review"))
         }
     }
 }
@@ -91,7 +90,7 @@ private struct ConflictVersionRow: View {
             if let endedAt {
                 Text(endedAt, format: .dateTime.hour().minute())
             } else {
-                Text("Sleeping")
+                Text("locSleeping", comment: "Text in Timeline: Sleeping")
             }
         }
         .font(.caption.monospacedDigit())

@@ -19,6 +19,7 @@
 		11052B95D77E1ED5769B8D4B /* FamilySharingContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8BE4C338F780283CAF4F507 /* FamilySharingContent.swift */; };
 		12C7B0ED90A2EAA98A3A856A /* GrowthContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 003A32D534274ED56FF989AA /* GrowthContent.swift */; };
 		130F4B4B302ECD46F5C30144 /* capture-_.familyManagementSheet.png in Resources */ = {isa = PBXBuildFile; fileRef = B126AFF572A9B3185BA16C37 /* capture-_.familyManagementSheet.png */; };
+		1A4CBFEC1A1DAD595973DA48 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = CB5FC431FCAB68EB87ED2EE1 /* Localizable.xcstrings */; };
 		1E446D3B92A147EBBC30EEBF /* FamilySetupScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BD69280C0F984FDD4422F62 /* FamilySetupScreen.swift */; };
 		1E790AFA3EFD16ABAA023E9F /* AddChildContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ED7F1F76B95E77FB9475089 /* AddChildContent.swift */; };
 		1FAC62EB3331253BBB63FCEC /* FamilySetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D67A960B662346DAFA52918F /* FamilySetup.swift */; };
@@ -35,6 +36,7 @@
 		31435D6C1E99F573422650FB /* DependenciesTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 3D52A8C3226BEA438C07A2DB /* DependenciesTestSupport */; };
 		316D502577DE587D9F1B1F0D /* PhoneWatchBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD9758664132AB21584A96AC /* PhoneWatchBridge.swift */; };
 		32E347573C4C49842ABB92CC /* SessionAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C28DF7DBFEC8C4705D78AB09 /* SessionAuthClient.swift */; };
+		32F06599D1BC3EBBA57CA1B0 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A3D3EC3440B04C1322F7C000 /* InfoPlist.xcstrings */; };
 		34897FA0801B4CD6EEA0F3D7 /* FamilySetupContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0079D19F3492D4F69F06FD /* FamilySetupContent.swift */; };
 		34A5D9EC071A686EA8B41F7D /* ChildEditorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF1DF93BFC04C3F3735B0E0 /* ChildEditorSheet.swift */; };
 		34F3F492CCE8979A6F1B88FD /* ChildEditorContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1D401F5DFFCEDA9B8431E9 /* ChildEditorContent.swift */; };
@@ -49,6 +51,7 @@
 		3F67A8EC57D51FC25A4BE656 /* SleepEntrySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFF0F8EAD4BC4114DEFF87D /* SleepEntrySheet.swift */; };
 		4468E70B0AB32E0B1B80E3AD /* TemperatureEntrySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BA61613A67C5F9CB1A059CB /* TemperatureEntrySheet.swift */; };
 		49FEEF5C8775506127FB5745 /* UnetonCore in Frameworks */ = {isa = PBXBuildFile; productRef = C84A1DF20438133E612C8513 /* UnetonCore */; };
+		4AC39A499D0780F20AD7ECA6 /* LocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8889DC823AE3FF1C4B858582 /* LocalizationTests.swift */; };
 		503C1297883A78D0B857765E /* UnetonApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D31FE1C3ACB3CB882029856B /* UnetonApp.swift */; };
 		505EBAA33B21B2743A28CAD7 /* CredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0009D16CB7EAFD3C94AEB10 /* CredentialStore.swift */; };
 		52DC98A03CFA511F2903B30E /* capture-_.onboarding.png in Resources */ = {isa = PBXBuildFile; fileRef = B36C2E2107DD081F376A34E1 /* capture-_.onboarding.png */; };
@@ -72,6 +75,7 @@
 		7EE9F7B1BE2D150CC89A5B30 /* UnetonActivity in Frameworks */ = {isa = PBXBuildFile; productRef = E8389CBA533E782935A9D730 /* UnetonActivity */; };
 		80D8EAD7366BA3498D2CA583 /* SessionSyncClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37BBA6E529FDA150CF89123E /* SessionSyncClient.swift */; };
 		8200EDDC66C07FAAC8CC554F /* AppRootTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABFE71EE585F9949FCABD7B /* AppRootTests.swift */; };
+		82D910AE8B5B33F0FD0F5938 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 8F5643B936AB4173A7337539 /* Localizable.xcstrings */; };
 		8E2711AC8695F397CD65A426 /* QRCodeImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B9EB5E1E7CFB04D29881E5E /* QRCodeImage.swift */; };
 		8EE54E1B5A784BE1C400AD74 /* capture-_.familySharingSheet.png in Resources */ = {isa = PBXBuildFile; fileRef = EBEE8C6312B8DF21A8E37969 /* capture-_.familySharingSheet.png */; };
 		910FCAED1BEA9A311691DD36 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 98FF8790ABA3E818C0847C23 /* SnapshotTesting */; };
@@ -79,6 +83,7 @@
 		943A7AE56109F41DE68AE53F /* capture-_.sleepEntrySheet.png in Resources */ = {isa = PBXBuildFile; fileRef = 3CC64DF0D2640D8A806E4A61 /* capture-_.sleepEntrySheet.png */; };
 		968654C9314D6BA38D616C59 /* UnetonCore in Frameworks */ = {isa = PBXBuildFile; productRef = F7C4691974BB5222DB4FB72B /* UnetonCore */; };
 		9BD67D61019C9F1E14A6B996 /* OnboardingScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F44568409F93B225B861E42 /* OnboardingScreen.swift */; };
+		9FA4B5715C321F5D4192D270 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 1A110BC5542FD9DE9606028A /* Localizable.xcstrings */; };
 		9FB29DA789A21B093A3A7E6F /* GrowthEntrySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0568021077504D52C0EF97B3 /* GrowthEntrySheet.swift */; };
 		A43E84F11FF64552F4EFBEF9 /* TimelineStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7695F9DDEE0AF670B1336CDE /* TimelineStyle.swift */; };
 		A59550D2F837669BA623FF23 /* SessionSharingClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0DADBE7FF9017AE001C683 /* SessionSharingClient.swift */; };
@@ -176,6 +181,7 @@
 		10202B305F3615FE103CAC95 /* ActivitySnapshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivitySnapshots.swift; sourceTree = "<group>"; };
 		15EA75C38B7B9913EFAF8D3C /* UnetonWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnetonWatchApp.swift; sourceTree = "<group>"; };
 		16F8A18EB8BF393F83693600 /* TimelineScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineScreen.swift; sourceTree = "<group>"; };
+		1A110BC5542FD9DE9606028A /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		1B00CFB9F4A5AD97A660B009 /* capture-_.temperatureTab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_.temperatureTab.png"; sourceTree = "<group>"; };
 		1B2C25DAD59C55EE96BD82B9 /* TemperatureEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemperatureEntry.swift; sourceTree = "<group>"; };
 		1DF29C953864C252FCF044CB /* FamilySharing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilySharing.swift; sourceTree = "<group>"; };
@@ -211,9 +217,11 @@
 		72BE2CA6738C2540B65E4FB6 /* UnetonWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UnetonWidgets.entitlements; sourceTree = "<group>"; };
 		7695F9DDEE0AF670B1336CDE /* TimelineStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineStyle.swift; sourceTree = "<group>"; };
 		82803025A1AFBF44B863CFC7 /* DisplayClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayClock.swift; sourceTree = "<group>"; };
+		8889DC823AE3FF1C4B858582 /* LocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationTests.swift; sourceTree = "<group>"; };
 		8A0DADBE7FF9017AE001C683 /* SessionSharingClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSharingClient.swift; sourceTree = "<group>"; };
 		8BFF0F8EAD4BC4114DEFF87D /* SleepEntrySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepEntrySheet.swift; sourceTree = "<group>"; };
 		8D288C99648B3BB2FA368168 /* capture-_.insightsTab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_.insightsTab.png"; sourceTree = "<group>"; };
+		8F5643B936AB4173A7337539 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		90D71E773BF7005FF4CA9D1B /* FamilyHome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyHome.swift; sourceTree = "<group>"; };
 		93442058261D164D125FE85A /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		95FC0EB3F083AB0587264171 /* LiveActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityController.swift; sourceTree = "<group>"; };
@@ -221,6 +229,7 @@
 		9BD69280C0F984FDD4422F62 /* FamilySetupScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilySetupScreen.swift; sourceTree = "<group>"; };
 		9F0079D19F3492D4F69F06FD /* FamilySetupContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilySetupContent.swift; sourceTree = "<group>"; };
 		A0009D16CB7EAFD3C94AEB10 /* CredentialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialStore.swift; sourceTree = "<group>"; };
+		A3D3EC3440B04C1322F7C000 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		A7643CD5216DE0A6886A71D4 /* TemperatureContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemperatureContent.swift; sourceTree = "<group>"; };
 		A813E55B8E67F20DEC32C945 /* capture-_.syncConflictsSheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_.syncConflictsSheet.png"; sourceTree = "<group>"; };
 		AABFE71EE585F9949FCABD7B /* AppRootTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootTests.swift; sourceTree = "<group>"; };
@@ -238,6 +247,7 @@
 		BE835A95C87FCCB8D5760BAB /* SleepEntryContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepEntryContent.swift; sourceTree = "<group>"; };
 		C28DF7DBFEC8C4705D78AB09 /* SessionAuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionAuthClient.swift; sourceTree = "<group>"; };
 		C449A99D10D28759FD0E4F13 /* Onboarding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Onboarding.swift; sourceTree = "<group>"; };
+		CB5FC431FCAB68EB87ED2EE1 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		CCA4BA7AF40DB25E721915A1 /* SyncConflictsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncConflictsSheet.swift; sourceTree = "<group>"; };
 		CDD0396698C166330A087AD8 /* SleepTimelineContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepTimelineContent.swift; sourceTree = "<group>"; };
 		D05C69FF57CC87AAFAA50239 /* InvitationScannerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvitationScannerSheet.swift; sourceTree = "<group>"; };
@@ -339,6 +349,7 @@
 			isa = PBXGroup;
 			children = (
 				E06D055826E7198BFF94D002 /* Info.plist */,
+				1A110BC5542FD9DE9606028A /* Localizable.xcstrings */,
 				72BE2CA6738C2540B65E4FB6 /* UnetonWidgets.entitlements */,
 				BBA9C6F0A3F7C533AFAA3988 /* UnetonWidgets.swift */,
 			);
@@ -399,6 +410,7 @@
 			isa = PBXGroup;
 			children = (
 				45B1DF3CCB9251A6A1E1DBE6 /* Info.plist */,
+				CB5FC431FCAB68EB87ED2EE1 /* Localizable.xcstrings */,
 				52E6E2D69BBCABC069653151 /* UnetonWatch.entitlements */,
 				15EA75C38B7B9913EFAF8D3C /* UnetonWatchApp.swift */,
 			);
@@ -456,6 +468,8 @@
 				0355076EEF872FB482B7B4DA /* ContentView.swift */,
 				E046408D96C5E3D53E27A0E9 /* FamilyHomeContent.swift */,
 				3D896FB7D71440107A4ABABE /* Info.plist */,
+				A3D3EC3440B04C1322F7C000 /* InfoPlist.xcstrings */,
+				8F5643B936AB4173A7337539 /* Localizable.xcstrings */,
 				B293649851B1A89B1E172B15 /* PrivacyInfo.xcprivacy */,
 				D4F4ED37643D6B68949D2915 /* Uneton.entitlements */,
 				D31FE1C3ACB3CB882029856B /* UnetonApp.swift */,
@@ -505,6 +519,7 @@
 				10202B305F3615FE103CAC95 /* ActivitySnapshots.swift */,
 				AABFE71EE585F9949FCABD7B /* AppRootTests.swift */,
 				019129055CD5E615545FAF11 /* DemoRuntimeTests.swift */,
+				8889DC823AE3FF1C4B858582 /* LocalizationTests.swift */,
 				692C9E34A3795E4E1E2BDBF7 /* ScreenSnapshots.swift */,
 				8613EA208C3D0CF6B983F050 /* __Snapshots__ */,
 			);
@@ -575,6 +590,7 @@
 			buildConfigurationList = 8EEB4B81F8302E468198EC10 /* Build configuration list for PBXNativeTarget "UnetonWatch" */;
 			buildPhases = (
 				A9C3932809207763D6232E72 /* Sources */,
+				2FD61204F1338E0B9F6E432C /* Resources */,
 				E096A435249EE8BC82884805 /* Frameworks */,
 			);
 			buildRules = (
@@ -594,6 +610,7 @@
 			buildConfigurationList = 781A7F6A94896BA06564513C /* Build configuration list for PBXNativeTarget "UnetonWidgets" */;
 			buildPhases = (
 				683A35CE8C34B4677797767C /* Sources */,
+				746ABE52132BAB4FC24F639E /* Resources */,
 				ACA49C3F783879E806C3812F /* Frameworks */,
 			);
 			buildRules = (
@@ -711,6 +728,7 @@
 			knownRegions = (
 				Base,
 				en,
+				fi,
 			);
 			mainGroup = CA4BB0AEA357C3DF8337947D;
 			minimizedProjectReferenceProxies = 1;
@@ -736,6 +754,14 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		2FD61204F1338E0B9F6E432C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1A4CBFEC1A1DAD595973DA48 /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		573CF1B43E7AF0ABC9878799 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -758,11 +784,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		746ABE52132BAB4FC24F639E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9FA4B5715C321F5D4192D270 /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		812D2D2A636EEE4BE884935D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				776E41E259D54BB9647721BB /* Assets.xcassets in Resources */,
+				32F06599D1BC3EBBA57CA1B0 /* InfoPlist.xcstrings in Resources */,
+				82D910AE8B5B33F0FD0F5938 /* Localizable.xcstrings in Resources */,
 				0AE8D08DB064AAA222E8B1CE /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -777,6 +813,7 @@
 				B6BDAAEF23ABC94928AB4B6A /* ActivitySnapshots.swift in Sources */,
 				8200EDDC66C07FAAC8CC554F /* AppRootTests.swift in Sources */,
 				EE1ADB9F3E5D5E74266732FE /* DemoRuntimeTests.swift in Sources */,
+				4AC39A499D0780F20AD7ECA6 /* LocalizationTests.swift in Sources */,
 				3C08A43A502962F34CA213DC /* ScreenSnapshots.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

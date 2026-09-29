@@ -8,12 +8,12 @@ struct TemperatureEntrySheet: View {
     var body: some View {
         NavigationStack {
             TemperatureEntryContent(store: store)
-                .navigationTitle(store.readingID == nil ? "Add temperature" : "Edit temperature")
+                .navigationTitle(store.readingID == nil ? LocalizedStringResource("locAddTemperature", defaultValue: "Add temperature", comment: "Screen title in Entry: Add temperature") : LocalizedStringResource("locEditTemperature", defaultValue: "Edit temperature", comment: "Screen title in Entry: Edit temperature"))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(LocalizedStringResource("locCancel", defaultValue: "Cancel", comment: "Button title in Entry: Cancel")) { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { store.send(.saveButtonTapped) }
+                    Button(LocalizedStringResource("locSave", defaultValue: "Save", comment: "Button title in Entry: Save")) { store.send(.saveButtonTapped) }
                         .disabled(store.centiCelsius == nil || store.request.isRunning)
                 }
             }

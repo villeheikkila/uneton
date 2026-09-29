@@ -13,9 +13,9 @@ struct TrendsContent: View {
         let summary = SleepTrends(sessions: sessions, rangeDays: range, now: now, calendar: calendar)
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                Picker("Range", selection: $range) {
-                    Text("7 days").tag(7)
-                    Text("30 days").tag(30)
+                Picker(String(localized: LocalizedStringResource("locRange", defaultValue: "Range", comment: "Picker title in Trends: Range")), selection: $range) {
+                    Text(.loc7Days).tag(7)
+                    Text(.loc30Days).tag(30)
                 }
                 .pickerStyle(.segmented)
                 .padding(4)
@@ -25,26 +25,26 @@ struct TrendsContent: View {
 
                 HStack(spacing: 12) {
                     metricCard(
-                        title: "Sleep sessions",
+                        title: String(localized: LocalizedStringResource("locSleepSessions", defaultValue: "Sleep sessions", comment: "Message in Trends: Sleep sessions")),
                         value: "\(summary.sessionCount)",
-                        detail: "in this period",
+                        detail: String(localized: LocalizedStringResource("locInThisPeriod", defaultValue: "in this period", comment: "Message in Trends: in this period")),
                         icon: "moon.zzz.fill",
                         color: .sleepIndigo
                     )
                     metricCard(
-                        title: "Daily average",
+                        title: String(localized: LocalizedStringResource("locDailyAverage", defaultValue: "Daily average", comment: "Message in Trends: Daily average")),
                         value: averageDuration(summary),
-                        detail: "total sleep",
+                        detail: String(localized: LocalizedStringResource("locTotalSleep", defaultValue: "total sleep", comment: "Message in Trends: total sleep")),
                         icon: "sparkles",
                         color: .sleepDawn
                     )
                 }
 
-                chartCard("Sleep by day", detail: "hours") {
+                chartCard(String(localized: LocalizedStringResource("locSleepByDay", defaultValue: "Sleep by day", comment: "Message in Trends: Sleep by day")), detail: String(localized: LocalizedStringResource("locHoursLowercase", defaultValue: "hours", comment: "Message in Trends: hours"))) {
                     Chart(summary.days) { value in
                         BarMark(
-                            x: .value("Day", value.date, unit: .day),
-                            y: .value("Hours", value.hours)
+                            x: .value(String(localized: LocalizedStringResource("locDay", defaultValue: "Day", comment: "Message in Trends: Day")), value.date, unit: .day),
+                            y: .value(String(localized: LocalizedStringResource("locHours", defaultValue: "Hours", comment: "Message in Trends: Hours")), value.hours)
                         )
                         .foregroundStyle(
                             LinearGradient(
@@ -68,12 +68,12 @@ struct TrendsContent: View {
                     }
                 }
 
-                chartCard("Sleep rhythm", detail: "time of day") {
+                chartCard(String(localized: LocalizedStringResource("locSleepRhythm", defaultValue: "Sleep rhythm", comment: "Message in Trends: Sleep rhythm")), detail: String(localized: LocalizedStringResource("locTimeOfDay", defaultValue: "time of day", comment: "Message in Trends: time of day"))) {
                     Chart(summary.completedSessions) { session in
                         BarMark(
-                            xStart: .value("Start", SleepTrends.minuteOfDay(session.startedAt, calendar: calendar)),
-                            xEnd: .value("End", SleepTrends.minuteOfDay(session.endedAt ?? now, calendar: calendar)),
-                            y: .value("Day", calendar.startOfDay(for: session.startedAt), unit: .day)
+                            xStart: .value(String(localized: LocalizedStringResource("locStartTimeAxis", defaultValue: "Start", comment: "Start is a chart axis noun for the beginning of a sleep session")), SleepTrends.minuteOfDay(session.startedAt, calendar: calendar)),
+                            xEnd: .value(String(localized: LocalizedStringResource("locEnd", defaultValue: "End", comment: "End is a chart axis noun for the end of a sleep session")), SleepTrends.minuteOfDay(session.endedAt ?? now, calendar: calendar)),
+                            y: .value(String(localized: LocalizedStringResource("locDay", defaultValue: "Day", comment: "Message in Trends: Day")), calendar.startOfDay(for: session.startedAt), unit: .day)
                         )
                         .foregroundStyle(
                             LinearGradient(
@@ -97,12 +97,12 @@ struct TrendsContent: View {
                     }
                 }
 
-                chartCard("Sessions per day", detail: "rhythm") {
+                chartCard(String(localized: LocalizedStringResource("locSessionsPerDay", defaultValue: "Sessions per day", comment: "Message in Trends: Sessions per day")), detail: String(localized: LocalizedStringResource("locRhythmLowercase", defaultValue: "rhythm", comment: "Message in Trends: rhythm"))) {
                     Chart(summary.days) { value in
-                        LineMark(x: .value("Day", value.date), y: .value("Naps", value.sessions))
+                        LineMark(x: .value(String(localized: LocalizedStringResource("locDay", defaultValue: "Day", comment: "Message in Trends: Day")), value.date), y: .value(String(localized: LocalizedStringResource("locNaps", defaultValue: "Naps", comment: "Message in Trends: Naps")), value.sessions))
                             .foregroundStyle(Color.sleepDawn)
                             .lineStyle(.init(lineWidth: 3, lineCap: .round, lineJoin: .round))
-                        PointMark(x: .value("Day", value.date), y: .value("Naps", value.sessions))
+                        PointMark(x: .value(String(localized: LocalizedStringResource("locDay", defaultValue: "Day", comment: "Message in Trends: Day")), value.date), y: .value(String(localized: LocalizedStringResource("locNaps", defaultValue: "Naps", comment: "Message in Trends: Naps")), value.sessions))
                             .foregroundStyle(Color.sleepDawn)
                     }
                 }
@@ -118,12 +118,12 @@ struct TrendsContent: View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Sleep insights")
+                    Text("locSleepInsights", comment: "Text in Trends: Sleep insights")
                         .font(.title3.weight(.semibold))
                         .foregroundStyle(.white.opacity(0.75))
                     Text(totalDuration(summary))
                         .font(.system(size: 42, weight: .bold, design: .rounded))
-                    Text("tracked across \(range) days")
+                    Text(.locTrackedAcrossDays(String(range)))
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.62))
                 }
@@ -136,8 +136,8 @@ struct TrendsContent: View {
 
             Chart(summary.days) { value in
                 AreaMark(
-                    x: .value("Day", value.date),
-                    y: .value("Hours", value.hours)
+                    x: .value(String(localized: LocalizedStringResource("locDay", defaultValue: "Day", comment: "Message in Trends: Day")), value.date),
+                    y: .value(String(localized: LocalizedStringResource("locHours", defaultValue: "Hours", comment: "Message in Trends: Hours")), value.hours)
                 )
                 .foregroundStyle(
                     LinearGradient(
@@ -147,8 +147,8 @@ struct TrendsContent: View {
                     )
                 )
                 LineMark(
-                    x: .value("Day", value.date),
-                    y: .value("Hours", value.hours)
+                    x: .value(String(localized: LocalizedStringResource("locDay", defaultValue: "Day", comment: "Message in Trends: Day")), value.date),
+                    y: .value(String(localized: LocalizedStringResource("locHours", defaultValue: "Hours", comment: "Message in Trends: Hours")), value.hours)
                 )
                 .foregroundStyle(.white)
                 .lineStyle(.init(lineWidth: 3, lineCap: .round, lineJoin: .round))

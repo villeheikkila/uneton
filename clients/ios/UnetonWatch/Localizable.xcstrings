@@ -1,0 +1,384 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "locLogTemperature": {
+      "comment": "Action to add a body temperature reading.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log temperature"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kirjaa lämpötila"
+          }
+        }
+      }
+    },
+    "locRefresh": {
+      "comment": "User-facing baby tracking text: “Refresh”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Päivitä"
+          }
+        }
+      }
+    },
+    "locSave": {
+      "comment": "User-facing baby tracking text: “Save”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tallenna"
+          }
+        }
+      }
+    },
+    "locWakeUp": {
+      "comment": "Action in Watch and Live Activity that records that the baby woke up.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wake up"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Merkitse hereille"
+          }
+        }
+      }
+    },
+    "locUnexpectedError": {
+      "comment": "User-facing baby tracking text: “Something went wrong. Try again.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong. Try again."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jokin meni vikaan. Yritä uudelleen."
+          }
+        }
+      }
+    },
+    "locRetryLastAction": {
+      "comment": "User-facing baby tracking text: “Retry last action”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry last action"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yritä viimeistä toimintoa uudelleen"
+          }
+        }
+      }
+    },
+    "locIPhoneDidNotReplyRetryTheAction": {
+      "comment": "User-facing baby tracking text: “iPhone did not reply. Retry the action.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone did not reply. Retry the action."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone ei vastannut. Yritä toimintoa uudelleen."
+          }
+        }
+      }
+    },
+    "locTemperatureWatchUnit": {
+      "comment": "Watch body temperature entry field with Celsius units.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temperature °C"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lämpötila °C"
+          }
+        }
+      }
+    },
+    "locChooseChild": {
+      "comment": "User-facing baby tracking text: “Choose child”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose child"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valitse vauva"
+          }
+        }
+      }
+    },
+    "locMeasured": {
+      "comment": "User-facing baby tracking text: “Measured”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Measured"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mitattu"
+          }
+        }
+      }
+    },
+    "locDeleteReading": {
+      "comment": "User-facing baby tracking text: “Delete reading”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete reading"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poista mittaus"
+          }
+        }
+      }
+    },
+    "locAwake": {
+      "comment": "User-facing baby tracking text: “Awake”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Awake"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hereillä"
+          }
+        }
+      }
+    },
+    "locEditReading": {
+      "comment": "User-facing baby tracking text: “Edit reading”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit reading"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muokkaa mittausta"
+          }
+        }
+      }
+    },
+    "locTemperature": {
+      "comment": "Temperature tracking tab or Watch screen title; this is body temperature.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temperature"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lämpötila"
+          }
+        }
+      }
+    },
+    "locOpenUnetonOnYourIPhoneToContinue": {
+      "comment": "User-facing baby tracking text: “Open Uneton on your iPhone to continue.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Uneton on your iPhone to continue."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avaa Uneton iPhonessa jatkaaksesi."
+          }
+        }
+      }
+    },
+    "locSetUpUnetonOnIPhone": {
+      "comment": "User-facing baby tracking text: “Set up Uneton on iPhone”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set up Uneton on iPhone"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ota Uneton käyttöön iPhonessa"
+          }
+        }
+      }
+    },
+    "locSyncPending": {
+      "comment": "User-facing baby tracking text: “Sync pending”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync pending"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odottaa synkronointia"
+          }
+        }
+      }
+    },
+    "locStartSleep": {
+      "comment": "User-facing baby tracking text: “Start sleep”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start sleep"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aloita uni"
+          }
+        }
+      }
+    },
+    "locNoteOptional": {
+      "comment": "User-facing baby tracking text: “Note (optional)”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Note (optional)"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muistiinpano (valinnainen)"
+          }
+        }
+      }
+    },
+    "locCouldNotReadTheIPhoneReplyRetryTheAction": {
+      "comment": "User-facing baby tracking text: “Could not read the iPhone reply. Retry the action.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not read the iPhone reply. Retry the action."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhonen vastausta ei voitu lukea. Yritä toimintoa uudelleen."
+          }
+        }
+      }
+    },
+    "locWatchChildOption": {
+      "comment": "Watch baby selector: baby name and family name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %@"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %@"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

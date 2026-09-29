@@ -348,7 +348,7 @@ final class SessionStore {
             request.nonce = hashedNonce(nonce)
         } catch {
             pendingAppleNonce = nil
-            errorMessage = error.localizedDescription
+            errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated"))
         }
     }
 
@@ -365,11 +365,11 @@ final class SessionStore {
         errorMessage = nil
         defer { isWorking = false }
         guard await synchronizeAllInBackground() else {
-            errorMessage = "Uneton could not sync your changes. Connect to the internet and try again before signing out."
+            errorMessage = String(localized: LocalizedStringResource("locUnetonCouldNotSyncYourChangesConnectToTheInternetAndTryAgainBeforeSigningOut", defaultValue: "Uneton could not sync your changes. Connect to the internet and try again before signing out.", comment: "Message in SessionStore: Uneton could not sync your changes. Connect to the internet and try again before signing out."))
             return false
         }
         guard !(await hasUnresolvedSyncState()) else {
-            errorMessage = "Resolve or discard sync conflicts before signing out."
+            errorMessage = String(localized: LocalizedStringResource("locResolveOrDiscardSyncConflictsBeforeSigningOut", defaultValue: "Resolve or discard sync conflicts before signing out.", comment: "Message in SessionStore: Resolve or discard sync conflicts before signing out."))
             return false
         }
         guard let accessToken else {
@@ -381,7 +381,7 @@ final class SessionStore {
         } catch where isUnauthenticatedAPIError(error) {
             // A prior sign-out may have succeeded after its response was lost.
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated"))
             return false
         }
         await clearLocalSession()
@@ -395,7 +395,7 @@ final class SessionStore {
         defer { isWorking = false }
         if await hasUnresolvedSyncState() { _ = await synchronizeAllInBackground() }
         guard !(await hasUnresolvedSyncState()) else {
-            errorMessage = "Sync or resolve pending changes before deleting your account."
+            errorMessage = String(localized: LocalizedStringResource("locSyncOrResolvePendingChangesBeforeDeletingYourAccount", defaultValue: "Sync or resolve pending changes before deleting your account.", comment: "Message in SessionStore: Sync or resolve pending changes before deleting your account."))
             return false
         }
         do {
@@ -403,12 +403,12 @@ final class SessionStore {
             await clearLocalSession()
             return true
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated"))
             return false
         }
     }
 
-    func startSleep(familyID: Family.ID, childID: Child.ID, childName: String = "Child", startedAt: Date? = nil) async {
+    func startSleep(familyID: Family.ID, childID: Child.ID, childName: String = String(localized: LocalizedStringResource("locChild", defaultValue: "Child", comment: "Message in SessionStore: Child")), startedAt: Date? = nil) async {
         let startedAt = startedAt ?? now
         await perform {
             let sessionID = try await coordinator.startSleep(familyID: familyID, childID: childID, startedAt: startedAt)
@@ -549,7 +549,7 @@ final class SessionStore {
                 let acceptedAt = now
                 try await database.write { database in
                     try Family.upsert {
-                        Family(id: accepted.familyID, name: "Shared family", role: accepted.role, updatedAt: acceptedAt)
+                        Family(id: accepted.familyID, name: String(localized: LocalizedStringResource("locSharedFamily", defaultValue: "Shared family", comment: "Message in SessionStore: Shared family")), role: accepted.role, updatedAt: acceptedAt)
                     }.execute(database)
                 }
                 await setPrediction(try await synchronizeWithRefresh(familyID: accepted.familyID))
@@ -588,7 +588,7 @@ final class SessionStore {
             let invite = try await apiClient.createInvite(familyID, accessToken)
             return URL(string: "uneton://invite/\(invite.token)")
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated"))
             return nil
         }
     }
@@ -661,7 +661,7 @@ final class SessionStore {
         do {
             let before = try await watchDiarySnapshot()
             guard request.isWellFormed else {
-                return WatchDiaryResponse(snapshot: before, errorMessage: "Invalid Watch request")
+                return WatchDiaryResponse(snapshot: before, errorMessage: String(localized: LocalizedStringResource("locInvalidWatchRequest", defaultValue: "Invalid Watch request", comment: "Message in SessionStore: Invalid Watch request")))
             }
             if request.action == .status {
                 Task { [weak self] in _ = await self?.synchronizeAllInBackground() }
@@ -669,7 +669,7 @@ final class SessionStore {
             }
             guard let familyID = request.familyID, let childID = request.childID,
                   let child = before.children.first(where: { $0.familyID == familyID && $0.id == childID }) else {
-                return WatchDiaryResponse(snapshot: before, errorMessage: "Select a child on iPhone first")
+                return WatchDiaryResponse(snapshot: before, errorMessage: String(localized: LocalizedStringResource("locSelectAChildOnIPhoneFirst", defaultValue: "Select a child on iPhone first", comment: "Message in SessionStore: Select a child on iPhone first")))
             }
             let readingID = request.readingID
             if let readingID {
@@ -680,7 +680,7 @@ final class SessionStore {
                             && existing.deletedAt == nil && existing.measuredAt == request.measuredAt
                             && existing.centiCelsius == request.centiCelsius && existing.note == request.note
                         return WatchDiaryResponse(snapshot: before,
-                            errorMessage: same ? nil : "Reading already exists")
+                            errorMessage: same ? nil : String(localized: LocalizedStringResource("locReadingAlreadyExists", defaultValue: "Reading already exists", comment: "Message in SessionStore: Reading already exists")))
                     }
                 } else if request.action == .upsertTemperature || request.action == .deleteTemperature {
                     if request.action == .deleteTemperature && existing == nil {
@@ -688,14 +688,14 @@ final class SessionStore {
                     }
                     guard let existing, existing.familyID == familyID, existing.childID == childID,
                           existing.deletedAt == nil else {
-                        return WatchDiaryResponse(snapshot: before, errorMessage: "Reading is no longer available")
+                        return WatchDiaryResponse(snapshot: before, errorMessage: String(localized: LocalizedStringResource("locReadingIsNoLongerAvailable", defaultValue: "Reading is no longer available", comment: "Message in SessionStore: Reading is no longer available")))
                     }
                     if existing.revision != request.expectedRevision {
                         let sameEdit = request.action == .upsertTemperature
                             && existing.measuredAt == request.measuredAt
                             && existing.centiCelsius == request.centiCelsius && existing.note == request.note
                         return WatchDiaryResponse(snapshot: before,
-                            errorMessage: sameEdit ? nil : "Reading changed on iPhone. Refresh and try again.")
+                            errorMessage: sameEdit ? nil : String(localized: LocalizedStringResource("locReadingChangedOnIPhoneRefreshAndTryAgain", defaultValue: "Reading changed on iPhone. Refresh and try again.", comment: "Message in SessionStore: Reading changed on iPhone. Refresh and try again.")))
                     }
                 }
             }
@@ -737,13 +737,13 @@ final class SessionStore {
                 accepted = saved == nil || saved?.deletedAt != nil
             }
             if !accepted {
-                return WatchDiaryResponse(snapshot: after, errorMessage: errorMessage ?? "Could not save on iPhone")
+                return WatchDiaryResponse(snapshot: after, errorMessage: errorMessage ?? String(localized: LocalizedStringResource("locCouldNotSaveOnIPhone", defaultValue: "Could not save on iPhone", comment: "Message in SessionStore: Could not save on iPhone")))
             }
             return WatchDiaryResponse(snapshot: after,
-                notice: errorMessage == nil ? nil : "Saved on iPhone. Sync will retry when online.")
+                notice: errorMessage == nil ? nil : String(localized: LocalizedStringResource("locSavedOnIPhoneSyncWillRetryWhenOnline", defaultValue: "Saved on iPhone. Sync will retry when online.", comment: "Message in SessionStore: Saved on iPhone. Sync will retry when online.")))
         } catch {
             return WatchDiaryResponse(snapshot: (try? await watchDiarySnapshot()) ?? WatchDiarySnapshot(),
-                errorMessage: error.localizedDescription)
+                errorMessage: String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated")))
         }
     }
 
@@ -756,13 +756,13 @@ final class SessionStore {
         let familyID = UserDefaults.standard.string(forKey: Key.pendingInitialFamilyID)
             .flatMap(Family.ID.init(uuidString:)) ?? Family.ID(rawValue: uuid())
         UserDefaults.standard.set(familyID.uuidString, forKey: Key.pendingInitialFamilyID)
-        let family = Family(id: familyID, name: "Our family", role: "owner", updatedAt: now)
+        let family = Family(id: familyID, name: String(localized: LocalizedStringResource("locOurFamily", defaultValue: "Our family", comment: "Message in SessionStore: Our family")), role: "owner", updatedAt: now)
         try await database.write { database in
             try Family.upsert { family }.execute(database)
         }
         // Persist the client-generated identity before the network request. If the
         // response is lost, onboarding retries the same idempotent server operation.
-        try await apiClient.createFamily(familyID, "Our family", accessToken)
+        try await apiClient.createFamily(familyID, String(localized: LocalizedStringResource("locOurFamily", defaultValue: "Our family", comment: "Message in SessionStore: Our family")), accessToken)
         _ = try await coordinator.createChild(
             familyID: familyID,
             nickname: childName,
@@ -956,7 +956,7 @@ final class SessionStore {
         do {
             try await operation()
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated"))
         }
         await watchBridge.publishSnapshot()
     }
@@ -974,11 +974,11 @@ enum SessionError: Error {
 extension SessionError: LocalizedError {
     var errorDescription: String? {
         switch self {
-        case .unsyncedChanges: "Sync or resolve this family’s pending changes before leaving or deleting it."
-        case .activeSleep: "End this baby’s active sleep before deleting their records."
-        case .notAuthenticated: "Sign in to manage this family."
-        case .invalidAppleCredential: "Your Apple sign in has expired."
-        case .missingAppleNonce, .couldNotCreateNonce: "Could not start Apple sign in. Try again."
+        case .unsyncedChanges: String(localized: LocalizedStringResource("locSyncOrResolveThisFamilySPendingChangesBeforeLeavingOrDeletingIt", defaultValue: "Sync or resolve this family’s pending changes before leaving or deleting it.", comment: "Message in SessionStore: Sync or resolve this family’s pending changes before leaving or deleting it."))
+        case .activeSleep: String(localized: LocalizedStringResource("locEndThisBabySActiveSleepBeforeDeletingTheirRecords", defaultValue: "End this baby’s active sleep before deleting their records.", comment: "Message in SessionStore: End this baby’s active sleep before deleting their records."))
+        case .notAuthenticated: String(localized: LocalizedStringResource("locSignInToManageThisFamily", defaultValue: "Sign in to manage this family.", comment: "Message in SessionStore: Sign in to manage this family."))
+        case .invalidAppleCredential: String(localized: LocalizedStringResource("locYourAppleSignInHasExpired", defaultValue: "Your Apple sign in has expired.", comment: "Message in SessionStore: Your Apple sign in has expired."))
+        case .missingAppleNonce, .couldNotCreateNonce: String(localized: LocalizedStringResource("locCouldNotStartAppleSignInTryAgain", defaultValue: "Could not start Apple sign in. Try again.", comment: "Message in SessionStore: Could not start Apple sign in. Try again."))
         }
     }
 }

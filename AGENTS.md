@@ -74,6 +74,8 @@ After changing the `.proto` contract or SQL queries, run `mise run generate` and
 
 ## Local workflow
 
+When changing Apple client copy, follow `docs/localization.md`: update English and Finnish catalogs, pass translator context with localization API `comment:` arguments, and run `python3 clients/ios/scripts/check_localizations.py`.
+
 - `mise install` — install all pinned development tools.
 - `mise run dev` — run the backend at `127.0.0.1:8080` with local development sign-in.
 - `mise run test` — run backend, load-test client, and shared Swift tests.

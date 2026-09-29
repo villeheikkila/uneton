@@ -3,6 +3,15 @@ import UnetonCore
 import SwiftUI
 
 extension FamilySync.Tab {
+    var title: LocalizedStringResource {
+        switch self {
+        case .timeline: LocalizedStringResource("locSleep", defaultValue: "Sleep", comment: "Main tab titles for sleep, insights, growth, and temperature")
+        case .trends: LocalizedStringResource("locInsights", defaultValue: "Insights", comment: "Main navigation tab for charts and sleep summaries")
+        case .growth: LocalizedStringResource("locGrowth", defaultValue: "Growth", comment: "Text in Timeline: Growth")
+        case .temperature: LocalizedStringResource("locTemperature", defaultValue: "Temperature", comment: "Temperature tracking tab or Watch screen title; this is body temperature")
+        }
+    }
+
     var systemImage: String {
         switch self {
         case .timeline: "moon.stars.fill"
@@ -46,9 +55,9 @@ struct TimelineScreen: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
-                        Menu("Family", systemImage: "person.2.fill") {
+                        Menu(LocalizedStringResource("locFamily", defaultValue: "Family", comment: "Text in Timeline: Family"), systemImage: "person.2.fill") {
                             if families.count > 1 {
-                                Section("Families") {
+                                Section(LocalizedStringResource("locFamilies", defaultValue: "Families", comment: "Text in Timeline: Families")) {
                                     ForEach(families) { item in
                                         Button(item.name, systemImage: item.id == family.id ? "checkmark" : "house") {
                                             selectFamily(item.id)
@@ -57,7 +66,7 @@ struct TimelineScreen: View {
                                 }
                             }
                             if children.count > 1 {
-                                Section("Babies") {
+                                Section(LocalizedStringResource("locBabies", defaultValue: "Babies", comment: "Text in Timeline: Babies")) {
                                     ForEach(children) { item in
                                         Button(item.nickname, systemImage: item.id == child.id ? "checkmark" : "figure.child") {
                                             selectChild(item.id)
@@ -65,7 +74,7 @@ struct TimelineScreen: View {
                                     }
                                 }
                             }
-                            Button("Manage family", systemImage: "person.2") {
+                            Button(LocalizedStringResource("locManageFamily", defaultValue: "Manage family", comment: "Button title in Timeline: Manage family"), systemImage: "person.2") {
                                 syncStore.send(.familyButtonTapped)
                             }
                         }
@@ -73,7 +82,7 @@ struct TimelineScreen: View {
 
                     if !syncStore.conflicts.isEmpty {
                         ToolbarItem(placement: .topBarTrailing) {
-                            Button("Sync conflicts", systemImage: "exclamationmark.triangle.fill") {
+                            Button(LocalizedStringResource("locSyncConflicts", defaultValue: "Sync conflicts", comment: "Button title in Timeline: Sync conflicts"), systemImage: "exclamationmark.triangle.fill") {
                                 syncStore.send(.conflictListButtonTapped)
                             }
                             .tint(.orange)

@@ -28,7 +28,7 @@ struct TimelineContent: View {
             }
             .tag(Mode.timeline)
             .tabItem {
-                Label(Mode.timeline.rawValue, systemImage: Mode.timeline.systemImage)
+                Label(Mode.timeline.title, systemImage: Mode.timeline.systemImage)
             }
 
             ZStack {
@@ -51,7 +51,7 @@ struct TimelineContent: View {
             }
             .tag(Mode.growth)
             .tabItem {
-                Label(Mode.growth.rawValue, systemImage: Mode.growth.systemImage)
+                Label(Mode.growth.title, systemImage: Mode.growth.systemImage)
             }
 
             ZStack {
@@ -64,7 +64,7 @@ struct TimelineContent: View {
                     })
             }
             .tag(Mode.temperature)
-            .tabItem { Label(Mode.temperature.rawValue, systemImage: Mode.temperature.systemImage) }
+            .tabItem { Label(Mode.temperature.title, systemImage: Mode.temperature.systemImage) }
 
             ZStack {
                 SleepBackground()
@@ -72,7 +72,7 @@ struct TimelineContent: View {
             }
             .tag(Mode.trends)
             .tabItem {
-                Label(Mode.trends.rawValue, systemImage: Mode.trends.systemImage)
+                Label(Mode.trends.title, systemImage: Mode.trends.systemImage)
             }
         }
         .tabViewBottomAccessory(isEnabled: syncStore.selectedTab == .timeline) {
@@ -92,7 +92,7 @@ struct TimelineContent: View {
             Button {
                 syncStore.send(.endSleepButtonTapped(activeSession.id))
             } label: {
-                Label("Wake \(child.nickname)", systemImage: "sun.max.fill")
+                Label(.locWakeChild(child.nickname), systemImage: "sun.max.fill")
                     .font(.headline.weight(.semibold))
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
@@ -100,12 +100,12 @@ struct TimelineContent: View {
             .buttonStyle(.glassProminent)
             .tint(Color.sleepDawn)
             .disabled(syncStore.wake.isRunning)
-            .accessibilityHint("Ends the current sleep at the present time")
+            .accessibilityHint(LocalizedStringResource("locEndsTheCurrentSleepAtThePresentTime", defaultValue: "Ends the current sleep at the present time", comment: "Text in Timeline: Ends the current sleep at the present time"))
         } else {
             Button {
                 syncStore.send(.newSleepButtonTapped(child.id, child.nickname))
             } label: {
-                Label("Start sleep", systemImage: "moon.fill")
+                Label(LocalizedStringResource("locStartSleep", defaultValue: "Start sleep", comment: "Label in Timeline: Start sleep"), systemImage: "moon.fill")
                     .font(.headline.weight(.semibold))
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)

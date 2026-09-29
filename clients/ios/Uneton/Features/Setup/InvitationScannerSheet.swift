@@ -7,7 +7,7 @@ struct InvitationScannerSheet: View {
     var body: some View {
         QRCodeScanner(onCode: onCode)
             .overlay(alignment: .bottom) {
-                Text("Point the camera at your family invitation code")
+                Text("locPointTheCameraAtYourFamilyInvitationCode", comment: "Text in Setup: Point the camera at your family invitation code")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)

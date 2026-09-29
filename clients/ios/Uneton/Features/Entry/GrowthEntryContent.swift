@@ -6,19 +6,19 @@ struct GrowthEntryContent: View {
 
     var body: some View {
         Form {
-            Section("Measurement") {
-                DatePicker("Date", selection: $store.measuredAt, displayedComponents: .date)
-                TextField("Weight (kg)", text: $store.weight)
+            Section(LocalizedStringResource("locMeasurement", defaultValue: "Measurement", comment: "Text in Entry: Measurement")) {
+                DatePicker(LocalizedStringResource("locDate", defaultValue: "Date", comment: "Picker title in Entry: Date"), selection: $store.measuredAt, displayedComponents: .date)
+                TextField(LocalizedStringResource("locWeightKg", defaultValue: "Weight (kg)", comment: "Text field placeholder in Entry: Weight (kg)"), text: $store.weight)
                     .keyboardType(.decimalPad)
-                TextField("Height (cm)", text: $store.height)
+                TextField(LocalizedStringResource("locHeightCm", defaultValue: "Height (cm)", comment: "Text field placeholder in Entry: Height (cm)"), text: $store.height)
                     .keyboardType(.decimalPad)
             }
-            Section("Note") {
-                TextField("Optional note", text: $store.note, axis: .vertical)
+            Section(LocalizedStringResource("locNote", defaultValue: "Note", comment: "Text in Entry: Note")) {
+                TextField(LocalizedStringResource("locOptionalNote", defaultValue: "Optional note", comment: "Text field placeholder in Entry: Optional note"), text: $store.note, axis: .vertical)
                     .lineLimit(2...4)
             }
             Section {
-                Text("Values are saved in a shared family record. They are not a medical assessment; contact your neuvola or healthcare professional with concerns.")
+                Text("locValuesAreSavedInASharedFamilyRecordTheyAreNotAMedicalAssessmentContactYourNeuvolaOrHealthcareProfessionalWithConcerns", comment: "Text in Entry: Values are saved in a shared family record. They are not a medical assessment; contact your neuvola or healthcare professional with concerns.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -27,7 +27,7 @@ struct GrowthEntryContent: View {
             }
             if store.measurementID != nil {
                 Section {
-                    Button("Delete measurement", role: .destructive) {
+                    Button(LocalizedStringResource("locDeleteMeasurement", defaultValue: "Delete measurement", comment: "Button title in Entry: Delete measurement"), role: .destructive) {
                         store.send(.deleteButtonTapped)
                     }
                     .disabled(store.request.isRunning)

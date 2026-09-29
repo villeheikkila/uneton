@@ -1,0 +1,24 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "locWake": {
+      "comment": "Short Dynamic Island action that ends the active sleep session.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wake"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lopeta uni"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

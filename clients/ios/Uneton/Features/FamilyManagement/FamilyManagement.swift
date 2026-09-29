@@ -88,30 +88,30 @@ struct FamilyManagement {
                             $0.errorMessage = nil
                         }
                     } catch {
-                        try store.modify { $0.errorMessage = error.localizedDescription }
+                        try store.modify { $0.errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated")) }
                     }
                 }
             case .saveProfile:
                 let name = state.profileName.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !name.isEmpty else { state.errorMessage = "Enter your name."; return }
+                guard !name.isEmpty else { state.errorMessage = String(localized: LocalizedStringResource("locEnterYourName", defaultValue: "Enter your name.", comment: "Message in FamilyManagement: Enter your name.")); return }
                 let familyID = state.familyID
                 store.addTask(id: state.request) {
                     do {
                         try await management.updateProfile(name)
                         let snapshot = try await management.load(familyID)
                         try store.modify { $0.snapshot = snapshot; $0.errorMessage = nil }
-                    } catch { try store.modify { $0.errorMessage = error.localizedDescription } }
+                    } catch { try store.modify { $0.errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated")) } }
                 }
             case .saveFamilyName:
                 let name = state.familyName.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !name.isEmpty else { state.errorMessage = "Enter a family name."; return }
+                guard !name.isEmpty else { state.errorMessage = String(localized: LocalizedStringResource("locEnterAFamilyName", defaultValue: "Enter a family name.", comment: "Message in FamilyManagement: Enter a family name.")); return }
                 let familyID = state.familyID
                 store.addTask(id: state.request) {
                     do {
                         try await management.renameFamily(familyID, name)
                         let snapshot = try await management.load(familyID)
                         try store.modify { $0.snapshot = snapshot; $0.errorMessage = nil }
-                    } catch { try store.modify { $0.errorMessage = error.localizedDescription } }
+                    } catch { try store.modify { $0.errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated")) } }
                 }
             case .invite:
                 let familyID = state.familyID
@@ -121,7 +121,7 @@ struct FamilyManagement {
                         let snapshot = try await management.load(familyID)
                         try store.modify { $0.inviteURL = url; $0.snapshot = snapshot; $0.errorMessage = nil }
                     } catch {
-                        try store.modify { $0.errorMessage = error.localizedDescription }
+                        try store.modify { $0.errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated")) }
                     }
                 }
             case let .confirmationAccepted(confirmation):
@@ -143,7 +143,7 @@ struct FamilyManagement {
                             try store.modify { $0.snapshot = snapshot; $0.errorMessage = nil }
                         }
                     } catch {
-                        try store.modify { $0.errorMessage = error.localizedDescription }
+                        try store.modify { $0.errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated")) }
                     }
                 }
             case let .prompt(confirmation):
@@ -160,7 +160,7 @@ struct FamilyManagement {
                 state.isAddingChild = true
             case .saveNewChild:
                 let name = state.newChildName.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !name.isEmpty else { state.errorMessage = "Enter your baby’s name."; return }
+                guard !name.isEmpty else { state.errorMessage = String(localized: LocalizedStringResource("locEnterYourBabySName", defaultValue: "Enter your baby’s name.", comment: "Message in FamilyManagement: Enter your baby’s name.")); return }
                 let familyID = state.familyID
                 let birthDate = state.newChildBirthDate
                 let reference = state.newChildReference
@@ -173,7 +173,7 @@ struct FamilyManagement {
                             $0.errorMessage = nil
                         }
                     } catch {
-                        try store.modify { $0.errorMessage = error.localizedDescription }
+                        try store.modify { $0.errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated")) }
                     }
                 }
             case .scanInvitation:
@@ -182,7 +182,7 @@ struct FamilyManagement {
                 state.isScanning = false
                 guard let url = URL(string: code), url.scheme == "uneton", url.host == "invite",
                       url.pathComponents.dropFirst().first != nil else {
-                    state.errorMessage = "Invalid family invitation."
+                    state.errorMessage = String(localized: LocalizedStringResource("locInvalidFamilyInvitationPeriod", defaultValue: "Invalid family invitation.", comment: "Message in FamilyManagement: Invalid family invitation."))
                     return
                 }
                 store.addTask(id: state.request) {
@@ -195,7 +195,7 @@ struct FamilyManagement {
             case .saveNewFamily:
                 let name = state.newFamilyName.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !name.isEmpty, let id = state.newFamilyID else {
-                    state.errorMessage = "Enter a family name."
+                    state.errorMessage = String(localized: LocalizedStringResource("locEnterAFamilyName", defaultValue: "Enter a family name.", comment: "Message in FamilyManagement: Enter a family name."))
                     return
                 }
                 store.addTask(id: state.request) {
@@ -207,7 +207,7 @@ struct FamilyManagement {
                             $0.newFamilyID = nil
                             $0.errorMessage = nil
                         }
-                    } catch { try store.modify { $0.errorMessage = error.localizedDescription } }
+                    } catch { try store.modify { $0.errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated")) } }
                 }
             case let .showDeviceSettings(notifications, activities, leadMinutes):
                 state.sharing = FamilySharing.State(notificationsEnabled: notifications, liveActivitiesEnabled: activities,
@@ -233,13 +233,13 @@ struct ChildEditor {
 
         var validationMessage: String? {
             if child.nickname.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                return "Enter your baby’s name."
+                return String(localized: LocalizedStringResource("locEnterYourBabySName", defaultValue: "Enter your baby’s name.", comment: "Message in FamilyManagement: Enter your baby’s name."))
             }
             if child.predictionMode == "manual" && (child.manualIntervalMinutes ?? 0) <= 0 {
-                return "Choose a manual interval."
+                return String(localized: LocalizedStringResource("locChooseAManualInterval", defaultValue: "Choose a manual interval.", comment: "Message in FamilyManagement: Choose a manual interval."))
             }
             if TimeZone(identifier: child.timeZone) == nil {
-                return "Enter a valid time zone, such as Europe/Helsinki."
+                return String(localized: LocalizedStringResource("locEnterAValidTimeZoneSuchAsEuropeHelsinki", defaultValue: "Enter a valid time zone, such as Europe/Helsinki.", comment: "Message in FamilyManagement: Enter a valid time zone, such as Europe/Helsinki."))
             }
             return nil
         }
@@ -261,7 +261,7 @@ struct ChildEditor {
                     do {
                         try await management.updateChild(child)
                         try store.modify { $0.isFinished = true; $0.errorMessage = nil }
-                    } catch { try store.modify { $0.errorMessage = error.localizedDescription } }
+                    } catch { try store.modify { $0.errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated")) } }
                 }
             case .delete:
                 let child = state.child
@@ -269,7 +269,7 @@ struct ChildEditor {
                     do {
                         try await management.deleteChild(child)
                         try store.modify { $0.isFinished = true; $0.errorMessage = nil }
-                    } catch { try store.modify { $0.errorMessage = error.localizedDescription } }
+                    } catch { try store.modify { $0.errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated")) } }
                 }
             case .promptDelete:
                 state.isConfirmingDeletion = true

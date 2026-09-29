@@ -10,37 +10,37 @@ struct FamilySharingContent: View {
                 Image(systemName: "gearshape")
                     .font(.system(size: 48))
                     .foregroundStyle(.indigo)
-                Text("Device and account")
+                Text("locDeviceAndAccount", comment: "Text in Settings: Device and account")
                     .font(.title2.bold())
 
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("This device").font(.headline)
-                    Toggle("Push notifications", isOn: $store.notificationsEnabled)
-                    Toggle("Live Activities", isOn: $store.liveActivitiesEnabled)
-                    Picker("Sleep reminder", selection: $store.reminderLeadMinutes) {
-                        Text("At predicted time").tag(0)
-                        Text("15 minutes before").tag(15)
-                        Text("30 minutes before").tag(30)
-                        Text("1 hour before").tag(60)
+                    Text("locThisDevice", comment: "Text in Settings: This device").font(.headline)
+                    Toggle(LocalizedStringResource("locPushNotifications", defaultValue: "Push notifications", comment: "Text in Settings: Push notifications"), isOn: $store.notificationsEnabled)
+                    Toggle(LocalizedStringResource("locLiveActivities", defaultValue: "Live Activities", comment: "Text in Settings: Live Activities"), isOn: $store.liveActivitiesEnabled)
+                    Picker(LocalizedStringResource("locSleepReminder", defaultValue: "Sleep reminder", comment: "Picker title in Settings: Sleep reminder"), selection: $store.reminderLeadMinutes) {
+                        Text("locAtPredictedTime", comment: "Text in Settings: At predicted time").tag(0)
+                        Text(.loc15MinutesBefore).tag(15)
+                        Text(.loc30MinutesBefore).tag(30)
+                        Text(.loc1HourBefore).tag(60)
                     }
                 }
 
                 Divider()
 
-                Button("Sign out", systemImage: "rectangle.portrait.and.arrow.right") {
+                Button(LocalizedStringResource("locSignOut", defaultValue: "Sign out", comment: "Button title in Settings: Sign out"), systemImage: "rectangle.portrait.and.arrow.right") {
                     store.send(.signOutButtonTapped)
                 }
                 .buttonStyle(.bordered)
                 .disabled(store.accountRequest.isRunning)
 
-                Button("Delete account", systemImage: "person.crop.circle.badge.minus", role: .destructive) {
+                Button(LocalizedStringResource("locDeleteAccount", defaultValue: "Delete account", comment: "Button title in Settings: Delete account"), systemImage: "person.crop.circle.badge.minus", role: .destructive) {
                     store.send(.deleteAccountPromptButtonTapped)
                 }
                 .disabled(store.accountRequest.isRunning)
 
                 HStack(spacing: 20) {
-                    Link("Privacy Policy", destination: LegalLinks.privacy)
-                    Link("Terms of Service", destination: LegalLinks.terms)
+                    Link(LocalizedStringResource("locPrivacyPolicy", defaultValue: "Privacy Policy", comment: "Link title in Settings: Privacy Policy"), destination: LegalLinks.privacy)
+                    Link(LocalizedStringResource("locTermsOfService", defaultValue: "Terms of Service", comment: "Link title in Settings: Terms of Service"), destination: LegalLinks.terms)
                 }
                 .font(.footnote)
 

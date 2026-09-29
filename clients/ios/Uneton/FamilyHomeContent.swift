@@ -26,7 +26,7 @@ struct FamilyHomeContent: View {
                     ProgressView()
                 }
             } else if homeStore.isLoadingChildren {
-                ProgressView("Loading babies…")
+                ProgressView(LocalizedStringResource("locLoadingBabies", defaultValue: "Loading babies…", comment: "Text in FamilyHome: Loading babies…"))
             } else {
                 emptyFamily
             }
@@ -41,21 +41,21 @@ struct FamilyHomeContent: View {
 
     private var emptyFamily: some View {
         NavigationStack {
-            ContentUnavailableView("No babies yet", systemImage: "figure.child",
-                description: Text("Add a baby to start tracking sleep, growth and temperature."))
+            ContentUnavailableView(LocalizedStringResource("locNoBabiesYet", defaultValue: "No babies yet", comment: "Text in FamilyHome: No babies yet"), systemImage: "figure.child",
+                description: Text("locAddABabyToStartTrackingSleepGrowthAndTemperature", comment: "Text in FamilyHome: Add a baby to start tracking sleep, growth and temperature."))
                 .navigationTitle(family.name)
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
-                        Menu("Family", systemImage: "person.2.fill") {
+                        Menu(LocalizedStringResource("locFamily", defaultValue: "Family", comment: "Text in FamilyHome: Family"), systemImage: "person.2.fill") {
                             ForEach(families) { item in
                                 Button(item.name) { store.send(.selectFamily(item.id)) }
                             }
-                            Button("Manage family") { store.send(.showFamilyManagement(family.id)) }
+                            Button(LocalizedStringResource("locManageFamily", defaultValue: "Manage family", comment: "Button title in FamilyHome: Manage family")) { store.send(.showFamilyManagement(family.id)) }
                         }
                     }
                 }
                 .safeAreaBar(edge: .bottom) {
-                    Button("Add baby", systemImage: "plus") { store.send(.showFamilyManagement(family.id)) }
+                    Button(LocalizedStringResource("locAddBaby", defaultValue: "Add baby", comment: "Button title in FamilyHome: Add baby"), systemImage: "plus") { store.send(.showFamilyManagement(family.id)) }
                         .buttonStyle(.glassProminent)
                 }
                 .sheet(item: $store.scope(\.management)) { management in

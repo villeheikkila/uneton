@@ -5,7 +5,7 @@ import Foundation
 @Feature
 struct Onboarding {
     struct State {
-        var caregiverName = "Caregiver"
+        var caregiverName = String(localized: LocalizedStringResource("locCaregiver", defaultValue: "Caregiver", comment: "Message in Setup: Caregiver"))
         var errorMessage: String?
         @StoreTaskID var signIn
     }

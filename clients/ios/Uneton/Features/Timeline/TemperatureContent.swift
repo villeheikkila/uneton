@@ -20,9 +20,9 @@ private struct TemperatureCard: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Label("Temperature", systemImage: "thermometer.medium")
+                    Label(LocalizedStringResource("locTemperature", defaultValue: "Temperature", comment: "Label in Timeline: Temperature"), systemImage: "thermometer.medium")
                         .font(.title2.weight(.bold))
-                    Text("Log readings and notes for your baby. Your family can see updates too.")
+                    Text("locLogReadingsAndNotesForYourBabyYourFamilyCanSeeUpdatesToo", comment: "Text in Timeline: Log readings and notes for your baby. Your family can see updates too.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -30,7 +30,7 @@ private struct TemperatureCard: View {
                 .glassEffect(.regular.tint(Color.sleepMoonlight.opacity(0.12)), in: .rect(cornerRadius: 24))
 
                 Button(action: onAdd) {
-                    Label("Add temperature", systemImage: "plus.circle.fill")
+                    Label(LocalizedStringResource("locAddTemperature", defaultValue: "Add temperature", comment: "Label in Timeline: Add temperature"), systemImage: "plus.circle.fill")
                         .font(.headline.weight(.semibold))
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)
@@ -39,8 +39,8 @@ private struct TemperatureCard: View {
                 .tint(Color.sleepIndigo)
 
                 if readings.isEmpty {
-                    ContentUnavailableView("No readings yet", systemImage: "thermometer.medium",
-                        description: Text("Add a reading with its time and an optional note."))
+                    ContentUnavailableView(LocalizedStringResource("locNoReadingsYet", defaultValue: "No readings yet", comment: "Text in Timeline: No readings yet"), systemImage: "thermometer.medium",
+                        description: Text("locAddAReadingWithItsTimeAndAnOptionalNote", comment: "Text in Timeline: Add a reading with its time and an optional note."))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 36)
                 } else {
@@ -53,7 +53,7 @@ private struct TemperatureCard: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(reading.measuredAt, format: .dateTime.year().month().day().hour().minute())
                                         .font(.headline)
-                                    Text(String(format: "%.2f °C", Double(reading.centiCelsius) / 100))
+                                    Text(String(format: "%.2f °C", locale: .current, Double(reading.centiCelsius) / 100))
                                         .font(.subheadline.monospacedDigit())
                                     if !reading.note.isEmpty {
                                         Text(reading.note).font(.caption).foregroundStyle(.secondary).lineLimit(1)

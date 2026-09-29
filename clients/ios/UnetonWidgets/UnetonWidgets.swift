@@ -30,8 +30,10 @@ struct SleepLiveActivity: Widget {
                         elapsed: Text(timerInterval: context.attributes.startedAt...Date.distantFuture, countsDown: false))
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Link("Wake", destination: endURL(context.attributes))
-                        .font(.caption.weight(.bold))
+                    Link(destination: endURL(context.attributes)) {
+                        Text("locWake", comment: "Short Dynamic Island action that ends the active sleep session")
+                            .font(.caption.weight(.bold))
+                    }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     SleepActivityExpandedBottomView(childName: context.attributes.childName)

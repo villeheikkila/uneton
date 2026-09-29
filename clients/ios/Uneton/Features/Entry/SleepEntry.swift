@@ -35,8 +35,8 @@ struct SleepEntry {
         }
 
         func validationError(at now: Date) -> String? {
-            if hasEnd && endedAt <= effectiveStart(at: now) { return "End time must be after start time." }
-            if effectiveStart(at: now) > now { return "Start time can’t be in the future." }
+            if hasEnd && endedAt <= effectiveStart(at: now) { return String(localized: LocalizedStringResource("locEndTimeMustBeAfterStartTime", defaultValue: "End time must be after start time.", comment: "Message in Entry: End time must be after start time.")) }
+            if effectiveStart(at: now) > now { return String(localized: LocalizedStringResource("locStartTimeCanTBeInTheFuture", defaultValue: "Start time can’t be in the future.", comment: "Message in Entry: Start time can’t be in the future.")) }
             return nil
         }
 

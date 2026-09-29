@@ -1,0 +1,4200 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "locUneton": {
+      "comment": "User-facing baby tracking text: “Uneton”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uneton"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uneton"
+          }
+        }
+      }
+    },
+    "locTrackYourBabySSleepGrowthAndTemperatureTogether": {
+      "comment": "User-facing baby tracking text: “Track your baby’s sleep, growth and temperature together.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Track your baby’s sleep, growth and temperature together."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seuraa vauvasi unta, kasvua ja lämpöä yhdessä paikassa."
+          }
+        }
+      }
+    },
+    "locKeepSleepGrowthAndTemperatureInOneSharedPlaceHaveAnInvitationScanItBelow": {
+      "comment": "User-facing baby tracking text: “Keep sleep, growth and temperature in one shared place. Have an invitation? Scan it below.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep sleep, growth and temperature in one shared place. Have an invitation? Scan it below."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pidä uni-, kasvu- ja lämpömerkinnät perheen yhteisessä paikassa. Saitko kutsun? Skannaa se alta."
+          }
+        }
+      }
+    },
+    "locExploreDemo": {
+      "comment": "User-facing baby tracking text: “Explore demo”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explore demo"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kokeile demoa"
+          }
+        }
+      }
+    },
+    "locUseLocalServer": {
+      "comment": "User-facing baby tracking text: “Use local server”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use local server"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Käytä paikallista palvelinta"
+          }
+        }
+      }
+    },
+    "locLocalCaregiver": {
+      "comment": "User-facing baby tracking text: “Local caregiver”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local caregiver"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paikallinen hoitaja"
+          }
+        }
+      }
+    },
+    "locPrivacyPolicy": {
+      "comment": "User-facing baby tracking text: “Privacy Policy”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy Policy"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tietosuojakäytäntö"
+          }
+        }
+      }
+    },
+    "locTermsOfService": {
+      "comment": "User-facing baby tracking text: “Terms of Service”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terms of Service"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Käyttöehdot"
+          }
+        }
+      }
+    },
+    "locAddYourBaby": {
+      "comment": "User-facing baby tracking text: “Add your baby”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add your baby"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisää vauva"
+          }
+        }
+      }
+    },
+    "locBabySName": {
+      "comment": "User-facing baby tracking text: “Baby’s name”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baby’s name"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vauvan nimi"
+          }
+        }
+      }
+    },
+    "locNameOrNickname": {
+      "comment": "User-facing baby tracking text: “Name or nickname”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name or nickname"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nimi tai lempinimi"
+          }
+        }
+      }
+    },
+    "locDateOfBirth": {
+      "comment": "User-facing baby tracking text: “Date of birth”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date of birth"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Syntymäaika"
+          }
+        }
+      }
+    },
+    "locGrowthReference": {
+      "comment": "User-facing baby tracking text: “Growth reference”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Growth reference"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kasvuviite"
+          }
+        }
+      }
+    },
+    "locNone": {
+      "comment": "User-facing baby tracking text: “None”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ei mitään"
+          }
+        }
+      }
+    },
+    "locGirl": {
+      "comment": "User-facing baby tracking text: “Girl”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Girl"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tyttö"
+          }
+        }
+      }
+    },
+    "locBoy": {
+      "comment": "User-facing baby tracking text: “Boy”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boy"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poika"
+          }
+        }
+      }
+    },
+    "locOptionalFinnishGrowthChartYouCanChangeThisLater": {
+      "comment": "User-facing baby tracking text: “Optional Finnish growth chart. You can change this later.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional Finnish growth chart. You can change this later."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valinnainen suomalainen kasvukäyrä. Voit vaihtaa valintaa myöhemmin."
+          }
+        }
+      }
+    },
+    "locUnsentChangesAreSavedOnThisDeviceScanANewInvitationFromThatFamilyToRestoreAccessAndSyncThem": {
+      "comment": "User-facing baby tracking text: “Unsent changes are saved on this device. Scan a new invitation from that family to restore access and sync them.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unsent changes are saved on this device. Scan a new invitation from that family to restore access and sync them."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lähettämättömät muutokset ovat tallessa tällä laitteella. Skannaa perheen uusi kutsu palauttaaksesi käyttöoikeuden ja synkronoidaksesi muutokset."
+          }
+        }
+      }
+    },
+    "locScanInvite": {
+      "comment": "User-facing baby tracking text: “Scan invite”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan invite"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skannaa kutsu"
+          }
+        }
+      }
+    },
+    "locAddBaby": {
+      "comment": "User-facing baby tracking text: “Add baby”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add baby"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisää vauva"
+          }
+        }
+      }
+    },
+    "locPointTheCameraAtYourFamilyInvitationCode": {
+      "comment": "User-facing baby tracking text: “Point the camera at your family invitation code”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point the camera at your family invitation code"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Osoita kamera perhekutsun QR-koodiin"
+          }
+        }
+      }
+    },
+    "locNoBabiesYet": {
+      "comment": "User-facing baby tracking text: “No babies yet”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No babies yet"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ei vauvoja vielä"
+          }
+        }
+      }
+    },
+    "locAddABabyToStartTrackingSleepGrowthAndTemperature": {
+      "comment": "User-facing baby tracking text: “Add a baby to start tracking sleep, growth and temperature.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a baby to start tracking sleep, growth and temperature."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisää vauva, niin voit alkaa seurata unta, kasvua ja lämpöä."
+          }
+        }
+      }
+    },
+    "locLoadingBabies": {
+      "comment": "User-facing baby tracking text: “Loading babies…”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading babies…"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ladataan vauvoja…"
+          }
+        }
+      }
+    },
+    "locFamily": {
+      "comment": "User-facing baby tracking text: “Family”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Family"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perhe"
+          }
+        }
+      }
+    },
+    "locFamilies": {
+      "comment": "User-facing baby tracking text: “Families”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Families"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perheet"
+          }
+        }
+      }
+    },
+    "locBabies": {
+      "comment": "User-facing baby tracking text: “Babies”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Babies"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vauvat"
+          }
+        }
+      }
+    },
+    "locManageFamily": {
+      "comment": "User-facing baby tracking text: “Manage family”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manage family"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hallitse perhettä"
+          }
+        }
+      }
+    },
+    "locSyncConflicts": {
+      "comment": "User-facing baby tracking text: “Sync conflicts”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync conflicts"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synkronointiristiriidat"
+          }
+        }
+      }
+    },
+    "locDone": {
+      "comment": "User-facing baby tracking text: “Done”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valmis"
+          }
+        }
+      }
+    },
+    "locAllChangesReconciled": {
+      "comment": "User-facing baby tracking text: “All changes reconciled”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All changes reconciled"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaikki muutokset on sovitettu"
+          }
+        }
+      }
+    },
+    "locThereAreNoChangesThatNeedYourDecision": {
+      "comment": "User-facing baby tracking text: “There are no changes that need your decision.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There are no changes that need your decision."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muutoksia ei odota päätöstäsi."
+          }
+        }
+      }
+    },
+    "locAnotherCaregiverChangedThisRecordBeforeYourOfflineChangeReachedTheServer": {
+      "comment": "User-facing baby tracking text: “Another caregiver changed this record before your offline change reached the server.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Another caregiver changed this record before your offline change reached the server."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toinen hoitaja muutti tätä merkintää ennen kuin yhteydettä tekemäsi muutos saapui palvelimelle."
+          }
+        }
+      }
+    },
+    "locMyChange": {
+      "comment": "User-facing baby tracking text: “My change”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My change"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oma muutos"
+          }
+        }
+      }
+    },
+    "locServerVersion": {
+      "comment": "User-facing baby tracking text: “Server version”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server version"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Palvelimen versio"
+          }
+        }
+      }
+    },
+    "locUseServerVersion": {
+      "comment": "User-facing baby tracking text: “Use server version”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use server version"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Käytä palvelimen versiota"
+          }
+        }
+      }
+    },
+    "locKeepMyChange": {
+      "comment": "User-facing baby tracking text: “Keep my change”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep my change"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pidä oma muutos"
+          }
+        }
+      }
+    },
+    "locSleepTimeChangedInTwoPlaces": {
+      "comment": "User-facing baby tracking text: “Sleep time changed in two places”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep time changed in two places"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uniaikaa muutettiin kahdessa paikassa"
+          }
+        }
+      }
+    },
+    "locSleepWasEditedAndDeleted": {
+      "comment": "User-facing baby tracking text: “Sleep was edited and deleted”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep was edited and deleted"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unimerkintää muokattiin ja se poistettiin"
+          }
+        }
+      }
+    },
+    "locChangeNeedsReview": {
+      "comment": "User-facing baby tracking text: “Change needs review”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change needs review"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muutos vaatii tarkistuksen"
+          }
+        }
+      }
+    },
+    "locSleeping": {
+      "comment": "User-facing baby tracking text: “Sleeping”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleeping"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nukkuu"
+          }
+        }
+      }
+    },
+    "locSleep": {
+      "comment": "User-facing baby tracking text: “Sleep”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uni"
+          }
+        }
+      }
+    },
+    "locInsights": {
+      "comment": "Main navigation tab for charts and sleep summaries.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Insights"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yhteenveto"
+          }
+        }
+      }
+    },
+    "locGrowth": {
+      "comment": "User-facing baby tracking text: “Growth”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Growth"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kasvu"
+          }
+        }
+      }
+    },
+    "locTemperature": {
+      "comment": "Temperature tracking tab or Watch screen title; this is body temperature.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temperature"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lämpötila"
+          }
+        }
+      }
+    },
+    "locSleepingNow": {
+      "comment": "User-facing baby tracking text: “Sleeping now”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleeping now"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nukkuu nyt"
+          }
+        }
+      }
+    },
+    "locAwakeNow": {
+      "comment": "User-facing baby tracking text: “Awake now”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Awake now"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hereillä nyt"
+          }
+        }
+      }
+    },
+    "locAwake": {
+      "comment": "User-facing baby tracking text: “Awake”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Awake"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hereillä"
+          }
+        }
+      }
+    },
+    "locExpectedWakeUp": {
+      "comment": "User-facing baby tracking text: “Expected wake-up”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expected wake-up"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arvioitu herääminen"
+          }
+        }
+      }
+    },
+    "locNextSweetSpot": {
+      "comment": "User-facing baby tracking text: “Next sweet spot”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next sweet spot"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seuraava otollinen uniaika"
+          }
+        }
+      }
+    },
+    "locToday": {
+      "comment": "User-facing baby tracking text: “Today”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tänään"
+          }
+        }
+      }
+    },
+    "locSleeps": {
+      "comment": "User-facing baby tracking text: “Sleeps”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleeps"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unijaksot"
+          }
+        }
+      }
+    },
+    "locLongest": {
+      "comment": "User-facing baby tracking text: “Longest”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Longest"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pisin"
+          }
+        }
+      }
+    },
+    "locNoSleepLoggedYet": {
+      "comment": "User-facing baby tracking text: “No sleep logged yet”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No sleep logged yet"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ei unimerkintöjä vielä"
+          }
+        }
+      }
+    },
+    "locHourlyRhythm": {
+      "comment": "User-facing baby tracking text: “Hourly rhythm”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hourly rhythm"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuntirytmi"
+          }
+        }
+      }
+    },
+    "locNOW": {
+      "comment": "User-facing baby tracking text: “NOW”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NOW"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NYT"
+          }
+        }
+      }
+    },
+    "locStartSleep": {
+      "comment": "User-facing baby tracking text: “Start sleep”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start sleep"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aloita uni"
+          }
+        }
+      }
+    },
+    "locEndsTheCurrentSleepAtThePresentTime": {
+      "comment": "User-facing baby tracking text: “Ends the current sleep at the present time”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ends the current sleep at the present time"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Päättää nykyisen unijakson tähän hetkeen"
+          }
+        }
+      }
+    },
+    "locOpensThisSleepForEditing": {
+      "comment": "User-facing baby tracking text: “Opens this sleep for editing”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens this sleep for editing"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avaa unimerkinnän muokattavaksi"
+          }
+        }
+      }
+    },
+    "loc1Day": {
+      "comment": "User-facing baby tracking text: “1 day”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 day"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 päivä"
+          }
+        }
+      }
+    },
+    "locNowLowercase": {
+      "comment": "User-facing baby tracking text: “now”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "now"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "nyt"
+          }
+        }
+      }
+    },
+    "locGrowthCurves": {
+      "comment": "User-facing baby tracking text: “Growth curves”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Growth curves"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kasvukäyrät"
+          }
+        }
+      }
+    },
+    "loc02Years": {
+      "comment": "User-facing baby tracking text: “0–2 years”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "0–2 years"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "0–2 vuotta"
+          }
+        }
+      }
+    },
+    "locKeepHeightAndWeightInOnePlaceAndSeeHowTheyChangeOverTime": {
+      "comment": "User-facing baby tracking text: “Keep height and weight in one place and see how they change over time.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep height and weight in one place and see how they change over time."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pidä pituus- ja painomerkinnät yhdessä paikassa ja seuraa niiden kehitystä."
+          }
+        }
+      }
+    },
+    "locReferenceCurves": {
+      "comment": "User-facing baby tracking text: “Reference curves”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reference curves"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Viitekäyrät"
+          }
+        }
+      }
+    },
+    "locOff": {
+      "comment": "User-facing baby tracking text: “Off”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pois"
+          }
+        }
+      }
+    },
+    "locTheSelectedFinnishReferenceIsAVisualGuideOnlyNotAMedicalAssessment": {
+      "comment": "User-facing baby tracking text: “The selected Finnish reference is a visual guide only, not a medical assessment.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The selected Finnish reference is a visual guide only, not a medical assessment."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valittu suomalainen viitekäyrä on vain visuaalinen apu, ei lääketieteellinen arvio."
+          }
+        }
+      }
+    },
+    "locAddMeasurement": {
+      "comment": "User-facing baby tracking text: “Add measurement”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add measurement"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisää mittaus"
+          }
+        }
+      }
+    },
+    "locNoMeasurementsYet": {
+      "comment": "User-facing baby tracking text: “No measurements yet”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No measurements yet"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ei mittauksia vielä"
+          }
+        }
+      }
+    },
+    "locAddTheMeasurementsFromANeuvolaVisitOrHomeScale": {
+      "comment": "User-facing baby tracking text: “Add the measurements from a neuvola visit or home scale.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add the measurements from a neuvola visit or home scale."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisää neuvolassa tai kotona tehdyt mittaukset."
+          }
+        }
+      }
+    },
+    "locFinnishReferenceCurvesWithYourRecordedMeasurements": {
+      "comment": "User-facing baby tracking text: “Finnish reference curves with your recorded measurements.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finnish reference curves with your recorded measurements."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suomalaiset viitekäyrät ja tallentamasi mittaukset."
+          }
+        }
+      }
+    },
+    "locHeightForAge": {
+      "comment": "User-facing baby tracking text: “Height for age”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Height for age"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pituus iän mukaan"
+          }
+        }
+      }
+    },
+    "locWeightForAge": {
+      "comment": "User-facing baby tracking text: “Weight for age”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weight for age"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paino iän mukaan"
+          }
+        }
+      }
+    },
+    "locReferenceIsLoading": {
+      "comment": "User-facing baby tracking text: “Reference is loading”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reference is loading"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Viitekäyrää ladataan"
+          }
+        }
+      }
+    },
+    "locAge": {
+      "comment": "User-facing baby tracking text: “Age”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Age"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ikä"
+          }
+        }
+      }
+    },
+    "locSeries": {
+      "comment": "User-facing baby tracking text: “Series”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Series"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sarja"
+          }
+        }
+      }
+    },
+    "locMeasurement": {
+      "comment": "User-facing baby tracking text: “Measurement”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Measurement"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mittaus"
+          }
+        }
+      }
+    },
+    "locAgeMonths": {
+      "comment": "User-facing baby tracking text: “Age (months)”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Age (months)"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ikä (kuukautta)"
+          }
+        }
+      }
+    },
+    "locHeightCm": {
+      "comment": "User-facing baby tracking text: “Height (cm)”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Height (cm)"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pituus (cm)"
+          }
+        }
+      }
+    },
+    "locWeightKg": {
+      "comment": "User-facing baby tracking text: “Weight (kg)”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weight (kg)"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paino (kg)"
+          }
+        }
+      }
+    },
+    "locBirth": {
+      "comment": "User-facing baby tracking text: “Birth”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Birth"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Syntymä"
+          }
+        }
+      }
+    },
+    "locTemperatureC": {
+      "comment": "Body temperature entry field with Celsius units.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temperature (°C)"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lämpötila (°C)"
+          }
+        }
+      }
+    },
+    "locLogReadingsAndNotesForYourBabyYourFamilyCanSeeUpdatesToo": {
+      "comment": "User-facing baby tracking text: “Log readings and notes for your baby. Your family can see updates too.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log readings and notes for your baby. Your family can see updates too."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kirjaa vauvasi lämpömittaukset ja muistiinpanot. Perheesi näkee päivitykset myös."
+          }
+        }
+      }
+    },
+    "locAddTemperature": {
+      "comment": "User-facing baby tracking text: “Add temperature”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add temperature"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisää lämpömittaus"
+          }
+        }
+      }
+    },
+    "locNoReadingsYet": {
+      "comment": "User-facing baby tracking text: “No readings yet”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No readings yet"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ei mittauksia vielä"
+          }
+        }
+      }
+    },
+    "locAddAReadingWithItsTimeAndAnOptionalNote": {
+      "comment": "User-facing baby tracking text: “Add a reading with its time and an optional note.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a reading with its time and an optional note."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisää mittausajankohta ja halutessasi muistiinpano."
+          }
+        }
+      }
+    },
+    "locEditTemperature": {
+      "comment": "User-facing baby tracking text: “Edit temperature”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit temperature"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muokkaa lämpömittausta"
+          }
+        }
+      }
+    },
+    "locEditMeasurement": {
+      "comment": "User-facing baby tracking text: “Edit measurement”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit measurement"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muokkaa mittausta"
+          }
+        }
+      }
+    },
+    "locDate": {
+      "comment": "User-facing baby tracking text: “Date”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Päivämäärä"
+          }
+        }
+      }
+    },
+    "locMeasured": {
+      "comment": "User-facing baby tracking text: “Measured”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Measured"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mitattu"
+          }
+        }
+      }
+    },
+    "locReading": {
+      "comment": "User-facing baby tracking text: “Reading”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mittaus"
+          }
+        }
+      }
+    },
+    "locNote": {
+      "comment": "User-facing baby tracking text: “Note”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Note"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muistiinpano"
+          }
+        }
+      }
+    },
+    "locOptionalNote": {
+      "comment": "User-facing baby tracking text: “Optional note”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional note"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valinnainen muistiinpano"
+          }
+        }
+      }
+    },
+    "locDeleteReading": {
+      "comment": "User-facing baby tracking text: “Delete reading”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete reading"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poista mittaus"
+          }
+        }
+      }
+    },
+    "locDeleteMeasurement": {
+      "comment": "User-facing baby tracking text: “Delete measurement”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete measurement"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poista mittaus"
+          }
+        }
+      }
+    },
+    "locSave": {
+      "comment": "User-facing baby tracking text: “Save”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tallenna"
+          }
+        }
+      }
+    },
+    "locCancel": {
+      "comment": "User-facing baby tracking text: “Cancel”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peruuta"
+          }
+        }
+      }
+    },
+    "locAdd": {
+      "comment": "User-facing baby tracking text: “Add”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisää"
+          }
+        }
+      }
+    },
+    "locStart": {
+      "comment": "Button action that starts a new sleep session.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aloita"
+          }
+        }
+      }
+    },
+    "locLogSleep": {
+      "comment": "User-facing baby tracking text: “Log sleep”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log sleep"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kirjaa uni"
+          }
+        }
+      }
+    },
+    "locEditSleep": {
+      "comment": "User-facing baby tracking text: “Edit sleep”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit sleep"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muokkaa unimerkintää"
+          }
+        }
+      }
+    },
+    "locChooseStartTime": {
+      "comment": "User-facing baby tracking text: “Choose start time”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose start time"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valitse aloitusaika"
+          }
+        }
+      }
+    },
+    "locStarted": {
+      "comment": "User-facing baby tracking text: “Started”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Started"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alkanut"
+          }
+        }
+      }
+    },
+    "locNow": {
+      "comment": "User-facing baby tracking text: “Now”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Now"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nyt"
+          }
+        }
+      }
+    },
+    "locAlreadyWokeUp": {
+      "comment": "User-facing baby tracking text: “Already woke up”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Already woke up"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Herännyt jo"
+          }
+        }
+      }
+    },
+    "locEnded": {
+      "comment": "User-facing baby tracking text: “Ended”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ended"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Päättynyt"
+          }
+        }
+      }
+    },
+    "locStatus": {
+      "comment": "User-facing baby tracking text: “Status”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tila"
+          }
+        }
+      }
+    },
+    "locStillSleeping": {
+      "comment": "User-facing baby tracking text: “Still sleeping”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Still sleeping"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nukkuu edelleen"
+          }
+        }
+      }
+    },
+    "locSleepSessions": {
+      "comment": "User-facing baby tracking text: “Sleep sessions”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep sessions"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unijaksot"
+          }
+        }
+      }
+    },
+    "locInThisPeriod": {
+      "comment": "User-facing baby tracking text: “in this period”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "in this period"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tällä jaksolla"
+          }
+        }
+      }
+    },
+    "locDailyAverage": {
+      "comment": "User-facing baby tracking text: “Daily average”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily average"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Päivittäinen keskiarvo"
+          }
+        }
+      }
+    },
+    "locTotalSleep": {
+      "comment": "User-facing baby tracking text: “total sleep”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "total sleep"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "unta yhteensä"
+          }
+        }
+      }
+    },
+    "locSleepByDay": {
+      "comment": "User-facing baby tracking text: “Sleep by day”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep by day"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uni päivittäin"
+          }
+        }
+      }
+    },
+    "locDay": {
+      "comment": "User-facing baby tracking text: “Day”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Päivä"
+          }
+        }
+      }
+    },
+    "locHours": {
+      "comment": "User-facing baby tracking text: “Hours”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hours"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuntia"
+          }
+        }
+      }
+    },
+    "locSleepRhythm": {
+      "comment": "User-facing baby tracking text: “Sleep rhythm”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep rhythm"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unirytmi"
+          }
+        }
+      }
+    },
+    "locTimeOfDay": {
+      "comment": "User-facing baby tracking text: “time of day”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "time of day"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "vuorokaudenaika"
+          }
+        }
+      }
+    },
+    "locEnd": {
+      "comment": "Chart axis noun for when a sleep session ended.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loppu"
+          }
+        }
+      }
+    },
+    "locSessionsPerDay": {
+      "comment": "User-facing baby tracking text: “Sessions per day”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sessions per day"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unijaksoja päivässä"
+          }
+        }
+      }
+    },
+    "locNaps": {
+      "comment": "User-facing baby tracking text: “Naps”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Naps"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Päiväunet"
+          }
+        }
+      }
+    },
+    "locSleepInsights": {
+      "comment": "User-facing baby tracking text: “Sleep insights”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep insights"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unitiedot"
+          }
+        }
+      }
+    },
+    "loc7Days": {
+      "comment": "User-facing baby tracking text: “7 days”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7 days"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7 päivää"
+          }
+        }
+      }
+    },
+    "loc30Days": {
+      "comment": "User-facing baby tracking text: “30 days”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 days"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 päivää"
+          }
+        }
+      }
+    },
+    "locRange": {
+      "comment": "User-facing baby tracking text: “Range”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Range"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aikaväli"
+          }
+        }
+      }
+    },
+    "locFamilyName": {
+      "comment": "User-facing baby tracking text: “Family name”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Family name"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perheen nimi"
+          }
+        }
+      }
+    },
+    "locSaveFamilyName": {
+      "comment": "User-facing baby tracking text: “Save family name”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save family name"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tallenna perheen nimi"
+          }
+        }
+      }
+    },
+    "locYourProfile": {
+      "comment": "User-facing baby tracking text: “Your profile”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your profile"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oma profiili"
+          }
+        }
+      }
+    },
+    "locYourName": {
+      "comment": "User-facing baby tracking text: “Your name”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your name"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oma nimi"
+          }
+        }
+      }
+    },
+    "locSaveName": {
+      "comment": "User-facing baby tracking text: “Save name”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save name"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tallenna nimi"
+          }
+        }
+      }
+    },
+    "locCaregivers": {
+      "comment": "User-facing baby tracking text: “Caregivers”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caregivers"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hoitajat"
+          }
+        }
+      }
+    },
+    "locCaregiver": {
+      "comment": "Family member who cares for the baby, or default caregiver display name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caregiver"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hoitaja"
+          }
+        }
+      }
+    },
+    "locOwner": {
+      "comment": "Family role with management permissions.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Owner"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Omistaja"
+          }
+        }
+      }
+    },
+    "locYou": {
+      "comment": "User-facing baby tracking text: “You”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sinä"
+          }
+        }
+      }
+    },
+    "locInviteCaregiver": {
+      "comment": "User-facing baby tracking text: “Invite caregiver”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invite caregiver"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kutsu hoitaja"
+          }
+        }
+      }
+    },
+    "locFamilyInvitationQRCode": {
+      "comment": "User-facing baby tracking text: “Family invitation QR code”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Family invitation QR code"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perhekutsun QR-koodi"
+          }
+        }
+      }
+    },
+    "locShareNewInvitation": {
+      "comment": "User-facing baby tracking text: “Share new invitation”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share new invitation"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jaa uusi kutsu"
+          }
+        }
+      }
+    },
+    "locPendingInvitations": {
+      "comment": "User-facing baby tracking text: “Pending invitations”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pending invitations"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odottavat kutsut"
+          }
+        }
+      }
+    },
+    "locRevoke": {
+      "comment": "User-facing baby tracking text: “Revoke”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revoke"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peruuta"
+          }
+        }
+      }
+    },
+    "locScanFamilyInvitation": {
+      "comment": "User-facing baby tracking text: “Scan family invitation”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan family invitation"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skannaa perhekutsu"
+          }
+        }
+      }
+    },
+    "locDeviceAndAccountSettings": {
+      "comment": "User-facing baby tracking text: “Device and account settings”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Device and account settings"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laitteen ja tilin asetukset"
+          }
+        }
+      }
+    },
+    "locDeleteFamily": {
+      "comment": "User-facing baby tracking text: “Delete family”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete family"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poista perhe"
+          }
+        }
+      }
+    },
+    "locLeaveFamily": {
+      "comment": "User-facing baby tracking text: “Leave family”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leave family"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poistu perheestä"
+          }
+        }
+      }
+    },
+    "locCreateAnotherFamily": {
+      "comment": "User-facing baby tracking text: “Create another family”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create another family"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luo toinen perhe"
+          }
+        }
+      }
+    },
+    "locLoadingFamily": {
+      "comment": "User-facing baby tracking text: “Loading family…”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading family…"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ladataan perhettä…"
+          }
+        }
+      }
+    },
+    "locRetryFamilyDetails": {
+      "comment": "User-facing baby tracking text: “Retry family details”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry family details"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yritä perhetietojen latausta uudelleen"
+          }
+        }
+      }
+    },
+    "locRemoveCaregiver": {
+      "comment": "User-facing baby tracking text: “Remove caregiver”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove caregiver"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poista hoitaja"
+          }
+        }
+      }
+    },
+    "locTransferOwnership": {
+      "comment": "User-facing baby tracking text: “Transfer ownership”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transfer ownership"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siirrä omistajuus"
+          }
+        }
+      }
+    },
+    "locNewFamily": {
+      "comment": "User-facing baby tracking text: “New family”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New family"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uusi perhe"
+          }
+        }
+      }
+    },
+    "locCreate": {
+      "comment": "User-facing baby tracking text: “Create”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luo"
+          }
+        }
+      }
+    },
+    "locBaby": {
+      "comment": "User-facing baby tracking text: “Baby”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baby"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vauva"
+          }
+        }
+      }
+    },
+    "locMode": {
+      "comment": "User-facing baby tracking text: “Mode”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mode"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tila"
+          }
+        }
+      }
+    },
+    "locSleepPrediction": {
+      "comment": "User-facing baby tracking text: “Sleep prediction”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep prediction"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uniarvio"
+          }
+        }
+      }
+    },
+    "locAdaptiveEstimate": {
+      "comment": "User-facing baby tracking text: “Adaptive estimate”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adaptive estimate"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mukautuva arvio"
+          }
+        }
+      }
+    },
+    "locManualInterval": {
+      "comment": "User-facing baby tracking text: “Manual interval”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manual interval"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Käsin asetettu väli"
+          }
+        }
+      }
+    },
+    "locTimeBetweenSleeps": {
+      "comment": "User-facing baby tracking text: “Time between sleeps”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time between sleeps"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unien välinen aika"
+          }
+        }
+      }
+    },
+    "locQuietHoursStart": {
+      "comment": "User-facing baby tracking text: “Quiet hours start”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quiet hours start"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiljaisen ajan alku"
+          }
+        }
+      }
+    },
+    "locQuietHoursEnd": {
+      "comment": "User-facing baby tracking text: “Quiet hours end”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quiet hours end"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiljaisen ajan loppu"
+          }
+        }
+      }
+    },
+    "locTimeZone": {
+      "comment": "User-facing baby tracking text: “Time zone”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time zone"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aikavyöhyke"
+          }
+        }
+      }
+    },
+    "locAreaCity": {
+      "comment": "User-facing baby tracking text: “Area/City”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Area/City"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alue/Kaupunki"
+          }
+        }
+      }
+    },
+    "locDeleteBabyAndRecords": {
+      "comment": "User-facing baby tracking text: “Delete baby and records”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete baby and records"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poista vauva ja merkinnät"
+          }
+        }
+      }
+    },
+    "locConfirmFamilyChange": {
+      "comment": "User-facing baby tracking text: “Confirm family change”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm family change"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vahvista perheen muutos"
+          }
+        }
+      }
+    },
+    "locRevokeInvitation": {
+      "comment": "User-facing baby tracking text: “Revoke invitation”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revoke invitation"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peru kutsu"
+          }
+        }
+      }
+    },
+    "locThisCaregiverWillLoseAccessToTheFamily": {
+      "comment": "User-facing baby tracking text: “This caregiver will lose access to the family.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This caregiver will lose access to the family."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tämä hoitaja menettää pääsyn perheeseen."
+          }
+        }
+      }
+    },
+    "locTheSelectedCaregiverWillBecomeTheOwnerYouWillRemainACaregiver": {
+      "comment": "User-facing baby tracking text: “The selected caregiver will become the owner. You will remain a caregiver.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The selected caregiver will become the owner. You will remain a caregiver."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valitusta hoitajasta tulee omistaja. Sinä jatkat hoitajana."
+          }
+        }
+      }
+    },
+    "locTheInvitationWillStopWorking": {
+      "comment": "User-facing baby tracking text: “The invitation will stop working.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The invitation will stop working."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kutsu lakkaa toimimasta."
+          }
+        }
+      }
+    },
+    "locYouWillLoseAccessToThisFamilyAndItsBabyRecords": {
+      "comment": "User-facing baby tracking text: “You will lose access to this family and its baby records.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You will lose access to this family and its baby records."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menetät pääsyn tähän perheeseen ja sen vauvan tietoihin."
+          }
+        }
+      }
+    },
+    "locThisPermanentlyDeletesTheFamilyAndItsBabyRecordsRemoveOtherCaregiversFirst": {
+      "comment": "User-facing baby tracking text: “This permanently deletes the family and its baby records. Remove other caregivers first.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This permanently deletes the family and its baby records. Remove other caregivers first."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tämä poistaa perheen ja sen vauvan tiedot pysyvästi. Poista ensin muut hoitajat."
+          }
+        }
+      }
+    },
+    "locThisRemovesThisBabySSleepGrowthAndTemperatureRecordsForEveryoneInTheFamily": {
+      "comment": "User-facing baby tracking text: “This removes this baby’s sleep, growth and temperature records for everyone in the family.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This removes this baby’s sleep, growth and temperature records for everyone in the family."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tämä poistaa vauvan uni-, kasvu- ja lämpömerkinnät kaikilta perheen jäseniltä."
+          }
+        }
+      }
+    },
+    "locSettings": {
+      "comment": "User-facing baby tracking text: “Settings”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asetukset"
+          }
+        }
+      }
+    },
+    "locThisDevice": {
+      "comment": "User-facing baby tracking text: “This device”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This device"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tämä laite"
+          }
+        }
+      }
+    },
+    "locPushNotifications": {
+      "comment": "User-facing baby tracking text: “Push notifications”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Push notifications"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Push-ilmoitukset"
+          }
+        }
+      }
+    },
+    "locLiveActivities": {
+      "comment": "User-facing baby tracking text: “Live Activities”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live Activities"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live-aktiviteetit"
+          }
+        }
+      }
+    },
+    "locSleepReminder": {
+      "comment": "User-facing baby tracking text: “Sleep reminder”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep reminder"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unimuistutus"
+          }
+        }
+      }
+    },
+    "locAtPredictedTime": {
+      "comment": "User-facing baby tracking text: “At predicted time”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At predicted time"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arvioituun aikaan"
+          }
+        }
+      }
+    },
+    "loc15MinutesBefore": {
+      "comment": "User-facing baby tracking text: “15 minutes before”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15 minutes before"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15 minuuttia ennen"
+          }
+        }
+      }
+    },
+    "loc30MinutesBefore": {
+      "comment": "User-facing baby tracking text: “30 minutes before”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 minutes before"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 minuuttia ennen"
+          }
+        }
+      }
+    },
+    "loc1HourBefore": {
+      "comment": "User-facing baby tracking text: “1 hour before”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 hour before"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 tunti ennen"
+          }
+        }
+      }
+    },
+    "locDeviceAndAccount": {
+      "comment": "User-facing baby tracking text: “Device and account”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Device and account"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laite ja tili"
+          }
+        }
+      }
+    },
+    "locSignOut": {
+      "comment": "User-facing baby tracking text: “Sign out”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign out"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kirjaudu ulos"
+          }
+        }
+      }
+    },
+    "locDeleteAccount": {
+      "comment": "User-facing baby tracking text: “Delete account”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete account"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poista tili"
+          }
+        }
+      }
+    },
+    "locThisSignsOutEveryDeviceFamiliesYouOwnTransferToAnotherCaregiverWhenOneIsPresentOtherwiseTheirBabyRecordsAreDeleted": {
+      "comment": "User-facing baby tracking text: “This signs out every device. Families you own transfer to another caregiver when one is present; otherwise their baby records are deleted.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This signs out every device. Families you own transfer to another caregiver when one is present; otherwise their baby records are deleted."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tämä kirjaa ulos kaikilta laitteilta. Omistamasi perheet siirtyvät toiselle hoitajalle, jos sellainen on; muuten niiden vauvan tiedot poistetaan."
+          }
+        }
+      }
+    },
+    "locSleepWindowIsApproaching": {
+      "comment": "User-facing baby tracking text: “Sleep window is approaching”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep window is approaching"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uniaika lähestyy"
+          }
+        }
+      }
+    },
+    "locOnlyDemoInvitationsWorkInDemoMode": {
+      "comment": "User-facing baby tracking text: “Only demo invitations work in demo mode.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only demo invitations work in demo mode."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demotilassa toimivat vain demokutsut."
+          }
+        }
+      }
+    },
+    "locUseTheDemoSignInButtonToExploreWithoutAnAccount": {
+      "comment": "User-facing baby tracking text: “Use the demo sign in button to explore without an account.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use the demo sign in button to explore without an account."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kokeile sovellusta ilman tiliä demon kirjautumispainikkeella."
+          }
+        }
+      }
+    },
+    "locThisDemoEntryIsNoLongerAvailable": {
+      "comment": "User-facing baby tracking text: “This demo entry is no longer available.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This demo entry is no longer available."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tämä demomerkintä ei ole enää saatavilla."
+          }
+        }
+      }
+    },
+    "locCouldNotCreateAnInvitation": {
+      "comment": "User-facing baby tracking text: “Could not create an invitation.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not create an invitation."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kutsua ei voitu luoda."
+          }
+        }
+      }
+    },
+    "locUnetonCouldNotSyncYourChangesConnectToTheInternetAndTryAgainBeforeSigningOut": {
+      "comment": "User-facing baby tracking text: “Uneton could not sync your changes. Connect to the internet and try again before signing out.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uneton could not sync your changes. Connect to the internet and try again before signing out."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uneton ei voinut synkronoida muutoksiasi. Yhdistä internetiin ja yritä uudelleen ennen uloskirjautumista."
+          }
+        }
+      }
+    },
+    "locResolveOrDiscardSyncConflictsBeforeSigningOut": {
+      "comment": "User-facing baby tracking text: “Resolve or discard sync conflicts before signing out.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resolve or discard sync conflicts before signing out."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ratkaise tai hylkää synkronointiristiriidat ennen uloskirjautumista."
+          }
+        }
+      }
+    },
+    "locSyncOrResolvePendingChangesBeforeDeletingYourAccount": {
+      "comment": "User-facing baby tracking text: “Sync or resolve pending changes before deleting your account.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync or resolve pending changes before deleting your account."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synkronoi tai ratkaise odottavat muutokset ennen tilin poistamista."
+          }
+        }
+      }
+    },
+    "locInvalidWatchRequest": {
+      "comment": "User-facing baby tracking text: “Invalid Watch request”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid Watch request"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Virheellinen Watch-pyyntö"
+          }
+        }
+      }
+    },
+    "locSelectAChildOnIPhoneFirst": {
+      "comment": "User-facing baby tracking text: “Select a child on iPhone first”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select a child on iPhone first"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valitse ensin vauva iPhonessa"
+          }
+        }
+      }
+    },
+    "locReadingAlreadyExists": {
+      "comment": "User-facing baby tracking text: “Reading already exists”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading already exists"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mittaus on jo olemassa"
+          }
+        }
+      }
+    },
+    "locReadingIsNoLongerAvailable": {
+      "comment": "User-facing baby tracking text: “Reading is no longer available”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading is no longer available"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mittaus ei ole enää saatavilla"
+          }
+        }
+      }
+    },
+    "locReadingChangedOnIPhoneRefreshAndTryAgain": {
+      "comment": "User-facing baby tracking text: “Reading changed on iPhone. Refresh and try again.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading changed on iPhone. Refresh and try again."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mittaus muuttui iPhonessa. Päivitä ja yritä uudelleen."
+          }
+        }
+      }
+    },
+    "locCouldNotSaveOnIPhone": {
+      "comment": "User-facing baby tracking text: “Could not save on iPhone”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not save on iPhone"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tallennus iPhonessa epäonnistui"
+          }
+        }
+      }
+    },
+    "locSavedOnIPhoneSyncWillRetryWhenOnline": {
+      "comment": "User-facing baby tracking text: “Saved on iPhone. Sync will retry when online.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved on iPhone. Sync will retry when online."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tallennettu iPhoneen. Synkronointia yritetään uudelleen, kun yhteys palautuu."
+          }
+        }
+      }
+    },
+    "locSharedFamily": {
+      "comment": "User-facing baby tracking text: “Shared family”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared family"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jaettu perhe"
+          }
+        }
+      }
+    },
+    "locOurFamily": {
+      "comment": "User-facing baby tracking text: “Our family”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Our family"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meidän perhe"
+          }
+        }
+      }
+    },
+    "locChild": {
+      "comment": "User-facing baby tracking text: “Child”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Child"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vauva"
+          }
+        }
+      }
+    },
+    "locSyncOrResolveThisFamilySPendingChangesBeforeLeavingOrDeletingIt": {
+      "comment": "User-facing baby tracking text: “Sync or resolve this family’s pending changes before leaving or deleting it.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync or resolve this family’s pending changes before leaving or deleting it."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synkronoi tai ratkaise perheen odottavat muutokset ennen perheestä poistumista tai sen poistamista."
+          }
+        }
+      }
+    },
+    "locEndThisBabySActiveSleepBeforeDeletingTheirRecords": {
+      "comment": "User-facing baby tracking text: “End this baby’s active sleep before deleting their records.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End this baby’s active sleep before deleting their records."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Päätä vauvan käynnissä oleva unijakso ennen tietojen poistamista."
+          }
+        }
+      }
+    },
+    "locSignInToManageThisFamily": {
+      "comment": "User-facing baby tracking text: “Sign in to manage this family.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign in to manage this family."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kirjaudu sisään hallitaksesi perhettä."
+          }
+        }
+      }
+    },
+    "locYourAppleSignInHasExpired": {
+      "comment": "User-facing baby tracking text: “Your Apple sign in has expired.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Apple sign in has expired."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple-kirjautumisesi on vanhentunut."
+          }
+        }
+      }
+    },
+    "locCouldNotStartAppleSignInTryAgain": {
+      "comment": "User-facing baby tracking text: “Could not start Apple sign in. Try again.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not start Apple sign in. Try again."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple-kirjautumista ei voitu aloittaa. Yritä uudelleen."
+          }
+        }
+      }
+    },
+    "locChooseAManualInterval": {
+      "comment": "User-facing baby tracking text: “Choose a manual interval.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a manual interval."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valitse unien väli käsin."
+          }
+        }
+      }
+    },
+    "locEnterAFamilyName": {
+      "comment": "User-facing baby tracking text: “Enter a family name.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a family name."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anna perheelle nimi."
+          }
+        }
+      }
+    },
+    "locEnterAValidTimeZoneSuchAsEuropeHelsinki": {
+      "comment": "User-facing baby tracking text: “Enter a valid time zone, such as Europe/Helsinki.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a valid time zone, such as Europe/Helsinki."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anna kelvollinen aikavyöhyke, esimerkiksi Europe/Helsinki."
+          }
+        }
+      }
+    },
+    "locEnterYourBabySName": {
+      "comment": "User-facing baby tracking text: “Enter your baby’s name.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter your baby’s name."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anna vauvasi nimi."
+          }
+        }
+      }
+    },
+    "locEnterYourName": {
+      "comment": "User-facing baby tracking text: “Enter your name.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter your name."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anna nimesi."
+          }
+        }
+      }
+    },
+    "locInvalidFamilyInvitation": {
+      "comment": "User-facing baby tracking text: “Invalid family invitation”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid family invitation"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Virheellinen perhekutsu"
+          }
+        }
+      }
+    },
+    "locInvalidFamilyInvitationPeriod": {
+      "comment": "User-facing baby tracking text: “Invalid family invitation.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid family invitation."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Virheellinen perhekutsu."
+          }
+        }
+      }
+    },
+    "locEndTimeMustBeAfterStartTime": {
+      "comment": "User-facing baby tracking text: “End time must be after start time.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End time must be after start time."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lopetusajan on oltava aloitusajan jälkeen."
+          }
+        }
+      }
+    },
+    "locStartTimeCanTBeInTheFuture": {
+      "comment": "User-facing baby tracking text: “Start time can’t be in the future.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start time can’t be in the future."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aloitusaika ei voi olla tulevaisuudessa."
+          }
+        }
+      }
+    },
+    "locPhoneAppUnavailable": {
+      "comment": "User-facing baby tracking text: “Phone app unavailable”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Phone app unavailable"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone-sovellus ei ole käytettävissä"
+          }
+        }
+      }
+    },
+    "locDeleteYourUnetonAccount": {
+      "comment": "User-facing baby tracking text: “Delete your Uneton account?”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete your Uneton account?"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poistetaanko Uneton-tilisi?"
+          }
+        }
+      }
+    },
+    "locValuesAreSavedInASharedFamilyRecordTheyAreNotAMedicalAssessmentContactYourNeuvolaOrHealthcareProfessionalWithConcerns": {
+      "comment": "User-facing baby tracking text: “Values are saved in a shared family record. They are not a medical assessment; contact your neuvola or healthcare professional with concerns.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Values are saved in a shared family record. They are not a medical assessment; contact your neuvola or healthcare professional with concerns."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arvot tallennetaan perheen yhteisiin tietoihin. Ne eivät ole lääketieteellinen arvio. Ota huolissasi yhteyttä neuvolaan tai terveydenhuollon ammattilaiseen."
+          }
+        }
+      }
+    },
+    "locThisIsASharedObservationNotAMedicalAssessmentContactAHealthcareProfessionalIfYouHaveConcerns": {
+      "comment": "User-facing baby tracking text: “This is a shared observation, not a medical assessment. Contact a healthcare professional if you have concerns.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is a shared observation, not a medical assessment. Contact a healthcare professional if you have concerns."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tämä on perheen yhteinen havainto, ei lääketieteellinen arvio. Ota huolissasi yhteyttä terveydenhuollon ammattilaiseen."
+          }
+        }
+      }
+    },
+    "locYourBabyMayBeReadyForSleepSoon": {
+      "comment": "User-facing baby tracking text: “Your baby may be ready for sleep soon.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your baby may be ready for sleep soon."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vauvasi saattaa olla pian valmis nukkumaan."
+          }
+        }
+      }
+    },
+    "locHoursLowercase": {
+      "comment": "User-facing baby tracking text: “hours”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hours"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tuntia"
+          }
+        }
+      }
+    },
+    "locRhythmLowercase": {
+      "comment": "User-facing baby tracking text: “rhythm”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rhythm"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rytmi"
+          }
+        }
+      }
+    },
+    "locUnexpectedError": {
+      "comment": "User-facing baby tracking text: “Something went wrong. Try again.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong. Try again."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jokin meni vikaan. Yritä uudelleen."
+          }
+        }
+      }
+    },
+    "locThisChangeCouldNotBeAppliedReviewBothVersionsBeforeDeciding": {
+      "comment": "User-facing baby tracking text: “This change could not be applied. Review both versions before deciding.”. Preserve the action or meaning in translation.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This change could not be applied. Review both versions before deciding."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muutosta ei voitu ottaa käyttöön. Tarkista molemmat versiot ennen päätöstä."
+          }
+        }
+      }
+    },
+    "locStartTimeAxis": {
+      "comment": "Chart axis label for the start of a sleep session; translate as a noun.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alku"
+          }
+        }
+      }
+    },
+    "locWakeChild": {
+      "comment": "Button that records the named baby’s wake-up.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wake %@"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Merkitse %@ hereille"
+          }
+        }
+      }
+    },
+    "locLikelyRange": {
+      "comment": "Estimated sleep window; the two placeholders are localized times.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Likely %@–%@"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todennäköisesti %@–%@"
+          }
+        }
+      }
+    },
+    "locEmptySleepDescription": {
+      "comment": "Empty sleep history; placeholder is the baby’s name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start a sleep session when %@ falls asleep. Their sleep history will build here."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aloita unijakso, kun %@ nukahtaa. Unihistoria kertyy tänne."
+          }
+        }
+      }
+    },
+    "locDeleteChildQuestion": {
+      "comment": "Confirmation title; placeholder is the baby’s name.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete %@?"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Poistetaanko %@?"
+          }
+        }
+      }
+    },
+    "locInviteExpires": {
+      "comment": "Invitation expiration date.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expires %@"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vanhenee %@"
+          }
+        }
+      }
+    },
+    "locTrackedAcrossDays": {
+      "comment": "Sleep insight summary; placeholder is the number of days.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tracked across %@ days"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "seurattu %@ päivän ajalta"
+          }
+        }
+      }
+    },
+    "locDaysCount": {
+      "comment": "Duration in whole days.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ days"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ päivää"
+          }
+        }
+      }
+    },
+    "locMinutesCount": {
+      "comment": "Manual sleep interval in minutes.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ minutes"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ minuuttia"
+          }
+        }
+      }
+    },
+    "locMonthShort": {
+      "comment": "Age in months on growth chart axis.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@m"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ kk"
+          }
+        }
+      }
+    },
+    "locPeriodAccessibility": {
+      "comment": "VoiceOver summary: sleep or awake, duration, start date and time.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, %@, from %@"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, %@, alkaen %@"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

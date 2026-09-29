@@ -7,13 +7,13 @@ struct NewFamilySheet: View {
     var body: some View {
         NavigationStack {
             NewFamilyContent(store: store)
-                .navigationTitle("New family")
+                .navigationTitle(LocalizedStringResource("locNewFamily", defaultValue: "New family", comment: "Screen title in FamilyManagement: New family"))
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { store.send(.dismissCreateFamily) }
+                        Button(LocalizedStringResource("locCancel", defaultValue: "Cancel", comment: "Button title in FamilyManagement: Cancel")) { store.send(.dismissCreateFamily) }
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("Create") { store.send(.saveNewFamily) }
+                        Button(LocalizedStringResource("locCreate", defaultValue: "Create", comment: "Button title in FamilyManagement: Create")) { store.send(.saveNewFamily) }
                             .disabled(store.request.isRunning
                                 || store.newFamilyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
