@@ -12,10 +12,18 @@ The public privacy policy, terms and support pages are served by the backend at 
 
 ## Local setup
 
-The App Store Connect app record did not exist for the production bundle ID when this tree was prepared. Create it in App Store Connect, then set `ASC_APP_ID` to its numeric ID. Authenticate `asc` locally with an API key, and use an authenticated Apple web session for `asc web privacy` commands. Xcode also needs distribution signing for the app, Watch and widget targets. The App Review contact and legal operator values are age-encrypted in `fnox.toml`, using the key at `~/.config/sops/age/keys.txt`. Keep the key, demo credentials, and production `.env` out of Git.
+The App Store Connect app record is `6817506009` for `solutions.bytesized.uneton`. Authenticate `asc` locally with an API key; the privacy commands also require an interactive Apple web session and two-factor authentication. Xcode needs distribution signing for the app, Watch and widget targets. The App Review contact and legal operator values are age-encrypted in `fnox.toml`, using the key at `~/.config/sops/age/keys.txt`. Keep the key, demo credentials, and production `.env` out of Git.
+
+Once the public privacy and support URLs resolve, run this from a clean checkout in a terminal:
 
 ```sh
-export ASC_APP_ID=1234567890 # replace with the actual numeric app ID
+mise run store:sync
+```
+
+The task sets the known app ID, validates local declarations and every listing URL, shows the metadata and App Privacy plans, and asks you to type `sync 6817506009` before applying. It then publishes App Privacy and checks drift. If reviewer access is marked `READY`, it also applies the readiness settings and review details. Otherwise, review details and copyright remain pending. Builds and App Store screenshots are separate release steps.
+
+```sh
+export ASC_APP_ID=6817506009
 mise run store -- validate
 mise run store -- plan
 mise run store -- approve

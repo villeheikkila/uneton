@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ "${1:-}" == --help && "$#" -eq 1 ]]; then
+  cat <<'EOF'
+usage: mise run store:sync
+
+Interactively plan and sync Uneton's listing, App Privacy, and age rating.
+Requires a clean checkout, reachable listing URLs, and Apple web-session 2FA.
+EOF
+  exit 0
+fi
+
+if [[ "$#" -ne 0 ]]; then
+  echo "usage: mise run store:sync" >&2
+  exit 2
+fi
+
+repo_root="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
+store="$repo_root/tooling/release/store"
+metadata="$repo_root/clients/ios/asc/metadata"
+readiness="$repo_root/clients/ios/asc/readiness.json"
+
+[[ -t 0 ]] || {
+  echo "Run store:sync in an interactive terminal for Apple 2FA and plan approval" >&2
+  exit 2
+}
+[[ -z "$(git -C "$repo_root" status --porcelain)" ]] || {
+  echo "Commit or remove local changes before syncing App Store Connect" >&2
+  exit 2
+}
+[[ -n "${ASC_APP_ID:-}" ]] || {
+  echo "Set ASC_APP_ID to the Uneton App Store Connect app ID" >&2
+  exit 2
+}
+
+"$store" validate
+
+shopt -s nullglob
+app_info_files=("$metadata"/app-info/*.json)
+version_files=("$metadata"/version/"${UNETON_STORE_VERSION:-1.0}"/*.json)
+[[ "${#app_info_files[@]}" -gt 0 && "${#version_files[@]}" -gt 0 ]] || {
+  echo "Missing app-info or version metadata files for ${UNETON_STORE_VERSION:-1.0}" >&2
+  exit 2
+}
+
+while IFS= read -r url; do
+  if ! curl --fail --location --silent --show-error --output /dev/null --max-time 15 "$url"; then
+    echo "Listing URL is not reachable: $url" >&2
+    echo "Deploy the public legal/support pages before syncing their URLs" >&2
+    exit 2
+  fi
+done < <(jq -r '.privacyPolicyUrl // empty' "${app_info_files[@]}"; \
+  jq -r '.supportUrl // empty' "${version_files[@]}"; \
+  printf '%s\n' 'https://api.uneton.app/terms')
+
+"$store" plan
+
+printf 'Type "sync %s" to apply the plan and publish App Privacy: ' "$ASC_APP_ID"
+IFS= read -r answer
+[[ "$answer" == "sync $ASC_APP_ID" ]] || {
+  echo "No App Store Connect changes applied" >&2
+  exit 2
+}
+
+"$store" approve
+"$store" apply
+"$store" publish-privacy
+
+if [[ "$(jq -r '.reviewAccess.status' "$readiness")" == READY ]]; then
+  "$store" readiness-apply
+else
+  echo "Reviewer access is pending; review details and copyright remain for readiness-apply"
+fi
+
+"$store" drift
+echo "App Store declarations are in sync. Builds and screenshots use the separate release workflow."

@@ -247,6 +247,11 @@ run = "tooling/release/ios-review"
 description = "Validate, plan, approve, apply, and inspect App Store Connect declarations locally"
 run = "tooling/release/store"
 
+[tasks."store:sync"]
+description = "Interactively sync the Uneton listing and privacy answers with App Store Connect"
+env.ASC_APP_ID = "6817506009"
+run = "tooling/release/store-sync"
+
 [tasks."infra:orb:create"]
 description = "Create the disposable OrbStack production-rehearsal VM"
 run = "platform/infra/vps/operations/orb-machine.sh create"

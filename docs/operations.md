@@ -27,7 +27,7 @@ For App Store Connect, configure local Xcode distribution signing for the iPhone
 
 ```sh
 mise run release:ios:build -- 1.0 2
-export ASC_APP_ID=1234567890 # replace with the numeric App Store Connect app ID
+export ASC_APP_ID=6817506009
 ipa=".asc/artifacts/Uneton-1.0-2-$(git rev-parse HEAD).ipa"
 mise run release:ios:upload -- "$ipa"
 mise run release:ios:upload -- "$ipa" --publish
