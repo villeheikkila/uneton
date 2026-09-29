@@ -28,6 +28,15 @@ nonisolated extension LocalizedStringResource {
     }
 
     /**
+     Live Activity status followed by the local time when the baby fell asleep.
+
+     Localized string for key “locSleepingSince” in table “Localizable.xcstrings”.
+     */
+    static func locSleepingSince(_ arg1: String) -> LocalizedStringResource {
+        LocalizedStringResource("locSleepingSince", defaultValue: "\(arg1)", table: "Localizable", bundle: resourceBundleDescription)
+    }
+
+    /**
      Action in Watch and Live Activity that records that the baby woke up.
      
      Localized string for key “locWakeUp” in table “Localizable.xcstrings”.

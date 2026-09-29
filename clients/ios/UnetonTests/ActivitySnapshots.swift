@@ -8,32 +8,38 @@ import UnetonActivity
 @Suite("Live Activity snapshots", .serialized)
 @MainActor
 struct ActivitySnapshots {
+    private var startedAt: Date {
+        Calendar.current.date(from: DateComponents(year: 2026, month: 9, day: 29, hour: 20, minute: 28))!
+    }
+
+    private var endURL: URL {
+        URL(string: "uneton://sleep/end?familyID=1&sessionID=2")!
+    }
+
     @Test func lockScreen() throws {
         let content = SleepActivityLockScreenView(
-            childName: "Aino", elapsed: Text("1:23:45"),
-            endURL: URL(string: "uneton://sleep/end?familyID=1&sessionID=2")!
+            childName: "Aino", startedAt: startedAt, elapsed: Text("1:58:16"), endURL: endURL
         )
-        .frame(width: 402, height: 92)
-        .background(SleepActivityPalette.softBlue)
-        try capture(content, size: CGSize(width: 402, height: 92), name: "lockScreen")
+        .frame(width: 402, height: 112)
+        .background(SleepActivityPalette.softBlue, in: .rect(cornerRadius: 26))
+        try capture(content, size: CGSize(width: 402, height: 112), name: "lockScreen")
     }
 
     @Test func expandedIsland() throws {
-        let content = VStack(spacing: 8) {
-            HStack {
-                Image(systemName: "moon.zzz.fill").foregroundStyle(SleepActivityPalette.blue)
-                Spacer()
-                SleepActivityExpandedCenterView(elapsed: Text("1:23:45"))
-                Spacer()
-                Text("Wake").font(.caption.weight(.bold))
+        let content = VStack(spacing: 3) {
+            HStack(spacing: 8) {
+                SleepActivityIdentityView(childName: "Aino", diameter: 42)
+                Spacer(minLength: 0)
+                SleepActivityExpandedCenterView(elapsed: Text("1:58:16"))
+                Spacer(minLength: 0)
+                SleepActivityWakeLink(endURL: endURL, diameter: 42)
             }
-            SleepActivityExpandedBottomView(childName: "Aino")
+            SleepActivityExpandedBottomView(startedAt: startedAt)
         }
-        .padding(16)
-        .frame(width: 350, height: 100)
+        .padding(.horizontal, 12)
+        .frame(width: 350, height: 112)
         .background(.black)
-        .foregroundStyle(.white)
-        try capture(content, size: CGSize(width: 350, height: 100), name: "expandedIsland")
+        try capture(content, size: CGSize(width: 350, height: 112), name: "expandedIsland")
     }
 
     private func capture<V: View>(_ view: V, size: CGSize, name: String) throws {
@@ -41,7 +47,7 @@ struct ActivitySnapshots {
         let previousKeyWindow = scene.windows.first(where: \.isKeyWindow)
         let window = UIWindow(windowScene: scene)
         window.frame = CGRect(origin: .zero, size: size)
-        window.rootViewController = UIHostingController(rootView: view.ignoresSafeArea())
+        window.rootViewController = UIHostingController(rootView: view.ignoresSafeArea().environment(\.locale, Locale(identifier: "en_GB")))
         window.makeKeyAndVisible()
         defer {
             window.isHidden = true

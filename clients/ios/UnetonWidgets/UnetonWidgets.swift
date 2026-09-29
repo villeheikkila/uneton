@@ -16,36 +16,34 @@ struct SleepLiveActivity: Widget {
         ActivityConfiguration(for: SleepActivityAttributes.self) { context in
             SleepActivityLockScreenView(
                 childName: context.attributes.childName,
+                startedAt: context.attributes.startedAt,
                 elapsed: Text(timerInterval: context.attributes.startedAt...Date.distantFuture, countsDown: false),
                 endURL: endURL(context.attributes))
             .activityBackgroundTint(SleepActivityPalette.softBlue)
-            .activitySystemActionForegroundColor(.primary)
+            .activitySystemActionForegroundColor(SleepActivityPalette.ink)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Image(systemName: "moon.zzz.fill").foregroundStyle(SleepActivityPalette.blue)
+                    SleepActivityIdentityView(childName: context.attributes.childName, diameter: 42)
                 }
                 DynamicIslandExpandedRegion(.center) {
                     SleepActivityExpandedCenterView(
                         elapsed: Text(timerInterval: context.attributes.startedAt...Date.distantFuture, countsDown: false))
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Link(destination: endURL(context.attributes)) {
-                        Text("locWake", comment: "Short Dynamic Island action that ends the active sleep session")
-                            .font(.caption.weight(.bold))
-                    }
+                    SleepActivityWakeLink(endURL: endURL(context.attributes), diameter: 42)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    SleepActivityExpandedBottomView(childName: context.attributes.childName)
+                    SleepActivityExpandedBottomView(startedAt: context.attributes.startedAt)
                 }
             } compactLeading: {
-                Image(systemName: "moon.fill").foregroundStyle(SleepActivityPalette.blue)
+                Image(systemName: "moon.fill").foregroundStyle(SleepActivityPalette.turquoise)
             } compactTrailing: {
                 Text(timerInterval: context.attributes.startedAt...Date.distantFuture, countsDown: false)
                     .monospacedDigit()
                     .frame(width: 42)
             } minimal: {
-                Image(systemName: "moon.fill").foregroundStyle(SleepActivityPalette.blue)
+                Image(systemName: "moon.fill").foregroundStyle(SleepActivityPalette.turquoise)
             }
             .widgetURL(endURL(context.attributes))
         }

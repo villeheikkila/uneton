@@ -36,6 +36,24 @@
           }
         }
       }
+    },
+    "locSleepingSince": {
+      "comment": "Live Activity status followed by the local time when the baby fell asleep.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleeping since %@"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nukkuu klo %@ alkaen"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

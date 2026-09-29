@@ -2,45 +2,111 @@
 import SwiftUI
 
 public enum SleepActivityPalette {
+  public static let ink = Color(red: 0.08, green: 0.20, blue: 0.27)
   public static let blue = Color(red: 0.13, green: 0.39, blue: 0.56)
+  public static let turquoise = Color(red: 0.13, green: 0.49, blue: 0.52)
   public static let softBlue = Color(red: 0.83, green: 0.94, blue: 0.97)
+  public static let mutedInk = Color(red: 0.29, green: 0.42, blue: 0.49)
+  public static let mutedOnDark = Color(red: 0.69, green: 0.74, blue: 0.79)
 }
 
-/// The lock-screen content is shared with visual tests; ActivityKit supplies its data and tint.
+public struct SleepActivityIdentityView: View {
+  public let childName: String
+  public let diameter: CGFloat
+
+  public init(childName: String, diameter: CGFloat = 52) {
+    self.childName = childName
+    self.diameter = diameter
+  }
+
+  public var body: some View {
+    Text(String(childName.prefix(1)).uppercased())
+      .font(.system(size: diameter * 0.46, weight: .medium, design: .rounded))
+      .foregroundStyle(.white)
+      .frame(width: diameter, height: diameter)
+      .background(SleepActivityPalette.blue, in: .circle)
+      .accessibilityLabel(Text(childName))
+  }
+}
+
+public struct SleepActivityWakeLink: View {
+  public let endURL: URL
+  public let diameter: CGFloat
+
+  public init(endURL: URL, diameter: CGFloat = 52) {
+    self.endURL = endURL
+    self.diameter = diameter
+  }
+
+  public var body: some View {
+    Link(destination: endURL) {
+      Image(systemName: "stop.fill")
+        .font(.system(size: diameter * 0.33, weight: .bold))
+        .foregroundStyle(.white)
+        .frame(width: diameter, height: diameter)
+        .background(SleepActivityPalette.turquoise, in: .circle)
+    }
+    .accessibilityLabel(Text("locWakeUp", bundle: .module, comment: "Accessible label for the Live Activity stop icon that opens the wake action"))
+  }
+}
+
+public struct SleepActivitySinceView: View {
+  public let startedAt: Date
+  public let onDarkBackground: Bool
+
+  public init(startedAt: Date, onDarkBackground: Bool = false) {
+    self.startedAt = startedAt
+    self.onDarkBackground = onDarkBackground
+  }
+
+  public var body: some View {
+    HStack(spacing: 7) {
+      Image(systemName: "moon.fill")
+        .font(.system(size: 12, weight: .semibold))
+        .foregroundStyle(.white)
+        .frame(width: 24, height: 24)
+        .background(SleepActivityPalette.blue, in: .circle)
+      Text(.locSleepingSince(startedAt.formatted(date: .omitted, time: .shortened)))
+        .font(.caption)
+        .foregroundStyle(onDarkBackground ? SleepActivityPalette.mutedOnDark : SleepActivityPalette.mutedInk)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+    }
+  }
+}
+
+/// ActivityKit supplies the rounded card and its background tint.
 public struct SleepActivityLockScreenView: View {
   public let childName: String
+  public let startedAt: Date
   public let elapsed: Text
   public let endURL: URL
 
-  public init(childName: String, elapsed: Text, endURL: URL) {
+  public init(childName: String, startedAt: Date, elapsed: Text, endURL: URL) {
     self.childName = childName
+    self.startedAt = startedAt
     self.elapsed = elapsed
     self.endURL = endURL
   }
 
   public var body: some View {
-    HStack(spacing: 14) {
-      Image(systemName: "moon.zzz.fill")
-        .font(.title2)
-        .foregroundStyle(SleepActivityPalette.blue)
-      VStack(alignment: .leading, spacing: 3) {
-        Text(.locChildIsSleeping(childName))
-          .font(.headline)
+    HStack(spacing: 10) {
+      SleepActivityIdentityView(childName: childName)
+      Spacer(minLength: 0)
+      VStack(spacing: 7) {
         elapsed
-          .font(.subheadline.monospacedDigit())
-          .foregroundStyle(.secondary)
+          .font(.system(size: 38, weight: .medium, design: .rounded).monospacedDigit())
+          .foregroundStyle(SleepActivityPalette.ink)
+          .lineLimit(1)
+          .minimumScaleFactor(0.7)
+        SleepActivitySinceView(startedAt: startedAt)
       }
-      Spacer()
-      Link(destination: endURL) {
-        Text("locWakeUp", bundle: .module, comment: "Wake up ends the current sleep")
-          .font(.subheadline.weight(.semibold))
-          .padding(.horizontal, 13)
-          .padding(.vertical, 9)
-          .background(SleepActivityPalette.blue, in: .capsule)
-          .foregroundStyle(.white)
-      }
+      .frame(maxWidth: .infinity)
+      Spacer(minLength: 0)
+      SleepActivityWakeLink(endURL: endURL)
     }
-    .padding()
+    .padding(.horizontal, 16)
+    .padding(.vertical, 12)
   }
 }
 
@@ -50,18 +116,22 @@ public struct SleepActivityExpandedCenterView: View {
   public init(elapsed: Text) { self.elapsed = elapsed }
 
   public var body: some View {
-    elapsed.font(.headline.monospacedDigit())
+    elapsed
+      .font(.system(size: 32, weight: .medium, design: .rounded).monospacedDigit())
+      .foregroundStyle(.white)
+      .lineLimit(1)
+      .minimumScaleFactor(0.7)
   }
 }
 
 public struct SleepActivityExpandedBottomView: View {
-  public let childName: String
+  public let startedAt: Date
 
-  public init(childName: String) { self.childName = childName }
+  public init(startedAt: Date) { self.startedAt = startedAt }
 
   public var body: some View {
-    Text(.locChildIsSleeping(childName))
-      .foregroundStyle(.secondary)
+    SleepActivitySinceView(startedAt: startedAt, onDarkBackground: true)
+      .frame(maxWidth: .infinity)
   }
 }
 #endif
