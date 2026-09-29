@@ -77,8 +77,7 @@ struct TimelineContent: View {
         }
         .tabViewBottomAccessory(isEnabled: syncStore.selectedTab == .timeline) {
             bottomControl
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .padding(.vertical, 8)
         }
         .tint(Color.sleepBlue)
     }
@@ -92,9 +91,9 @@ struct TimelineContent: View {
                 Label(.locWakeChild(child.nickname), systemImage: "sun.max.fill")
                     .font(.headline.weight(.semibold))
                     .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .foregroundStyle(.white)
-                    .background(Color.sleepAqua, in: .capsule)
+                    .frame(height: 44)
+                    .foregroundStyle(Color.sleepAqua)
+                    .contentShape(.rect)
             }
             .buttonStyle(.plain)
             .disabled(syncStore.wake.isRunning)
@@ -106,9 +105,9 @@ struct TimelineContent: View {
                 Label(LocalizedStringResource("locStartSleep", defaultValue: "Start sleep", comment: "Label in Timeline: Start sleep"), systemImage: "moon.fill")
                     .font(.headline.weight(.semibold))
                     .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .foregroundStyle(.white)
-                    .background(Color.sleepBlue, in: .capsule)
+                    .frame(height: 44)
+                    .foregroundStyle(Color.sleepBlue)
+                    .contentShape(.rect)
             }
             .buttonStyle(.plain)
         }
