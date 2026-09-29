@@ -22,7 +22,8 @@ final class PhoneWatchBridge: NSObject, WCSessionDelegate, @unchecked Sendable {
         Task { @MainActor [weak self] in
             guard let store = self?.store else {
                 reply.call(Self.encoded(WatchDiaryResponse(snapshot: WatchDiarySnapshot(),
-                    errorMessage: String(localized: LocalizedStringResource("locPhoneAppUnavailable", defaultValue: "Phone app unavailable", comment: "Message in PhoneWatchBridge: Phone app unavailable")))))
+                    errorMessage: String(localized: LocalizedStringResource("locPhoneAppUnavailable", defaultValue: "Phone app unavailable", comment: "Message in PhoneWatchBridge: Phone app unavailable")),
+                    retryable: true)))
                 return
             }
             let request = try? JSONDecoder().decode(WatchDiaryRequest.self, from: messageData)

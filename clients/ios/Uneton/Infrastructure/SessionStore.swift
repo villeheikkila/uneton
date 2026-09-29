@@ -27,6 +27,7 @@ final class SessionStore {
         static let liveActivitiesEnabled = "push.liveActivitiesEnabled"
         static let reminderLeadMinutes = "push.reminderLeadMinutes"
         static let pendingInitialFamilyID = "session.pendingInitialFamilyID"
+        static let watchSnapshotVersion = "watch.snapshotVersion"
     }
 
     private let credentials = CredentialStore()
@@ -408,10 +409,10 @@ final class SessionStore {
         }
     }
 
-    func startSleep(familyID: Family.ID, childID: Child.ID, childName: String = String(localized: LocalizedStringResource("locChild", defaultValue: "Child", comment: "Message in SessionStore: Child")), startedAt: Date? = nil) async {
+    func startSleep(familyID: Family.ID, childID: Child.ID, childName: String = String(localized: LocalizedStringResource("locChild", defaultValue: "Child", comment: "Message in SessionStore: Child")), startedAt: Date? = nil, sessionID: SleepSession.ID? = nil, commandID: PendingCommand.ID? = nil) async {
         let startedAt = startedAt ?? now
         await perform {
-            let sessionID = try await coordinator.startSleep(familyID: familyID, childID: childID, startedAt: startedAt)
+            let sessionID = try await coordinator.startSleep(familyID: familyID, childID: childID, sessionID: sessionID, commandID: commandID, startedAt: startedAt)
             if liveActivitiesEnabled { await liveActivities.start(
                 familyID: familyID,
                 childID: childID,
@@ -630,7 +631,11 @@ final class SessionStore {
     }
 
     func watchDiarySnapshot() async throws -> WatchDiarySnapshot {
-        guard isAuthenticated else { return WatchDiarySnapshot() }
+        let defaults = UserDefaults.standard
+        let version = max(defaults.integer(forKey: Key.watchSnapshotVersion) + 1,
+            Int(now.timeIntervalSince1970 * 1_000))
+        defaults.set(version, forKey: Key.watchSnapshotVersion)
+        guard isAuthenticated else { return WatchDiarySnapshot(version: version) }
         let allowedFamilyIDs = memberships.map { Set($0.map(\.id)) }
         return try await database.read { database in
             let families = try Family.order { $0.updatedAt.desc() }.fetchAll(database)
@@ -638,7 +643,7 @@ final class SessionStore {
             let children = try Child.fetchAll(database)
             let sessions = try SleepSession.fetchAll(database)
             let readings = try TemperatureReading.order { $0.measuredAt.desc() }.fetchAll(database)
-            return WatchDiarySnapshot(children: families.flatMap { family in
+            return WatchDiarySnapshot(version: version, children: families.flatMap { family in
                 children.filter { $0.familyID == family.id }.map { child in
                     let active = sessions.first {
                         $0.childID == child.id && $0.endedAt == nil && $0.deletedAt == nil && $0.supersededByID == nil
@@ -650,7 +655,7 @@ final class SessionStore {
                                 revision: reading.revision, isPending: reading.pendingCommandID != nil)
                         }
                     return WatchDiaryChild(id: child.id, familyID: family.id, familyName: family.name,
-                        nickname: child.nickname, activeSleepStartedAt: active?.startedAt,
+                        nickname: child.nickname, activeSleepID: active?.id, activeSleepStartedAt: active?.startedAt,
                         readings: recent)
                 }
             })
@@ -703,15 +708,46 @@ final class SessionStore {
             case .status:
                 break
             case .startSleep:
-                guard child.activeSleepStartedAt == nil else { return WatchDiaryResponse(snapshot: before) }
-                await startSleep(familyID: familyID, childID: childID, childName: child.nickname)
-            case .endSleep:
-                let activeID = try await database.read { database in
-                    try SleepSession.where { $0.childID.eq(childID) && $0.endedAt.is(nil) && $0.deletedAt.is(nil) && $0.supersededByID.is(nil) }
-                        .order { $0.startedAt.desc() }.fetchOne(database)?.id
+                let sessionID = request.sessionID!
+                let commandID = PendingCommand.ID(rawValue: sessionID.rawValue)
+                let prior = try await database.read { database in
+                    (try PendingCommand.find(commandID).fetchOne(database),
+                     try AcknowledgedCommand.find(commandID).fetchOne(database))
                 }
-                guard let activeID else { return WatchDiaryResponse(snapshot: before) }
-                await endSleep(familyID: familyID, sessionID: activeID)
+                if let pending = prior.0 {
+                    guard pending.familyID == familyID && pending.kind == "startSleep" else {
+                        return WatchDiaryResponse(snapshot: before, errorMessage: String(localized: LocalizedStringResource("locInvalidWatchRequest", defaultValue: "Invalid Watch request", comment: "Message in SessionStore: Invalid Watch request")))
+                    }
+                    return WatchDiaryResponse(snapshot: before)
+                }
+                if let acknowledged = prior.1 {
+                    guard acknowledged.familyID == familyID && acknowledged.kind == "startSleep" else {
+                        return WatchDiaryResponse(snapshot: before, errorMessage: String(localized: LocalizedStringResource("locInvalidWatchRequest", defaultValue: "Invalid Watch request", comment: "Message in SessionStore: Invalid Watch request")))
+                    }
+                    return WatchDiaryResponse(snapshot: before)
+                }
+                if let existing = try await database.read({ database in
+                    try SleepSession.find(sessionID).fetchOne(database)
+                }) {
+                    guard existing.familyID == familyID && existing.childID == childID else {
+                        return WatchDiaryResponse(snapshot: before, errorMessage: String(localized: LocalizedStringResource("locInvalidWatchRequest", defaultValue: "Invalid Watch request", comment: "Message in SessionStore: Invalid Watch request")))
+                    }
+                    return WatchDiaryResponse(snapshot: before)
+                }
+                guard child.activeSleepStartedAt == nil else { return WatchDiaryResponse(snapshot: before) }
+                await startSleep(familyID: familyID, childID: childID, childName: child.nickname,
+                    sessionID: sessionID, commandID: commandID)
+            case .endSleep:
+                let requestedID = request.sessionID!
+                let session = try await database.read { try SleepSession.find(requestedID).fetchOne($0) }
+                guard let session, session.familyID == familyID, session.childID == childID else {
+                    return WatchDiaryResponse(snapshot: before, errorMessage: String(localized: LocalizedStringResource("locInvalidWatchRequest", defaultValue: "Invalid Watch request", comment: "Message in SessionStore: Invalid Watch request")))
+                }
+                guard session.endedAt == nil else { return WatchDiaryResponse(snapshot: before) }
+                guard request.targetsActiveSleep(of: child) else {
+                    return WatchDiaryResponse(snapshot: before, errorMessage: String(localized: LocalizedStringResource("locSleepChangedOnIPhoneRefreshAndTryAgain", defaultValue: "Sleep changed on iPhone. Refresh and try again.", comment: "Watch wake action was based on a sleep session that is no longer active; ask the caregiver to refresh.")))
+                }
+                await endSleep(familyID: familyID, sessionID: requestedID)
             case .upsertTemperature:
                 await logTemperatureReading(familyID: familyID, childID: childID, readingID: readingID,
                     measuredAt: request.measuredAt!, centiCelsius: request.centiCelsius!,
@@ -721,12 +757,15 @@ final class SessionStore {
                     expectedRevision: request.expectedRevision)
             }
             let after = try await watchDiarySnapshot()
-            let updatedChild = after.children.first { $0.familyID == familyID && $0.id == childID }
             let accepted: Bool
             switch request.action {
             case .status: accepted = true
-            case .startSleep: accepted = updatedChild?.activeSleepStartedAt != nil
-            case .endSleep: accepted = updatedChild?.activeSleepStartedAt == nil
+            case .startSleep:
+                let saved = try await database.read { try SleepSession.find(request.sessionID!).fetchOne($0) }
+                accepted = saved?.familyID == familyID && saved?.childID == childID
+            case .endSleep:
+                let saved = try await database.read { try SleepSession.find(request.sessionID!).fetchOne($0) }
+                accepted = saved?.familyID == familyID && saved?.childID == childID && saved?.endedAt != nil
             case .upsertTemperature:
                 let saved = try await database.read { try TemperatureReading.find(readingID!).fetchOne($0) }
                 accepted = saved?.familyID == familyID && saved?.childID == childID
@@ -737,13 +776,13 @@ final class SessionStore {
                 accepted = saved == nil || saved?.deletedAt != nil
             }
             if !accepted {
-                return WatchDiaryResponse(snapshot: after, errorMessage: errorMessage ?? String(localized: LocalizedStringResource("locCouldNotSaveOnIPhone", defaultValue: "Could not save on iPhone", comment: "Message in SessionStore: Could not save on iPhone")))
+                return WatchDiaryResponse(snapshot: after, errorMessage: errorMessage ?? String(localized: LocalizedStringResource("locCouldNotSaveOnIPhone", defaultValue: "Could not save on iPhone", comment: "Message in SessionStore: Could not save on iPhone")), retryable: true)
             }
             return WatchDiaryResponse(snapshot: after,
                 notice: errorMessage == nil ? nil : String(localized: LocalizedStringResource("locSavedOnIPhoneSyncWillRetryWhenOnline", defaultValue: "Saved on iPhone. Sync will retry when online.", comment: "Message in SessionStore: Saved on iPhone. Sync will retry when online.")))
         } catch {
             return WatchDiaryResponse(snapshot: (try? await watchDiarySnapshot()) ?? WatchDiarySnapshot(),
-                errorMessage: String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated")))
+                errorMessage: String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated")), retryable: true)
         }
     }
 

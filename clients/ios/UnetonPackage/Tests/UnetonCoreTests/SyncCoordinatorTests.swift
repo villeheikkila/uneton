@@ -17,6 +17,23 @@ import Testing
 struct SyncCoordinatorTests {
   @Dependency(\.defaultDatabase) var database
 
+  @Test func watchStartUsesTheSessionIdentityRetainedAcrossRetries() async throws {
+    let familyID = Family.ID()
+    let childID = Child.ID()
+    let sessionID = SleepSession.ID()
+    let commandID = PendingCommand.ID(rawValue: sessionID.rawValue)
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    let coordinator = SyncCoordinator(deviceID: DeviceID(), accessToken: { "token" })
+    let savedID = try await coordinator.startSleep(familyID: familyID, childID: childID,
+      sessionID: sessionID, commandID: commandID, startedAt: date(1_000), source: "watch")
+    let saved = try await database.read { try SleepSession.find(sessionID).fetchOne($0) }
+    let pending = try await database.read { try PendingCommand.find(commandID).fetchOne($0) }
+    #expect(savedID == sessionID)
+    #expect(saved?.id == sessionID)
+    #expect(saved?.source == "watch")
+    #expect(pending?.kind == "startSleep")
+  }
+
   @Test func childSettingsQueueOneDurableOptimisticUpdate() async throws {
     let familyID = Family.ID(rawValue: UUID(-201))
     let childID = Child.ID(rawValue: UUID(-202))

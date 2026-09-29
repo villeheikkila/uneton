@@ -34,14 +34,17 @@ final class WatchBridge: NSObject, WCSessionDelegate {
     var selectedChild: WatchDiaryChild? { snapshot.selectedChild(id: selectedChildID) }
 
     private let usesSnapshotFixture: Bool
+    private let pendingStore = WatchPendingRequestStore()
 
     init(snapshotFixture: WatchDiarySnapshot? = nil) {
         usesSnapshotFixture = snapshotFixture != nil
         selectedChildID = UserDefaults.standard.string(forKey: "watch.selectedChildID").flatMap(Child.ID.init(uuidString:))
+        pendingRequest = pendingStore.load()
         super.init()
         if let snapshotFixture {
             snapshot = snapshotFixture
             selectedChildID = snapshotFixture.children.first?.id
+            pendingRequest = nil
             return
         }
         guard WCSession.isSupported() else { return }
@@ -55,6 +58,7 @@ final class WatchBridge: NSObject, WCSessionDelegate {
     }
 
     private func accept(_ value: WatchDiarySnapshot) {
+        guard value.isNewer(than: snapshot) else { return }
         snapshot = value
         if value.children.isEmpty {
             selectedChildID = nil
@@ -67,7 +71,7 @@ final class WatchBridge: NSObject, WCSessionDelegate {
 
     func refresh() {
         guard !usesSnapshotFixture else { return }
-        guard pendingRequest == nil else { return }
+        if let pendingRequest { send(pendingRequest); return }
         send(WatchDiaryRequest(action: .status))
     }
 
@@ -78,15 +82,22 @@ final class WatchBridge: NSObject, WCSessionDelegate {
 
     func send(_ request: WatchDiaryRequest) {
         guard !isWorking else { return }
+        if request.action != .status {
+            do {
+                try pendingStore.save(request)
+            } catch {
+                errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated"))
+                return
+            }
+            pendingRequest = request
+        }
         guard WCSession.isSupported(), WCSession.default.activationState == .activated,
               WCSession.default.isReachable else {
-            if request.action != .status { pendingRequest = request }
             errorMessage = String(localized: LocalizedStringResource("locOpenUnetonOnYourIPhoneToContinue", defaultValue: "Open Uneton on your iPhone to continue.", comment: "Message in UnetonWatchApp: Open Uneton on your iPhone to continue."))
             return
         }
         do {
             let data = try JSONEncoder().encode(request)
-            if request.action != .status { pendingRequest = request }
             isWorking = true
             errorMessage = nil
             notice = nil
@@ -101,7 +112,10 @@ final class WatchBridge: NSObject, WCSessionDelegate {
                     self.accept(response.snapshot)
                     self.errorMessage = response.errorMessage
                     self.notice = response.notice
-                    self.pendingRequest = nil
+                    if request.action != .status && response.retryable != true {
+                        self.pendingStore.clear()
+                        self.pendingRequest = nil
+                    }
                 }
             }, errorHandler: { [weak self] _ in
                 Task { @MainActor [weak self] in
@@ -145,6 +159,7 @@ private enum WatchScreenshotFixture {
         let child = ModelFixtures.child()
         return WatchDiarySnapshot(children: [ModelFixtures.watchChild(
             from: child, family: family,
+            activeSleepID: scenario == "sleeping" ? SleepSession.ID() : nil,
             activeSleepStartedAt: scenario == "sleeping" ? .now.addingTimeInterval(-3_600) : nil,
             readings: scenario == "temperature" ? [ModelFixtures.temperature()] : []
         )])
@@ -185,13 +200,18 @@ private struct WatchDiaryView: View {
                         Text("locAwake", comment: "Text in UnetonWatchApp: Awake").font(.headline)
                     }
                     Button(child.activeSleepStartedAt == nil ? LocalizedStringResource("locStartSleep", defaultValue: "Start sleep", comment: "Button title in UnetonWatchApp: Start sleep") : LocalizedStringResource("locWakeUp", defaultValue: "Wake up", comment: "Action in Watch and Live Activity that records that the baby woke up")) {
-                        bridge.send(WatchDiaryRequest(
-                            action: child.activeSleepStartedAt == nil ? .startSleep : .endSleep,
-                            familyID: child.familyID, childID: child.id))
+                        if child.activeSleepStartedAt == nil {
+                            bridge.send(WatchDiaryRequest(action: .startSleep, familyID: child.familyID,
+                                childID: child.id, sessionID: SleepSession.ID()))
+                        } else if let sessionID = child.activeSleepID {
+                            bridge.send(WatchDiaryRequest(action: .endSleep, familyID: child.familyID,
+                                childID: child.id, sessionID: sessionID))
+                        }
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(child.activeSleepStartedAt == nil ? WatchPalette.blue : WatchPalette.turquoise)
-                    .disabled(bridge.isWorking || bridge.pendingRequest != nil)
+                    .disabled(bridge.isWorking || bridge.pendingRequest != nil
+                        || (child.activeSleepStartedAt != nil && child.activeSleepID == nil))
 
                     Divider()
                     Button { showingNewTemperature = true } label: {

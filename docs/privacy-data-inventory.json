@@ -87,6 +87,7 @@
   },
   "excludedFromCollection": {
     "growth_reference_points": "Static population reference curves, not a family's observations",
-    "local_projection": "Device-local copy and unresolved commands are already represented by authoritative data categories; they are not a separate upload category"
+    "local_projection": "Device-local copy and unresolved commands are already represented by authoritative data categories; they are not a separate upload category",
+    "watch_pending_request": "One device-local Watch request may contain family and child IDs, a sleep or temperature reading ID, temperature and note until the iPhone gives a definitive reply; these fields are already represented by the diary categories and are not a separate upload category"
   }
 }

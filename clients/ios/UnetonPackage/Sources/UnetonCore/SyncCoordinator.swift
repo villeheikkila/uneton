@@ -58,11 +58,13 @@ public actor SyncCoordinator {
   public func startSleep(
     familyID: Family.ID,
     childID: Child.ID,
+    sessionID: SleepSession.ID? = nil,
+    commandID: PendingCommand.ID? = nil,
     startedAt: Date? = nil,
     source: String = "phone"
   ) async throws -> SleepSession.ID {
-    let sessionID: SleepSession.ID = nextID()
-    let commandID: PendingCommand.ID = nextID()
+    let sessionID: SleepSession.ID = sessionID ?? nextID()
+    let commandID: PendingCommand.ID = commandID ?? nextID()
     let start = startedAt ?? now
     let payload = try jsonValue(SleepCommandPayload(id: sessionID, childID: childID, startedAt: start, endedAt: nil, source: source))
     let pending = try pendingCommand(id: commandID, familyID: familyID, kind: "startSleep", payload: payload)

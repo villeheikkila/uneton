@@ -3493,6 +3493,24 @@
         }
       }
     },
+    "locSleepChangedOnIPhoneRefreshAndTryAgain": {
+      "comment": "A Watch wake action referred to a sleep session that is no longer active; ask the caregiver to refresh before trying again.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep changed on iPhone. Refresh and try again."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uni muuttui iPhonessa. Päivitä ja yritä uudelleen."
+          }
+        }
+      }
+    },
     "locCouldNotSaveOnIPhone": {
       "comment": "User-facing baby tracking text: “Could not save on iPhone”. Preserve the action or meaning in translation.",
       "extractionState": "manual",

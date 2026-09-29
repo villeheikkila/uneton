@@ -85,11 +85,12 @@ public enum ModelFixtures {
   }
 
   public static func watchChild(
-    from child: Child, family: Family, activeSleepStartedAt: Date? = nil,
+    from child: Child, family: Family, activeSleepID: SleepSession.ID? = nil,
+    activeSleepStartedAt: Date? = nil,
     readings: [TemperatureReading] = []
   ) -> WatchDiaryChild {
     WatchDiaryChild(id: child.id, familyID: family.id, familyName: family.name,
-      nickname: child.nickname, activeSleepStartedAt: activeSleepStartedAt,
+      nickname: child.nickname, activeSleepID: activeSleepID, activeSleepStartedAt: activeSleepStartedAt,
       readings: readings.map(watchReading))
   }
 }
