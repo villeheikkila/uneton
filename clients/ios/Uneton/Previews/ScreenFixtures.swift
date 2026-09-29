@@ -122,7 +122,7 @@ enum ScreenFixtures {
             let store = Store(initialState: Onboarding.State()) {
                 Onboarding().environment(\.sessionAuth, demo.auth)
             }
-            return AnyView(OnboardingView(store: store, prepareAppleAuthorization: { _ in }))
+            return AnyView(OnboardingScreen(store: store, prepareAppleAuthorization: { _ in }))
         case .familySetup, .invitationScannerSheet:
             var state = FamilySetup.State()
             state.birthDate = child.birthDate
@@ -132,9 +132,9 @@ enum ScreenFixtures {
             let store = Store(initialState: state) {
                 FamilySetup().environment(\.sessionFamily, demo.family)
             }
-            return AnyView(FamilySetupView(store: store))
+            return AnyView(FamilySetupScreen(store: store))
         default:
-            var state = FamilySync.State(familyID: family.id)
+            var state = FamilySync.State(familyID: family.id, childID: child.id)
             switch scenario {
             case .sleepEntrySheet:
                 state.entry = SleepEntry.State(familyID: family.id, childID: child.id, childName: child.nickname, now: now)

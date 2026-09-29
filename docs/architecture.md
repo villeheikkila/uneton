@@ -80,6 +80,8 @@ The app uses TCA26 for presentation and lifecycle orchestration. `AppRoot` owns 
 
 SQLiteData remains the durable read source. TCA feature state holds selection, presentation, loading, and form workflow state, not a second copy of authoritative diary records or a second command queue. The `SessionStore` runtime still handles Apple frameworks, the Watch bridge, background push registration, and existing sync effects. Moving further actions into features must preserve optimistic command insertion and the complete `SyncCoordinator` reconciliation path described below.
 
+SwiftUI `Screen` and `Sheet` views own navigation, toolbars, presentation, and scene lifecycle. Their `Content` views read from TCA26 feature stores. Feature state owns SQLiteData readers with `@ObservationIgnored @FetchAll` or `@FetchOne`; readers for the active family or baby filter in SQLite. Selecting a different family or baby creates new scoped feature state, so data from the previous selection cannot appear under the new title. A `ForEach` row has one root view, with a stack inside it when the row needs several elements. The feature does not keep a second copy of the diary.
+
 `FamilySync` also owns the selected tab and insights range. Sleep and growth charts derive their summaries from the current SQLite projection with pure `UnetonCore` calculations; they do not persist a separate chart cache. Feature effects read injected time, and preview fixtures compose a demo `SessionStore` with fake feature clients so rendering cannot start production observers or credential work.
 
 ## Mutation path: local intent to authoritative state

@@ -2,7 +2,7 @@ import AuthenticationServices
 import ComposableArchitecture2
 import SwiftUI
 
-struct OnboardingView: View {
+struct OnboardingContent: View {
     @Bindable var store: StoreOf<Onboarding>
     let prepareAppleAuthorization: (ASAuthorizationAppleIDRequest) -> Void
 
@@ -70,7 +70,3 @@ struct OnboardingView: View {
         }
     }
 }
-
-#if DEBUG
-#Preview("Onboarding") { ScreenFixtures.preview(.onboarding) }
-#endif

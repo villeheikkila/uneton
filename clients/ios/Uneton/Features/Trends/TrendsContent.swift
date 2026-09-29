@@ -2,15 +2,15 @@ import Charts
 import UnetonCore
 import SwiftUI
 
-struct TrendsView: View {
+struct TrendsContent: View {
     @Environment(\.calendar) private var calendar
     @Environment(\.unetonDisplayNow) private var displayNowOverride
     let sessions: [SleepSession]
     @Binding var range: Int
     private var now: Date { displayNowOverride ?? .now }
-    private var summary: SleepTrends { SleepTrends(sessions: sessions, rangeDays: range, now: now, calendar: calendar) }
 
     var body: some View {
+        let summary = SleepTrends(sessions: sessions, rangeDays: range, now: now, calendar: calendar)
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 Picker("Range", selection: $range) {
@@ -21,7 +21,7 @@ struct TrendsView: View {
                 .padding(4)
                 .glassEffect(.regular.tint(Color.sleepLavender.opacity(0.12)), in: .capsule)
 
-                overviewCard
+                overviewCard(summary)
 
                 HStack(spacing: 12) {
                     metricCard(
@@ -33,7 +33,7 @@ struct TrendsView: View {
                     )
                     metricCard(
                         title: "Daily average",
-                        value: averageDuration,
+                        value: averageDuration(summary),
                         detail: "total sleep",
                         icon: "sparkles",
                         color: .sleepDawn
@@ -114,14 +114,14 @@ struct TrendsView: View {
         .contentMargins(.top, 6, for: .scrollContent)
     }
 
-    private var overviewCard: some View {
+    private func overviewCard(_ summary: SleepTrends) -> some View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Sleep insights")
                         .font(.title3.weight(.semibold))
                         .foregroundStyle(.white.opacity(0.75))
-                    Text(totalDuration)
+                    Text(totalDuration(summary))
                         .font(.system(size: 42, weight: .bold, design: .rounded))
                     Text("tracked across \(range) days")
                         .font(.subheadline)
@@ -174,12 +174,12 @@ struct TrendsView: View {
         .shadow(color: Color.sleepIndigo.opacity(0.18), radius: 22, y: 10)
     }
 
-    private var totalDuration: String {
+    private func totalDuration(_ summary: SleepTrends) -> String {
         Duration.seconds(summary.totalSeconds)
             .formatted(.units(allowed: [.hours, .minutes], width: .abbreviated))
     }
 
-    private var averageDuration: String {
+    private func averageDuration(_ summary: SleepTrends) -> String {
         guard !summary.days.isEmpty else { return "—" }
         return Duration.seconds(summary.averageSeconds)
             .formatted(.units(allowed: [.hours, .minutes], width: .abbreviated))

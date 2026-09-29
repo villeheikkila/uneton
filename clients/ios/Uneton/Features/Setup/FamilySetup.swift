@@ -1,9 +1,13 @@
 import ComposableArchitecture2
 import Foundation
+import Observation
+import SQLiteData
+import UnetonCore
 
 @Feature
 struct FamilySetup {
     struct State {
+        @ObservationIgnored @DebugSnapshotIgnored @FetchOne(PendingCommand.count()) var pendingCommandCount = 0
         var birthDate = Calendar.current.date(byAdding: .month, value: -6, to: .now) ?? .now
         var childName = ""
         var errorMessage: String?

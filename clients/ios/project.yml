@@ -15,6 +15,9 @@ packages:
   SnapshotTesting:
     url: https://github.com/pointfreeco/swift-snapshot-testing.git
     revision: 59a99c458de4d2dee580529b61b4f78dca7b7fa6
+  Dependencies:
+    url: https://github.com/pointfreeco/swift-dependencies
+    version: 1.17.1
   Tagged:
     url: https://github.com/pointfreeco/swift-tagged.git
     version: 0.10.0
@@ -147,6 +150,8 @@ targets:
         product: Tagged
       - package: TCA26
         product: ComposableArchitectureTestSupport
+      - package: Dependencies
+        product: DependenciesTestSupport
       - package: SnapshotTesting
         product: SnapshotTesting
 schemes:

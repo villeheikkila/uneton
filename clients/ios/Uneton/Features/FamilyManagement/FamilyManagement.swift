@@ -1,5 +1,7 @@
 import ComposableArchitecture2
 import Foundation
+import Observation
+import SQLiteData
 import UnetonCore
 
 @Feature
@@ -14,6 +16,7 @@ struct FamilyManagement {
 
     struct State {
         let familyID: Family.ID
+        @ObservationIgnored @DebugSnapshotIgnored @FetchAll var children: [Child]
         var snapshot: FamilyManagementSnapshot?
         var profileName = ""
         var familyName = ""
@@ -33,6 +36,14 @@ struct FamilyManagement {
         var isFinished = false
         @StoreTaskID var load
         @StoreTaskID var request
+
+        init(familyID: Family.ID) {
+            self.familyID = familyID
+            _children = FetchAll(Child.where { $0.familyID.eq(familyID) }
+                .order { $0.updatedAt.desc() })
+        }
+
+        var isLoadingChildren: Bool { $children.isLoading }
     }
 
     enum Action {

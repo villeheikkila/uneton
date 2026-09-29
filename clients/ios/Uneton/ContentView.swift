@@ -1,6 +1,5 @@
 import ComposableArchitecture2
 import UnetonCore
-import SQLiteData
 import SwiftUI
 
 struct ContentView: View {
@@ -11,13 +10,10 @@ struct ContentView: View {
 
     @Bindable var store: StoreOf<AppRoot>
     @Environment(SessionStore.self) private var session
-    @FetchAll(Family.order { $0.updatedAt.desc() }) private var families
-    @FetchAll(Child.order { $0.updatedAt.desc() }) private var children
-
     private var visibleFamilies: [Family] {
-        guard let memberships = session.memberships else { return families }
+        guard let memberships = session.memberships else { return store.families }
         let ids = Set(memberships.map(\.id))
-        return families.filter { ids.contains($0.id) }
+        return store.families.filter { ids.contains($0.id) }
     }
 
     private var selectedFamily: Family? {
@@ -27,19 +23,20 @@ struct ContentView: View {
     var body: some View {
         Group {
             if !store.isAuthenticated {
-                OnboardingView(
+                OnboardingScreen(
                     store: store.scope(\.onboarding),
                     prepareAppleAuthorization: { session.prepareAppleAuthorization($0) }
                 )
             } else if let family = selectedFamily {
-                let familyChildren = children.filter { $0.familyID == family.id }
-                if let child = familyChildren.first(where: { $0.id == store.selectedChildID }) ?? familyChildren.first {
-                    familyContent(family: family, child: child, familyChildren: familyChildren)
+                if let homeStore = store.scope(\.familyHome), homeStore.familyID == family.id {
+                    FamilyHomeContent(store: store, homeStore: homeStore, family: family,
+                        families: visibleFamilies)
+                        .id(family.id)
                 } else {
-                    emptyFamily(family)
+                    ProgressView()
                 }
             } else {
-                FamilySetupView(store: store.scope(\.familySetup))
+                FamilySetupScreen(store: store.scope(\.familySetup))
             }
         }
         .onOpenURL { url in
@@ -54,40 +51,4 @@ struct ContentView: View {
         }
     }
 
-    @ViewBuilder
-    private func familyContent(family: Family, child: Child, familyChildren: [Child]) -> some View {
-        if let syncStore = store.scope(\.familySync) {
-            TimelineScreen(syncStore: syncStore, family: family, child: child,
-                families: visibleFamilies, children: familyChildren,
-                selectFamily: { store.send(.selectFamily($0)) },
-                selectChild: { store.send(.selectChild($0)) })
-        } else {
-            ProgressView()
-        }
-    }
-
-    private func emptyFamily(_ family: Family) -> some View {
-        NavigationStack {
-            ContentUnavailableView("No babies yet", systemImage: "figure.child",
-                description: Text("Add a baby to start tracking sleep, growth and temperature."))
-                .navigationTitle(family.name)
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Menu("Family", systemImage: "person.2.fill") {
-                            ForEach(visibleFamilies) { item in
-                                Button(item.name) { store.send(.selectFamily(item.id)) }
-                            }
-                            Button("Manage family") { store.send(.showFamilyManagement(family.id)) }
-                        }
-                    }
-                }
-                .safeAreaBar(edge: .bottom) {
-                    Button("Add baby", systemImage: "plus") { store.send(.showFamilyManagement(family.id)) }
-                        .buttonStyle(.glassProminent)
-                }
-                .sheet(item: $store.scope(\.management)) { management in
-                    FamilyManagementView(store: management, children: [])
-                }
-        }
-    }
 }

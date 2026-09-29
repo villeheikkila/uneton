@@ -1,10 +1,14 @@
 import ComposableArchitecture2
 import Foundation
+import Observation
+import SQLiteData
 import UnetonCore
 
 @Feature
 struct AppRoot {
     struct State {
+        @ObservationIgnored @DebugSnapshotIgnored @FetchAll(Family.order { $0.updatedAt.desc() }) var families: [Family]
+        var familyHome: FamilyHome.State?
         var familySetup = FamilySetup.State()
         var familySync: FamilySync.State?
         var isAuthenticated: Bool
@@ -17,6 +21,7 @@ struct AppRoot {
     enum Action {
         case authenticationChanged(Bool)
         case credentialValidationRequested
+        case familyHome(FamilyHome.Action)
         case familySetup(FamilySetup.Action)
         case familySelected(Family.ID?)
         case familySync(FamilySync.Action)
@@ -38,6 +43,7 @@ struct AppRoot {
                     state.isAuthenticated = isAuthenticated
                     if !isAuthenticated {
                         state.familySync = nil
+                        state.familyHome = nil
                         state.selectedFamilyID = nil
                         state.selectedChildID = nil
                         state.management = nil
@@ -50,6 +56,7 @@ struct AppRoot {
                 case let .familySelected(familyID):
                     guard state.isAuthenticated, let familyID else {
                         state.familySync = nil
+                        state.familyHome = nil
                         state.selectedFamilyID = nil
                         state.selectedChildID = nil
                         return
@@ -58,19 +65,34 @@ struct AppRoot {
                         state.selectedFamilyID = familyID
                         state.selectedChildID = nil
                     }
-                    if state.familySync?.familyID != familyID {
-                        state.familySync = FamilySync.State(familyID: familyID)
+                    if state.familyHome?.familyID != familyID {
+                        state.familyHome = FamilyHome.State(familyID: familyID)
+                    }
+                    if let childID = state.selectedChildID {
+                        if state.familySync?.familyID != familyID || state.familySync?.childID != childID {
+                            state.familySync = FamilySync.State(familyID: familyID, childID: childID)
+                        }
+                    } else {
+                        state.familySync = nil
                     }
                 case let .selectFamily(id):
                     state.selectedFamilyID = id
                     state.selectedChildID = nil
+                    state.familyHome = FamilyHome.State(familyID: id)
+                    state.familySync = nil
                 case let .selectChild(id):
                     state.selectedChildID = id
+                    if let familyID = state.selectedFamilyID,
+                       (state.familySync?.familyID != familyID || state.familySync?.childID != id) {
+                        let selectedTab = state.familySync?.selectedTab ?? .timeline
+                        state.familySync = FamilySync.State(familyID: familyID, childID: id)
+                        state.familySync?.selectedTab = selectedTab
+                    }
                 case let .showFamilyManagement(id):
                     state.management = FamilyManagement.State(familyID: id)
                 case .management:
                     break
-                case .familySetup, .familySync, .onboarding:
+                case .familyHome, .familySetup, .familySync, .onboarding:
                     break
                 case let .openedURL(url):
                     store.addTask {
@@ -86,6 +108,7 @@ struct AppRoot {
                 FamilySetup()
             }
         }
+        .ifLet(\.familyHome) { FamilyHome() }
         .ifLet(\.familySync) {
             FamilySync()
         }

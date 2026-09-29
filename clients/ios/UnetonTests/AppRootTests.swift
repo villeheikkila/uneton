@@ -1,11 +1,15 @@
 import ComposableArchitecture2
 import ComposableArchitectureTestSupport
+import DependenciesTestSupport
 import Foundation
 import Testing
 import UnetonCore
 @testable import Uneton
 
 @MainActor
+@Suite(.dependencies {
+    try $0.bootstrapDatabase(inMemory: true)
+})
 struct AppRootTests {
     @Test func `baby settings save through the injected family client`() async {
         let child = ModelFixtures.child()
@@ -78,20 +82,28 @@ struct AppRootTests {
     @Test func `selection follows authentication and family changes`() async {
         let firstFamily = Family.ID(uuidString: "00000000-0000-4000-8000-000000000001")!
         let secondFamily = Family.ID(uuidString: "00000000-0000-4000-8000-000000000002")!
+        let firstChild = Child.ID(uuidString: "00000000-0000-4000-8000-000000000010")!
         let store = TestStore(initialState: AppRoot.State(isAuthenticated: true)) {
             AppRoot()
         }
 
         store.send(.familySelected(firstFamily)) {
-            $0.familySync = FamilySync.State.DebugSnapshot(familyID: firstFamily)
+            $0.familyHome = FamilyHome.State.DebugSnapshot(familyID: firstFamily)
             $0.selectedFamilyID = firstFamily
         }
+        store.send(.selectChild(firstChild)) {
+            $0.selectedChildID = firstChild
+            $0.familySync = FamilySync.State.DebugSnapshot(familyID: firstFamily, childID: firstChild)
+        }
         store.send(.familySelected(secondFamily)) {
-            $0.familySync = FamilySync.State.DebugSnapshot(familyID: secondFamily)
+            $0.familyHome = FamilyHome.State.DebugSnapshot(familyID: secondFamily)
+            $0.familySync = nil
             $0.selectedFamilyID = secondFamily
+            $0.selectedChildID = nil
         }
         store.send(.authenticationChanged(false)) {
             $0.isAuthenticated = false
+            $0.familyHome = nil
             $0.familySync = nil
             $0.selectedFamilyID = nil
         }
