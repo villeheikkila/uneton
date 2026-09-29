@@ -140,6 +140,7 @@ private enum WatchScreenshotFixture {
         guard let scenario = ProcessInfo.processInfo.environment["UNETON_WATCH_SCREENSHOT_SCENARIO"] else {
             return nil
         }
+        if scenario == "setup" { return WatchDiarySnapshot() }
         let family = ModelFixtures.family()
         let child = ModelFixtures.child()
         return WatchDiarySnapshot(children: [ModelFixtures.watchChild(

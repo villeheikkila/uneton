@@ -66,8 +66,12 @@ description = "Record iPhone and Live Activity snapshots on iPhone 17 Pro with i
 run = "xcodebuild -project clients/ios/Uneton.xcodeproj -scheme Uneton -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' -derivedDataPath /tmp/uneton-snapshot-derived-data -only-testing:UnetonTests/ScreenSnapshots -only-testing:UnetonTests/ActivitySnapshots test CODE_SIGNING_ALLOWED=NO ARCHS=arm64 UNETON_RECORD_SNAPSHOTS=UNETON_RECORD_SNAPSHOTS"
 
 [tasks."watch:screenshots:test"]
-description = "Capture Watch screen attachments and verify key controls (requires a watchOS simulator)"
-run = "xcodebuild -project clients/ios/Uneton.xcodeproj -scheme UnetonWatch -destination 'platform=watchOS Simulator,name=Apple Watch Series 11 (46mm)' -derivedDataPath /tmp/uneton-watch-screenshot-derived-data -only-testing:UnetonWatchUITests/WatchScreenshots test CODE_SIGNING_ALLOWED=NO"
+description = "Capture Watch screen attachments and verify key controls on Series 12 (46mm)"
+run = "xcodebuild -project clients/ios/Uneton.xcodeproj -scheme UnetonWatch -destination 'platform=watchOS Simulator,name=Apple Watch Series 12 (46mm),OS=27.0' -derivedDataPath /tmp/uneton-watch-screenshot-derived-data -only-testing:UnetonWatchUITests/WatchScreenshots test CODE_SIGNING_ALLOWED=NO ARCHS=arm64"
+
+[tasks."watch:screenshots:record"]
+description = "Run Watch UI tests and save their screenshot attachments as named PNG references"
+run = "python3 clients/ios/scripts/record_watch_snapshots.py"
 
 [tasks.generate]
 description = "Regenerate sqlc and ConnectRPC sources"

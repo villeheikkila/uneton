@@ -24,6 +24,29 @@ final class WatchScreenshots: XCTestCase {
         attachScreenshot(of: app, named: "watch-temperature-entry")
     }
 
+    func testTemperatureHistory() {
+        let app = launch("temperature")
+        let reading = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "°C")).firstMatch
+        XCTAssertTrue(reading.waitForExistence(timeout: 10))
+        app.swipeUp()
+        attachScreenshot(of: app, named: "watch-temperature-history")
+    }
+
+    func testEditTemperature() {
+        let app = launch("temperature")
+        let reading = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "°C")).firstMatch
+        XCTAssertTrue(reading.waitForExistence(timeout: 10))
+        reading.tap()
+        XCTAssertTrue(app.staticTexts["Edit reading"].waitForExistence(timeout: 5))
+        attachScreenshot(of: app, named: "watch-temperature-edit")
+    }
+
+    func testNeedsIPhoneSetup() {
+        let app = launch("setup")
+        XCTAssertTrue(app.staticTexts["Set up Uneton on iPhone"].waitForExistence(timeout: 10))
+        attachScreenshot(of: app, named: "watch-setup")
+    }
+
     private func launch(_ scenario: String) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["UNETON_WATCH_SCREENSHOT_SCENARIO"] = scenario
