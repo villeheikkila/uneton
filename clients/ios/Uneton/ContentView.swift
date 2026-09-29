@@ -39,6 +39,7 @@ struct ContentView: View {
                 FamilySetupScreen(store: store.scope(\.familySetup))
             }
         }
+        .tint(Color.sleepBlue)
         .onOpenURL { url in
             store.send(.openedURL(url))
         }

@@ -19,7 +19,7 @@ struct TrendsContent: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(4)
-                .glassEffect(.regular.tint(Color.sleepLavender.opacity(0.12)), in: .capsule)
+                .glassEffect(.regular.tint(Color.sleepTurquoise.opacity(0.12)), in: .capsule)
 
                 overviewCard(summary)
 
@@ -29,14 +29,14 @@ struct TrendsContent: View {
                         value: "\(summary.sessionCount)",
                         detail: String(localized: LocalizedStringResource("locInThisPeriod", defaultValue: "in this period", comment: "Message in Trends: in this period")),
                         icon: "moon.zzz.fill",
-                        color: .sleepIndigo
+                        color: .sleepBlue
                     )
                     metricCard(
                         title: String(localized: LocalizedStringResource("locDailyAverage", defaultValue: "Daily average", comment: "Message in Trends: Daily average")),
                         value: averageDuration(summary),
                         detail: String(localized: LocalizedStringResource("locTotalSleep", defaultValue: "total sleep", comment: "Message in Trends: total sleep")),
                         icon: "sparkles",
-                        color: .sleepDawn
+                        color: .sleepAqua
                     )
                 }
 
@@ -48,7 +48,7 @@ struct TrendsContent: View {
                         )
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [.sleepLavender, .sleepIndigo],
+                                colors: [.sleepTurquoise, .sleepBlue],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
@@ -62,7 +62,7 @@ struct TrendsContent: View {
                     }
                     .chartYAxis {
                         AxisMarks(position: .leading) { _ in
-                            AxisGridLine().foregroundStyle(Color.sleepIndigo.opacity(0.1))
+                            AxisGridLine().foregroundStyle(Color.sleepBlue.opacity(0.1))
                             AxisValueLabel()
                         }
                     }
@@ -77,7 +77,7 @@ struct TrendsContent: View {
                         )
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [.sleepMoonlight, .sleepLavender],
+                                colors: [.sleepSky, .sleepTurquoise],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
@@ -87,7 +87,7 @@ struct TrendsContent: View {
                     .chartXScale(domain: 0...1_440)
                     .chartXAxis {
                         AxisMarks(values: [0, 360, 720, 1_080, 1_440]) { value in
-                                AxisGridLine().foregroundStyle(Color.sleepIndigo.opacity(0.1))
+                                AxisGridLine().foregroundStyle(Color.sleepBlue.opacity(0.1))
                                 AxisValueLabel {
                                 if let minute = value.as(Int.self) {
                                     Text(String(format: "%02d", minute / 60))
@@ -100,10 +100,10 @@ struct TrendsContent: View {
                 chartCard(String(localized: LocalizedStringResource("locSessionsPerDay", defaultValue: "Sessions per day", comment: "Message in Trends: Sessions per day")), detail: String(localized: LocalizedStringResource("locRhythmLowercase", defaultValue: "rhythm", comment: "Message in Trends: rhythm"))) {
                     Chart(summary.days) { value in
                         LineMark(x: .value(String(localized: LocalizedStringResource("locDay", defaultValue: "Day", comment: "Message in Trends: Day")), value.date), y: .value(String(localized: LocalizedStringResource("locNaps", defaultValue: "Naps", comment: "Message in Trends: Naps")), value.sessions))
-                            .foregroundStyle(Color.sleepDawn)
+                            .foregroundStyle(Color.sleepAqua)
                             .lineStyle(.init(lineWidth: 3, lineCap: .round, lineJoin: .round))
                         PointMark(x: .value(String(localized: LocalizedStringResource("locDay", defaultValue: "Day", comment: "Message in Trends: Day")), value.date), y: .value(String(localized: LocalizedStringResource("locNaps", defaultValue: "Naps", comment: "Message in Trends: Naps")), value.sessions))
-                            .foregroundStyle(Color.sleepDawn)
+                            .foregroundStyle(Color.sleepAqua)
                     }
                 }
             }
@@ -161,7 +161,7 @@ struct TrendsContent: View {
         .padding(22)
         .background(
             LinearGradient(
-                colors: [Color.sleepIndigo, Color.sleepLavender, Color.sleepMoonlight.opacity(0.9)],
+                colors: [Color.sleepBlue, Color.sleepTurquoise, Color.sleepAqua],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             ),
@@ -171,7 +171,7 @@ struct TrendsContent: View {
             RoundedRectangle(cornerRadius: 30)
                 .stroke(.white.opacity(0.25), lineWidth: 1)
         }
-        .shadow(color: Color.sleepIndigo.opacity(0.18), radius: 22, y: 10)
+        .shadow(color: Color.sleepBlue.opacity(0.18), radius: 22, y: 10)
     }
 
     private func totalDuration(_ summary: SleepTrends) -> String {
@@ -213,7 +213,7 @@ struct TrendsContent: View {
             content().frame(height: 210)
         }
         .padding(20)
-        .glassEffect(.regular.tint(Color.sleepLavender.opacity(0.09)), in: .rect(cornerRadius: 28))
+        .glassEffect(.regular.tint(Color.sleepTurquoise.opacity(0.09)), in: .rect(cornerRadius: 28))
     }
 }
 

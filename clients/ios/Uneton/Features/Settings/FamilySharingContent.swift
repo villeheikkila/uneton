@@ -9,7 +9,7 @@ struct FamilySharingContent: View {
             VStack(spacing: 22) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 48))
-                    .foregroundStyle(.indigo)
+                    .foregroundStyle(Color.sleepBlue)
                 Text("locDeviceAndAccount", comment: "Text in Settings: Device and account")
                     .font(.title2.bold())
 
@@ -53,5 +53,6 @@ struct FamilySharingContent: View {
             }
             .padding(24)
         }
+        .background(Color.sleepCanvas.ignoresSafeArea())
     }
 }

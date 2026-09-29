@@ -85,7 +85,7 @@ struct TimelineScreen: View {
                             Button(LocalizedStringResource("locSyncConflicts", defaultValue: "Sync conflicts", comment: "Button title in Timeline: Sync conflicts"), systemImage: "exclamationmark.triangle.fill") {
                                 syncStore.send(.conflictListButtonTapped)
                             }
-                            .tint(.orange)
+                            .tint(Color.sleepAqua)
                         }
                     }
                 }

@@ -31,13 +31,13 @@ struct SyncConflictsContent: View {
                                     title: String(localized: LocalizedStringResource("locMyChange", defaultValue: "My change", comment: "Message in Timeline: My change")),
                                     startedAt: comparison.local.startedAt,
                                     endedAt: comparison.local.endedAt,
-                                    tint: .indigo
+                                    tint: .sleepBlue
                                 )
                                 ConflictVersionRow(
                                     title: String(localized: LocalizedStringResource("locServerVersion", defaultValue: "Server version", comment: "Message in Timeline: Server version")),
                                     startedAt: comparison.server.startedAt,
                                     endedAt: comparison.server.endedAt,
-                                    tint: .orange
+                                    tint: .sleepTurquoise
                                 )
                             }
                         }

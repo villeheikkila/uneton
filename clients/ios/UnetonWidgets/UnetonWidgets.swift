@@ -18,12 +18,12 @@ struct SleepLiveActivity: Widget {
                 childName: context.attributes.childName,
                 elapsed: Text(timerInterval: context.attributes.startedAt...Date.distantFuture, countsDown: false),
                 endURL: endURL(context.attributes))
-            .activityBackgroundTint(Color.indigo.opacity(0.12))
+            .activityBackgroundTint(SleepActivityPalette.softBlue)
             .activitySystemActionForegroundColor(.primary)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Image(systemName: "moon.zzz.fill").foregroundStyle(.indigo)
+                    Image(systemName: "moon.zzz.fill").foregroundStyle(SleepActivityPalette.blue)
                 }
                 DynamicIslandExpandedRegion(.center) {
                     SleepActivityExpandedCenterView(
@@ -39,13 +39,13 @@ struct SleepLiveActivity: Widget {
                     SleepActivityExpandedBottomView(childName: context.attributes.childName)
                 }
             } compactLeading: {
-                Image(systemName: "moon.fill").foregroundStyle(.indigo)
+                Image(systemName: "moon.fill").foregroundStyle(SleepActivityPalette.blue)
             } compactTrailing: {
                 Text(timerInterval: context.attributes.startedAt...Date.distantFuture, countsDown: false)
                     .monospacedDigit()
                     .frame(width: 42)
             } minimal: {
-                Image(systemName: "moon.fill").foregroundStyle(.indigo)
+                Image(systemName: "moon.fill").foregroundStyle(SleepActivityPalette.blue)
             }
             .widgetURL(endURL(context.attributes))
         }

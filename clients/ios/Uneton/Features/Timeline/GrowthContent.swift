@@ -35,7 +35,7 @@ private struct GrowthCard: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding(18)
-                .glassEffect(.regular.tint(Color.sleepMoonlight.opacity(0.12)), in: .rect(cornerRadius: 24))
+                .glassEffect(.regular.tint(Color.sleepSky.opacity(0.12)), in: .rect(cornerRadius: 24))
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("locReferenceCurves", comment: "Text in Timeline: Reference curves")
@@ -67,7 +67,7 @@ private struct GrowthCard: View {
                         .frame(height: 48)
                 }
                 .buttonStyle(.glassProminent)
-                .tint(Color.sleepIndigo)
+                .tint(Color.sleepBlue)
 
                 if measurements.isEmpty {
                     ContentUnavailableView(
@@ -83,7 +83,7 @@ private struct GrowthCard: View {
                             HStack(spacing: 14) {
                                 Image(systemName: "cross.case.fill")
                                     .font(.title3)
-                                    .foregroundStyle(Color.sleepIndigo)
+                                    .foregroundStyle(Color.sleepBlue)
                                     .frame(width: 30)
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(measurement.measuredAt, format: .dateTime.year().month(.wide).day())
@@ -129,7 +129,7 @@ private struct GrowthCard: View {
     private func referenceButton(_ title: LocalizedStringResource, value: String) -> some View {
         Button { onReferenceChanged(value) } label: { Text(title) }
             .buttonStyle(.bordered)
-            .tint(child.growthReference == value ? Color.sleepIndigo : .secondary)
+            .tint(child.growthReference == value ? Color.sleepBlue : .secondary)
             .frame(maxWidth: .infinity)
             .accessibilityAddTraits(child.growthReference == value ? .isSelected : [])
     }
@@ -157,7 +157,7 @@ private struct GrowthReferenceCharts: View {
             GrowthReferenceChart(child: child, measurements: measurements, points: points, metric: "weight")
         }
         .padding(18)
-        .glassEffect(.regular.tint(Color.sleepMoonlight.opacity(0.08)), in: .rect(cornerRadius: 24))
+        .glassEffect(.regular.tint(Color.sleepSky.opacity(0.08)), in: .rect(cornerRadius: 24))
     }
 }
 
@@ -194,10 +194,10 @@ private struct GrowthReferenceChart: View {
                 Spacer()
                 Text(unit)
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(Color.sleepIndigo)
+                    .foregroundStyle(Color.sleepBlue)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color.sleepMoonlight.opacity(0.16), in: .capsule)
+                    .background(Color.sleepSky.opacity(0.16), in: .capsule)
             }
             if chartData.curves.isEmpty {
                 ContentUnavailableView(LocalizedStringResource("locReferenceIsLoading", defaultValue: "Reference is loading", comment: "Text in Timeline: Reference is loading"), systemImage: "arrow.triangle.2.circlepath")
@@ -244,12 +244,12 @@ private struct GrowthReferenceChart: View {
                     curveLabel(for: 0): curveColor(for: 0),
                     curveLabel(for: 1): curveColor(for: 1),
                     curveLabel(for: 2): curveColor(for: 2),
-                    String(localized: LocalizedStringResource("locMeasurement", defaultValue: "Measurement", comment: "Message in Timeline: Measurement")): Color.sleepIndigo,
+                    String(localized: LocalizedStringResource("locMeasurement", defaultValue: "Measurement", comment: "Message in Timeline: Measurement")): Color.sleepBlue,
                 ])
                 .chartXAxis {
                     AxisMarks(values: .stride(by: 3)) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.8))
-                            .foregroundStyle(Color.sleepMoonlight.opacity(0.42))
+                            .foregroundStyle(Color.sleepSky.opacity(0.42))
                         AxisTick(stroke: StrokeStyle(lineWidth: 0.8))
                         AxisValueLabel {
                             if let month = value.as(Int.self) {
@@ -261,15 +261,15 @@ private struct GrowthReferenceChart: View {
                 .chartYAxis {
                     AxisMarks(position: .leading) { _ in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.8))
-                            .foregroundStyle(Color.sleepMoonlight.opacity(0.42))
+                            .foregroundStyle(Color.sleepSky.opacity(0.42))
                         AxisTick(stroke: StrokeStyle(lineWidth: 0.8))
                         AxisValueLabel()
                     }
                 }
                 .chartPlotStyle { content in
                     content
-                        .background(Color.sleepMoonlight.opacity(0.07))
-                        .border(Color.sleepMoonlight.opacity(0.55), width: 1)
+                        .background(Color.sleepSky.opacity(0.07))
+                        .border(Color.sleepSky.opacity(0.55), width: 1)
                 }
                 .chartLegend(.hidden)
                 .frame(height: isHeight ? 245 : 205)

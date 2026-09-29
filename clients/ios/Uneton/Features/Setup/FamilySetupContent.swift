@@ -10,7 +10,7 @@ struct FamilySetupContent: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Image(systemName: "figure.child")
                         .font(.system(size: 38, weight: .medium))
-                        .foregroundStyle(.indigo)
+                        .foregroundStyle(Color.sleepBlue)
                         .padding(.bottom, 4)
                     Text("locAddYourBaby", comment: "Text in Setup: Add your baby")
                         .font(.largeTitle.bold())

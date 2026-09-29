@@ -8,8 +8,9 @@ struct OnboardingContent: View {
 
     var body: some View {
         ZStack {
+            Color.sleepCanvas.ignoresSafeArea()
             LinearGradient(
-                colors: [Color.indigo.opacity(0.16), Color.cyan.opacity(0.08), Color.clear],
+                colors: [Color.sleepSky.opacity(0.30), Color.sleepTurquoise.opacity(0.13), Color.clear],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -19,7 +20,7 @@ struct OnboardingContent: View {
                 Spacer()
                 Image(systemName: "moon.stars.fill")
                     .font(.system(size: 48, weight: .medium))
-                    .foregroundStyle(.indigo)
+                    .foregroundStyle(Color.sleepBlue)
                     .symbolEffect(.breathe)
                 VStack(spacing: 8) {
                     Text("locUneton", comment: "Text in Setup: Uneton")

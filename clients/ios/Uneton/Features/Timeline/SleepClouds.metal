@@ -24,9 +24,9 @@ static float cloudShape(float2 point, float2 center, float scale) {
     float aspect = safeSize.x / safeSize.y;
     float2 field = float2(uv.x * aspect, uv.y);
 
-    float3 skyTop = float3(0.82, 0.90, 0.90);
-    float3 skyMiddle = float3(0.85, 0.90, 0.92);
-    float3 skyBottom = float3(0.89, 0.89, 0.93);
+    float3 skyTop = float3(0.83, 0.94, 0.97);
+    float3 skyMiddle = float3(0.87, 0.95, 0.97);
+    float3 skyBottom = float3(0.91, 0.96, 0.98);
     float3 sky = mix(skyTop, skyMiddle, smoothstep(0.0, 0.52, uv.y));
     sky = mix(sky, skyBottom, smoothstep(0.48, 1.0, uv.y));
 
@@ -43,8 +43,8 @@ static float cloudShape(float2 point, float2 center, float scale) {
     shadow += cloudShape(field, float2(x1, 0.185), 0.66) * 0.035;
     shadow += cloudShape(field, float2(x2, 0.495), 0.56) * 0.025;
 
-    float3 color = mix(sky, float3(0.76, 0.83, 0.86), saturate(shadow));
-    color = mix(color, float3(0.96, 0.98, 0.98), saturate(clouds));
+    float3 color = mix(sky, float3(0.62, 0.78, 0.83), saturate(shadow));
+    color = mix(color, float3(0.98, 1.00, 1.00), saturate(clouds));
 
     return half4(half3(saturate(color)), source.a);
 }

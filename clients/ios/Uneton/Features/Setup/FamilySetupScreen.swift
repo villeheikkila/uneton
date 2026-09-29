@@ -7,6 +7,7 @@ struct FamilySetupScreen: View {
     var body: some View {
         NavigationStack {
             FamilySetupContent(store: store)
+                .background(Color.sleepCanvas.ignoresSafeArea())
                 .scrollDismissesKeyboard(.interactively)
                 .safeAreaBar(edge: .bottom) {
                 HStack(spacing: 12) {
@@ -27,7 +28,7 @@ struct FamilySetupScreen: View {
                             .frame(height: 48)
                     }
                     .buttonStyle(.glassProminent)
-                    .tint(.indigo)
+                    .tint(Color.sleepBlue)
                     .disabled(
                         store.childName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                             || store.request.isRunning

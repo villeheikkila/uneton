@@ -3,6 +3,11 @@ import SwiftUI
 import UnetonCore
 import WatchConnectivity
 
+private enum WatchPalette {
+    static let blue = Color(red: 0.35, green: 0.70, blue: 0.85)
+    static let turquoise = Color(red: 0.35, green: 0.78, blue: 0.76)
+}
+
 @main
 struct UnetonWatchApp: App {
     @State private var bridge = WatchBridge(snapshotFixture: WatchScreenshotFixture.current)
@@ -11,6 +16,7 @@ struct UnetonWatchApp: App {
         WindowGroup {
             WatchDiaryView()
                 .environment(bridge)
+                .tint(WatchPalette.blue)
         }
     }
 }
@@ -170,7 +176,7 @@ private struct WatchDiaryView: View {
 
                     Image(systemName: child.activeSleepStartedAt == nil ? "sun.max.fill" : "moon.zzz.fill")
                         .font(.largeTitle)
-                        .foregroundStyle(child.activeSleepStartedAt == nil ? .orange : .indigo)
+                        .foregroundStyle(child.activeSleepStartedAt == nil ? WatchPalette.turquoise : WatchPalette.blue)
                     if let startedAt = child.activeSleepStartedAt {
                         Text(timerInterval: startedAt...Date.distantFuture, countsDown: false)
                             .font(.title3.monospacedDigit())
@@ -183,7 +189,7 @@ private struct WatchDiaryView: View {
                             familyID: child.familyID, childID: child.id))
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(child.activeSleepStartedAt == nil ? .indigo : .orange)
+                    .tint(child.activeSleepStartedAt == nil ? WatchPalette.blue : WatchPalette.turquoise)
                     .disabled(bridge.isWorking || bridge.pendingRequest != nil)
 
                     Divider()

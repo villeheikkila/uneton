@@ -14,14 +14,14 @@ struct ActivitySnapshots {
             endURL: URL(string: "uneton://sleep/end?familyID=1&sessionID=2")!
         )
         .frame(width: 402, height: 92)
-        .background(Color.indigo.opacity(0.12))
+        .background(SleepActivityPalette.softBlue)
         try capture(content, size: CGSize(width: 402, height: 92), name: "lockScreen")
     }
 
     @Test func expandedIsland() throws {
         let content = VStack(spacing: 8) {
             HStack {
-                Image(systemName: "moon.zzz.fill").foregroundStyle(.indigo)
+                Image(systemName: "moon.zzz.fill").foregroundStyle(SleepActivityPalette.blue)
                 Spacer()
                 SleepActivityExpandedCenterView(elapsed: Text("1:23:45"))
                 Spacer()

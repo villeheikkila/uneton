@@ -76,14 +76,11 @@ struct TimelineContent: View {
             }
         }
         .tabViewBottomAccessory(isEnabled: syncStore.selectedTab == .timeline) {
-            HStack {
-                Spacer(minLength: 44)
-                bottomControl
-                Spacer(minLength: 44)
-            }
-            .padding(.vertical, 8)
+            bottomControl
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
         }
-        .tint(Color.sleepIndigo)
+        .tint(Color.sleepBlue)
     }
 
     @ViewBuilder
@@ -95,10 +92,11 @@ struct TimelineContent: View {
                 Label(.locWakeChild(child.nickname), systemImage: "sun.max.fill")
                     .font(.headline.weight(.semibold))
                     .frame(maxWidth: .infinity)
-                    .frame(height: 50)
+                    .frame(height: 52)
+                    .foregroundStyle(.white)
+                    .background(Color.sleepAqua, in: .capsule)
             }
-            .buttonStyle(.glassProminent)
-            .tint(Color.sleepDawn)
+            .buttonStyle(.plain)
             .disabled(syncStore.wake.isRunning)
             .accessibilityHint(LocalizedStringResource("locEndsTheCurrentSleepAtThePresentTime", defaultValue: "Ends the current sleep at the present time", comment: "Text in Timeline: Ends the current sleep at the present time"))
         } else {
@@ -108,10 +106,11 @@ struct TimelineContent: View {
                 Label(LocalizedStringResource("locStartSleep", defaultValue: "Start sleep", comment: "Label in Timeline: Start sleep"), systemImage: "moon.fill")
                     .font(.headline.weight(.semibold))
                     .frame(maxWidth: .infinity)
-                    .frame(height: 50)
+                    .frame(height: 52)
+                    .foregroundStyle(.white)
+                    .background(Color.sleepBlue, in: .capsule)
             }
-            .buttonStyle(.glassProminent)
-            .tint(Color.sleepIndigo)
+            .buttonStyle(.plain)
         }
     }
 }

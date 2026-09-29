@@ -1,6 +1,11 @@
 #if os(iOS)
 import SwiftUI
 
+public enum SleepActivityPalette {
+  public static let blue = Color(red: 0.13, green: 0.39, blue: 0.56)
+  public static let softBlue = Color(red: 0.83, green: 0.94, blue: 0.97)
+}
+
 /// The lock-screen content is shared with visual tests; ActivityKit supplies its data and tint.
 public struct SleepActivityLockScreenView: View {
   public let childName: String
@@ -17,7 +22,7 @@ public struct SleepActivityLockScreenView: View {
     HStack(spacing: 14) {
       Image(systemName: "moon.zzz.fill")
         .font(.title2)
-        .foregroundStyle(.indigo)
+        .foregroundStyle(SleepActivityPalette.blue)
       VStack(alignment: .leading, spacing: 3) {
         Text(.locChildIsSleeping(childName))
           .font(.headline)
@@ -31,7 +36,7 @@ public struct SleepActivityLockScreenView: View {
           .font(.subheadline.weight(.semibold))
           .padding(.horizontal, 13)
           .padding(.vertical, 9)
-          .background(.indigo, in: .capsule)
+          .background(SleepActivityPalette.blue, in: .capsule)
           .foregroundStyle(.white)
       }
     }

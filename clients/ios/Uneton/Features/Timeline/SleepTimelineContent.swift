@@ -101,7 +101,7 @@ private struct SleepSummary: View {
                     Image(systemName: isSleeping ? "moon.stars.fill" : "cloud.sun.fill")
                         .font(.system(size: 34, weight: .medium))
                         .symbolRenderingMode(.palette)
-                        .foregroundStyle(Color.sleepInk, Color.sleepMoonlight)
+                        .foregroundStyle(Color.sleepInk, Color.sleepSky)
                 }
 
                 if let prediction = relevantPrediction {
@@ -111,7 +111,7 @@ private struct SleepSummary: View {
                     HStack(spacing: 10) {
                         Image(systemName: isSleeping ? "sun.horizon.fill" : "sparkles")
                             .font(.headline)
-                            .foregroundStyle(isSleeping ? Color.sleepMoonlight : Color.sleepDawn)
+                            .foregroundStyle(isSleeping ? Color.sleepSky : Color.sleepAqua)
                             .frame(width: 24)
 
                         VStack(alignment: .leading, spacing: 1) {
@@ -148,7 +148,7 @@ private struct SleepSummary: View {
             }
             .foregroundStyle(Color.sleepInk)
             .padding(18)
-            .glassEffect(.regular.tint((isSleeping ? Color.sleepMoonlight : Color.sleepDawn).opacity(0.12)).interactive(), in: .rect(cornerRadius: 26))
+            .glassEffect(.regular.tint((isSleeping ? Color.sleepSky : Color.sleepAqua).opacity(0.12)).interactive(), in: .rect(cornerRadius: 26))
         }
     }
 
@@ -194,7 +194,7 @@ private struct EmptySleepCard: View {
         VStack(spacing: 14) {
             Image(systemName: "moon.zzz.fill")
                 .font(.system(size: 34))
-                .foregroundStyle(Color.sleepIndigo)
+                .foregroundStyle(Color.sleepBlue)
             Text("locNoSleepLoggedYet", comment: "Text in Timeline: No sleep logged yet")
                 .font(.title3.weight(.bold))
                 .foregroundStyle(Color.sleepInk)
@@ -205,7 +205,7 @@ private struct EmptySleepCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(28)
-        .glassEffect(.regular.tint(Color.sleepLavender.opacity(0.18)), in: .rect(cornerRadius: 28))
+        .glassEffect(.regular.tint(Color.sleepTurquoise.opacity(0.18)), in: .rect(cornerRadius: 28))
     }
 }
 
@@ -306,20 +306,20 @@ private struct ContinuousSleepTimeline: View {
 
         return ZStack(alignment: .topLeading) {
             Rectangle()
-                .fill(isMidnight ? Color.sleepIndigo.opacity(0.22) : Color.sleepInk.opacity(0.07))
+                .fill(isMidnight ? Color.sleepBlue.opacity(0.22) : Color.sleepInk.opacity(0.07))
                 .frame(width: width - 54, height: isMidnight ? 1.5 : 0.5)
                 .offset(x: 46)
 
             Text(date, format: .dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits))
                 .font(.caption2.monospacedDigit())
-                .foregroundStyle(isMidnight ? Color.sleepIndigo : Color.secondary.opacity(0.46))
+                .foregroundStyle(isMidnight ? Color.sleepBlue : Color.secondary.opacity(0.46))
                 .frame(width: 48, alignment: .trailing)
                 .offset(x: -16, y: -7)
 
             if isMidnight {
                 Text(date, format: .dateTime.weekday(.wide).month(.abbreviated).day())
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(Color.sleepIndigo)
+                    .foregroundStyle(Color.sleepBlue)
                     .offset(x: 52, y: -9)
             }
         }
@@ -339,13 +339,13 @@ private struct ContinuousSleepTimeline: View {
             ZStack(alignment: .topLeading) {
                 if sleeping {
                     RoundedRectangle(cornerRadius: min(12, height / 2))
-                        .fill(Color.sleepIndigo.opacity(0.84))
+                        .fill(Color.sleepBlue.opacity(0.84))
                 } else {
                     Rectangle()
                         .fill(.clear)
 
                     Rectangle()
-                        .fill(Color.sleepDawn.opacity(0.3))
+                        .fill(Color.sleepAqua.opacity(0.3))
                         .frame(width: 2)
                 }
 
@@ -359,7 +359,7 @@ private struct ContinuousSleepTimeline: View {
                             .font(.caption.monospacedDigit().weight(.bold))
                         if period.isCurrent {
                             Circle()
-                                .fill(sleeping ? Color.sleepMoonlight : Color.sleepDawn)
+                                .fill(sleeping ? Color.sleepSky : Color.sleepAqua)
                                 .frame(width: 6, height: 6)
                         }
 
@@ -404,7 +404,7 @@ private struct ContinuousSleepTimeline: View {
             content.matchedTransitionSource(id: session.id, in: navigationNamespace) { source in
                 source
                     .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-                    .background(Color.sleepIndigo.opacity(0.84))
+                    .background(Color.sleepBlue.opacity(0.84))
             }
         } else {
             content
@@ -416,16 +416,16 @@ private struct ContinuousSleepTimeline: View {
         return ZStack(alignment: .topTrailing) {
             HStack(spacing: 6) {
                 Circle()
-                    .fill(Color.sleepDawn)
+                    .fill(Color.sleepAqua)
                     .frame(width: 9, height: 9)
                 Rectangle()
-                    .fill(Color.sleepDawn)
+                    .fill(Color.sleepAqua)
                     .frame(height: 2)
             }
 
             Text("locNOW", comment: "Text in Timeline: NOW")
                 .font(.caption2.weight(.black))
-                .foregroundStyle(Color.sleepDawn)
+                .foregroundStyle(Color.sleepAqua)
                 .padding(.horizontal, 6)
                 .background(Color.sleepCanvas.opacity(0.94), in: .capsule)
                 .offset(y: -14)

@@ -27,7 +27,7 @@ private struct TemperatureCard: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding(18)
-                .glassEffect(.regular.tint(Color.sleepMoonlight.opacity(0.12)), in: .rect(cornerRadius: 24))
+                .glassEffect(.regular.tint(Color.sleepSky.opacity(0.12)), in: .rect(cornerRadius: 24))
 
                 Button(action: onAdd) {
                     Label(LocalizedStringResource("locAddTemperature", defaultValue: "Add temperature", comment: "Label in Timeline: Add temperature"), systemImage: "plus.circle.fill")
@@ -36,7 +36,7 @@ private struct TemperatureCard: View {
                         .frame(height: 48)
                 }
                 .buttonStyle(.glassProminent)
-                .tint(Color.sleepIndigo)
+                .tint(Color.sleepBlue)
 
                 if readings.isEmpty {
                     ContentUnavailableView(LocalizedStringResource("locNoReadingsYet", defaultValue: "No readings yet", comment: "Text in Timeline: No readings yet"), systemImage: "thermometer.medium",
@@ -49,7 +49,7 @@ private struct TemperatureCard: View {
                             HStack(spacing: 14) {
                                 Image(systemName: "thermometer.medium")
                                     .font(.title3)
-                                    .foregroundStyle(Color.sleepIndigo)
+                                    .foregroundStyle(Color.sleepBlue)
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(reading.measuredAt, format: .dateTime.year().month().day().hour().minute())
                                         .font(.headline)
