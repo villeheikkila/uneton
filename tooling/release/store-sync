@@ -4,17 +4,23 @@ set -euo pipefail
 
 if [[ "${1:-}" == --help && "$#" -eq 1 ]]; then
   cat <<'EOF'
-usage: mise run store:sync
+usage: mise run store:sync [--check]
 
 Interactively plan and sync Uneton's listing, App Privacy, and age rating.
-Requires a clean checkout, reachable listing URLs, and Apple web-session 2FA.
+Unreachable listing URLs and incomplete locales are held for a later rerun.
+Requires a clean checkout and Apple web-session 2FA.
+--check validates local files and reports held URLs without contacting Apple.
 EOF
   exit 0
 fi
 
-if [[ "$#" -ne 0 ]]; then
-  echo "usage: mise run store:sync" >&2
+if [[ "$#" -gt 1 || ( "$#" -eq 1 && "$1" != --check ) ]]; then
+  echo "usage: mise run store:sync [--check]" >&2
   exit 2
+fi
+check_only=false
+if [[ "${1:-}" == --check ]]; then
+  check_only=true
 fi
 
 repo_root="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
@@ -22,14 +28,16 @@ store="$repo_root/tooling/release/store"
 metadata="$repo_root/clients/ios/asc/metadata"
 readiness="$repo_root/clients/ios/asc/readiness.json"
 
-[[ -t 0 ]] || {
-  echo "Run store:sync in an interactive terminal for Apple 2FA and plan approval" >&2
-  exit 2
-}
-[[ -z "$(git -C "$repo_root" status --porcelain)" ]] || {
-  echo "Commit or remove local changes before syncing App Store Connect" >&2
-  exit 2
-}
+if [[ "$check_only" == false ]]; then
+  [[ -t 0 ]] || {
+    echo "Run store:sync in an interactive terminal for Apple 2FA and plan approval" >&2
+    exit 2
+  }
+  [[ -z "$(git -C "$repo_root" status --porcelain)" ]] || {
+    echo "Commit or remove local changes before syncing App Store Connect" >&2
+    exit 2
+  }
+fi
 [[ -n "${ASC_APP_ID:-}" ]] || {
   echo "Set ASC_APP_ID to the Uneton App Store Connect app ID" >&2
   exit 2
@@ -37,27 +45,65 @@ readiness="$repo_root/clients/ios/asc/readiness.json"
 
 "$store" validate
 
+stage_root="$(mktemp -d "${TMPDIR:-/tmp}/uneton-store-sync.XXXXXX")"
+trap 'rm -rf "$stage_root"' EXIT
+cp -R "$metadata" "$stage_root/metadata"
+export UNETON_STORE_METADATA_DIR="$stage_root/metadata"
+
 shopt -s nullglob
-app_info_files=("$metadata"/app-info/*.json)
-version_files=("$metadata"/version/"${UNETON_STORE_VERSION:-1.0}"/*.json)
+app_info_files=("$UNETON_STORE_METADATA_DIR"/app-info/*.json)
+version_files=("$UNETON_STORE_METADATA_DIR"/version/"${UNETON_STORE_VERSION:-1.0}"/*.json)
 [[ "${#app_info_files[@]}" -gt 0 && "${#version_files[@]}" -gt 0 ]] || {
   echo "Missing app-info or version metadata files for ${UNETON_STORE_VERSION:-1.0}" >&2
   exit 2
 }
 
-while IFS= read -r url; do
-  if ! curl --fail --location --silent --show-error --output /dev/null --max-time 15 "$url"; then
-    echo "Listing URL is not reachable: $url" >&2
-    echo "Deploy the public legal/support pages before syncing their URLs" >&2
-    exit 2
+skipped_urls=()
+fi_incomplete=false
+if ! curl --fail --location --silent --output /dev/null --max-time 15 \
+  'https://api.uneton.app/terms'; then
+  echo "Public terms page is unreachable; listing URLs will wait for deployment"
+  terms_unreachable=true
+else
+  terms_unreachable=false
+fi
+
+for file in "${app_info_files[@]}" "${version_files[@]}"; do
+  if [[ "$file" == */app-info/* ]]; then
+    field=privacyPolicyUrl
+  else
+    field=supportUrl
   fi
-done < <(jq -r '.privacyPolicyUrl // empty' "${app_info_files[@]}"; \
-  jq -r '.supportUrl // empty' "${version_files[@]}"; \
-  printf '%s\n' 'https://api.uneton.app/terms')
+  if ! url="$(jq -er ".$field // empty" "$file")"; then
+    continue
+  fi
+  if [[ "$terms_unreachable" == true ]] || ! curl --fail --location --silent \
+    --output /dev/null --max-time 15 "$url"; then
+    skipped_urls+=("$url")
+    jq "del(.$field)" "$file" > "$file.tmp"
+    mv "$file.tmp" "$file"
+    if [[ "$file" == */fi.json ]]; then
+      fi_incomplete=true
+    fi
+  fi
+done
+
+if [[ "$fi_incomplete" == true ]]; then
+  rm -f "$UNETON_STORE_METADATA_DIR/app-info/fi.json" \
+    "$UNETON_STORE_METADATA_DIR/version/${UNETON_STORE_VERSION:-1.0}/fi.json"
+  echo "Finnish listing held until its privacy and support URLs are reachable"
+fi
+if [[ "${#skipped_urls[@]}" -gt 0 ]]; then
+  printf 'URL held for a later sync: %s\n' "${skipped_urls[@]}"
+fi
+if [[ "$check_only" == true ]]; then
+  echo "Local sync check complete; App Store Connect was not contacted"
+  exit 0
+fi
 
 "$store" plan
 
-printf 'Type "sync %s" to apply the plan and publish App Privacy: ' "$ASC_APP_ID"
+printf 'Type "sync %s" to apply the displayed plan and publish App Privacy: ' "$ASC_APP_ID"
 IFS= read -r answer
 [[ "$answer" == "sync $ASC_APP_ID" ]] || {
   echo "No App Store Connect changes applied" >&2
@@ -75,4 +121,9 @@ else
 fi
 
 "$store" drift
-echo "App Store declarations are in sync. Builds and screenshots use the separate release workflow."
+if [[ "${#skipped_urls[@]}" -gt 0 ]]; then
+  echo "Reachable declarations are in sync; rerun after the public pages resolve to finish the listing"
+else
+  echo "App Store declarations are in sync"
+fi
+echo "Builds and screenshots use the separate release workflow."

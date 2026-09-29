@@ -14,13 +14,13 @@ The public privacy policy, terms and support pages are served by the backend at 
 
 The App Store Connect app record is `6817506009` for `solutions.bytesized.uneton`. Authenticate `asc` locally with an API key; the privacy commands also require an interactive Apple web session and two-factor authentication. Xcode needs distribution signing for the app, Watch and widget targets. The App Review contact and legal operator values are age-encrypted in `fnox.toml`, using the key at `~/.config/sops/age/keys.txt`. Keep the key, demo credentials, and production `.env` out of Git.
 
-Once the public privacy and support URLs resolve, run this from a clean checkout in a terminal:
+Run this from a clean checkout in a terminal:
 
 ```sh
 mise run store:sync
 ```
 
-The task sets the known app ID, validates local declarations and every listing URL, shows the metadata and App Privacy plans, and asks you to type `sync 6817506009` before applying. It then publishes App Privacy and checks drift. If reviewer access is marked `READY`, it also applies the readiness settings and review details. Otherwise, review details and copyright remain pending. Builds and App Store screenshots are separate release steps.
+The task sets the known app ID, validates local declarations, checks the listing URLs, shows the metadata and App Privacy plans, and asks you to type `sync 6817506009` before applying. It then publishes App Privacy and checks drift. Unreachable URL fields are withheld, and the Finnish listing is withheld if its URLs are unreachable; rerun the command after deploying the public pages. `mise run store:sync -- --check` shows the withheld URLs without contacting Apple. If reviewer access is marked `READY`, the task also applies the readiness settings and review details. Otherwise, review details and copyright remain pending. Builds and App Store screenshots are separate release steps.
 
 ```sh
 export ASC_APP_ID=6817506009
