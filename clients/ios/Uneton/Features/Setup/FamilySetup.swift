@@ -40,9 +40,7 @@ struct FamilySetup {
             case let .invitationCodeScanned(code):
                 state.isScanning = false
                 guard let url = URL(string: code),
-                      url.scheme == "uneton",
-                      url.host == "invite",
-                      url.pathComponents.dropFirst().first != nil else {
+                      FamilyInvitationLink.token(from: url) != nil else {
                     state.errorMessage = String(localized: LocalizedStringResource("locInvalidFamilyInvitation", defaultValue: "Invalid family invitation", comment: "Message in Setup: Invalid family invitation"))
                     return
                 }

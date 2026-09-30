@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="{{if .Finnish}}fi{{else}}en{{end}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{{if .Finnish}}Kutsu perheeseen · Uneton{{else}}Family invitation · Uneton{{end}}</title>
+<style>
+:root{color-scheme:light dark;font-family:system-ui,-apple-system,sans-serif;background:#f4f7fb;color:#23334b}body{margin:0;padding:24px;min-height:90vh;display:grid;place-items:center}main{max-width:440px;padding:40px 32px;background:#fff;border-radius:28px;box-shadow:0 16px 60px #23334b12}header{font-weight:700;color:#526fa6}h1{font-size:2rem;line-height:1.15;margin:24px 0 16px}p{line-height:1.6;color:#526078}.button{display:block;text-align:center;background:#526fa6;color:#fff;padding:16px;border-radius:14px;text-decoration:none;font-weight:650;margin:28px 0}a{color:#425f95}a:focus-visible{outline:3px solid #8da8df;outline-offset:4px}nav,footer{font-size:.875rem;margin-top:24px}nav a,footer a{margin-right:16px}@media(prefers-color-scheme:dark){:root{background:#141e2e;color:#f3f6fc}main{background:#202d42}p{color:#c2ccdd}header,a{color:#b4c9f1}.button{background:#a9c2ef;color:#172339}}
+</style>
+</head>
+<body><main>
+<header>Uneton</header>
+{{if .Finnish}}
+<h1>Sinut on kutsuttu perheeseen</h1>
+<p>Avaa kutsu Unetonissa ja kirjaudu sisään Apple-tililläsi liittyäksesi perheen yhteiseen päiväkirjaan.</p>
+<a class="button" href="uneton://invite/{{.Token}}">Avaa Unetonissa</a>
+<p>Eikö sovellus avaudu? Asenna Uneton iPhoneesi ja avaa alkuperäinen kutsulinkki uudelleen. Kutsu voi olla vanhentunut tai peruttu. Uneton tarkistaa sen, kun liityt perheeseen.</p>
+<p>Jaa kutsu vain henkilölle, jolla saa olla pääsy perheen tietoihin.</p>
+{{else}}
+<h1>You’re invited to a family</h1>
+<p>Open this invitation in Uneton and sign in with Apple to join your family’s shared diary.</p>
+<a class="button" href="uneton://invite/{{.Token}}">Open in Uneton</a>
+<p>App didn’t open? Install Uneton on your iPhone, then open the original invitation link again. The invitation may have expired or been revoked. Uneton checks it when you join.</p>
+<p>Share this invitation only with someone who should have access to your family’s records.</p>
+{{end}}
+<nav aria-label="Language"><a href="?lang=en" lang="en">English</a><a href="?lang=fi" lang="fi">Suomi</a></nav>
+<footer>{{if .Finnish}}<a href="/privacy?lang=fi">Tietosuoja</a><a href="/support?lang=fi">Tuki</a>{{else}}<a href="/privacy">Privacy</a><a href="/support">Support</a>{{end}}</footer>
+</main></body>
+</html>

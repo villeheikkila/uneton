@@ -132,6 +132,8 @@ func (s *Server) RewrapAppleTokens(ctx context.Context) error {
 }
 
 func (s *Server) routes() {
+	s.mux.HandleFunc("GET /.well-known/apple-app-site-association", s.appleAppSiteAssociation)
+	s.mux.HandleFunc("GET /invite/{token}", s.invitationPage)
 	s.mux.HandleFunc("GET /privacy", s.legalPage("privacy"))
 	s.mux.HandleFunc("GET /terms", s.legalPage("terms"))
 	s.mux.HandleFunc("GET /support", s.legalPage("support"))
@@ -206,7 +208,11 @@ func (s *Server) recoverAndLog(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if recovered := recover(); recovered != nil {
-				s.logger.Error("request panic", "error", recovered, "method", r.Method, "path", r.URL.Path)
+				path := r.URL.Path
+				if strings.HasPrefix(path, "/invite/") {
+					path = "/invite/[redacted]"
+				}
+				s.logger.Error("request panic", "error", recovered, "method", r.Method, "path", path)
 				http.Error(w, "internal server error", http.StatusInternalServerError)
 			}
 		}()

@@ -1,3 +1,4 @@
+import Foundation
 import ComposableArchitecture2
 import UnetonCore
 import SwiftUI
@@ -42,6 +43,9 @@ struct ContentView: View {
         .tint(Color.sleepBlue)
         .onOpenURL { url in
             store.send(.openedURL(url))
+        }
+        .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+            if let url = activity.webpageURL { store.send(.openedURL(url)) }
         }
         .task { store.send(.credentialValidationRequested) }
         .task(id: Selection(familyID: selectedFamily?.id, isAuthenticated: store.isAuthenticated)) {

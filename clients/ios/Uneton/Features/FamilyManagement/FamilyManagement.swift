@@ -180,8 +180,7 @@ struct FamilyManagement {
                 state.isScanning = true
             case let .invitationCodeScanned(code):
                 state.isScanning = false
-                guard let url = URL(string: code), url.scheme == "uneton", url.host == "invite",
-                      url.pathComponents.dropFirst().first != nil else {
+                guard let url = URL(string: code), FamilyInvitationLink.token(from: url) != nil else {
                     state.errorMessage = String(localized: LocalizedStringResource("locInvalidFamilyInvitationPeriod", defaultValue: "Invalid family invitation.", comment: "Message in FamilyManagement: Invalid family invitation."))
                     return
                 }

@@ -84,6 +84,14 @@ SwiftUI `Screen` and `Sheet` views own navigation, toolbars, presentation, and s
 
 `FamilySync` also owns the selected tab and insights range. Sleep and growth charts derive their summaries from the current SQLite projection with pure `UnetonCore` calculations; they do not persist a separate chart cache. Feature effects read injected time, and preview fixtures compose a demo `SessionStore` with fake feature clients so rendering cannot start production observers or credential work.
 
+## Family invitation links
+
+The iPhone shares invitations as `https://api.uneton.app/invite/<token>` in both the share sheet and QR code. The Go backend serves a generic English/Finnish landing page and `/.well-known/apple-app-site-association`, scoped to `/invite/*` for `J9S7QG9SVR.solutions.bytesized.uneton`. The iPhone declares `applinks:api.uneton.app` and routes browsing activities, opened URLs, and scanned QR codes through the same `FamilyInvitationLink` validator. Legacy `uneton://invite/<token>` links remain supported and power the landing page's explicit app-open button.
+
+The public page never looks up an invitation or exposes family records, and a browser or message preview never claims membership. It sends no-store, no-referrer, noindex, and a restrictive content security policy, loads no external resources, and redacts invitation paths from backend panic logs. Only the existing authenticated `AcceptInvite` RPC checks expiry, revocation, and single-use claims. A signed-out client holds the link in memory until sign-in, then uses that same acceptance flow and `Sync` to ingest the shared diary. Membership links do not transfer authoritative diary state or advance the cursor.
+
+Deployment must serve the association file directly over HTTPS on `api.uneton.app` and enable Associated Domains for the iOS app's signing profile. Keep its app identifier aligned with the team and bundle identifier in `clients/ios/project.yml`. Verify a signed build on a physical iPhone by opening a shared link from Messages, including when signed out; verify the browser fallback without the app. There is no deferred-install token recovery: after installation the recipient reopens the original link.
+
 ## Mutation path: local intent to authoritative state
 
 ### 1. Accept intent locally

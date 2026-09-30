@@ -11,6 +11,22 @@ import UnetonCore
     try $0.bootstrapDatabase(inMemory: true)
 })
 struct AppRootTests {
+    @Test(arguments: ["https://api.uneton.app/invite/shared-token", "uneton://invite/shared-token"])
+    func `scanned invitations use the existing family acceptance client`(_ value: String) async {
+        var family = SessionFamilyClient.unimplemented
+        family.handleInvitation = { url in
+            #expect(url.absoluteString == value)
+            return nil
+        }
+        let store = TestStore(initialState: FamilySetup.State()) {
+            FamilySetup().environment(\.sessionFamily, family)
+        }
+        store.send(.scanInvitationButtonTapped) { $0.isScanning = true }
+        let task = store.send(.invitationCodeScanned(value)) { $0.isScanning = false }
+        await task?.value
+        await store.dismount()
+    }
+
     @Test func `baby settings save through the injected family client`() async {
         let child = ModelFixtures.child()
         var management = SessionFamilyManagementClient.unimplemented

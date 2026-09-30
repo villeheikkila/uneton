@@ -41,6 +41,8 @@ targets:
       path: Uneton/Uneton.entitlements
       properties:
         aps-environment: development
+        com.apple.developer.associated-domains:
+          - applinks:api.uneton.app
     info:
       path: Uneton/Info.plist
       properties:

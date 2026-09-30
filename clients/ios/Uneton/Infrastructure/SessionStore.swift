@@ -540,8 +540,8 @@ final class SessionStore {
     }
 
     func handle(url: URL) async {
-        if url.scheme == "uneton", url.host == "invite" {
-            guard let token = url.pathComponents.dropFirst().first, let accessToken else {
+        if let token = FamilyInvitationLink.token(from: url) {
+            guard let accessToken else {
                 pendingInviteURL = url
                 return
             }
@@ -587,7 +587,7 @@ final class SessionStore {
         guard let accessToken else { return nil }
         do {
             let invite = try await apiClient.createInvite(familyID, accessToken)
-            return URL(string: "uneton://invite/\(invite.token)")
+            return FamilyInvitationLink.url(token: invite.token)
         } catch {
             errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated"))
             return nil
