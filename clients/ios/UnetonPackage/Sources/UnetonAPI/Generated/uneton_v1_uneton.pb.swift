@@ -328,6 +328,9 @@ public nonisolated struct Uneton_V1_UpdateDevicePushSettingsRequest: Sendable {
   /// Clears the value of `notificationLanguage`. Subsequent reads from it will return its default value.
   public mutating func clearNotificationLanguage() {self._notificationLanguage = nil}
 
+  /// Persisted device-local counter; older requests cannot replace newer tokens/settings.
+  public var registrationRevision: Int64 = 0
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -372,6 +375,8 @@ public nonisolated struct Uneton_V1_RegisterLiveActivityRequest: Sendable {
   public var pushToken: String = String()
 
   public var apnsEnvironment: String = String()
+
+  public var registrationRevision: Int64 = 0
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -2405,7 +2410,7 @@ nonisolated extension Uneton_V1_DevicePushSettings: SwiftProtobuf.Message, Swift
 
 nonisolated extension Uneton_V1_UpdateDevicePushSettingsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".UpdateDevicePushSettingsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}apns_token\0\u{3}push_to_start_token\0\u{3}apns_environment\0\u{3}notifications_enabled\0\u{3}live_activities_enabled\0\u{3}reminder_lead_minutes\0\u{3}remote_reminders_until\0\u{3}notification_language\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}apns_token\0\u{3}push_to_start_token\0\u{3}apns_environment\0\u{3}notifications_enabled\0\u{3}live_activities_enabled\0\u{3}reminder_lead_minutes\0\u{3}remote_reminders_until\0\u{3}notification_language\0\u{3}registration_revision\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2421,6 +2426,7 @@ nonisolated extension Uneton_V1_UpdateDevicePushSettingsRequest: SwiftProtobuf.M
       case 6: try { try decoder.decodeSingularInt32Field(value: &self._reminderLeadMinutes) }()
       case 7: try { try decoder.decodeSingularMessageField(value: &self._remoteRemindersUntil) }()
       case 8: try { try decoder.decodeSingularStringField(value: &self._notificationLanguage) }()
+      case 9: try { try decoder.decodeSingularInt64Field(value: &self.registrationRevision) }()
       default: break
       }
     }
@@ -2455,6 +2461,9 @@ nonisolated extension Uneton_V1_UpdateDevicePushSettingsRequest: SwiftProtobuf.M
     try { if let v = self._notificationLanguage {
       try visitor.visitSingularStringField(value: v, fieldNumber: 8)
     } }()
+    if self.registrationRevision != 0 {
+      try visitor.visitSingularInt64Field(value: self.registrationRevision, fieldNumber: 9)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -2467,6 +2476,7 @@ nonisolated extension Uneton_V1_UpdateDevicePushSettingsRequest: SwiftProtobuf.M
     if lhs._reminderLeadMinutes != rhs._reminderLeadMinutes {return false}
     if lhs._remoteRemindersUntil != rhs._remoteRemindersUntil {return false}
     if lhs._notificationLanguage != rhs._notificationLanguage {return false}
+    if lhs.registrationRevision != rhs.registrationRevision {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -2508,7 +2518,7 @@ nonisolated extension Uneton_V1_UpdateDevicePushSettingsResponse: SwiftProtobuf.
 
 nonisolated extension Uneton_V1_RegisterLiveActivityRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".RegisterLiveActivityRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}session_id\0\u{3}push_token\0\u{3}apns_environment\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}session_id\0\u{3}push_token\0\u{3}apns_environment\0\u{3}registration_revision\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2519,6 +2529,7 @@ nonisolated extension Uneton_V1_RegisterLiveActivityRequest: SwiftProtobuf.Messa
       case 1: try { try decoder.decodeSingularStringField(value: &self.sessionID) }()
       case 2: try { try decoder.decodeSingularStringField(value: &self.pushToken) }()
       case 3: try { try decoder.decodeSingularStringField(value: &self.apnsEnvironment) }()
+      case 4: try { try decoder.decodeSingularInt64Field(value: &self.registrationRevision) }()
       default: break
       }
     }
@@ -2534,6 +2545,9 @@ nonisolated extension Uneton_V1_RegisterLiveActivityRequest: SwiftProtobuf.Messa
     if !self.apnsEnvironment.isEmpty {
       try visitor.visitSingularStringField(value: self.apnsEnvironment, fieldNumber: 3)
     }
+    if self.registrationRevision != 0 {
+      try visitor.visitSingularInt64Field(value: self.registrationRevision, fieldNumber: 4)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -2541,6 +2555,7 @@ nonisolated extension Uneton_V1_RegisterLiveActivityRequest: SwiftProtobuf.Messa
     if lhs.sessionID != rhs.sessionID {return false}
     if lhs.pushToken != rhs.pushToken {return false}
     if lhs.apnsEnvironment != rhs.apnsEnvironment {return false}
+    if lhs.registrationRevision != rhs.registrationRevision {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

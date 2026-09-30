@@ -14,6 +14,10 @@ func (s *Server) RunPushDeliveries(ctx context.Context) {
 	if s.apns == nil {
 		return
 	}
+	if err := s.store.Queries.ResetInterruptedLiveActivityStarts(ctx); err != nil {
+		s.logger.ErrorContext(ctx, "could not recover interrupted activity starts", "error", err)
+		return
+	}
 	if err := s.store.Queries.ResetSendingDeliveries(ctx); err != nil {
 		s.logger.ErrorContext(ctx, "could not reset interrupted push deliveries", "error", err)
 	}
@@ -63,7 +67,11 @@ func (s *Server) runDuePushDeliveries(ctx context.Context) {
 				if event == "" {
 					deliveryErr = fmt.Errorf("unsupported delivery kind %q", row.Kind)
 				} else {
-					deliveryErr = s.deliverSleepChange(ctx, row.FamilyID, payload.OriginDeviceID, event, payload.Sleep)
+					if event == "start" && payload.TargetDeviceID != "" {
+						deliveryErr = s.startMissingLiveActivities(ctx, payload.TargetDeviceID, payload.Sleep.ID)
+					} else {
+						deliveryErr = s.deliverSleepChangeToDevice(ctx, row.FamilyID, payload.OriginDeviceID, payload.TargetDeviceID, event, payload.Sleep)
+					}
 				}
 			}
 		}
@@ -103,18 +111,37 @@ func (s *Server) deliverFamilyChange(ctx context.Context, familyID, originDevice
 	return errors.Join(transient...)
 }
 
-func (s *Server) startMissingLiveActivities(deviceID string) {
-	if s.apns == nil {
-		return
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	rows, err := s.store.Queries.ActiveSleepsMissingFromDevice(ctx, deviceID)
+func (s *Server) queueMissingLiveActivities(ctx context.Context, q *storedb.Queries, deviceID string) error {
+	rows, err := q.ActiveSleepsMissingFromDevice(ctx, deviceID)
 	if err != nil {
-		s.logger.WarnContext(ctx, "could not reconcile live activities", "device_id", deviceID, "error", err)
-		return
+		return err
 	}
 	for _, row := range rows {
+		payload, err := json.Marshal(activityDelivery{TargetDeviceID: deviceID, Sleep: sleepRecord{ID: row.ID}})
+		if err != nil {
+			return err
+		}
+		stamp := formatTime(s.now().UTC())
+		if err := q.QueueActivityReconciliation(ctx, storedb.QueueActivityReconciliationParams{ID: "activity-start-" + row.ID + "-" + deviceID, FamilyID: row.FamilyID, Kind: "activityStart", PayloadJson: payload, DueAt: stamp, CreatedAt: stamp}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Server) startMissingLiveActivities(ctx context.Context, deviceID, sessionID string) error {
+	if s.apns == nil {
+		return nil
+	}
+	rows, err := s.store.Queries.ActiveSleepsMissingFromDevice(ctx, deviceID)
+	if err != nil {
+		return err
+	}
+	var transient []error
+	for _, row := range rows {
+		if row.ID != sessionID {
+			continue
+		}
 		startedAt, parseErr := parseTime(row.StartedAt)
 		if parseErr != nil {
 			continue
@@ -126,7 +153,11 @@ func (s *Server) startMissingLiveActivities(deviceID string) {
 		claimed, claimErr := s.store.Queries.ClaimLiveActivityStart(ctx, storedb.ClaimLiveActivityStartParams{
 			SessionID: row.ID, DeviceID: deviceID, PushToStartToken: row.PushToStartToken.String, CreatedAt: formatTime(s.now().UTC()),
 		})
-		if claimErr != nil || claimed != 1 {
+		if claimErr != nil {
+			transient = append(transient, claimErr)
+			continue
+		}
+		if claimed != 1 {
 			continue
 		}
 		invalid, sendErr := s.apns.liveActivity(ctx, row.PushToStartToken.String, row.ApnsEnvironment, "start", attributes, map[string]any{}, "sleep-"+row.ID)
@@ -134,16 +165,31 @@ func (s *Server) startMissingLiveActivities(deviceID string) {
 			_ = s.store.Queries.DeletePushToStartToken(ctx, storedb.DeletePushToStartTokenParams{ID: deviceID, PushToStartToken: row.PushToStartToken})
 		}
 		if sendErr != nil && !invalid {
-			s.logger.WarnContext(ctx, "live activity reconciliation failed", "device_id", deviceID, "session_id", row.ID, "error", sendErr)
+			transient = append(transient, sendErr)
 		}
 		if sendErr != nil {
 			_ = s.store.Queries.ReleaseLiveActivityStart(ctx, storedb.ReleaseLiveActivityStartParams{SessionID: row.ID, DeviceID: deviceID, PushToStartToken: row.PushToStartToken.String})
 		}
 	}
+	return errors.Join(transient...)
 }
 
 func (s *Server) deliverSleepChange(ctx context.Context, familyID, originDeviceID, event string, sleep sleepRecord) error {
+	return s.deliverSleepChangeToDevice(ctx, familyID, originDeviceID, "", event, sleep)
+}
+
+func (s *Server) deliverSleepChangeToDevice(ctx context.Context, familyID, originDeviceID, targetDeviceID, event string, sleep sleepRecord) error {
 	if s.apns == nil {
+		return nil
+	}
+	state, err := s.store.Queries.LiveActivitySessionContext(ctx, sleep.ID)
+	if err != nil {
+		return err
+	}
+	if event == "start" && (state.EndedAt.Valid || state.DeletedAt.Valid || state.SupersededByID.Valid || state.ChildDeletedAt.Valid) {
+		return nil
+	}
+	if event == "end" && !state.EndedAt.Valid && !state.DeletedAt.Valid && !state.SupersededByID.Valid && !state.ChildDeletedAt.Valid {
 		return nil
 	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -158,6 +204,10 @@ func (s *Server) deliverSleepChange(ctx context.Context, familyID, originDeviceI
 	}
 	var transient []error
 	if event == "start" {
+		sleep.StartedAt, err = parseTime(child.StartedAt)
+		if err != nil {
+			return err
+		}
 		attributes := map[string]any{"familyID": familyID, "childID": sleep.ChildID, "sessionID": sleep.ID, "childName": child.Nickname, "startedAt": appleReferenceSeconds(sleep.StartedAt)}
 		for _, device := range devices {
 			if device.ID != originDeviceID && device.NotificationsEnabled == 1 && device.ApnsToken.Valid {
@@ -208,6 +258,9 @@ func (s *Server) deliverSleepChange(ctx context.Context, familyID, originDeviceI
 		return errors.Join(transient...)
 	}
 	for _, device := range devices {
+		if targetDeviceID != "" {
+			continue
+		}
 		if device.ID != originDeviceID && device.NotificationsEnabled == 1 && device.ApnsToken.Valid {
 			invalid, sendErr := s.apns.alert(ctx, device.ApnsToken.String, device.ApnsEnvironment, child.Nickname+" woke up", "Sleep ended just now.", "sleep-"+sleep.ID)
 			if invalid {
@@ -234,13 +287,31 @@ func (s *Server) deliverSleepChange(ctx context.Context, familyID, originDeviceI
 	if err != nil {
 		return fmt.Errorf("list live activity tokens: %w", err)
 	}
+	if state.EndedAt.Valid {
+		ended, err := parseTime(state.EndedAt.String)
+		if err != nil {
+			return err
+		}
+		sleep.EndedAt = &ended
+	}
 	endedAt := s.now().UTC()
 	if sleep.EndedAt != nil {
 		endedAt = *sleep.EndedAt
 	}
+	eligible := make(map[string]bool)
+	for _, device := range devices {
+		eligible[device.ID] = true
+	}
 	for _, token := range tokens {
+		if targetDeviceID != "" && targetDeviceID != token.DeviceID {
+			continue
+		}
+		if !eligible[token.DeviceID] {
+			_ = s.store.Queries.DeleteLiveActivityToken(ctx, token.Token)
+			continue
+		}
 		invalid, sendErr := s.apns.liveActivity(ctx, token.Token, token.ApnsEnvironment, "end", nil, map[string]any{"endedAt": appleReferenceSeconds(endedAt)}, "sleep-"+sleep.ID)
-		if invalid {
+		if invalid || sendErr == nil {
 			_ = s.store.Queries.DeleteLiveActivityToken(ctx, token.Token)
 		}
 		if sendErr != nil {
@@ -250,14 +321,11 @@ func (s *Server) deliverSleepChange(ctx context.Context, familyID, originDeviceI
 			}
 		}
 	}
-	pending, err := s.store.Queries.PendingLiveActivityTokens(ctx, sleep.ID)
+	pending, err := s.store.Queries.PendingLiveActivityTokens(ctx, storedb.PendingLiveActivityTokensParams{SessionID: sleep.ID, Cutoff: formatTime(s.now().UTC().Add(-15 * time.Minute))})
 	if err != nil {
 		transient = append(transient, err)
-	} else if pending > 0 {
+	} else if pending > 0 && targetDeviceID == "" {
 		transient = append(transient, fmt.Errorf("waiting for %d live activity push tokens", pending))
-	}
-	if len(transient) == 0 {
-		_ = s.store.Queries.DeleteLiveActivityTokens(ctx, sleep.ID)
 	}
 	return errors.Join(transient...)
 }

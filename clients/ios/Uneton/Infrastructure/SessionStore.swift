@@ -4,6 +4,7 @@ import CryptoKit
 import Dependencies
 import Foundation
 import Observation
+import OSLog
 import SQLiteData
 import Tagged
 import UnetonActivity
@@ -26,6 +27,7 @@ final class SessionStore {
         static let notificationsEnabled = "push.notificationsEnabled"
         static let liveActivitiesEnabled = "push.liveActivitiesEnabled"
         static let reminderLeadMinutes = "push.reminderLeadMinutes"
+        static let tokenRegistrations = "push.tokenRegistrations"
         static let remoteReminderUntil = "push.remoteReminderUntil"
         static let pendingInitialFamilyID = "session.pendingInitialFamilyID"
         static let watchSnapshotVersion = "watch.snapshotVersion"
@@ -55,12 +57,17 @@ final class SessionStore {
     @ObservationIgnored private var credentialRevocationTask: Task<Void, Never>?
     @ObservationIgnored private var apnsTokenTask: Task<Void, Never>?
     @ObservationIgnored private var liveActivityTokenTask: Task<Void, Never>?
-    @ObservationIgnored private var apnsToken: String?
-    @ObservationIgnored private var pushToStartToken: String?
+    @ObservationIgnored private var tokenRegistrations = PushTokenRegistrations()
+    @ObservationIgnored private var pushRetryGeneration = 0
+    @ObservationIgnored private var pushRetryTask: Task<Void, Never>?
+    @ObservationIgnored private var isUploadingActivityTokens = false
+    private let pushLogger = Logger(subsystem: "solutions.bytesized.uneton", category: "push-registration")
+    private var apnsToken: String? { tokenRegistrations.apnsToken }
+    private var pushToStartToken: String? { tokenRegistrations.pushToStartToken }
     @ObservationIgnored private var reminderOwnership = SleepReminderOwnership()
     @ObservationIgnored private var isUploadingPushSettings = false
     @ObservationIgnored private var needsPushSettingsUpload = false
-    @ObservationIgnored private var activityTokens: [SleepSession.ID: String] = [:]
+    @ObservationIgnored private var pushSettingsFailed = false
 
     init(demo: Bool = false) {
         if demo {
@@ -90,6 +97,11 @@ final class SessionStore {
             accessToken: { CredentialStore().value(for: Key.accessToken) }
         )
         self.watchBridge = PhoneWatchBridge(store: self)
+        if let stored = credentials.value(for: Key.tokenRegistrations),
+           let data = stored.data(using: .utf8),
+           let restored = try? JSONDecoder().decode(PushTokenRegistrations.self, from: data) {
+            tokenRegistrations = restored
+        }
         self.isAuthenticated = accessToken != nil
         self.credentialRevocationTask = Task { [weak self] in
             for await _ in NotificationCenter.default.notifications(
@@ -99,8 +111,12 @@ final class SessionStore {
                 await self?.validateAppleCredential(force: true)
             }
         }
+        let tokenUpdates = NotificationCenter.default.notifications(named: .unetonAPNSTokenChanged)
         self.apnsTokenTask = Task { [weak self] in
-            for await notification in NotificationCenter.default.notifications(named: .unetonAPNSTokenChanged) {
+            if let token = PushRegistrationController.latestToken {
+                await self?.receivedAPNSToken(token.hexadecimalString)
+            }
+            for await notification in tokenUpdates {
                 guard let data = notification.object as? Data else { continue }
                 await self?.receivedAPNSToken(data.hexadecimalString)
             }
@@ -820,6 +836,8 @@ final class SessionStore {
     }
 
     private func save(_ authentication: AuthenticationResponse) {
+        tokenRegistrations.bind(to: authentication.userID)
+        persistTokenRegistrations()
         credentials.set(authentication.accessToken, for: Key.accessToken)
         credentials.set(authentication.refreshToken, for: Key.refreshToken)
         UserDefaults.standard.set(authentication.deviceID.uuidString, forKey: Key.deviceID)
@@ -829,23 +847,28 @@ final class SessionStore {
 
     private func configurePushRegistration() async {
         if notificationsEnabled { await PushRegistrationController.requestAuthorization() }
+        else { PushRegistrationController.register() }
         await uploadPushSettings()
-        for (sessionID, token) in activityTokens { await uploadActivityToken(sessionID: sessionID, token: token) }
+        await uploadActivityTokens()
     }
 
     private func receivedAPNSToken(_ token: String) async {
-        apnsToken = token
+        tokenRegistrations.apnsToken = token
+        persistTokenRegistrations()
         await uploadPushSettings()
     }
 
     private func receivedPushToStartToken(_ token: String) async {
-        pushToStartToken = token
+        tokenRegistrations.pushToStartToken = token
+        persistTokenRegistrations()
         await uploadPushSettings()
     }
 
     private func receivedActivityToken(sessionID: SleepSession.ID, token: String) async {
-        activityTokens[sessionID] = token
-        await uploadActivityToken(sessionID: sessionID, token: token)
+        guard accessToken != nil else { return }
+        tokenRegistrations.record(sessionID: sessionID, token: token, now: now)
+        persistTokenRegistrations()
+        await uploadActivityTokens()
     }
 
     private func uploadPushSettings() async {
@@ -858,6 +881,12 @@ final class SessionStore {
         repeat {
             needsPushSettingsUpload = false
             guard let accessToken else { return }
+            let registrationRevision = tokenRegistrations.reserveRevision()
+            guard persistTokenRegistrations() else {
+                pushSettingsFailed = true
+                schedulePushRetry()
+                return
+            }
             let until: Date?
             if notificationsEnabled {
                 if apnsToken != nil {
@@ -873,10 +902,12 @@ final class SessionStore {
             let settings = DevicePushSettings(notificationsEnabled: notificationsEnabled,
                 liveActivitiesEnabled: liveActivitiesEnabled, reminderLeadMinutes: reminderLeadMinutes,
                 remoteRemindersUntil: until,
-                notificationLanguage: Bundle.main.preferredLocalizations.first == "fi" ? "fi" : "en")
+                notificationLanguage: Bundle.main.preferredLocalizations.first == "fi" ? "fi" : "en",
+                registrationRevision: registrationRevision)
             do {
                 let acknowledged = try await apiClient.updateDevicePushSettings(apnsToken, pushToStartToken,
                     PushRegistrationController.environment, settings, accessToken)
+                pushSettingsFailed = false
                 // Sign-out may have completed while the request was in flight.
                 if self.accessToken == accessToken {
                     reminderOwnership.remoteUntil = acknowledged.remoteRemindersUntil
@@ -884,6 +915,9 @@ final class SessionStore {
                     await scheduleLocalReminder()
                 }
             } catch {
+                pushSettingsFailed = true
+                pushLogger.warning("Device token registration failed; retry scheduled")
+                schedulePushRetry()
                 // Keep the reserved period after an ambiguous response. Re-enabling
                 // a local request here could duplicate an already-owned remote alert.
             }
@@ -908,16 +942,96 @@ final class SessionStore {
             notificationsEnabled: notificationsEnabled, leadMinutes: reminderLeadMinutes, now: now))
     }
 
-    private func uploadActivityToken(sessionID: SleepSession.ID, token: String) async {
-        guard let accessToken else { return }
-        try? await apiClient.registerLiveActivity(sessionID, token, PushRegistrationController.environment, accessToken)
+    @discardableResult
+    private func persistTokenRegistrations() -> Bool {
+        guard let data = try? JSONEncoder().encode(tokenRegistrations),
+              let value = String(data: data, encoding: .utf8) else { return false }
+        credentials.set(value, for: Key.tokenRegistrations)
+        let saved = credentials.value(for: Key.tokenRegistrations) == value
+        if !saved { pushLogger.error("Could not persist token registration work") }
+        return saved
+    }
+
+    private func uploadActivityTokens() async {
+        guard !isUploadingActivityTokens, let accessToken else { return }
+        guard persistTokenRegistrations() else { schedulePushRetry(); return }
+        isUploadingActivityTokens = true
+        defer {
+            isUploadingActivityTokens = false
+            if !tokenRegistrations.activities.isEmpty { schedulePushRetry() }
+        }
+        let registrations = tokenRegistrations
+        for (sessionID, token) in registrations.activities {
+            guard let revision = registrations.activityRevisions[sessionID] else { continue }
+            guard self.accessToken == accessToken else { return }
+            do {
+                try await apiClient.registerLiveActivity(sessionID, token,
+                    PushRegistrationController.environment, revision, accessToken)
+                guard self.accessToken == accessToken else { return }
+                tokenRegistrations.acknowledge(sessionID: sessionID, token: token, revision: revision)
+                persistTokenRegistrations()
+            } catch {
+                pushLogger.warning("Activity token registration failed; retry scheduled")
+                schedulePushRetry()
+            }
+        }
+        if !tokenRegistrations.activities.isEmpty {
+            let count = tokenRegistrations.activities.count
+            let age = Int(now.timeIntervalSince(tokenRegistrations.pendingSince.values.min() ?? now))
+            pushLogger.notice("Pending activity registrations: \(count), oldest age seconds: \(age)")
+            schedulePushRetry()
+        }
+    }
+
+    private func schedulePushRetry() {
+        guard pushRetryTask == nil, accessToken != nil else { return }
+        pushRetryGeneration += 1
+        let generation = pushRetryGeneration
+        pushRetryTask = Task { [weak self] in
+            var delay = 2
+            while let self, !Task.isCancelled, self.accessToken != nil,
+                  self.pushRetryGeneration == generation {
+                do { try await self.clock.sleep(for: .seconds(delay)) } catch { break }
+                // Refresh authentication through its usual path before retrying.
+                try? await self.refreshAuthentication()
+                await self.uploadPushSettings()
+                await self.uploadActivityTokens()
+                delay = min(delay * 2, 300)
+                if self.tokenRegistrations.activities.isEmpty && !self.pushSettingsFailed { break }
+            }
+            if self?.pushRetryGeneration == generation { self?.pushRetryTask = nil }
+        }
+    }
+
+    private func reconcileLiveActivities() async {
+        let familyIDs = Set(memberships?.map(\.id) ?? [])
+        guard let sessions = try? await database.read({ db in
+            try SleepSession.fetchAll(db)
+        }) else { return }
+        let visible = sessions.filter { familyIDs.contains($0.familyID) && $0.deletedAt == nil && $0.supersededByID == nil }
+        let active = Dictionary(uniqueKeysWithValues: visible.filter { $0.endedAt == nil }.map { ($0.id, $0) })
+        var seen = Set<SleepSession.ID>()
+        for activity in Activity<SleepActivityAttributes>.activities {
+            let id = activity.attributes.sessionID
+            if !liveActivitiesEnabled || active[id] == nil || !seen.insert(id).inserted {
+                await activity.end(nil, dismissalPolicy: .immediate)
+            }
+        }
+        // Keep ended sessions until registration acknowledges: the server must
+        // know a late token so it can send the corresponding remote end.
+        tokenRegistrations.retainActivities(Set(visible.map(\.id)))
+        persistTokenRegistrations()
     }
 
     private func clearLocalSession() async {
         for activity in Activity<SleepActivityAttributes>.activities {
             await activity.end(nil, dismissalPolicy: .immediate)
         }
-        activityTokens.removeAll()
+        pushRetryGeneration += 1
+        pushRetryTask?.cancel()
+        pushRetryTask = nil
+        tokenRegistrations = PushTokenRegistrations()
+        credentials.removeValue(for: Key.tokenRegistrations)
         credentials.removeValue(for: Key.accessToken)
         credentials.removeValue(for: Key.refreshToken)
         credentials.removeValue(for: Key.appleUserID)
@@ -987,6 +1101,9 @@ final class SessionStore {
             try await refreshAuthentication()
             result = try await coordinator.synchronize(familyID: familyID)
         }
+        await reconcileLiveActivities()
+        // Claim existing local activity tokens before settings can request a remote start.
+        await uploadActivityTokens()
         await uploadPushSettings()
         await watchBridge.publishSnapshot()
         return result

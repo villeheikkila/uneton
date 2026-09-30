@@ -78,7 +78,8 @@ func (p *APNSProvider) sendWithExpiration(ctx context.Context, token, environmen
 	}
 	response, err := p.client.Do(request)
 	if err != nil {
-		return false, err
+		// net/http errors can include the request URL, which contains a push token.
+		return false, &apnsTransportError{cause: err}
 	}
 	defer func() { _ = response.Body.Close() }()
 	if response.StatusCode == http.StatusOK {
@@ -115,3 +116,9 @@ func (p *APNSProvider) liveActivity(ctx context.Context, token, environment, eve
 func appleReferenceSeconds(value time.Time) float64 {
 	return value.Sub(time.Date(2001, 1, 1, 0, 0, 0, 0, time.UTC)).Seconds()
 }
+
+// Keep the cause for errors.Is/As without exposing token-bearing URLs in logs.
+type apnsTransportError struct{ cause error }
+
+func (e *apnsTransportError) Error() string { return "APNs transport request failed" }
+func (e *apnsTransportError) Unwrap() error { return e.cause }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "authoritativeSchemaSha256": "1dc7cb7f2dffd87ba25d9027b575eb0434b96ee7145a7804220a233aa149f7b7",
+  "authoritativeSchemaSha256": "96e8b866d31eafa4e44523c83582976746ce9919b48259650687833195944c7b",
   "tables": {
     "users": [
       "USER_ID",

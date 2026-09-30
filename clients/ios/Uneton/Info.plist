@@ -48,5 +48,7 @@
 	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
+	<key>UnetonAPNSEnvironment</key>
+	<string>$(UNETON_APNS_ENVIRONMENT)</string>
 </dict>
 </plist>

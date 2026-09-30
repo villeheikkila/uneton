@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -87,4 +88,15 @@ type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (function roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
 	return function(request)
+}
+
+func TestAPNSTransportErrorsDoNotExposeTokens(t *testing.T) {
+	failure := errors.New("connection lost")
+	provider := NewAPNSProvider(APNSConfig{TeamID: "team", KeyID: "key", PrivateKey: applePrivateKey(t), Topic: "solutions.bytesized.uneton"})
+	provider.client = &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) { return nil, failure })}
+	provider.endpoint = func(string) string { return "https://apns.test" }
+	_, err := provider.alert(context.Background(), "private-push-token", "development", "title", "body", "id")
+	if err == nil || strings.Contains(err.Error(), "private-push-token") || !errors.Is(err, failure) {
+		t.Fatalf("transport error must preserve cause without token URL: %v", err)
+	}
 }

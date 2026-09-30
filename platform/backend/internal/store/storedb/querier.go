@@ -17,6 +17,7 @@ type Querier interface {
 	ActiveSleepForChild(ctx context.Context, arg ActiveSleepForChildParams) (string, error)
 	ActiveSleepForFamily(ctx context.Context, familyID string) (ActiveSleepForFamilyRow, error)
 	ActiveSleepsMissingFromDevice(ctx context.Context, deviceID string) ([]ActiveSleepsMissingFromDeviceRow, error)
+	ActivityRegistrationRevision(ctx context.Context, arg ActivityRegistrationRevisionParams) (int64, error)
 	AddCaregiver(ctx context.Context, arg AddCaregiverParams) error
 	AddOwner(ctx context.Context, arg AddOwnerParams) error
 	AnonymizeUser(ctx context.Context, arg AnonymizeUserParams) (int64, error)
@@ -32,6 +33,7 @@ type Querier interface {
 	ClaimLiveActivityStart(ctx context.Context, arg ClaimLiveActivityStartParams) (int64, error)
 	ClaimSleepReminder(ctx context.Context, arg ClaimSleepReminderParams) (int64, error)
 	CommandResult(ctx context.Context, arg CommandResultParams) ([]byte, error)
+	ConfirmLiveActivityStart(ctx context.Context, arg ConfirmLiveActivityStartParams) error
 	CreateActiveSleep(ctx context.Context, arg CreateActiveSleepParams) error
 	CreateChild(ctx context.Context, arg CreateChildParams) error
 	CreateFamily(ctx context.Context, arg CreateFamilyParams) error
@@ -83,15 +85,17 @@ type Querier interface {
 	InviteByTokenHash(ctx context.Context, tokenHash []byte) (InviteByTokenHashRow, error)
 	IsFamilyMember(ctx context.Context, arg IsFamilyMemberParams) (bool, error)
 	LatestFamilyCursor(ctx context.Context, familyID string) (int64, error)
+	LiveActivitySessionContext(ctx context.Context, sessionID string) (LiveActivitySessionContextRow, error)
 	MarkDeliveryFailed(ctx context.Context, arg MarkDeliveryFailedParams) error
 	MarkDeliverySending(ctx context.Context, id string) (int64, error)
 	MarkDeliverySent(ctx context.Context, id string) error
 	MergeSleep(ctx context.Context, arg MergeSleepParams) error
 	OwnedFamilyIDs(ctx context.Context, ownerID string) ([]string, error)
 	PendingFamilyInvites(ctx context.Context, arg PendingFamilyInvitesParams) ([]PendingFamilyInvitesRow, error)
-	PendingLiveActivityTokens(ctx context.Context, sessionID string) (int64, error)
+	PendingLiveActivityTokens(ctx context.Context, arg PendingLiveActivityTokensParams) (int64, error)
 	PredictionChild(ctx context.Context, familyID string) (PredictionChildRow, error)
 	PromoteFamilyOwner(ctx context.Context, arg PromoteFamilyOwnerParams) (int64, error)
+	QueueActivityReconciliation(ctx context.Context, arg QueueActivityReconciliationParams) error
 	QueueDelivery(ctx context.Context, arg QueueDeliveryParams) error
 	ReadEvents(ctx context.Context, arg ReadEventsParams) ([]ReadEventsRow, error)
 	RecordCommand(ctx context.Context, arg RecordCommandParams) error
@@ -102,6 +106,7 @@ type Querier interface {
 	RemoveCaregiver(ctx context.Context, arg RemoveCaregiverParams) (int64, error)
 	RemoveFamilyMemberships(ctx context.Context, userID string) error
 	RenameFamily(ctx context.Context, arg RenameFamilyParams) (int64, error)
+	ResetInterruptedLiveActivityStarts(ctx context.Context) error
 	ResetSendingDeliveries(ctx context.Context) error
 	RevokePendingInvite(ctx context.Context, arg RevokePendingInviteParams) (int64, error)
 	SessionLiveActivityTokens(ctx context.Context, sessionID string) ([]SessionLiveActivityTokensRow, error)

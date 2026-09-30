@@ -46,6 +46,7 @@ where devices.id=?1
   and sleep_sessions.ended_at is null
   and sleep_sessions.deleted_at is null
   and sleep_sessions.superseded_by_id is null
+  and children.deleted_at is null
   and not exists (
     select 1 from live_activity_starts
     where live_activity_starts.session_id=sleep_sessions.id
@@ -92,6 +93,23 @@ func (q *Queries) ActiveSleepsMissingFromDevice(ctx context.Context, deviceID st
 		return nil, err
 	}
 	return items, nil
+}
+
+const activityRegistrationRevision = `-- name: ActivityRegistrationRevision :one
+select registration_revision from live_activity_starts
+where session_id=?1 and device_id=?2
+`
+
+type ActivityRegistrationRevisionParams struct {
+	SessionID string `json:"session_id"`
+	DeviceID  string `json:"device_id"`
+}
+
+func (q *Queries) ActivityRegistrationRevision(ctx context.Context, arg ActivityRegistrationRevisionParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, activityRegistrationRevision, arg.SessionID, arg.DeviceID)
+	var registration_revision int64
+	err := row.Scan(&registration_revision)
+	return registration_revision, err
 }
 
 const anonymizeUser = `-- name: AnonymizeUser :execrows
@@ -222,6 +240,29 @@ func (q *Queries) ClaimLiveActivityStart(ctx context.Context, arg ClaimLiveActiv
 	return result.RowsAffected()
 }
 
+const confirmLiveActivityStart = `-- name: ConfirmLiveActivityStart :exec
+update live_activity_starts set push_to_start_token=?1,
+  registration_revision=?2
+where session_id=?3 and device_id=?4
+`
+
+type ConfirmLiveActivityStartParams struct {
+	PushToStartToken     string `json:"push_to_start_token"`
+	RegistrationRevision int64  `json:"registration_revision"`
+	SessionID            string `json:"session_id"`
+	DeviceID             string `json:"device_id"`
+}
+
+func (q *Queries) ConfirmLiveActivityStart(ctx context.Context, arg ConfirmLiveActivityStartParams) error {
+	_, err := q.db.ExecContext(ctx, confirmLiveActivityStart,
+		arg.PushToStartToken,
+		arg.RegistrationRevision,
+		arg.SessionID,
+		arg.DeviceID,
+	)
+	return err
+}
+
 const createUser = `-- name: CreateUser :exec
 insert into users(id, apple_subject, display_name, apple_refresh_token_ciphertext, created_at)
 values (?1, ?2, ?3, ?4, ?5)
@@ -319,7 +360,7 @@ func (q *Queries) DeleteUserDevices(ctx context.Context, userID string) error {
 }
 
 const devicePushSettings = `-- name: DevicePushSettings :one
-select apns_token, push_to_start_token, apns_environment,
+select apns_token, push_to_start_token, apns_environment, push_registration_revision,
   notifications_enabled, live_activities_enabled, reminder_lead_minutes,
   remote_reminders_until, remote_reminders_from, notification_language
 from devices where id=?1 and user_id=?2
@@ -331,15 +372,16 @@ type DevicePushSettingsParams struct {
 }
 
 type DevicePushSettingsRow struct {
-	ApnsToken             sql.NullString `json:"apns_token"`
-	PushToStartToken      sql.NullString `json:"push_to_start_token"`
-	ApnsEnvironment       string         `json:"apns_environment"`
-	NotificationsEnabled  int64          `json:"notifications_enabled"`
-	LiveActivitiesEnabled int64          `json:"live_activities_enabled"`
-	ReminderLeadMinutes   int64          `json:"reminder_lead_minutes"`
-	RemoteRemindersUntil  sql.NullString `json:"remote_reminders_until"`
-	RemoteRemindersFrom   sql.NullString `json:"remote_reminders_from"`
-	NotificationLanguage  string         `json:"notification_language"`
+	ApnsToken                sql.NullString `json:"apns_token"`
+	PushToStartToken         sql.NullString `json:"push_to_start_token"`
+	ApnsEnvironment          string         `json:"apns_environment"`
+	PushRegistrationRevision int64          `json:"push_registration_revision"`
+	NotificationsEnabled     int64          `json:"notifications_enabled"`
+	LiveActivitiesEnabled    int64          `json:"live_activities_enabled"`
+	ReminderLeadMinutes      int64          `json:"reminder_lead_minutes"`
+	RemoteRemindersUntil     sql.NullString `json:"remote_reminders_until"`
+	RemoteRemindersFrom      sql.NullString `json:"remote_reminders_from"`
+	NotificationLanguage     string         `json:"notification_language"`
 }
 
 func (q *Queries) DevicePushSettings(ctx context.Context, arg DevicePushSettingsParams) (DevicePushSettingsRow, error) {
@@ -349,6 +391,7 @@ func (q *Queries) DevicePushSettings(ctx context.Context, arg DevicePushSettings
 		&i.ApnsToken,
 		&i.PushToStartToken,
 		&i.ApnsEnvironment,
+		&i.PushRegistrationRevision,
 		&i.NotificationsEnabled,
 		&i.LiveActivitiesEnabled,
 		&i.ReminderLeadMinutes,
@@ -426,6 +469,34 @@ func (q *Queries) FamilyNotificationDevices(ctx context.Context, familyID string
 	return items, nil
 }
 
+const liveActivitySessionContext = `-- name: LiveActivitySessionContext :one
+select sleep_sessions.family_id, sleep_sessions.ended_at, sleep_sessions.deleted_at,
+  sleep_sessions.superseded_by_id, children.deleted_at as child_deleted_at
+from sleep_sessions inner join children on sleep_sessions.child_id=children.id
+where sleep_sessions.id=?1
+`
+
+type LiveActivitySessionContextRow struct {
+	FamilyID       string         `json:"family_id"`
+	EndedAt        sql.NullString `json:"ended_at"`
+	DeletedAt      sql.NullString `json:"deleted_at"`
+	SupersededByID sql.NullString `json:"superseded_by_id"`
+	ChildDeletedAt sql.NullString `json:"child_deleted_at"`
+}
+
+func (q *Queries) LiveActivitySessionContext(ctx context.Context, sessionID string) (LiveActivitySessionContextRow, error) {
+	row := q.db.QueryRowContext(ctx, liveActivitySessionContext, sessionID)
+	var i LiveActivitySessionContextRow
+	err := row.Scan(
+		&i.FamilyID,
+		&i.EndedAt,
+		&i.DeletedAt,
+		&i.SupersededByID,
+		&i.ChildDeletedAt,
+	)
+	return i, err
+}
+
 const pendingLiveActivityTokens = `-- name: PendingLiveActivityTokens :one
 select count(*) from live_activity_starts
 left join live_activity_tokens
@@ -433,13 +504,50 @@ left join live_activity_tokens
   and live_activity_starts.device_id=live_activity_tokens.device_id
 where live_activity_starts.session_id=?1
   and live_activity_tokens.token is null
+  and live_activity_starts.push_to_start_token not like 'activity:%'
+  and live_activity_starts.created_at > ?2
 `
 
-func (q *Queries) PendingLiveActivityTokens(ctx context.Context, sessionID string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, pendingLiveActivityTokens, sessionID)
+type PendingLiveActivityTokensParams struct {
+	SessionID string `json:"session_id"`
+	Cutoff    string `json:"cutoff"`
+}
+
+func (q *Queries) PendingLiveActivityTokens(ctx context.Context, arg PendingLiveActivityTokensParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, pendingLiveActivityTokens, arg.SessionID, arg.Cutoff)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const queueActivityReconciliation = `-- name: QueueActivityReconciliation :exec
+insert into deliveries(id, family_id, kind, payload_json, due_at, created_at)
+values (?1, ?2, ?3, ?4,
+  ?5, ?6)
+on conflict(id) do update set payload_json=excluded.payload_json,
+  status='pending', due_at=excluded.due_at, last_error=null
+where deliveries.status='sent'
+`
+
+type QueueActivityReconciliationParams struct {
+	ID          string `json:"id"`
+	FamilyID    string `json:"family_id"`
+	Kind        string `json:"kind"`
+	PayloadJson []byte `json:"payload_json"`
+	DueAt       string `json:"due_at"`
+	CreatedAt   string `json:"created_at"`
+}
+
+func (q *Queries) QueueActivityReconciliation(ctx context.Context, arg QueueActivityReconciliationParams) error {
+	_, err := q.db.ExecContext(ctx, queueActivityReconciliation,
+		arg.ID,
+		arg.FamilyID,
+		arg.Kind,
+		arg.PayloadJson,
+		arg.DueAt,
+		arg.CreatedAt,
+	)
+	return err
 }
 
 const registerLiveActivity = `-- name: RegisterLiveActivity :exec
@@ -491,6 +599,26 @@ delete from family_members where user_id=?1
 
 func (q *Queries) RemoveFamilyMemberships(ctx context.Context, userID string) error {
 	_, err := q.db.ExecContext(ctx, removeFamilyMemberships, userID)
+	return err
+}
+
+const resetInterruptedLiveActivityStarts = `-- name: ResetInterruptedLiveActivityStarts :exec
+delete from live_activity_starts
+where push_to_start_token not like 'activity:%'
+  and exists (
+    select 1 from deliveries
+    where deliveries.status='sending'
+      and deliveries.kind='activityStart'
+      and json_extract(deliveries.payload_json, '$.sleep.id')=live_activity_starts.session_id
+      and (
+        json_extract(deliveries.payload_json, '$.targetDeviceID') is null
+        or json_extract(deliveries.payload_json, '$.targetDeviceID')=live_activity_starts.device_id
+      )
+  )
+`
+
+func (q *Queries) ResetInterruptedLiveActivityStarts(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetInterruptedLiveActivityStarts)
 	return err
 }
 
@@ -573,36 +701,39 @@ func (q *Queries) UpdateAppleRefreshToken(ctx context.Context, arg UpdateAppleRe
 
 const updateDevicePushSettings = `-- name: UpdateDevicePushSettings :execrows
 update devices set
-  apns_token=?1,
-  push_to_start_token=?2,
-  apns_environment=?3,
-  notifications_enabled=?4,
-  live_activities_enabled=?5,
-  reminder_lead_minutes=?6,
-  remote_reminders_until=?7,
-  remote_reminders_from=?8,
-  notification_language=?9,
-  last_seen_at=?10
-where id=?11 and user_id=?12
+  push_registration_revision=?1,
+  apns_token=?2,
+  push_to_start_token=?3,
+  apns_environment=?4,
+  notifications_enabled=?5,
+  live_activities_enabled=?6,
+  reminder_lead_minutes=?7,
+  remote_reminders_until=?8,
+  remote_reminders_from=?9,
+  notification_language=?10,
+  last_seen_at=?11
+where id=?12 and user_id=?13
 `
 
 type UpdateDevicePushSettingsParams struct {
-	ApnsToken             sql.NullString `json:"apns_token"`
-	PushToStartToken      sql.NullString `json:"push_to_start_token"`
-	ApnsEnvironment       string         `json:"apns_environment"`
-	NotificationsEnabled  int64          `json:"notifications_enabled"`
-	LiveActivitiesEnabled int64          `json:"live_activities_enabled"`
-	ReminderLeadMinutes   int64          `json:"reminder_lead_minutes"`
-	RemoteRemindersUntil  sql.NullString `json:"remote_reminders_until"`
-	RemoteRemindersFrom   sql.NullString `json:"remote_reminders_from"`
-	NotificationLanguage  string         `json:"notification_language"`
-	LastSeenAt            string         `json:"last_seen_at"`
-	ID                    string         `json:"id"`
-	UserID                string         `json:"user_id"`
+	PushRegistrationRevision int64          `json:"push_registration_revision"`
+	ApnsToken                sql.NullString `json:"apns_token"`
+	PushToStartToken         sql.NullString `json:"push_to_start_token"`
+	ApnsEnvironment          string         `json:"apns_environment"`
+	NotificationsEnabled     int64          `json:"notifications_enabled"`
+	LiveActivitiesEnabled    int64          `json:"live_activities_enabled"`
+	ReminderLeadMinutes      int64          `json:"reminder_lead_minutes"`
+	RemoteRemindersUntil     sql.NullString `json:"remote_reminders_until"`
+	RemoteRemindersFrom      sql.NullString `json:"remote_reminders_from"`
+	NotificationLanguage     string         `json:"notification_language"`
+	LastSeenAt               string         `json:"last_seen_at"`
+	ID                       string         `json:"id"`
+	UserID                   string         `json:"user_id"`
 }
 
 func (q *Queries) UpdateDevicePushSettings(ctx context.Context, arg UpdateDevicePushSettingsParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, updateDevicePushSettings,
+		arg.PushRegistrationRevision,
 		arg.ApnsToken,
 		arg.PushToStartToken,
 		arg.ApnsEnvironment,

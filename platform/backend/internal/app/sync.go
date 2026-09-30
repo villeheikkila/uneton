@@ -102,6 +102,7 @@ type temperatureReadingRecord struct {
 }
 
 type activityDelivery struct {
+	TargetDeviceID string      `json:"targetDeviceID,omitempty"`
 	OriginDeviceID string      `json:"originDeviceID,omitempty"`
 	Sleep          sleepRecord `json:"sleep"`
 }

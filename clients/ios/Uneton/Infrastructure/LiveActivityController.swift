@@ -12,7 +12,10 @@ struct LiveActivityController {
         childName: String,
         startedAt: Date
     ) async {
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        guard ActivityAuthorizationInfo().areActivitiesEnabled,
+              !Activity<SleepActivityAttributes>.activities.contains(where: {
+                  $0.attributes.sessionID == sessionID
+              }) else { return }
         let attributes = SleepActivityAttributes(
             familyID: familyID,
             childID: childID,
@@ -31,21 +34,33 @@ struct LiveActivityController {
         pushToStart: @escaping @Sendable (String) async -> Void,
         activity: @escaping @Sendable (SleepSession.ID, String) async -> Void
     ) async {
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask {
-                for await token in Activity<SleepActivityAttributes>.pushToStartTokenUpdates {
-                    await pushToStart(token.hexadecimalString)
-                }
+        let observers = ConcurrentTokenObservers()
+        let starts = Task { @MainActor in
+            if let token = Activity<SleepActivityAttributes>.pushToStartToken {
+                await pushToStart(token.hexadecimalString)
             }
-            group.addTask {
-                for existing in Activity<SleepActivityAttributes>.activities {
-                    await observe(existing, activity: activity)
-                }
-                for await newActivity in Activity<SleepActivityAttributes>.activityUpdates {
-                    await observe(newActivity, activity: activity)
-                }
+            for await token in Activity<SleepActivityAttributes>.pushToStartTokenUpdates {
+                guard !Task.isCancelled else { return }
+                await pushToStart(token.hexadecimalString)
             }
-            await group.waitForAll()
+        }
+        let discovery = Task { @MainActor in
+            for existing in Activity<SleepActivityAttributes>.activities {
+                await observers.start(id: existing.id) { await observe(existing, activity: activity) }
+            }
+            for await newActivity in Activity<SleepActivityAttributes>.activityUpdates {
+                guard !Task.isCancelled else { break }
+                await observers.start(id: newActivity.id) { await observe(newActivity, activity: activity) }
+            }
+            await observers.cancelAll()
+        }
+        await withTaskCancellationHandler {
+            await discovery.value
+            starts.cancel()
+            await starts.value
+        } onCancel: {
+            starts.cancel()
+            discovery.cancel()
         }
     }
 
@@ -60,11 +75,27 @@ struct LiveActivityController {
     }
 }
 
+@MainActor
 private func observe(
     _ value: Activity<SleepActivityAttributes>,
     activity: @escaping @Sendable (SleepSession.ID, String) async -> Void
 ) async {
-    for await token in value.pushTokenUpdates {
-        await activity(value.attributes.sessionID, token.hexadecimalString)
+    let tokens = Task { @MainActor in
+        if let token = value.pushToken {
+            await activity(value.attributes.sessionID, token.hexadecimalString)
+        }
+        for await token in value.pushTokenUpdates {
+            guard !Task.isCancelled else { return }
+            await activity(value.attributes.sessionID, token.hexadecimalString)
+        }
+    }
+    await withTaskCancellationHandler {
+        for await state in value.activityStateUpdates {
+            if Task.isCancelled || state == .ended || state == .dismissed { break }
+        }
+        tokens.cancel()
+        await tokens.value
+    } onCancel: {
+        tokens.cancel()
     }
 }

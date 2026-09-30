@@ -124,6 +124,7 @@ create table devices (
   user_id text not null references users(id) on delete cascade,
   refresh_token_hash blob,
   refresh_expires_at text,
+  push_registration_revision integer not null default 0 check (push_registration_revision >= 0),
   apns_token text,
   push_to_start_token text,
   apns_environment text not null default 'development',
@@ -150,6 +151,7 @@ create table live_activity_starts (
   session_id text not null references sleep_sessions(id) on delete cascade,
   device_id text not null references devices(id) on delete cascade,
   push_to_start_token text not null,
+  registration_revision integer not null default 0 check (registration_revision >= 0),
   created_at text not null,
   primary key (session_id, device_id)
 ) strict;

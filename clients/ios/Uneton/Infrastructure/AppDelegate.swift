@@ -1,5 +1,6 @@
 import BackgroundTasks
 import Foundation
+import OSLog
 import UIKit
 import UserNotifications
 import UnetonCore
@@ -29,11 +30,13 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     }
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        PushRegistrationController.latestToken = deviceToken
         NotificationCenter.default.post(name: .unetonAPNSTokenChanged, object: deviceToken)
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: any Error) {
-        // APNs registration is retried on the next application launch.
+        Logger(subsystem: "solutions.bytesized.uneton", category: "push-registration")
+            .warning("APNs registration failed; will retry on foreground activation")
     }
 
     func application(

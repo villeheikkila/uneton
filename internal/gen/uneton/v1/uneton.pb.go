@@ -578,6 +578,8 @@ type UpdateDevicePushSettingsRequest struct {
 	// A bounded ownership period; an epoch timestamp explicitly disables it.
 	RemoteRemindersUntil *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=remote_reminders_until,json=remoteRemindersUntil,proto3,oneof" json:"remote_reminders_until,omitempty"`
 	NotificationLanguage *string                `protobuf:"bytes,8,opt,name=notification_language,json=notificationLanguage,proto3,oneof" json:"notification_language,omitempty"`
+	// Persisted device-local counter; older requests cannot replace newer tokens/settings.
+	RegistrationRevision int64 `protobuf:"varint,9,opt,name=registration_revision,json=registrationRevision,proto3" json:"registration_revision,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -668,6 +670,13 @@ func (x *UpdateDevicePushSettingsRequest) GetNotificationLanguage() string {
 	return ""
 }
 
+func (x *UpdateDevicePushSettingsRequest) GetRegistrationRevision() int64 {
+	if x != nil {
+		return x.RegistrationRevision
+	}
+	return 0
+}
+
 type UpdateDevicePushSettingsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Settings      *DevicePushSettings    `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
@@ -713,12 +722,13 @@ func (x *UpdateDevicePushSettingsResponse) GetSettings() *DevicePushSettings {
 }
 
 type RegisterLiveActivityRequest struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	SessionId       string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	PushToken       string                 `protobuf:"bytes,2,opt,name=push_token,json=pushToken,proto3" json:"push_token,omitempty"`
-	ApnsEnvironment string                 `protobuf:"bytes,3,opt,name=apns_environment,json=apnsEnvironment,proto3" json:"apns_environment,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	SessionId            string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	PushToken            string                 `protobuf:"bytes,2,opt,name=push_token,json=pushToken,proto3" json:"push_token,omitempty"`
+	ApnsEnvironment      string                 `protobuf:"bytes,3,opt,name=apns_environment,json=apnsEnvironment,proto3" json:"apns_environment,omitempty"`
+	RegistrationRevision int64                  `protobuf:"varint,4,opt,name=registration_revision,json=registrationRevision,proto3" json:"registration_revision,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *RegisterLiveActivityRequest) Reset() {
@@ -770,6 +780,13 @@ func (x *RegisterLiveActivityRequest) GetApnsEnvironment() string {
 		return x.ApnsEnvironment
 	}
 	return ""
+}
+
+func (x *RegisterLiveActivityRequest) GetRegistrationRevision() int64 {
+	if x != nil {
+		return x.RegistrationRevision
+	}
+	return 0
 }
 
 type RegisterLiveActivityResponse struct {
@@ -5014,7 +5031,7 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x15reminder_lead_minutes\x18\x03 \x01(\x05R\x13reminderLeadMinutes\x12U\n" +
 	"\x16remote_reminders_until\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x14remoteRemindersUntil\x88\x01\x01\x123\n" +
 	"\x15notification_language\x18\x05 \x01(\tR\x14notificationLanguageB\x19\n" +
-	"\x17_remote_reminders_until\"\x91\x05\n" +
+	"\x17_remote_reminders_until\"\xc6\x05\n" +
 	"\x1fUpdateDevicePushSettingsRequest\x12\"\n" +
 	"\n" +
 	"apns_token\x18\x01 \x01(\tH\x00R\tapnsToken\x88\x01\x01\x122\n" +
@@ -5024,7 +5041,8 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x17live_activities_enabled\x18\x05 \x01(\bH\x03R\x15liveActivitiesEnabled\x88\x01\x01\x127\n" +
 	"\x15reminder_lead_minutes\x18\x06 \x01(\x05H\x04R\x13reminderLeadMinutes\x88\x01\x01\x12U\n" +
 	"\x16remote_reminders_until\x18\a \x01(\v2\x1a.google.protobuf.TimestampH\x05R\x14remoteRemindersUntil\x88\x01\x01\x128\n" +
-	"\x15notification_language\x18\b \x01(\tH\x06R\x14notificationLanguage\x88\x01\x01B\r\n" +
+	"\x15notification_language\x18\b \x01(\tH\x06R\x14notificationLanguage\x88\x01\x01\x123\n" +
+	"\x15registration_revision\x18\t \x01(\x03R\x14registrationRevisionB\r\n" +
 	"\v_apns_tokenB\x16\n" +
 	"\x14_push_to_start_tokenB\x18\n" +
 	"\x16_notifications_enabledB\x1a\n" +
@@ -5033,13 +5051,14 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x17_remote_reminders_untilB\x18\n" +
 	"\x16_notification_language\"]\n" +
 	" UpdateDevicePushSettingsResponse\x129\n" +
-	"\bsettings\x18\x01 \x01(\v2\x1d.uneton.v1.DevicePushSettingsR\bsettings\"\x86\x01\n" +
+	"\bsettings\x18\x01 \x01(\v2\x1d.uneton.v1.DevicePushSettingsR\bsettings\"\xbb\x01\n" +
 	"\x1bRegisterLiveActivityRequest\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1d\n" +
 	"\n" +
 	"push_token\x18\x02 \x01(\tR\tpushToken\x12)\n" +
-	"\x10apns_environment\x18\x03 \x01(\tR\x0fapnsEnvironment\"\x1e\n" +
+	"\x10apns_environment\x18\x03 \x01(\tR\x0fapnsEnvironment\x123\n" +
+	"\x15registration_revision\x18\x04 \x01(\x03R\x14registrationRevision\"\x1e\n" +
 	"\x1cRegisterLiveActivityResponse\"\xcf\x01\n" +
 	"\x16AuthenticationResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1b\n" +

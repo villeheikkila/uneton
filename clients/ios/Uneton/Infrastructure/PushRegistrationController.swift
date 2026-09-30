@@ -9,6 +9,7 @@ extension Notification.Name {
 
 @MainActor
 enum PushRegistrationController {
+    static var latestToken: Data?
     private static var familyRefresh: ((Family.ID) async -> Bool)?
     private static var allRefresh: (() async -> Bool)?
 
@@ -30,15 +31,13 @@ enum PushRegistrationController {
 
     static func requestAuthorization() async {
         _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound])
-        await MainActor.run { UIApplication.shared.registerForRemoteNotifications() }
+        register()
     }
 
+    static func register() { UIApplication.shared.registerForRemoteNotifications() }
+
     static var environment: String {
-        #if DEBUG
-        "development"
-        #else
-        "production"
-        #endif
+        Bundle.main.object(forInfoDictionaryKey: "UnetonAPNSEnvironment") as? String ?? "development"
     }
 }
 

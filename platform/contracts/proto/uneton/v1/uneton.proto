@@ -77,6 +77,8 @@ message UpdateDevicePushSettingsRequest {
   // A bounded ownership period; an epoch timestamp explicitly disables it.
   optional google.protobuf.Timestamp remote_reminders_until = 7;
   optional string notification_language = 8;
+  // Persisted device-local counter; older requests cannot replace newer tokens/settings.
+  int64 registration_revision = 9;
 }
 
 message UpdateDevicePushSettingsResponse {
@@ -87,6 +89,7 @@ message RegisterLiveActivityRequest {
   string session_id = 1;
   string push_token = 2;
   string apns_environment = 3;
+  int64 registration_revision = 4;
 }
 
 message RegisterLiveActivityResponse {}

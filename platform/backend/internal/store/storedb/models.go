@@ -46,20 +46,21 @@ type Delivery struct {
 }
 
 type Device struct {
-	ID                    string         `json:"id"`
-	UserID                string         `json:"user_id"`
-	RefreshTokenHash      []byte         `json:"refresh_token_hash"`
-	RefreshExpiresAt      sql.NullString `json:"refresh_expires_at"`
-	ApnsToken             sql.NullString `json:"apns_token"`
-	PushToStartToken      sql.NullString `json:"push_to_start_token"`
-	ApnsEnvironment       string         `json:"apns_environment"`
-	NotificationsEnabled  int64          `json:"notifications_enabled"`
-	LiveActivitiesEnabled int64          `json:"live_activities_enabled"`
-	ReminderLeadMinutes   int64          `json:"reminder_lead_minutes"`
-	RemoteRemindersUntil  sql.NullString `json:"remote_reminders_until"`
-	RemoteRemindersFrom   sql.NullString `json:"remote_reminders_from"`
-	NotificationLanguage  string         `json:"notification_language"`
-	LastSeenAt            string         `json:"last_seen_at"`
+	ID                       string         `json:"id"`
+	UserID                   string         `json:"user_id"`
+	RefreshTokenHash         []byte         `json:"refresh_token_hash"`
+	RefreshExpiresAt         sql.NullString `json:"refresh_expires_at"`
+	PushRegistrationRevision int64          `json:"push_registration_revision"`
+	ApnsToken                sql.NullString `json:"apns_token"`
+	PushToStartToken         sql.NullString `json:"push_to_start_token"`
+	ApnsEnvironment          string         `json:"apns_environment"`
+	NotificationsEnabled     int64          `json:"notifications_enabled"`
+	LiveActivitiesEnabled    int64          `json:"live_activities_enabled"`
+	ReminderLeadMinutes      int64          `json:"reminder_lead_minutes"`
+	RemoteRemindersUntil     sql.NullString `json:"remote_reminders_until"`
+	RemoteRemindersFrom      sql.NullString `json:"remote_reminders_from"`
+	NotificationLanguage     string         `json:"notification_language"`
+	LastSeenAt               string         `json:"last_seen_at"`
 }
 
 type Family struct {
@@ -118,10 +119,11 @@ type Invite struct {
 }
 
 type LiveActivityStart struct {
-	SessionID        string `json:"session_id"`
-	DeviceID         string `json:"device_id"`
-	PushToStartToken string `json:"push_to_start_token"`
-	CreatedAt        string `json:"created_at"`
+	SessionID            string `json:"session_id"`
+	DeviceID             string `json:"device_id"`
+	PushToStartToken     string `json:"push_to_start_token"`
+	RegistrationRevision int64  `json:"registration_revision"`
+	CreatedAt            string `json:"created_at"`
 }
 
 type LiveActivityToken struct {

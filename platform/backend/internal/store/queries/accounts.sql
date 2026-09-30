@@ -58,13 +58,14 @@ where id=sqlc.arg(id) and refresh_token_hash=sqlc.arg(refresh_token_hash);
 delete from devices where id=sqlc.arg(id) and user_id=sqlc.arg(user_id);
 
 -- name: DevicePushSettings :one
-select apns_token, push_to_start_token, apns_environment,
+select apns_token, push_to_start_token, apns_environment, push_registration_revision,
   notifications_enabled, live_activities_enabled, reminder_lead_minutes,
   remote_reminders_until, remote_reminders_from, notification_language
 from devices where id=sqlc.arg(id) and user_id=sqlc.arg(user_id);
 
 -- name: UpdateDevicePushSettings :execrows
 update devices set
+  push_registration_revision=sqlc.arg(push_registration_revision),
   apns_token=sqlc.narg(apns_token),
   push_to_start_token=sqlc.narg(push_to_start_token),
   apns_environment=sqlc.arg(apns_environment),
@@ -99,7 +100,9 @@ left join live_activity_tokens
   on live_activity_starts.session_id=live_activity_tokens.session_id
   and live_activity_starts.device_id=live_activity_tokens.device_id
 where live_activity_starts.session_id=sqlc.arg(session_id)
-  and live_activity_tokens.token is null;
+  and live_activity_tokens.token is null
+  and live_activity_starts.push_to_start_token not like 'activity:%'
+  and live_activity_starts.created_at > sqlc.arg(cutoff);
 
 -- name: CanRegisterLiveActivity :one
 select exists(
@@ -154,6 +157,7 @@ where devices.id=sqlc.arg(device_id)
   and sleep_sessions.ended_at is null
   and sleep_sessions.deleted_at is null
   and sleep_sessions.superseded_by_id is null
+  and children.deleted_at is null
   and not exists (
     select 1 from live_activity_starts
     where live_activity_starts.session_id=sleep_sessions.id
@@ -173,3 +177,40 @@ update users set
   apple_refresh_token_ciphertext=null,
   deleted_at=sqlc.arg(deleted_at)
 where id=sqlc.arg(id) and deleted_at is null;
+
+-- name: LiveActivitySessionContext :one
+select sleep_sessions.family_id, sleep_sessions.ended_at, sleep_sessions.deleted_at,
+  sleep_sessions.superseded_by_id, children.deleted_at as child_deleted_at
+from sleep_sessions inner join children on sleep_sessions.child_id=children.id
+where sleep_sessions.id=sqlc.arg(session_id);
+
+-- name: QueueActivityReconciliation :exec
+insert into deliveries(id, family_id, kind, payload_json, due_at, created_at)
+values (sqlc.arg(id), sqlc.arg(family_id), sqlc.arg(kind), sqlc.arg(payload_json),
+  sqlc.arg(due_at), sqlc.arg(created_at))
+on conflict(id) do update set payload_json=excluded.payload_json,
+  status='pending', due_at=excluded.due_at, last_error=null
+where deliveries.status='sent';
+
+-- name: ConfirmLiveActivityStart :exec
+update live_activity_starts set push_to_start_token=sqlc.arg(push_to_start_token),
+  registration_revision=sqlc.arg(registration_revision)
+where session_id=sqlc.arg(session_id) and device_id=sqlc.arg(device_id);
+
+-- name: ResetInterruptedLiveActivityStarts :exec
+delete from live_activity_starts
+where push_to_start_token not like 'activity:%'
+  and exists (
+    select 1 from deliveries
+    where deliveries.status='sending'
+      and deliveries.kind='activityStart'
+      and json_extract(deliveries.payload_json, '$.sleep.id')=live_activity_starts.session_id
+      and (
+        json_extract(deliveries.payload_json, '$.targetDeviceID') is null
+        or json_extract(deliveries.payload_json, '$.targetDeviceID')=live_activity_starts.device_id
+      )
+  );
+
+-- name: ActivityRegistrationRevision :one
+select registration_revision from live_activity_starts
+where session_id=sqlc.arg(session_id) and device_id=sqlc.arg(device_id);

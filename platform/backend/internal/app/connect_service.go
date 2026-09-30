@@ -2,9 +2,11 @@ package app
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -116,9 +118,21 @@ func (s *Server) UpdateDevicePushSettings(ctx context.Context, req *connect.Requ
 	if err != nil {
 		return nil, err
 	}
-	current, err := s.store.Queries.DevicePushSettings(ctx, storedb.DevicePushSettingsParams{ID: p.DeviceID, UserID: p.UserID})
+	tx, err := s.store.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, internalError("database unavailable", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+	q := s.store.Queries.WithTx(tx)
+	current, err := q.DevicePushSettings(ctx, storedb.DevicePushSettingsParams{ID: p.DeviceID, UserID: p.UserID})
 	if err != nil {
 		return nil, internalError("could not read device settings", err)
+	}
+	if req.Msg.GetRegistrationRevision() < 0 {
+		return nil, invalidArgument("invalid registration revision")
+	}
+	if req.Msg.GetRegistrationRevision() < current.PushRegistrationRevision {
+		return nil, connect.NewError(connect.CodeAborted, errors.New("newer device registration already stored"))
 	}
 	environment := req.Msg.GetApnsEnvironment()
 	if environment == "" {
@@ -187,8 +201,9 @@ func (s *Server) UpdateDevicePushSettings(ctx context.Context, req *connect.Requ
 			return nil, invalidArgument("notification language must be en or fi")
 		}
 	}
-	rows, err := s.store.Queries.UpdateDevicePushSettings(ctx, storedb.UpdateDevicePushSettingsParams{
-		ApnsToken: apnsToken, PushToStartToken: pushToStartToken, ApnsEnvironment: environment,
+	rows, err := q.UpdateDevicePushSettings(ctx, storedb.UpdateDevicePushSettingsParams{
+		PushRegistrationRevision: req.Msg.GetRegistrationRevision(),
+		ApnsToken:                apnsToken, PushToStartToken: pushToStartToken, ApnsEnvironment: environment,
 		NotificationsEnabled: notificationsEnabled, LiveActivitiesEnabled: liveActivitiesEnabled,
 		ReminderLeadMinutes: reminderLead, RemoteRemindersUntil: remoteUntil, RemoteRemindersFrom: remoteFrom, NotificationLanguage: language, LastSeenAt: formatTime(s.now().UTC()), ID: p.DeviceID, UserID: p.UserID,
 	})
@@ -196,7 +211,12 @@ func (s *Server) UpdateDevicePushSettings(ctx context.Context, req *connect.Requ
 		return nil, internalError("could not update device settings", err)
 	}
 	if liveActivitiesEnabled == 1 && pushToStartToken.Valid {
-		go s.startMissingLiveActivities(p.DeviceID)
+		if err := s.queueMissingLiveActivities(ctx, q, p.DeviceID); err != nil {
+			return nil, internalError("could not queue live activities", err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, internalError("could not save push settings", err)
 	}
 	var remoteTimestamp *timestamppb.Timestamp
 	if remoteUntil.Valid {
@@ -223,21 +243,66 @@ func (s *Server) RegisterLiveActivity(ctx context.Context, req *connect.Request[
 	if environment != "development" && environment != "production" {
 		return nil, invalidArgument("APNs environment must be development or production")
 	}
-	allowed, err := s.store.Queries.CanRegisterLiveActivity(ctx, storedb.CanRegisterLiveActivityParams{SessionID: req.Msg.GetSessionId(), UserID: p.UserID})
+	tx, err := s.store.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, internalError("database unavailable", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+	q := s.store.Queries.WithTx(tx)
+	allowed, err := q.CanRegisterLiveActivity(ctx, storedb.CanRegisterLiveActivityParams{SessionID: req.Msg.GetSessionId(), UserID: p.UserID})
 	if err != nil {
 		return nil, internalError("could not authorize live activity", err)
 	}
 	if !allowed {
 		return nil, connect.NewError(connect.CodePermissionDenied, errors.New("family access required"))
 	}
-	if err := s.store.Queries.RegisterLiveActivity(ctx, storedb.RegisterLiveActivityParams{SessionID: req.Msg.GetSessionId(), DeviceID: p.DeviceID, Token: req.Msg.GetPushToken(), ApnsEnvironment: environment, UpdatedAt: formatTime(s.now().UTC())}); err != nil {
+	if req.Msg.GetRegistrationRevision() < 0 {
+		return nil, invalidArgument("invalid registration revision")
+	}
+	revision, err := q.ActivityRegistrationRevision(ctx, storedb.ActivityRegistrationRevisionParams{SessionID: req.Msg.GetSessionId(), DeviceID: p.DeviceID})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, internalError("could not read token revision", err)
+	}
+	if req.Msg.GetRegistrationRevision() < revision {
+		return nil, connect.NewError(connect.CodeAborted, errors.New("newer activity registration already stored"))
+	}
+	if err := q.RegisterLiveActivity(ctx, storedb.RegisterLiveActivityParams{SessionID: req.Msg.GetSessionId(), DeviceID: p.DeviceID, Token: req.Msg.GetPushToken(), ApnsEnvironment: environment, UpdatedAt: formatTime(s.now().UTC())}); err != nil {
 		return nil, internalError("could not register live activity", err)
 	}
-	if _, err := s.store.Queries.ClaimLiveActivityStart(ctx, storedb.ClaimLiveActivityStartParams{
+	if _, err := q.ClaimLiveActivityStart(ctx, storedb.ClaimLiveActivityStartParams{
 		SessionID: req.Msg.GetSessionId(), DeviceID: p.DeviceID,
 		PushToStartToken: "activity:" + req.Msg.GetPushToken(), CreatedAt: formatTime(s.now().UTC()),
 	}); err != nil {
 		return nil, internalError("could not record live activity", err)
+	}
+	if err := q.ConfirmLiveActivityStart(ctx, storedb.ConfirmLiveActivityStartParams{RegistrationRevision: req.Msg.GetRegistrationRevision(), SessionID: req.Msg.GetSessionId(), DeviceID: p.DeviceID, PushToStartToken: "activity:" + req.Msg.GetPushToken()}); err != nil {
+		return nil, internalError("could not confirm activity", err)
+	}
+	state, err := q.LiveActivitySessionContext(ctx, req.Msg.GetSessionId())
+	if err != nil {
+		return nil, internalError("could not read activity session", err)
+	}
+	if state.EndedAt.Valid || state.DeletedAt.Valid || state.SupersededByID.Valid || state.ChildDeletedAt.Valid {
+		encoded, _, err := sleepJSON(ctx, tx, state.FamilyID, req.Msg.GetSessionId())
+		if err != nil {
+			return nil, internalError("could not read ended sleep", err)
+		}
+		var sleep sleepRecord
+		if err := json.Unmarshal(encoded, &sleep); err != nil {
+			return nil, internalError("invalid sleep", err)
+		}
+		payload, err := json.Marshal(activityDelivery{TargetDeviceID: p.DeviceID, Sleep: sleep})
+		if err != nil {
+			return nil, internalError("invalid activity delivery", err)
+		}
+		id := fmt.Sprintf("activity-end-%s-%s-%x", sleep.ID, p.DeviceID, sha256.Sum256([]byte(req.Msg.GetPushToken())))
+		stamp := formatTime(s.now().UTC())
+		if err := q.QueueActivityReconciliation(ctx, storedb.QueueActivityReconciliationParams{ID: id, FamilyID: state.FamilyID, Kind: "activityEnd", PayloadJson: payload, DueAt: stamp, CreatedAt: stamp}); err != nil {
+			return nil, internalError("could not queue activity end", err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, internalError("could not save activity token", err)
 	}
 	return connect.NewResponse(&unetonv1.RegisterLiveActivityResponse{}), nil
 }

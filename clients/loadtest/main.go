@@ -64,9 +64,10 @@ type scenario struct {
 }
 
 type actor struct {
-	auth       *unetonv1.AuthenticationResponse
-	cursor     int64
-	generation string
+	pushRegistrationRevision int64
+	auth                     *unetonv1.AuthenticationResponse
+	cursor                   int64
+	generation               string
 }
 
 func main() {
@@ -497,8 +498,9 @@ func (s scenario) authenticate(ctx context.Context, name string) (*actor, error)
 
 func (s scenario) configureReminders(ctx context.Context, user *actor) error {
 	return s.call("UpdateDevicePushSettings", func() error {
+		user.pushRegistrationRevision++
 		enabled, language := true, "en"
-		request := connect.NewRequest(&unetonv1.UpdateDevicePushSettingsRequest{ApnsEnvironment: "development", NotificationsEnabled: &enabled, NotificationLanguage: &language, RemoteRemindersUntil: timestamppb.New(time.Now().Add(24 * time.Hour))})
+		request := connect.NewRequest(&unetonv1.UpdateDevicePushSettingsRequest{RegistrationRevision: user.pushRegistrationRevision, ApnsEnvironment: "development", NotificationsEnabled: &enabled, NotificationLanguage: &language, RemoteRemindersUntil: timestamppb.New(time.Now().Add(24 * time.Hour))})
 		authorize(request, user.auth.GetAccessToken())
 		_, err := s.client.UpdateDevicePushSettings(ctx, request)
 		return err

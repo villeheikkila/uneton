@@ -244,13 +244,15 @@ public struct FamilyManagementSnapshot: Codable, Equatable, Sendable {
 }
 
 public struct DevicePushSettings: Codable, Equatable, Sendable {
+  public var registrationRevision: Int64
   public var notificationsEnabled: Bool
   public var liveActivitiesEnabled: Bool
   public var reminderLeadMinutes: Int
   public var remoteRemindersUntil: Date?
   public var notificationLanguage: String
 
-  public init(notificationsEnabled: Bool = true, liveActivitiesEnabled: Bool = true, reminderLeadMinutes: Int = 15, remoteRemindersUntil: Date? = nil, notificationLanguage: String = "en") {
+  public init(notificationsEnabled: Bool = true, liveActivitiesEnabled: Bool = true, reminderLeadMinutes: Int = 15, remoteRemindersUntil: Date? = nil, notificationLanguage: String = "en", registrationRevision: Int64 = 0) {
+    self.registrationRevision = registrationRevision
     self.notificationsEnabled = notificationsEnabled
     self.liveActivitiesEnabled = liveActivitiesEnabled
     self.reminderLeadMinutes = reminderLeadMinutes
@@ -266,7 +268,7 @@ public struct APIClient: Sendable {
   public var signOut: @Sendable (_ accessToken: String) async throws -> Void
   public var deleteAccount: @Sendable (_ accessToken: String) async throws -> Void
   public var updateDevicePushSettings: @Sendable (_ apnsToken: String?, _ pushToStartToken: String?, _ environment: String, _ settings: DevicePushSettings, _ accessToken: String) async throws -> DevicePushSettings
-  public var registerLiveActivity: @Sendable (_ sessionID: SleepSession.ID, _ pushToken: String, _ environment: String, _ accessToken: String) async throws -> Void
+  public var registerLiveActivity: @Sendable (_ sessionID: SleepSession.ID, _ pushToken: String, _ environment: String, _ registrationRevision: Int64, _ accessToken: String) async throws -> Void
   public var createFamily: @Sendable (_ id: Family.ID, _ name: String, _ accessToken: String) async throws -> Void
   public var createInvite: @Sendable (_ familyID: Family.ID, _ accessToken: String) async throws -> FamilyInvite
   public var acceptInvite: @Sendable (_ token: String, _ accessToken: String) async throws -> AcceptedInvite
@@ -288,7 +290,7 @@ public struct APIClient: Sendable {
     signOut: @escaping @Sendable (String) async throws -> Void,
     deleteAccount: @escaping @Sendable (String) async throws -> Void,
     updateDevicePushSettings: @escaping @Sendable (String?, String?, String, DevicePushSettings, String) async throws -> DevicePushSettings,
-    registerLiveActivity: @escaping @Sendable (SleepSession.ID, String, String, String) async throws -> Void,
+    registerLiveActivity: @escaping @Sendable (SleepSession.ID, String, String, Int64, String) async throws -> Void,
     createFamily: @escaping @Sendable (Family.ID, String, String) async throws -> Void,
     createInvite: @escaping @Sendable (Family.ID, String) async throws -> FamilyInvite,
     acceptInvite: @escaping @Sendable (String, String) async throws -> AcceptedInvite,
@@ -335,7 +337,7 @@ extension APIClient: TestDependencyKey {
       signOut: { _ in },
       deleteAccount: { _ in },
       updateDevicePushSettings: { _, _, _, settings, _ in settings },
-      registerLiveActivity: { _, _, _, _ in },
+      registerLiveActivity: { _, _, _, _, _ in },
       createFamily: { _, _, _ in },
       createInvite: { _, _ in FamilyInvite(token: "invite", expiresAt: .distantFuture) },
       acceptInvite: { _, _ in AcceptedInvite(familyID: Family.ID(rawValue: UUID(0)), role: "caregiver") },
@@ -416,6 +418,7 @@ extension APIClient {
         request.reminderLeadMinutes = Int32(settings.reminderLeadMinutes)
         request.remoteRemindersUntil = Google_Protobuf_Timestamp(date: settings.remoteRemindersUntil ?? Date(timeIntervalSince1970: 0))
         request.notificationLanguage = settings.notificationLanguage
+        request.registrationRevision = settings.registrationRevision
         let response = try await generated.updateDevicePushSettings(request: request, headers: authorization(token)).result.get()
         if response.settings.hasRemoteRemindersUntil {
           guard let requestedUntil = settings.remoteRemindersUntil,
@@ -424,10 +427,11 @@ extension APIClient {
         }
         return DevicePushSettings(notificationsEnabled: response.settings.notificationsEnabled, liveActivitiesEnabled: response.settings.liveActivitiesEnabled, reminderLeadMinutes: Int(response.settings.reminderLeadMinutes), remoteRemindersUntil: response.settings.hasRemoteRemindersUntil ? response.settings.remoteRemindersUntil.date : nil, notificationLanguage: response.settings.notificationLanguage)
       },
-      registerLiveActivity: { sessionID, pushToken, environment, token in
+      registerLiveActivity: { sessionID, pushToken, environment, revision, token in
         var request = Uneton_V1_RegisterLiveActivityRequest()
         request.sessionID = sessionID.uuidString
         request.pushToken = pushToken
+        request.registrationRevision = revision
         request.apnsEnvironment = environment
         _ = try await generated.registerLiveActivity(request: request, headers: authorization(token)).result.get()
       },
