@@ -614,7 +614,7 @@ func predictionToProto(value *Prediction) *unetonv1.SleepPrediction {
 }
 
 func commandEntityType(kind string) string {
-	if strings.Contains(kind, "Child") || kind == "updatePredictionSettings" {
+	if strings.Contains(kind, "Child") {
 		return "child"
 	}
 	if strings.Contains(kind, "GrowthMeasurement") {

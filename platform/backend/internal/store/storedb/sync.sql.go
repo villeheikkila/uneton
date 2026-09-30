@@ -1354,8 +1354,8 @@ update children set
   birth_date=coalesce(nullif(?2, ''), birth_date),
   prediction_mode=?3,
   manual_interval_minutes=?4,
-  quiet_hours_start_minutes=case when ?5>0 then ?5 else quiet_hours_start_minutes end,
-  quiet_hours_end_minutes=case when ?6>0 then ?6 else quiet_hours_end_minutes end,
+  quiet_hours_start_minutes=?5,
+  quiet_hours_end_minutes=?6,
   time_zone=coalesce(nullif(?7, ''), time_zone),
   growth_reference=coalesce(nullif(?8, ''), growth_reference),
   revision=revision+1,
@@ -1368,8 +1368,8 @@ type UpdateChildParams struct {
 	BirthDate              interface{}   `json:"birth_date"`
 	PredictionMode         string        `json:"prediction_mode"`
 	ManualIntervalMinutes  sql.NullInt64 `json:"manual_interval_minutes"`
-	QuietHoursStartMinutes interface{}   `json:"quiet_hours_start_minutes"`
-	QuietHoursEndMinutes   interface{}   `json:"quiet_hours_end_minutes"`
+	QuietHoursStartMinutes int64         `json:"quiet_hours_start_minutes"`
+	QuietHoursEndMinutes   int64         `json:"quiet_hours_end_minutes"`
 	TimeZone               interface{}   `json:"time_zone"`
 	GrowthReference        interface{}   `json:"growth_reference"`
 	UpdatedAt              string        `json:"updated_at"`

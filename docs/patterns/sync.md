@@ -4,10 +4,13 @@ See [`../architecture.md`](../architecture.md) for the complete client/server li
 
 - A command ID returns the same stored result when retried.
 - Applying a command and appending its event is atomic.
-- Updates and deletes compare `expected_revision`.
+- Updates and deletes require and compare `expected_revision`; creation commands omit it.
+- Deletes return complete canonical tombstones, including revision and deletion time.
+- Pending, acknowledged, replayed, and transmitted commands share a durable local sequence.
 - Local cursors advance only after returned events commit locally.
 - Pulls never discard unresolved pending commands.
-- Acknowledged server timestamps and revisions win.
+- Acknowledged server timestamps and revisions win; older stored retry results cannot replace newer cached revisions.
+- An accepted result without its canonical payload cannot remove a pending command.
 - `WatchFamily` is an invalidation hint; only `Sync` transfers durable state.
 - A generation mismatch or cursor rollback returns a full snapshot before any new command is evaluated.
 - Clients retain accepted commands so an acknowledged mutation can be replayed after a restored older database.

@@ -66,7 +66,7 @@ Dependencies point inward. UI and Apple frameworks may call `UnetonCore`; domain
 The local database deliberately separates server knowledge from what the user sees:
 
 1. `AuthoritativeRecord` stores the latest acknowledged server representation of each entity.
-2. `PendingCommand` stores unresolved local intent in creation order.
+2. `PendingCommand` stores unresolved local intent in a durable sequence allocated in the same transaction as insertion.
 3. `AcknowledgedCommand` retains the complete accepted command journal. It is not part of the visible projection; it exists solely to repair a server restored behind an acknowledged client.
 4. `Projection.rebuild` materializes the visible `Child`, `SleepSession`, `GrowthMeasurement`, and `TemperatureReading` diary tables, scoped by the locally stored family membership, by replaying pending intent over the authoritative base.
 5. `SyncState` stores the committed family event cursor, server generation, and last synchronization time.
@@ -89,6 +89,8 @@ SwiftUI `Screen` and `Sheet` views own navigation, toolbars, presentation, and s
 ### 1. Accept intent locally
 
 An iPhone action creates stable entity and command UUIDs, inserts a `PendingCommand`, and rebuilds the projection in one local SQLite transaction. The UI updates immediately. Network availability is irrelevant to accepting the action.
+
+Projection replay, command batching, and acknowledged-journal restore all use the same local sequence. Timestamps and random UUIDs do not determine ordering, so equal timestamps or a clock rollback cannot reorder a start and its wake-up. The acknowledged journal retains each command’s sequence. Sequential offline edits reserve the expected revision produced by the preceding queued mutation for that entity.
 
 The Watch app sends selected-child sleep and temperature intent to the paired phone through a typed `UnetonCore` Watch diary contract. The phone validates family and child identity, creates the same durable command used by its own UI, and returns the local projection. Watch replies and application-context updates are presentation snapshots only: they contain no event cursor and never apply authoritative entity state. The phone assigns a persistent, increasing version to each presentation snapshot; the Watch ignores older snapshots so a delayed reply cannot replace newer displayed state. The Watch persists its single outstanding request before sending, restores it after restart, and retries when the phone becomes reachable. Start-sleep requests carry a stable session ID that also identifies their durable command, so the phone recognizes retries through its pending and acknowledged command journals even if the visible session was later removed. Wake requests name the exact displayed session and cannot end a later one. The phone checks repeated temperature intent against its projection so an ambiguous reply does not create a duplicate reading. The Watch has no independent diary database or general command queue, so the paired iPhone must be reachable to accept an action. When the iPhone is offline from the backend, it still accepts the command durably and retries `Sync` later.
 
@@ -119,7 +121,7 @@ The coordinator may need several pages and command passes. Pagination after the 
 The backend authorizes family membership, opens one SQLite transaction, and isolates each command with a savepoint. For a command not seen before it:
 
 1. validates payload and domain rules;
-2. checks `expected_revision` for an update or delete;
+2. requires and checks `expected_revision` for every update or delete;
 3. mutates the authoritative entity;
 4. appends the corresponding family event;
 5. queues any required background/APNs delivery;
@@ -127,22 +129,24 @@ The backend authorizes family membership, opens one SQLite transaction, and isol
 
 The entity change, event, delivery intent, and stored command result commit together. Retrying the same command ID returns the stored result without applying the mutation or enqueueing delivery again. An ambiguous client timeout is therefore safe to retry.
 
+Creation upserts omit `expected_revision`; an upsert naming a missing entity with an expected revision is rejected rather than recreating it. Deletes return the complete canonical entity with its new revision and deletion timestamp in both the result and event, using the same representation as snapshots.
+
 A rejected command is also returned deterministically. Its savepoint rolls back partial entity, event, and delivery work without preventing later commands in the batch from progressing.
 
 ### 4. Reconcile locally in one transaction
 
-Before writing anything, the client validates response structure: cursors cannot move backwards or advance past the final supplied event or snapshot, event cursors must be ordered and bounded, pagination must make progress, and command-result IDs and statuses must match the sent batch. Event, snapshot, and canonical result payloads must agree with their declared entity identity, revision, and family. A malformed response leaves the cursor and pending commands untouched.
+Before writing anything, the client validates response structure: cursors cannot move backwards or advance past the final supplied event or snapshot, event cursors must be ordered and bounded, pagination must make progress, and command-result IDs and statuses must match the sent batch. Accepted command results must include a canonical entity payload. Event, snapshot, and canonical result payloads must agree with their declared entity identity, revision, and family. A malformed response leaves the cursor and pending commands untouched.
 
 It then performs one local SQLite transaction:
 
-1. ingest canonical command-result payloads into `AuthoritativeRecord`;
+1. ingest canonical command-result payloads into `AuthoritativeRecord` only when their revision is at least the cached revision;
 2. remove accepted pending commands;
 3. rebase a supported stale command once, accept the server version, or create `SyncConflict`;
 4. fold newer events into `AuthoritativeRecord` by revision;
 5. advance `SyncState.cursor` only after those writes succeed;
 6. rebuild the visible projection from authoritative records plus remaining commands.
 
-Server timestamps, canonical entity IDs, and revisions win after acknowledgement. If this local transaction fails, the old cursor and pending commands remain available for a safe retry.
+Server timestamps, canonical entity IDs, and revisions win after acknowledgement. A stored result returned for a retry may describe an older revision than the current cache or a compaction snapshot; it settles the command without rolling the entity backwards. Results and events share the same revision guard. If this local transaction fails, the old cursor and pending commands remain available for a safe retry.
 
 ### Snapshots, compaction, and restore recovery
 
@@ -254,7 +258,11 @@ Never add a second state-transfer channel to make a screen appear fresher. Impro
 
 The highest-value tests exercise invariants rather than transport syntax:
 
-- command replay after a lost response;
+- command replay after a lost response, including a stored result older than the cached entity;
+- complete deletion tombstones in results and events;
+- rejection of missing as well as stale expected revisions;
+- identical enqueue timestamps and clock rollback preserving command order;
+- incomplete acknowledgements preserving pending intent;
 - command/event/delivery atomicity;
 - two caregivers editing the same revision;
 - pagination with pending commands retained;
@@ -265,6 +273,8 @@ The highest-value tests exercise invariants rather than transport syntax:
 - projection rebuild with authoritative changes beneath optimistic overlays;
 - compacted-history snapshot replacement;
 - restore rehearsal with generation rotation and acknowledged-command replay.
+
+The executable checks live in `UnetonCoreTests/SyncCoordinatorTests.swift` (projection, response validation, ordering, pagination, batching, and journal recovery), backend `internal/app/server_test.go` (two caregivers, retries, reconnect, compaction, and restore), `internal/app/sync_boundaries_test.go` (required revisions, idempotent rejection, and deletion payloads), and `internal/app/apns_test.go` (delivery payloads). `mise run test` runs backend, load-client, and shared Swift tests; `mise run ios:build` checks the iPhone, Watch, and widget integration. These checks do not prove real-device background scheduling or APNs delivery, which remain best-effort channels and require device validation.
 
 `clients/loadtest` must remain behaviorally aligned with the real two-caregiver command sequence. Capacity results are meaningful only after the correctness scenario passes.
 

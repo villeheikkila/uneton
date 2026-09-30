@@ -1,6 +1,6 @@
 # Load-test client
 
-This Go client drives the same generated ConnectRPC API as the Apple client. Each scenario models a shared family with two independently authenticated caregivers and exercises family invitation, initial projection download, live stream invalidation, optimistic sleep start, idempotent command retry, cross-device pull, revision-checked wake-up, and final reconciliation.
+This Go client drives the same generated ConnectRPC API as the Apple client. Each scenario models a shared family with two independently authenticated caregivers and exercises family invitation, initial projection download, live stream invalidation, optimistic sleep start, idempotent command retry, cross-device pull, revision-checked wake-up, temperature propagation, an offline start/wake batch with reserved revisions and idempotent replay, child settings and deletion, and final reconciliation.
 
 Start the development server, then run a small scenario:
 

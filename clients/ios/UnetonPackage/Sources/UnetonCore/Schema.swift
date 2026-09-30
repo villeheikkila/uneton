@@ -266,8 +266,9 @@ public struct PendingCommand: Identifiable, Equatable, Sendable {
   public var createdAt: Date
   public var lastError: String?
   public var rebaseAttempt: Int
+  public var sequence: Int64
 
-  public init(id: ID, familyID: Family.ID, kind: String, expectedRevision: Int? = nil, payloadJSON: Data, createdAt: Date, lastError: String? = nil, rebaseAttempt: Int = 0) {
+  public init(id: ID, familyID: Family.ID, kind: String, expectedRevision: Int? = nil, payloadJSON: Data, createdAt: Date, lastError: String? = nil, rebaseAttempt: Int = 0, sequence: Int64 = 0) {
     self.id = id
     self.familyID = familyID
     self.kind = kind
@@ -276,6 +277,7 @@ public struct PendingCommand: Identifiable, Equatable, Sendable {
     self.createdAt = createdAt
     self.lastError = lastError
     self.rebaseAttempt = rebaseAttempt
+    self.sequence = sequence
   }
 }
 
@@ -289,8 +291,9 @@ public struct AcknowledgedCommand: Identifiable, Equatable, Sendable {
   public var payloadJSON: Data
   public var createdAt: Date
   public var acknowledgedAt: Date
+  public var sequence: Int64
 
-  public init(id: ID, familyID: Family.ID, kind: String, expectedRevision: Int? = nil, payloadJSON: Data, createdAt: Date, acknowledgedAt: Date) {
+  public init(id: ID, familyID: Family.ID, kind: String, expectedRevision: Int? = nil, payloadJSON: Data, createdAt: Date, acknowledgedAt: Date, sequence: Int64 = 0) {
     self.id = id
     self.familyID = familyID
     self.kind = kind
@@ -298,6 +301,7 @@ public struct AcknowledgedCommand: Identifiable, Equatable, Sendable {
     self.payloadJSON = payloadJSON
     self.createdAt = createdAt
     self.acknowledgedAt = acknowledgedAt
+    self.sequence = sequence
   }
 }
 
@@ -582,6 +586,21 @@ extension DependencyValues {
         CREATE INDEX "index_temperatureReadings_on_childID_measuredAt"
         ON "temperatureReadings"("childID", "measuredAt" DESC)
         """).execute(database)
+    }
+    migrator.registerMigration("Order the durable command journal") { database in
+      try #sql("ALTER TABLE pendingCommands ADD COLUMN sequence INTEGER NOT NULL DEFAULT 0").execute(database)
+      try #sql("ALTER TABLE acknowledgedCommands ADD COLUMN sequence INTEGER NOT NULL DEFAULT 0").execute(database)
+      let pending = try PendingCommand.fetchAll(database)
+      let acknowledged = try AcknowledgedCommand.fetchAll(database)
+      let identities = (pending.map { ($0.id, $0.createdAt) } + acknowledged.map { ($0.id, $0.createdAt) })
+        .sorted { ($0.1, $0.0.uuidString) < ($1.1, $1.0.uuidString) }
+      for (index, identity) in identities.enumerated() {
+        let sequence = Int64(index + 1)
+        try PendingCommand.find(identity.0).update { $0.sequence = sequence }.execute(database)
+        try AcknowledgedCommand.find(identity.0).update { $0.sequence = sequence }.execute(database)
+      }
+      try #sql("CREATE INDEX index_pendingCommands_on_sequence ON pendingCommands(sequence)").execute(database)
+      try #sql("CREATE INDEX index_acknowledgedCommands_on_sequence ON acknowledgedCommands(sequence)").execute(database)
     }
     try migrator.migrate(database)
     defaultDatabase = database

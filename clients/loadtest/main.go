@@ -360,14 +360,54 @@ func (s scenario) run(ctx context.Context) error {
 			return fmt.Errorf("cycle %d caregiver missing temperature reading", cycle+1)
 		}
 	}
+	offlineSessionID := newID()
+	offlineStart := time.Now().UTC().Add(-2 * time.Hour)
+	offlineRevision := int64(1)
+	offlineCommands := []*unetonv1.Command{
+		{Id: newID(), Payload: &unetonv1.Command_StartSleep{StartSleep: &unetonv1.StartSleep{Sleep: &unetonv1.SleepInput{Id: offlineSessionID, ChildId: childID, StartedAt: timestamppb.New(offlineStart), Source: "phone"}}}},
+		{Id: newID(), ExpectedRevision: &offlineRevision, Payload: &unetonv1.Command_EndSleep{EndSleep: &unetonv1.EndSleep{Id: offlineSessionID, EndedAt: timestamppb.New(offlineStart.Add(30 * time.Minute))}}},
+	}
+	offlineResponse, err := s.sync(ctx, owner, offlineCommands)
+	if err != nil {
+		return fmt.Errorf("offline start/wake batch: %w", err)
+	}
+	if err := accepted(offlineResponse, 2); err != nil {
+		return fmt.Errorf("offline start/wake result: %w", err)
+	}
+	offlineRetry, err := s.sync(ctx, owner, offlineCommands)
+	if err != nil {
+		return fmt.Errorf("offline batch retry: %w", err)
+	}
+	if err := accepted(offlineRetry, 2); err != nil {
+		return fmt.Errorf("offline batch retry result: %w", err)
+	}
+	if len(offlineRetry.GetEvents()) != 0 {
+		return errors.New("offline batch retry changed history")
+	}
+	offlinePull, err := s.sync(ctx, caregiver, nil)
+	if err != nil {
+		return fmt.Errorf("caregiver offline batch pull: %w", err)
+	}
+	offlineFound := false
+	for _, event := range offlinePull.GetEvents() {
+		sleep := event.GetEntity().GetSleepSession()
+		if event.GetEntityId() == offlineSessionID && sleep.GetRevision() == 2 && sleep.GetEndedAt() != nil {
+			offlineFound = true
+		}
+	}
+	if !offlineFound {
+		return errors.New("caregiver missed the offline start/wake batch")
+	}
 	childRevision := int64(1)
 	manualInterval := int32(150)
-	settings := &unetonv1.Command{Id: newID(), ExpectedRevision: &childRevision,
+	settings := &unetonv1.Command{
+		Id: newID(), ExpectedRevision: &childRevision,
 		Payload: &unetonv1.Command_UpdateChild{UpdateChild: &unetonv1.UpdateChild{Child: &unetonv1.ChildInput{
 			Id: childID, Nickname: "Muru updated", BirthDate: time.Now().AddDate(0, -6, 0).Format(time.DateOnly),
 			PredictionMode: "manual", ManualIntervalMinutes: &manualInterval,
 			QuietHoursStartMinutes: 1200, QuietHoursEndMinutes: 360, TimeZone: "Europe/Helsinki",
-		}}}}
+		}}},
+	}
 	updatedChild, err := s.sync(ctx, owner, []*unetonv1.Command{settings})
 	if err != nil {
 		return fmt.Errorf("update child: %w", err)
@@ -379,8 +419,10 @@ func (s scenario) run(ctx context.Context) error {
 		return fmt.Errorf("caregiver child settings pull: %w", err)
 	}
 	childRevision = 2
-	deletion := &unetonv1.Command{Id: newID(), ExpectedRevision: &childRevision,
-		Payload: &unetonv1.Command_DeleteChild{DeleteChild: &unetonv1.DeleteChild{Id: childID}}}
+	deletion := &unetonv1.Command{
+		Id: newID(), ExpectedRevision: &childRevision,
+		Payload: &unetonv1.Command_DeleteChild{DeleteChild: &unetonv1.DeleteChild{Id: childID}},
+	}
 	deletedChild, err := s.sync(ctx, owner, []*unetonv1.Command{deletion})
 	if err != nil {
 		return fmt.Errorf("delete child: %w", err)

@@ -119,7 +119,7 @@ func TestFamilySyncAndInvite(t *testing.T) {
 	endedAt := time.Date(2026, 8, 23, 10, 0, 0, 0, time.UTC)
 	second := syncFamily(t, ctx, client, owner.GetAccessToken(), &unetonv1.SyncRequest{
 		FamilyId: familyID, Cursor: first.GetNextCursor(),
-		Commands: []*unetonv1.Command{{Id: "40000000-0000-4000-8000-000000000003", Payload: &unetonv1.Command_EndSleep{EndSleep: &unetonv1.EndSleep{Id: sessionID, EndedAt: timestamppb.New(endedAt)}}}},
+		Commands: []*unetonv1.Command{{Id: "40000000-0000-4000-8000-000000000003", ExpectedRevision: new(int64(1)), Payload: &unetonv1.Command_EndSleep{EndSleep: &unetonv1.EndSleep{Id: sessionID, EndedAt: timestamppb.New(endedAt)}}}},
 	})
 	if len(second.GetEvents()) != 1 || second.GetNextSleepEstimate() == nil {
 		t.Fatalf("unexpected second sync: %+v", second)

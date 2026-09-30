@@ -234,12 +234,7 @@ func currentCommandEntity(ctx context.Context, tx *sql.Tx, familyID string, comm
 		return "", nil
 	}
 	switch command.Kind {
-	case "createChild", "updateChild", "updatePredictionSettings":
-		payload, _, err := childJSON(ctx, tx, familyID, identity.ID)
-		if err == nil {
-			return identity.ID, payload
-		}
-	case "deleteChild":
+	case "createChild", "updateChild", "deleteChild":
 		payload, _, err := childJSON(ctx, tx, familyID, identity.ID)
 		if err == nil {
 			return identity.ID, payload
@@ -282,7 +277,7 @@ func (s *Server) applyCommand(ctx context.Context, tx *sql.Tx, familyID, userID,
 	switch command.Kind {
 	case "createChild":
 		return s.createChild(ctx, tx, familyID, command)
-	case "updateChild", "updatePredictionSettings":
+	case "updateChild":
 		return s.updateChild(ctx, tx, familyID, command)
 	case "deleteChild":
 		return s.deleteChild(ctx, tx, familyID, command)
@@ -356,7 +351,7 @@ func (s *Server) updateChild(ctx context.Context, tx *sql.Tx, familyID string, c
 	if err != nil {
 		return CommandResult{ID: command.ID}, errors.New("child not found")
 	}
-	if command.ExpectedRevision != nil && *command.ExpectedRevision != int(revision64) {
+	if command.ExpectedRevision == nil || *command.ExpectedRevision != int(revision64) {
 		return CommandResult{ID: command.ID}, errors.New("stale revision")
 	}
 	if payload.PredictionMode == "" {
@@ -479,7 +474,7 @@ func (s *Server) endSleep(ctx context.Context, tx *sql.Tx, familyID, deviceID st
 	if !payload.EndedAt.After(startedAt) {
 		return CommandResult{ID: command.ID}, errors.New("end must be after start")
 	}
-	if command.ExpectedRevision != nil && *command.ExpectedRevision != int(revision) {
+	if command.ExpectedRevision == nil || *command.ExpectedRevision != int(revision) {
 		return CommandResult{ID: command.ID}, errors.New("stale revision")
 	}
 	now := formatTime(s.now().UTC())
@@ -512,12 +507,15 @@ func (s *Server) upsertSleep(ctx context.Context, tx *sql.Tx, familyID, userID s
 	revision, err := q.SleepRevision(ctx, storedb.SleepRevisionParams{ID: payload.ID, FamilyID: familyID})
 	now := formatTime(s.now().UTC())
 	if errors.Is(err, sql.ErrNoRows) {
+		if command.ExpectedRevision != nil {
+			return CommandResult{ID: command.ID}, errors.New("stale revision")
+		}
 		if payload.Source == "" {
 			payload.Source = "manual"
 		}
 		err = q.CreateSleep(ctx, storedb.CreateSleepParams{ID: payload.ID, FamilyID: familyID, ChildID: payload.ChildID, StartedAt: formatTime(payload.StartedAt), EndedAt: nullableString(payload.EndedAt), AuthorID: userID, Source: payload.Source, StartCondition: payload.StartCondition, SleepLocation: payload.SleepLocation, EndCondition: payload.EndCondition, WakeMood: payload.WakeMood, WakeReason: payload.WakeReason, CaregiverIntervened: nullableBool(payload.CaregiverIntervened), UpdatedAt: now})
 	} else if err == nil {
-		if command.ExpectedRevision != nil && *command.ExpectedRevision != int(revision) {
+		if command.ExpectedRevision == nil || *command.ExpectedRevision != int(revision) {
 			return CommandResult{ID: command.ID}, errors.New("stale revision")
 		}
 		err = q.UpdateSleep(ctx, storedb.UpdateSleepParams{StartedAt: formatTime(payload.StartedAt), EndedAt: nullableString(payload.EndedAt), StartCondition: payload.StartCondition, SleepLocation: payload.SleepLocation, EndCondition: payload.EndCondition, WakeMood: payload.WakeMood, WakeReason: payload.WakeReason, CaregiverIntervened: nullableBool(payload.CaregiverIntervened), UpdatedAt: now, ID: payload.ID, FamilyID: familyID})
@@ -547,7 +545,7 @@ func (s *Server) deleteSleep(ctx context.Context, tx *sql.Tx, familyID string, c
 	if err != nil {
 		return CommandResult{ID: command.ID}, errors.New("sleep not found")
 	}
-	if command.ExpectedRevision != nil && *command.ExpectedRevision != int(revision) {
+	if command.ExpectedRevision == nil || *command.ExpectedRevision != int(revision) {
 		return CommandResult{ID: command.ID}, errors.New("stale revision")
 	}
 	now := formatTime(s.now().UTC())
@@ -555,7 +553,10 @@ func (s *Server) deleteSleep(ctx context.Context, tx *sql.Tx, familyID string, c
 	if err := q.DeleteSleep(ctx, storedb.DeleteSleepParams{DeletedAt: nullString(now), Revision: revision, UpdatedAt: now, ID: payload.ID}); err != nil {
 		return CommandResult{ID: command.ID}, err
 	}
-	encoded := json.RawMessage(`{"id":"` + payload.ID + `"}`)
+	encoded, _, err := sleepJSON(ctx, tx, familyID, payload.ID)
+	if err != nil {
+		return CommandResult{ID: command.ID}, err
+	}
 	if err := appendEvent(ctx, q, familyID, "sleepSession", payload.ID, "delete", int(revision), encoded, now); err != nil {
 		return CommandResult{ID: command.ID}, err
 	}
@@ -574,9 +575,12 @@ func (s *Server) upsertGrowthMeasurement(ctx context.Context, tx *sql.Tx, family
 	revision, err := q.GrowthMeasurementRevision(ctx, storedb.GrowthMeasurementRevisionParams{ID: payload.ID, FamilyID: familyID})
 	now := formatTime(s.now().UTC())
 	if errors.Is(err, sql.ErrNoRows) {
+		if command.ExpectedRevision != nil {
+			return CommandResult{ID: command.ID}, errors.New("stale revision")
+		}
 		err = q.CreateGrowthMeasurement(ctx, storedb.CreateGrowthMeasurementParams{ID: payload.ID, FamilyID: familyID, ChildID: payload.ChildID, MeasuredAt: formatTime(payload.MeasuredAt), WeightGrams: nullableInt(payload.WeightGrams), HeightMillimeters: nullableInt(payload.HeightMillimeters), Note: payload.Note, UpdatedAt: now})
 	} else if err == nil {
-		if command.ExpectedRevision != nil && *command.ExpectedRevision != int(revision) {
+		if command.ExpectedRevision == nil || *command.ExpectedRevision != int(revision) {
 			return CommandResult{ID: command.ID}, errors.New("stale revision")
 		}
 		err = q.UpdateGrowthMeasurement(ctx, storedb.UpdateGrowthMeasurementParams{MeasuredAt: formatTime(payload.MeasuredAt), WeightGrams: nullableInt(payload.WeightGrams), HeightMillimeters: nullableInt(payload.HeightMillimeters), Note: payload.Note, UpdatedAt: now, ID: payload.ID, FamilyID: familyID})
@@ -603,7 +607,7 @@ func (s *Server) deleteGrowthMeasurement(ctx context.Context, tx *sql.Tx, family
 	if err != nil {
 		return CommandResult{ID: command.ID}, errors.New("growth measurement not found")
 	}
-	if command.ExpectedRevision != nil && *command.ExpectedRevision != int(revision) {
+	if command.ExpectedRevision == nil || *command.ExpectedRevision != int(revision) {
 		return CommandResult{ID: command.ID}, errors.New("stale revision")
 	}
 	now := formatTime(s.now().UTC())
@@ -611,7 +615,10 @@ func (s *Server) deleteGrowthMeasurement(ctx context.Context, tx *sql.Tx, family
 	if err := q.DeleteGrowthMeasurement(ctx, storedb.DeleteGrowthMeasurementParams{DeletedAt: nullString(now), Revision: revision, UpdatedAt: now, ID: payload.ID, FamilyID: familyID}); err != nil {
 		return CommandResult{ID: command.ID}, err
 	}
-	encoded := json.RawMessage(`{"id":"` + payload.ID + `"}`)
+	encoded, _, err := growthMeasurementJSON(ctx, tx, familyID, payload.ID)
+	if err != nil {
+		return CommandResult{ID: command.ID}, err
+	}
 	if err := appendEvent(ctx, q, familyID, "growthMeasurement", payload.ID, "delete", int(revision), encoded, now); err != nil {
 		return CommandResult{ID: command.ID}, err
 	}
@@ -670,7 +677,10 @@ func (s *Server) deleteTemperatureReading(ctx context.Context, tx *sql.Tx, famil
 	if err := q.DeleteTemperatureReading(ctx, storedb.DeleteTemperatureReadingParams{DeletedAt: nullString(now), Revision: revision, UpdatedAt: now, ID: payload.ID, FamilyID: familyID}); err != nil {
 		return CommandResult{ID: command.ID}, err
 	}
-	encoded := json.RawMessage(`{"id":"` + payload.ID + `"}`)
+	encoded, _, err := temperatureReadingJSON(ctx, tx, familyID, payload.ID)
+	if err != nil {
+		return CommandResult{ID: command.ID}, err
+	}
 	if err := appendEvent(ctx, q, familyID, "temperatureReading", payload.ID, "delete", int(revision), encoded, now); err != nil {
 		return CommandResult{ID: command.ID}, err
 	}

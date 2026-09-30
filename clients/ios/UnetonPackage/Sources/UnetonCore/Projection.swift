@@ -8,10 +8,8 @@ enum Projection {
       .fetchAll(database)
     let commands = try PendingCommand
       .where { $0.familyID.eq(familyID) }
+      .order(by: \.sequence)
       .fetchAll(database)
-      .sorted {
-        ($0.createdAt, $0.id.uuidString) < ($1.createdAt, $1.id.uuidString)
-      }
 
     try SleepSession.where { $0.familyID.eq(familyID) }.delete().execute(database)
     try GrowthMeasurement.where { $0.familyID.eq(familyID) }.delete().execute(database)
@@ -117,7 +115,7 @@ enum Projection {
 
   static func applyPending(_ command: PendingCommand, database: Database) throws {
     switch command.kind {
-    case "createChild", "updateChild", "updatePredictionSettings":
+    case "createChild", "updateChild":
       let payload = try JSONDecoder.uneton.decode(ChildCommandPayload.self, from: command.payloadJSON)
       let current = try Child.find(payload.id).fetchOne(database)
       guard let birthDate = SyncPayload.birthDateFormatter.date(from: payload.birthDate) ?? current?.birthDate else {
@@ -131,8 +129,8 @@ enum Projection {
           birthDate: birthDate,
           predictionMode: payload.predictionMode.isEmpty ? current?.predictionMode ?? "adaptive" : payload.predictionMode,
           manualIntervalMinutes: payload.manualIntervalMinutes,
-          quietHoursStartMinutes: payload.quietHoursStartMinutes > 0 ? payload.quietHoursStartMinutes : current?.quietHoursStartMinutes ?? 1_200,
-          quietHoursEndMinutes: payload.quietHoursEndMinutes > 0 ? payload.quietHoursEndMinutes : current?.quietHoursEndMinutes ?? 360,
+          quietHoursStartMinutes: payload.quietHoursStartMinutes,
+          quietHoursEndMinutes: payload.quietHoursEndMinutes,
           timeZone: payload.timeZone.isEmpty ? current?.timeZone ?? TimeZone.current.identifier : payload.timeZone,
           growthReference: payload.growthReference.isEmpty ? current?.growthReference ?? "none" : payload.growthReference,
           revision: current?.revision ?? 0,

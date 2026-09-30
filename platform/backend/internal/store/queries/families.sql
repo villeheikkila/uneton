@@ -12,7 +12,7 @@ where id=sqlc.arg(id) and owner_id=sqlc.arg(owner_id);
 -- name: ActiveFamilyMembers :many
 select fm.user_id, u.display_name, fm.role, fm.joined_at
 from family_members as fm
-join users as u on u.id=fm.user_id
+inner join users as u on fm.user_id=u.id
 where fm.family_id=sqlc.arg(family_id) and fm.removed_at is null and u.deleted_at is null
 order by case fm.role when 'owner' then 0 else 1 end, fm.joined_at, fm.user_id;
 
@@ -110,7 +110,7 @@ values (sqlc.arg(id), sqlc.arg(family_id), sqlc.arg(token_hash), sqlc.arg(create
 -- name: PendingFamilyInvites :many
 select id, expires_at, created_at from invites
 where family_id=sqlc.arg(family_id) and claimed_at is null and expires_at>sqlc.arg(now)
-order by created_at desc, id;
+order by created_at desc, id asc;
 
 -- name: RevokePendingInvite :execrows
 delete from invites as i where i.id=sqlc.arg(id) and i.family_id=sqlc.arg(family_id) and i.claimed_at is null

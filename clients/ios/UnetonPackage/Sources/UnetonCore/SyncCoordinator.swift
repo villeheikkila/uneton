@@ -48,7 +48,7 @@ public actor SyncCoordinator {
     )
     let pending = try pendingCommand(id: commandID, familyID: familyID, kind: "createChild", payload: payload)
     try await database.write { database in
-      try PendingCommand.insert { pending }.execute(database)
+      try Self.enqueue(pending, database: database)
       try Projection.rebuild(familyID: familyID, database: database)
     }
     return childID
@@ -69,7 +69,7 @@ public actor SyncCoordinator {
     let payload = try jsonValue(SleepCommandPayload(id: sessionID, childID: childID, startedAt: start, endedAt: nil, source: source))
     let pending = try pendingCommand(id: commandID, familyID: familyID, kind: "startSleep", payload: payload)
     try await database.write { database in
-      try PendingCommand.insert { pending }.execute(database)
+      try Self.enqueue(pending, database: database)
       try Projection.rebuild(familyID: familyID, database: database)
     }
     return sessionID
@@ -91,9 +91,9 @@ public actor SyncCoordinator {
     guard end > session.startedAt else { throw SyncError.invalidInterval }
     let commandID: PendingCommand.ID = nextID()
     let payload = try jsonValue(SleepCommandPayload(id: sessionID, childID: session.childID, startedAt: session.startedAt, endedAt: end, source: session.source, startCondition: session.startCondition, sleepLocation: session.sleepLocation, endCondition: session.endCondition, wakeMood: wakeMood, wakeReason: wakeReason, caregiverIntervened: caregiverIntervened))
-    let pending = try pendingCommand(id: commandID, familyID: familyID, kind: "endSleep", expectedRevision: session.revision == 0 ? nil : session.revision, payload: payload)
+    let pending = try pendingCommand(id: commandID, familyID: familyID, kind: "endSleep", expectedRevision: try await pendingRevision(familyID: familyID, entityType: "sleepSession", entityID: EntityID(rawValue: sessionID.rawValue)) ?? max(1, session.revision), payload: payload)
     try await database.write { database in
-      try PendingCommand.insert { pending }.execute(database)
+      try Self.enqueue(pending, database: database)
       try Projection.rebuild(familyID: familyID, database: database)
     }
   }
@@ -122,9 +122,9 @@ public actor SyncCoordinator {
       wakeReason: existing?.wakeReason ?? "unknown",
       caregiverIntervened: existing?.caregiverIntervened
     ))
-    let pending = try pendingCommand(id: commandID, familyID: familyID, kind: "upsertSleep", expectedRevision: existing?.revision == 0 ? nil : existing?.revision, payload: payload)
+    let pending = try pendingCommand(id: commandID, familyID: familyID, kind: "upsertSleep", expectedRevision: try await pendingRevision(familyID: familyID, entityType: "sleepSession", entityID: EntityID(rawValue: id.rawValue)) ?? existing?.revision, payload: payload)
     try await database.write { database in
-      try PendingCommand.insert { pending }.execute(database)
+      try Self.enqueue(pending, database: database)
       try Projection.rebuild(familyID: familyID, database: database)
     }
   }
@@ -150,10 +150,10 @@ public actor SyncCoordinator {
     ))
     let pending = try pendingCommand(
       id: nextID(), familyID: familyID, kind: "upsertGrowthMeasurement",
-      expectedRevision: existing?.revision == 0 ? nil : existing?.revision, payload: payload
+      expectedRevision: try await pendingRevision(familyID: familyID, entityType: "growthMeasurement", entityID: EntityID(rawValue: id.rawValue)) ?? existing?.revision, payload: payload
     )
     try await database.write { database in
-      try PendingCommand.insert { pending }.execute(database)
+      try Self.enqueue(pending, database: database)
       try Projection.rebuild(familyID: familyID, database: database)
     }
   }
@@ -167,10 +167,10 @@ public actor SyncCoordinator {
     let payload = try jsonValue(DeleteCommandPayload(id: measurementID))
     let pending = try pendingCommand(
       id: nextID(), familyID: familyID, kind: "deleteGrowthMeasurement",
-      expectedRevision: existing.revision == 0 ? nil : existing.revision, payload: payload
+      expectedRevision: try await pendingRevision(familyID: familyID, entityType: "growthMeasurement", entityID: EntityID(rawValue: measurementID.rawValue)) ?? max(1, existing.revision), payload: payload
     )
     try await database.write { database in
-      try PendingCommand.insert { pending }.execute(database)
+      try Self.enqueue(pending, database: database)
       try Projection.rebuild(familyID: familyID, database: database)
     }
   }
@@ -182,14 +182,14 @@ public actor SyncCoordinator {
     guard TemperatureValue.isValid(centiCelsius) else { throw SyncError.invalidTemperatureReading }
     let id = readingID ?? nextID()
     let existing = try await database.read { database in try TemperatureReading.find(id).fetchOne(database) }
-    let effectiveRevision = try await pendingTemperatureRevision(familyID: familyID, readingID: id)
+    let effectiveRevision = try await pendingRevision(familyID: familyID, entityType: "temperatureReading", entityID: EntityID(rawValue: id.rawValue))
       ?? expectedRevision ?? (existing?.revision == 0 ? nil : existing?.revision)
     let payload = try jsonValue(TemperatureReadingCommandPayload(id: id, childID: childID,
       measuredAt: measuredAt, centiCelsius: centiCelsius, note: note))
     let pending = try pendingCommand(id: nextID(), familyID: familyID, kind: "upsertTemperatureReading",
       expectedRevision: effectiveRevision, payload: payload)
     try await database.write { database in
-      try PendingCommand.insert { pending }.execute(database)
+      try Self.enqueue(pending, database: database)
       try Projection.rebuild(familyID: familyID, database: database)
     }
   }
@@ -198,29 +198,14 @@ public actor SyncCoordinator {
                                        expectedRevision: Int? = nil) async throws {
     let existing = try await database.read { database in try TemperatureReading.find(readingID).fetchOne(database) }
     guard let existing else { throw SyncError.missingTemperatureReading }
-    let effectiveRevision = try await pendingTemperatureRevision(familyID: familyID, readingID: readingID)
+    let effectiveRevision = try await pendingRevision(familyID: familyID, entityType: "temperatureReading", entityID: EntityID(rawValue: readingID.rawValue))
       ?? expectedRevision ?? (existing.revision == 0 ? nil : existing.revision)
     let payload = try jsonValue(DeleteCommandPayload(id: readingID))
     let pending = try pendingCommand(id: nextID(), familyID: familyID, kind: "deleteTemperatureReading",
       expectedRevision: effectiveRevision, payload: payload)
     try await database.write { database in
-      try PendingCommand.insert { pending }.execute(database)
+      try Self.enqueue(pending, database: database)
       try Projection.rebuild(familyID: familyID, database: database)
-    }
-  }
-
-  private func pendingTemperatureRevision(familyID: Family.ID, readingID: TemperatureReading.ID) async throws -> Int? {
-    try await database.read { database in
-      let commands = try PendingCommand.where { $0.familyID.eq(familyID) }.fetchAll(database)
-        .sorted { ($0.createdAt, $0.id.uuidString) < ($1.createdAt, $1.id.uuidString) }
-      let matching = commands.filter { command in
-        guard command.kind == "upsertTemperatureReading",
-              let payload = try? JSONDecoder.uneton.decode(TemperatureReadingCommandPayload.self, from: command.payloadJSON)
-        else { return false }
-        return payload.id == readingID
-      }
-      guard let last = matching.last else { return nil }
-      return (last.expectedRevision ?? 0) + 1
     }
   }
 
@@ -263,11 +248,11 @@ public actor SyncCoordinator {
     ))
     let pending = try pendingCommand(
       id: nextID(), familyID: familyID, kind: "updateChild",
-      expectedRevision: try await pendingChildRevision(familyID: familyID, childID: childID)
+      expectedRevision: try await pendingRevision(familyID: familyID, entityType: "child", entityID: EntityID(rawValue: childID.rawValue))
         ?? (child.revision == 0 ? nil : child.revision), payload: payload
     )
     try await database.write { database in
-      try PendingCommand.insert { pending }.execute(database)
+      try Self.enqueue(pending, database: database)
       try Projection.rebuild(familyID: familyID, database: database)
     }
   }
@@ -277,26 +262,25 @@ public actor SyncCoordinator {
     guard let child, child.familyID == familyID else { throw SyncError.missingChild }
     let payload = try jsonValue(DeleteCommandPayload(id: childID))
     let pending = try pendingCommand(id: nextID(), familyID: familyID, kind: "deleteChild",
-      expectedRevision: try await pendingChildRevision(familyID: familyID, childID: childID)
+      expectedRevision: try await pendingRevision(familyID: familyID, entityType: "child", entityID: EntityID(rawValue: childID.rawValue))
         ?? max(1, child.revision), payload: payload)
     try await database.write { database in
-      try PendingCommand.insert { pending }.execute(database)
+      try Self.enqueue(pending, database: database)
       try Projection.rebuild(familyID: familyID, database: database)
     }
   }
 
-  private func pendingChildRevision(familyID: Family.ID, childID: Child.ID) async throws -> Int? {
+  private func pendingRevision(familyID: Family.ID, entityType: String, entityID: EntityID) async throws -> Int? {
     try await database.read { database in
-      let commands = try PendingCommand.where { $0.familyID.eq(familyID) }.fetchAll(database)
-        .sorted { ($0.createdAt, $0.id.uuidString) < ($1.createdAt, $1.id.uuidString) }
-      let matching = commands.filter { command in
-        guard command.kind == "createChild" || command.kind == "updateChild",
-          let payload = try? JSONDecoder.uneton.decode(ChildCommandPayload.self, from: command.payloadJSON)
-        else { return false }
-        return payload.id == childID
+      let commands = try PendingCommand.where { $0.familyID.eq(familyID) }
+        .order(by: \.sequence).fetchAll(database)
+      for command in commands.reversed() where !command.kind.hasPrefix("delete") {
+        let identity = try Self.commandIdentity(command)
+        if identity.entityType == entityType && identity.entityID == entityID {
+          return (command.expectedRevision ?? 0) + 1
+        }
       }
-      guard let last = matching.last else { return nil }
-      return (last.expectedRevision ?? 0) + 1
+      return nil
     }
   }
 
@@ -357,9 +341,10 @@ public actor SyncCoordinator {
         let state = try SyncState.find(familyID).fetchOne(database)
         let commands = try PendingCommand
           .where { $0.familyID.eq(familyID) }
-          .order(by: \.createdAt)
+          .order(by: \.sequence)
+          .limit(100)
           .fetchAll(database)
-        return (state?.cursor ?? 0, state?.generation ?? "", Array(commands.prefix(100)))
+        return (state?.cursor ?? 0, state?.generation ?? "", commands)
       }
       let commands = includeCommands ? try snapshot.2.map(apiCommand) : []
       if includeCommands { commandPasses += 1 }
@@ -420,7 +405,7 @@ public actor SyncCoordinator {
       if response.resetRequired {
         let acknowledged = try AcknowledgedCommand
           .where { $0.familyID.eq(familyID) }
-          .order(by: \.createdAt)
+          .order(by: \.sequence)
           .fetchAll(database)
         for command in acknowledged {
           try PendingCommand.upsert {
@@ -430,7 +415,8 @@ public actor SyncCoordinator {
               kind: command.kind,
               expectedRevision: command.expectedRevision,
               payloadJSON: command.payloadJSON,
-              createdAt: command.createdAt
+              createdAt: command.createdAt,
+              sequence: command.sequence
             )
           }.execute(database)
         }
@@ -447,7 +433,8 @@ public actor SyncCoordinator {
               expectedRevision: command.expectedRevision,
               payloadJSON: command.payloadJSON,
               createdAt: command.createdAt,
-              acknowledgedAt: appliedAt
+              acknowledgedAt: appliedAt,
+              sequence: command.sequence
             )
           }.execute(database)
           try PendingCommand.find(result.id).delete().execute(database)
@@ -461,7 +448,7 @@ public actor SyncCoordinator {
           )
           switch resolution {
           case let .retry(replacement):
-            try PendingCommand.insert { replacement }.execute(database)
+            try Self.enqueue(replacement, database: database)
           case .serverWins:
             break
           case .requiresUser:
@@ -497,10 +484,7 @@ public actor SyncCoordinator {
           operation: event.operation,
           payloadJSON: payload
         )
-        let existing = try AuthoritativeRecord.find(record.id).fetchOne(database)
-        if existing == nil || existing!.revision <= record.revision {
-          try AuthoritativeRecord.upsert { record }.execute(database)
-        }
+        try Self.ingest(record, database: database)
       }
       let cursor = response.resetRequired ? response.nextCursor : max(currentCursor, response.nextCursor)
       let state = SyncState(id: familyID, cursor: cursor, generation: response.generation, lastSyncedAt: response.serverTime)
@@ -558,6 +542,9 @@ public actor SyncCoordinator {
             result.status == "accepted" || result.status == "rejected" else {
         throw SyncError.invalidServerPayload
       }
+      guard result.status != "accepted" || result.payload != nil else {
+        throw SyncError.invalidServerPayload
+      }
       if let payload = result.payload {
         guard let type = entityType(for: command.kind),
               case let .object(commandObject) = command.payload,
@@ -579,7 +566,7 @@ public actor SyncCoordinator {
 
   private nonisolated static func entityType(for kind: String) -> String? {
     switch kind {
-    case "createChild", "updateChild", "updatePredictionSettings", "deleteChild": "child"
+    case "createChild", "updateChild", "deleteChild": "child"
     case "startSleep", "endSleep", "upsertSleep", "deleteSleep": "sleepSession"
     case "upsertGrowthMeasurement", "deleteGrowthMeasurement": "growthMeasurement"
     case "upsertTemperatureReading", "deleteTemperatureReading": "temperatureReading"
@@ -630,7 +617,7 @@ public actor SyncCoordinator {
           createdAt: resolvedAt,
           rebaseAttempt: 1
         )
-        try PendingCommand.insert { replacement }.execute(database)
+        try Self.enqueue(replacement, database: database)
       }
       try SyncConflict.find(conflictID).delete().execute(database)
       try Projection.rebuild(familyID: conflict.familyID, database: database)
@@ -648,17 +635,30 @@ public actor SyncCoordinator {
     let payloadData = try JSONEncoder.uneton.encode(payload)
     let entityID = result.entityID ?? identity.entityID
     guard let revision = try revision(payloadData) else { return }
-    try AuthoritativeRecord.upsert {
-      AuthoritativeRecord(
-        id: AuthoritativeRecord.ID(rawValue: "\(identity.entityType):\(entityID.uuidString)"),
-        familyID: familyID,
-        entityType: identity.entityType,
-        entityID: entityID,
-        revision: revision,
-        operation: result.status == "accepted" && command.kind.hasPrefix("delete") ? "delete" : "upsert",
-        payloadJSON: payloadData
-      )
-    }.execute(database)
+    try ingest(AuthoritativeRecord(
+      id: AuthoritativeRecord.ID(rawValue: "\(identity.entityType):\(entityID.uuidString)"),
+      familyID: familyID,
+      entityType: identity.entityType,
+      entityID: entityID,
+      revision: revision,
+      operation: result.status == "accepted" && command.kind.hasPrefix("delete") ? "delete" : "upsert",
+      payloadJSON: payloadData
+    ), database: database)
+  }
+
+  private nonisolated static func ingest(_ record: AuthoritativeRecord, database: Database) throws {
+    if let existing = try AuthoritativeRecord.find(record.id).fetchOne(database), existing.revision > record.revision {
+      return
+    }
+    try AuthoritativeRecord.upsert { record }.execute(database)
+  }
+
+  private nonisolated static func enqueue(_ command: PendingCommand, database: Database) throws {
+    let pendingSequence = try PendingCommand.order { $0.sequence.desc() }.fetchOne(database)?.sequence ?? 0
+    let acknowledgedSequence = try AcknowledgedCommand.order { $0.sequence.desc() }.fetchOne(database)?.sequence ?? 0
+    var command = command
+    command.sequence = max(pendingSequence, acknowledgedSequence) + 1
+    try PendingCommand.insert { command }.execute(database)
   }
 
   private nonisolated static func automaticResolution(
@@ -675,41 +675,11 @@ public actor SyncCoordinator {
     case "deleteSleep":
       let server = try JSONDecoder.uneton.decode(ServerSleepPayload.self, from: serverData)
       guard server.deletedAt == nil else { return .serverWins }
-      return .retry(PendingCommand(
-        id: replacementID,
-        familyID: command.familyID,
-        kind: command.kind,
-        expectedRevision: serverRevision,
-        payloadJSON: command.payloadJSON,
-        createdAt: appliedAt,
-        rebaseAttempt: 1
-      ))
-    case "upsertGrowthMeasurement", "deleteGrowthMeasurement", "upsertTemperatureReading", "deleteTemperatureReading":
-      return .retry(PendingCommand(
-        id: replacementID,
-        familyID: command.familyID,
-        kind: command.kind,
-        expectedRevision: serverRevision,
-        payloadJSON: command.payloadJSON,
-        createdAt: appliedAt,
-        rebaseAttempt: 1
-      ))
-    case "updateChild", "updatePredictionSettings":
-      return .retry(PendingCommand(
-        id: replacementID,
-        familyID: command.familyID,
-        kind: command.kind,
-        expectedRevision: serverRevision,
-        payloadJSON: command.payloadJSON,
-        createdAt: appliedAt,
-        rebaseAttempt: 1
-      ))
     case "deleteChild":
       let server = try JSONDecoder.uneton.decode(ServerChildPayload.self, from: serverData)
       guard server.deletedAt == nil else { return .serverWins }
-      return .retry(PendingCommand(id: replacementID, familyID: command.familyID,
-        kind: command.kind, expectedRevision: serverRevision,
-        payloadJSON: command.payloadJSON, createdAt: appliedAt, rebaseAttempt: 1))
+    case "upsertGrowthMeasurement", "deleteGrowthMeasurement", "upsertTemperatureReading", "deleteTemperatureReading", "updateChild":
+      break
     case "endSleep":
       let local = try JSONDecoder.uneton.decode(SleepCommandPayload.self, from: command.payloadJSON)
       let server = try JSONDecoder.uneton.decode(ServerSleepPayload.self, from: serverData)
@@ -740,11 +710,16 @@ public actor SyncCoordinator {
     default:
       return .requiresUser
     }
+    return .retry(PendingCommand(
+      id: replacementID, familyID: command.familyID, kind: command.kind,
+      expectedRevision: serverRevision, payloadJSON: command.payloadJSON,
+      createdAt: appliedAt, rebaseAttempt: 1
+    ))
   }
 
   private nonisolated static func commandIdentity(_ command: PendingCommand) throws -> (entityType: String, entityID: EntityID) {
     switch command.kind {
-    case "createChild", "updateChild", "updatePredictionSettings":
+    case "createChild", "updateChild":
       return ("child", try EntityID(rawValue: JSONDecoder.uneton.decode(ChildCommandPayload.self, from: command.payloadJSON).id.rawValue))
     case "deleteChild":
       return ("child", try EntityID(rawValue: JSONDecoder.uneton.decode(DeleteCommandPayload<Child.ID>.self, from: command.payloadJSON).id.rawValue))

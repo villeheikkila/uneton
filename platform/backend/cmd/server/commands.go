@@ -83,7 +83,7 @@ func healthcheck(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("check readiness: %w", err)
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 	if response.StatusCode != http.StatusOK {
 		return fmt.Errorf("check readiness: HTTP %d", response.StatusCode)
 	}

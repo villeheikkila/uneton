@@ -576,7 +576,7 @@ private func protoCommand(_ command: APICommand) throws -> Uneton_V1_Command {
     var payload = Uneton_V1_CreateChild()
     payload.child = try childInput(JSONDecoder.uneton.decode(ChildCommandPayload.self, from: data))
     result.payload = .createChild(payload)
-  case "updateChild", "updatePredictionSettings":
+  case "updateChild":
     var payload = Uneton_V1_UpdateChild()
     payload.child = try childInput(JSONDecoder.uneton.decode(ChildCommandPayload.self, from: data))
     result.payload = .updateChild(payload)

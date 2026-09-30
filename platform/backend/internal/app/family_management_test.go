@@ -173,7 +173,7 @@ func TestDeleteChildCommandIsIdempotentAndRevisionChecked(t *testing.T) {
 		t.Fatalf("active sleep allowed child deletion: %+v", blocked)
 	}
 	ended := time.Now().UTC()
-	woke := syncFamily(t, ctx, client, owner.GetAccessToken(), &unetonv1.SyncRequest{FamilyId: familyID, Cursor: blocked.GetNextCursor(), Commands: []*unetonv1.Command{{Id: "40000000-0000-4000-8000-000000000035", Payload: &unetonv1.Command_EndSleep{EndSleep: &unetonv1.EndSleep{Id: sleepID, EndedAt: timestamppb.New(ended)}}}}})
+	woke := syncFamily(t, ctx, client, owner.GetAccessToken(), &unetonv1.SyncRequest{FamilyId: familyID, Cursor: blocked.GetNextCursor(), Commands: []*unetonv1.Command{{Id: "40000000-0000-4000-8000-000000000035", ExpectedRevision: new(int64(1)), Payload: &unetonv1.Command_EndSleep{EndSleep: &unetonv1.EndSleep{Id: sleepID, EndedAt: timestamppb.New(ended)}}}}})
 	if err := acceptedResult(woke, "40000000-0000-4000-8000-000000000035"); err != nil {
 		t.Fatal(err)
 	}

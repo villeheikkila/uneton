@@ -812,14 +812,14 @@ struct SyncCoordinatorTests {
             familyID: familyID,
             kind: "createChild",
             payloadJSON: payloadJSON,
-            createdAt: date(Double(index))
+            createdAt: date(Double(index)), sequence: Int64(index + 1)
           )
         }.execute(database)
       }
     }
     let responder = BatchResponder()
     var api = APIClient.testValue
-    api.sync = { _, _, request in await responder.response(for: request) }
+    api.sync = { _, _, request in try await responder.response(for: request) }
 
     try await withDependencies {
       $0.apiClient = api
@@ -864,6 +864,211 @@ struct SyncCoordinatorTests {
     #expect(state.1 == 1)
     #expect(state.2?.revision == 1)
     #expect(await responder.commandCounts == [1, 0, 1])
+  }
+
+  @Test(arguments: ["accepted", "rejected"])
+  func retriedCommandResultCannotReplaceANewerAuthoritativeRevision(status: String) async throws {
+    let fixture = try await seedAuthoritativeSession(revision: 3, endedAt: date(3_600))
+    var api = APIClient.testValue
+    api.sync = { _, _, request in
+      let command = try #require(request.commands.first)
+      return SyncResponse(
+        commandResults: [APICommandResult(id: command.id, status: status,
+          error: status == "rejected" ? "stale revision" : nil,
+          entityID: EntityID(rawValue: fixture.sessionID.rawValue),
+          payload: try jsonValue(serverSleep(fixture: fixture, revision: 1, endedAt: nil)))],
+        events: [], nextCursor: request.cursor, hasMore: false, serverTime: date(6_000)
+      )
+    }
+    try await withDependencies {
+      $0.apiClient = api
+    } operation: {
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
+      try await coordinator.upsertSleep(familyID: fixture.familyID, childID: fixture.childID,
+        sessionID: fixture.sessionID, startedAt: date(600), endedAt: date(4_200))
+      _ = try await coordinator.synchronize(familyID: fixture.familyID)
+    }
+    let state = try await database.read { database in
+      (try SleepSession.find(fixture.sessionID).fetchOne(database),
+       try PendingCommand.fetchCount(database), try AcknowledgedCommand.fetchCount(database),
+       try SyncConflict.fetchCount(database))
+    }
+    expectNoDifference(state.0?.revision, 3)
+    expectNoDifference(state.0?.endedAt, date(3_600))
+    expectNoDifference(state.1, 0)
+    expectNoDifference(state.2, status == "accepted" ? 1 : 0)
+    expectNoDifference(state.3, status == "rejected" ? 1 : 0)
+  }
+
+  @Test func midnightQuietHoursRemainVisibleWhileOffline() async throws {
+    let familyID = Family.ID(rawValue: UUID(-201))
+    let childID = Child.ID(rawValue: UUID(-202))
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    let coordinator = SyncCoordinator(deviceID: DeviceID(), accessToken: { "token" })
+    try await coordinator.updateChild(familyID: familyID, childID: childID, nickname: "Muru",
+      birthDate: date(0), predictionMode: "adaptive", manualIntervalMinutes: nil,
+      quietHoursStartMinutes: 0, quietHoursEndMinutes: 0, timeZone: "UTC", growthReference: "none")
+    let child = try await database.read { try Child.find(childID).fetchOne($0) }
+    expectNoDifference(child?.quietHoursStartMinutes, 0)
+    expectNoDifference(child?.quietHoursEndMinutes, 0)
+  }
+
+  @Test(arguments: [false, true])
+  func offlineSleepCommandsKeepInsertionOrderWhenTimeDoesNotIncrease(clockRollsBack: Bool) async throws {
+    let fixture = Fixture(familyID: Family.ID(rawValue: UUID(-1)), childID: Child.ID(rawValue: UUID(-2)), sessionID: SleepSession.ID(rawValue: UUID(-3)))
+    try await seedFamilyAndChild(familyID: fixture.familyID, childID: fixture.childID)
+    let coordinator = SyncCoordinator(deviceID: DeviceID(), accessToken: { "token" })
+    try await coordinator.startSleep(familyID: fixture.familyID, childID: fixture.childID,
+      sessionID: fixture.sessionID, commandID: PendingCommand.ID(rawValue: UUID(100)), startedAt: date(1_000))
+    try await withDependencies {
+      $0.date.now = clockRollsBack ? date(9_000) : date(10_000)
+    } operation: {
+      let coordinator = SyncCoordinator(deviceID: DeviceID(), accessToken: { "token" })
+      try await coordinator.endSleep(familyID: fixture.familyID, sessionID: fixture.sessionID, endedAt: date(3_600))
+    }
+    let state = try await database.read { database in
+      (try SleepSession.find(fixture.sessionID).fetchOne(database),
+       try PendingCommand.order(by: \.sequence).fetchAll(database))
+    }
+    expectNoDifference(state.0?.endedAt, date(3_600))
+    expectNoDifference(state.1.map(\.kind), ["startSleep", "endSleep"])
+    expectNoDifference(state.1.map(\.sequence), [1, 2])
+    expectNoDifference(state.1.map(\.expectedRevision), [nil, 1])
+    #expect(state.1[1].id.uuidString < state.1[0].id.uuidString)
+  }
+
+  @Test func sleepAndGrowthEditsQueueSequentialRevisionsWhileOffline() async throws {
+    let fixture = try await seedAuthoritativeSession(revision: 3, endedAt: date(3_600))
+    let coordinator = SyncCoordinator(deviceID: DeviceID(), accessToken: { "token" })
+    for endedAt in [date(4_000), date(4_200)] {
+      try await coordinator.upsertSleep(familyID: fixture.familyID, childID: fixture.childID,
+        sessionID: fixture.sessionID, startedAt: date(1_000), endedAt: endedAt)
+    }
+    let measurementID = GrowthMeasurement.ID(rawValue: UUID(-20))
+    for weight in [6_000, 6_100] {
+      try await coordinator.upsertGrowthMeasurement(familyID: fixture.familyID, childID: fixture.childID,
+        measurementID: measurementID, measuredAt: date(1_000), weightGrams: weight, heightMillimeters: nil)
+    }
+    try await coordinator.deleteGrowthMeasurement(familyID: fixture.familyID, measurementID: measurementID)
+    let pending = try await database.read { try PendingCommand.order(by: \.sequence).fetchAll($0) }
+    expectNoDifference(pending.map(\.expectedRevision), [3, 4, nil, 1, 2])
+  }
+
+  @Test func incompleteAcknowledgementCannotDiscardPendingIntent() async throws {
+    let fixture = try await seedAuthoritativeSession(revision: 3, endedAt: date(3_600))
+    var api = APIClient.testValue
+    api.sync = { _, _, request in
+      SyncResponse(commandResults: request.commands.map {
+        APICommandResult(id: $0.id, status: "accepted", entityID: nil, payload: nil)
+      }, events: [], nextCursor: request.cursor, hasMore: false, serverTime: date(6_000))
+    }
+    try await withDependencies {
+      $0.apiClient = api
+    } operation: {
+      let coordinator = SyncCoordinator(deviceID: DeviceID(), accessToken: { "token" })
+      try await coordinator.upsertSleep(familyID: fixture.familyID, childID: fixture.childID,
+        sessionID: fixture.sessionID, startedAt: date(600), endedAt: date(4_200))
+      await #expect(throws: SyncError.invalidServerPayload) {
+        try await coordinator.synchronize(familyID: fixture.familyID)
+      }
+    }
+    let state = try await database.read { database in
+      (try PendingCommand.fetchCount(database), try AcknowledgedCommand.fetchCount(database),
+       try SleepSession.find(fixture.sessionID).fetchOne(database))
+    }
+    expectNoDifference(state.0, 1)
+    expectNoDifference(state.1, 0)
+    expectNoDifference(state.2?.endedAt, date(4_200))
+  }
+
+  @Test(arguments: ["sleepSession", "growthMeasurement", "temperatureReading"])
+  func completeDeleteTombstoneSettlesTheOutboxAndSurvivesARebuild(entityType: String) async throws {
+    let fixture = Fixture(familyID: Family.ID(rawValue: UUID(-1)), childID: Child.ID(rawValue: UUID(-2)), sessionID: SleepSession.ID(rawValue: UUID(-3)))
+    try await seedFamilyAndChild(familyID: fixture.familyID, childID: fixture.childID)
+    let entityID = EntityID(rawValue: fixture.sessionID.rawValue)
+    let payload: JSONValue
+    let kind: String
+    switch entityType {
+    case "sleepSession":
+      var sleep = serverSleep(fixture: fixture, revision: 2, endedAt: date(3_600))
+      sleep.deletedAt = date(5_000)
+      payload = try jsonValue(sleep)
+      kind = "deleteSleep"
+    case "growthMeasurement":
+      payload = try jsonValue(ServerGrowthMeasurementPayload(id: GrowthMeasurement.ID(rawValue: entityID.rawValue),
+        familyID: fixture.familyID, childID: fixture.childID, measuredAt: date(1_000), weightGrams: 6_000,
+        heightMillimeters: nil, note: "", revision: 2, updatedAt: date(5_000), deletedAt: date(5_000)))
+      kind = "deleteGrowthMeasurement"
+    default:
+      payload = try jsonValue(ServerTemperatureReadingPayload(id: TemperatureReading.ID(rawValue: entityID.rawValue),
+        familyID: fixture.familyID, childID: fixture.childID, measuredAt: date(1_000), centiCelsius: 3_700,
+        note: "", revision: 2, updatedAt: date(5_000), deletedAt: date(5_000)))
+      kind = "deleteTemperatureReading"
+    }
+    let commandID = PendingCommand.ID(rawValue: UUID(-10))
+    let commandPayload = try JSONEncoder.uneton.encode(DeleteCommandPayload(id: entityID))
+    try await database.write { database in
+      try PendingCommand.insert {
+        PendingCommand(id: commandID, familyID: fixture.familyID, kind: kind,
+          expectedRevision: 1, payloadJSON: commandPayload, createdAt: date(4_000), sequence: 1)
+      }.execute(database)
+    }
+    var api = APIClient.testValue
+    api.sync = { _, _, _ in
+      SyncResponse(commandResults: [APICommandResult(id: commandID, status: "accepted", entityID: entityID, payload: payload)],
+        events: [SyncEvent(cursor: 1, entityType: entityType, entityID: entityID, operation: "delete",
+          revision: 2, payload: payload, createdAt: date(5_000))],
+        nextCursor: 1, hasMore: false, serverTime: date(6_000))
+    }
+    try await withDependencies {
+      $0.apiClient = api
+    } operation: {
+      let coordinator = SyncCoordinator(deviceID: DeviceID(), accessToken: { "token" })
+      _ = try await coordinator.synchronize(familyID: fixture.familyID)
+      let cursor = try await coordinator.cursor(familyID: fixture.familyID)
+      expectNoDifference(cursor, 1)
+    }
+    try await database.write { try Projection.rebuild(familyID: fixture.familyID, database: $0) }
+    let state = try await database.read { database in
+      (try PendingCommand.fetchCount(database), try AcknowledgedCommand.fetchCount(database),
+       try AuthoritativeRecord.find(AuthoritativeRecord.ID(rawValue: "\(entityType):\(entityID.uuidString)")).fetchOne(database),
+       try SleepSession.fetchCount(database), try GrowthMeasurement.fetchCount(database), try TemperatureReading.fetchCount(database))
+    }
+    expectNoDifference(state.0, 0)
+    expectNoDifference(state.1, 1)
+    expectNoDifference(state.2?.revision, 2)
+    expectNoDifference(state.2?.operation, "delete")
+    expectNoDifference([state.3, state.4, state.5], [0, 0, 0])
+  }
+
+  @Test func restoreReplaysAcknowledgedStartAndWakeInTheirOriginalSequence() async throws {
+    let fixture = Fixture(familyID: Family.ID(rawValue: UUID(-1)), childID: Child.ID(rawValue: UUID(-2)), sessionID: SleepSession.ID(rawValue: UUID(-3)))
+    try await seedFamilyAndChild(familyID: fixture.familyID, childID: fixture.childID)
+    let responder = SnapshotRecoveryResponder(fixture: fixture)
+    var api = APIClient.testValue
+    api.sync = { _, _, request in try await responder.response(for: request) }
+    try await withDependencies {
+      $0.apiClient = api
+    } operation: {
+      let coordinator = SyncCoordinator(deviceID: DeviceID(), accessToken: { "token" })
+      try await coordinator.startSleep(familyID: fixture.familyID, childID: fixture.childID,
+        sessionID: fixture.sessionID, commandID: PendingCommand.ID(rawValue: UUID(100)), startedAt: date(1_000))
+      try await coordinator.endSleep(familyID: fixture.familyID, sessionID: fixture.sessionID, endedAt: date(3_600))
+      _ = try await coordinator.synchronize(familyID: fixture.familyID)
+      _ = try await coordinator.synchronize(familyID: fixture.familyID)
+    }
+    let state = try await database.read { database in
+      (try PendingCommand.fetchCount(database),
+       try AcknowledgedCommand.order(by: \.sequence).fetchAll(database),
+       try SleepSession.find(fixture.sessionID).fetchOne(database))
+    }
+    expectNoDifference(state.0, 0)
+    expectNoDifference(state.1.map(\.kind), ["startSleep", "endSleep"])
+    expectNoDifference(state.1.map(\.sequence), [1, 2])
+    expectNoDifference(state.2?.endedAt, date(3_600))
+    expectNoDifference(state.2?.revision, 2)
+    let commandCounts = await responder.commandCounts
+    expectNoDifference(commandCounts, [2, 0, 2])
   }
 
   private func seedAuthoritativeSession(revision: Int, endedAt: Date?) async throws -> Fixture {
@@ -1051,11 +1256,17 @@ private actor PausedResponder {
 private actor BatchResponder {
   private(set) var batchSizes: [Int] = []
 
-  func response(for request: SyncRequest) -> SyncResponse {
+  func response(for request: SyncRequest) throws -> SyncResponse {
     batchSizes.append(request.commands.count)
     return SyncResponse(
-      commandResults: request.commands.map {
-        APICommandResult(id: $0.id, status: "accepted", entityID: nil, payload: nil)
+      commandResults: try request.commands.map { command in
+        let input = try JSONDecoder.uneton.decode(ChildCommandPayload.self, from: JSONEncoder.uneton.encode(command.payload))
+        let payload = ServerChildPayload(id: input.id, nickname: input.nickname, birthDate: input.birthDate,
+          predictionMode: input.predictionMode, manualIntervalMinutes: input.manualIntervalMinutes,
+          quietHoursStartMinutes: input.quietHoursStartMinutes, quietHoursEndMinutes: input.quietHoursEndMinutes,
+          timeZone: input.timeZone, growthReference: input.growthReference, revision: 1, updatedAt: date(6_000))
+        return APICommandResult(id: command.id, status: "accepted",
+          entityID: EntityID(rawValue: input.id.rawValue), payload: try jsonValue(payload))
       },
       events: [], nextCursor: request.cursor, hasMore: false, serverTime: date(6_000)
     )
@@ -1074,24 +1285,7 @@ private actor SnapshotRecoveryResponder {
     commandCounts.append(request.commands.count)
     switch requestCount {
     case 1:
-      let command = try #require(request.commands.first)
-      return SyncResponse(
-        commandResults: [
-          APICommandResult(
-            id: command.id,
-            status: "accepted",
-            entityID: EntityID(rawValue: fixture.sessionID.rawValue),
-            payload: try jsonValue(serverSleep(fixture: fixture, revision: 1, endedAt: nil))
-          )
-        ],
-        events: [SyncEvent(
-          cursor: 1, entityType: "sleepSession", entityID: EntityID(rawValue: fixture.sessionID.rawValue),
-          operation: "upsert", revision: 1,
-          payload: try jsonValue(serverSleep(fixture: fixture, revision: 1, endedAt: nil)),
-          createdAt: date(2_000)
-        )], nextCursor: 1, hasMore: false, serverTime: date(2_000),
-        generation: "generation-before-restore"
-      )
+      return try commandResponse(request, generation: "generation-before-restore")
     case 2:
       let child = ServerChildPayload(
         id: fixture.childID,
@@ -1114,25 +1308,28 @@ private actor SnapshotRecoveryResponder {
         resetRequired: true
       )
     default:
-      let command = try #require(request.commands.first)
-      return SyncResponse(
-        commandResults: [
-          APICommandResult(
-            id: command.id,
-            status: "accepted",
-            entityID: EntityID(rawValue: fixture.sessionID.rawValue),
-            payload: try jsonValue(serverSleep(fixture: fixture, revision: 1, endedAt: nil))
-          )
-        ],
-        events: [SyncEvent(
-          cursor: 1, entityType: "sleepSession", entityID: EntityID(rawValue: fixture.sessionID.rawValue),
-          operation: "upsert", revision: 1,
-          payload: try jsonValue(serverSleep(fixture: fixture, revision: 1, endedAt: nil)),
-          createdAt: date(2_200)
-        )], nextCursor: 1, hasMore: false, serverTime: date(2_200),
-        generation: "generation-after-restore"
-      )
+      return try commandResponse(request, generation: "generation-after-restore")
     }
+  }
+
+  private func commandResponse(_ request: SyncRequest, generation: String) throws -> SyncResponse {
+    #expect(!request.commands.isEmpty)
+    let payloads = try request.commands.enumerated().map { index, command in
+      try jsonValue(serverSleep(fixture: fixture, revision: index + 1,
+        endedAt: command.kind == "endSleep" ? date(3_600) : nil))
+    }
+    return SyncResponse(
+      commandResults: request.commands.enumerated().map { index, command in
+        APICommandResult(id: command.id, status: "accepted",
+          entityID: EntityID(rawValue: fixture.sessionID.rawValue), payload: payloads[index])
+      },
+      events: request.commands.enumerated().map { index, _ in
+        SyncEvent(cursor: Int64(index + 1), entityType: "sleepSession",
+          entityID: EntityID(rawValue: fixture.sessionID.rawValue), operation: "upsert",
+          revision: index + 1, payload: payloads[index], createdAt: date(2_000))
+      },
+      nextCursor: Int64(request.commands.count), hasMore: false, serverTime: date(2_200), generation: generation
+    )
   }
 }
 

@@ -25,7 +25,7 @@ func (q *Queries) ActiveFamilyMemberCount(ctx context.Context, familyID string) 
 const activeFamilyMembers = `-- name: ActiveFamilyMembers :many
 select fm.user_id, u.display_name, fm.role, fm.joined_at
 from family_members as fm
-join users as u on u.id=fm.user_id
+inner join users as u on fm.user_id=u.id
 where fm.family_id=?1 and fm.removed_at is null and u.deleted_at is null
 order by case fm.role when 'owner' then 0 else 1 end, fm.joined_at, fm.user_id
 `
@@ -418,7 +418,7 @@ func (q *Queries) OwnedFamilyIDs(ctx context.Context, ownerID string) ([]string,
 const pendingFamilyInvites = `-- name: PendingFamilyInvites :many
 select id, expires_at, created_at from invites
 where family_id=?1 and claimed_at is null and expires_at>?2
-order by created_at desc, id
+order by created_at desc, id asc
 `
 
 type PendingFamilyInvitesParams struct {
