@@ -57,6 +57,7 @@ type Server struct {
 	legalOperator          string
 	legalContactEmail      string
 	readiness              atomic.Bool
+	streamShutdown         chan struct{}
 }
 
 func NewServer(config Config) *Server {
@@ -81,6 +82,7 @@ func NewServer(config Config) *Server {
 	s := &Server{
 		store: config.Store, tokenSecret: config.TokenSecret, development: config.Development,
 		logger: config.Logger, now: config.Now, broker: newBroker(), mux: http.NewServeMux(),
+		streamShutdown:  make(chan struct{}),
 		streamHeartbeat: config.StreamHeartbeat, streamLifetime: config.StreamLifetime,
 		snapshotEventThreshold: config.SnapshotEventThreshold, deliveryRetention: config.DeliveryRetention,
 		legalOperator: config.LegalOperator, legalContactEmail: config.LegalContactEmail,
@@ -102,7 +104,11 @@ func NewServer(config Config) *Server {
 
 func (s *Server) Handler() http.Handler { return s.recoverAndLog(s.mux) }
 
-func (s *Server) MarkNotReady() { s.readiness.Store(false) }
+func (s *Server) MarkNotReady() {
+	if s.readiness.Swap(false) {
+		close(s.streamShutdown)
+	}
+}
 
 // RewrapAppleTokens migrates provider credentials to the active encryption key.
 // It is safe to run at every startup and fails closed if a referenced old key

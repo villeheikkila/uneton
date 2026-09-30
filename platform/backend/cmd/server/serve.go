@@ -29,6 +29,7 @@ func serve(ctx context.Context, stderr io.Writer) error {
 	previous := slog.Default()
 	slog.SetDefault(logger)
 	defer slog.SetDefault(previous)
+	logger.InfoContext(ctx, "effective configuration", "settings", cfg.RedactedLogValue())
 	runCtx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	return app.NewRunner(logger).Run(runCtx, cfg)

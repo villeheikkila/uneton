@@ -1,0 +1,27 @@
+package config
+
+var knownEnvironment = map[string]bool{
+	"UNETON_RUNTIME_ENVIRONMENT":                       true,
+	"UNETON_HTTP_LISTEN_ADDRESS":                       true,
+	"UNETON_DATABASE_PATH":                             true,
+	"UNETON_AUTH_TOKEN_SECRET":                         true,
+	"UNETON_LOG_FORMAT":                                true,
+	"UNETON_LOG_LEVEL":                                 true,
+	"UNETON_RUNTIME_SHUTDOWN_TIMEOUT":                  true,
+	"UNETON_AUTH_APPLE_CLIENT_ID":                      true,
+	"UNETON_INTEGRATION_APPLE_TEAM_ID":                 true,
+	"UNETON_INTEGRATION_APPLE_PRIVATE_KEY_ID":          true,
+	"UNETON_INTEGRATION_APPLE_PRIVATE_KEY_PEM":         true,
+	"UNETON_AUTH_APPLE_SERVER_NOTIFICATION_URL":        true,
+	"UNETON_INTEGRATION_APPLE_TOKEN_URL":               true,
+	"UNETON_INTEGRATION_APPLE_JWKS_URL":                true,
+	"UNETON_INTEGRATION_APPLE_REVOKE_URL":              true,
+	"UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_KEYRING_JSON":  true,
+	"UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_ACTIVE_KEY_ID": true,
+	"UNETON_INTEGRATION_APNS_TEAM_ID":                  true,
+	"UNETON_INTEGRATION_APNS_PRIVATE_KEY_ID":           true,
+	"UNETON_INTEGRATION_APNS_PRIVATE_KEY_PEM":          true,
+	"UNETON_INTEGRATION_APNS_TOPIC":                    true,
+	"UNETON_LEGAL_OPERATOR_NAME":                       true,
+	"UNETON_LEGAL_CONTACT_EMAIL":                       true,
+}

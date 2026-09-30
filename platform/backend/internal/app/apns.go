@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -26,6 +27,22 @@ type APNSConfig struct {
 	KeyID      string
 	PrivateKey string
 	Topic      string
+}
+
+func (c APNSConfig) Validate() error {
+	configured, complete := false, true
+	for _, value := range []string{c.TeamID, c.KeyID, c.PrivateKey, c.Topic} {
+		configured = configured || strings.TrimSpace(value) != ""
+		complete = complete && strings.TrimSpace(value) != ""
+	}
+	if !configured {
+		return nil
+	}
+	if !complete {
+		return errors.New("APNs team ID, key ID, private key and topic must all be configured")
+	}
+	_, err := parseApplePrivateKey(c.PrivateKey)
+	return err
 }
 
 func NewAPNSProvider(config APNSConfig) *APNSProvider {

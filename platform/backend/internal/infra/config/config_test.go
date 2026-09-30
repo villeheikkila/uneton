@@ -2,6 +2,9 @@ package config
 
 import (
 	"bytes"
+	"context"
+	"log/slog"
+	"solutions.bytesized/uneton/platform/backend/internal/common/secret"
 	"strings"
 	"testing"
 )
@@ -85,5 +88,47 @@ func developmentEnvironment() map[string]string {
 	return map[string]string{
 		"UNETON_RUNTIME_ENVIRONMENT": "development",
 		"UNETON_AUTH_TOKEN_SECRET":   "development-secret-at-least-32-characters",
+	}
+}
+
+func TestEffectiveConfigurationValidation(t *testing.T) {
+	cfg, err := FromEnv(developmentEnvironment())
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.ShutdownTimeout = 0
+	if err := cfg.Validate(); err == nil || !strings.Contains(err.Error(), "SHUTDOWN_TIMEOUT") {
+		t.Fatalf("invalid effective configuration = %v", err)
+	}
+}
+
+func TestDiagnosticsCoverContractAndRedactSecrets(t *testing.T) {
+	cfg, err := FromEnv(developmentEnvironment())
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.Apple.PrivateKey = secret.New("apple-private-sentinel")
+	cfg.APNS.PrivateKey = secret.New("apns-private-sentinel")
+	cfg.Apple.TokenKeyring = secret.New("keyring-sentinel")
+	cfg.LegalEmail = "email-sentinel@example.invalid"
+	cfg.LegalOperator = "operator-sentinel"
+	settings := cfg.redactedSettings()
+	if len(settings) != len(knownEnvironment) {
+		t.Fatalf("diagnostics cover %d of %d settings", len(settings), len(knownEnvironment))
+	}
+	for name := range knownEnvironment {
+		if _, ok := settings[name]; !ok {
+			t.Fatalf("missing diagnostic setting %s", name)
+		}
+	}
+	var cli, logs bytes.Buffer
+	if err := cfg.WriteRedacted(&cli); err != nil {
+		t.Fatal(err)
+	}
+	slog.New(slog.NewJSONHandler(&logs, nil)).InfoContext(context.Background(), "effective configuration", "settings", cfg.RedactedLogValue())
+	for _, sensitive := range []string{cfg.TokenSecret.Reveal(), "apple-private-sentinel", "apns-private-sentinel", "keyring-sentinel", cfg.LegalEmail, cfg.LegalOperator} {
+		if strings.Contains(cli.String(), sensitive) || strings.Contains(logs.String(), sensitive) {
+			t.Fatalf("diagnostics revealed %q", sensitive)
+		}
 	}
 }

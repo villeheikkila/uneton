@@ -100,3 +100,22 @@ func TestAPNSTransportErrorsDoNotExposeTokens(t *testing.T) {
 		t.Fatalf("transport error must preserve cause without token URL: %v", err)
 	}
 }
+
+func TestAPNSConfigValidation(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		config APNSConfig
+		valid  bool
+	}{
+		{name: "disabled", valid: true},
+		{name: "partial", config: APNSConfig{Topic: "solutions.bytesized.uneton"}},
+		{name: "malformed", config: APNSConfig{TeamID: "team", KeyID: "key", PrivateKey: "invalid", Topic: "solutions.bytesized.uneton"}},
+		{name: "valid", config: APNSConfig{TeamID: "team", KeyID: "key", PrivateKey: applePrivateKey(t), Topic: "solutions.bytesized.uneton"}, valid: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if err := test.config.Validate(); (err == nil) != test.valid {
+				t.Fatalf("validation = %v, want valid %t", err, test.valid)
+			}
+		})
+	}
+}

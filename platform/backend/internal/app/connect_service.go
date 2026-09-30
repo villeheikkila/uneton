@@ -537,6 +537,8 @@ func (s *Server) WatchFamily(ctx context.Context, req *connect.Request[unetonv1.
 		select {
 		case <-ctx.Done():
 			return nil
+		case <-s.streamShutdown:
+			return nil
 		case <-expiry.C:
 			if expiresWithToken {
 				return connect.NewError(connect.CodeUnauthenticated, errors.New("access token expired"))
