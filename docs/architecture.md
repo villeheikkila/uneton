@@ -262,6 +262,8 @@ A new synchronized entity or mutation is incomplete unless the change covers the
 
 Never add a second state-transfer channel to make a screen appear fresher. Improve invalidation and call `Sync`.
 
+Remote sleep-window reminders use the same APNs presentation boundary. The backend derives per-baby/device schedules from acknowledged records; it stores only delivery identity and timing in `sleep_reminders`, never forecast state in the diary. The iPhone reserves a bounded remote ownership period before registration and suppresses local reminders within it, retaining that reservation after ambiguous responses. Sync renews ownership; local fallback covers fire times outside it. The worker revalidates membership, preferences, current wake episode and estimate before a durable single submission attempt. See [push notification ownership and expiry](patterns/push-notifications.md) for failure and timing limits.
+
 ## Verification strategy
 
 The highest-value tests exercise invariants rather than transport syntax:

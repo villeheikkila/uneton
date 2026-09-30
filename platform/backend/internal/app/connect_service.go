@@ -155,10 +155,42 @@ func (s *Server) UpdateDevicePushSettings(ctx context.Context, req *connect.Requ
 	if reminderLead < 0 || reminderLead > 1440 {
 		return nil, invalidArgument("reminder lead must be between 0 and 1440 minutes")
 	}
+	remoteUntil := current.RemoteRemindersUntil
+	if req.Msg.RemoteRemindersUntil != nil {
+		if err := req.Msg.RemoteRemindersUntil.CheckValid(); err != nil {
+			return nil, invalidArgument("invalid remote reminder ownership period")
+		}
+		until := req.Msg.RemoteRemindersUntil.AsTime()
+		if until.After(s.now().UTC().Add(24*time.Hour + 5*time.Minute)) {
+			return nil, invalidArgument("remote reminder ownership must not exceed 24 hours")
+		}
+		remoteUntil = nullableString(&until)
+		if !until.After(s.now().UTC()) {
+			remoteUntil = sql.NullString{}
+		}
+	}
+	if s.apns == nil || notificationsEnabled != 1 || !apnsToken.Valid {
+		remoteUntil = sql.NullString{}
+	}
+	remoteFrom := current.RemoteRemindersFrom
+	previousUntil, _ := parseTime(current.RemoteRemindersUntil.String)
+	if !remoteUntil.Valid {
+		remoteFrom = sql.NullString{}
+	} else if !remoteFrom.Valid || !previousUntil.After(s.now().UTC()) {
+		// Do not backfill a window that a local reminder may have already covered.
+		remoteFrom = nullString(formatTime(s.now().UTC()))
+	}
+	language := current.NotificationLanguage
+	if req.Msg.NotificationLanguage != nil {
+		language = req.Msg.GetNotificationLanguage()
+		if language != "en" && language != "fi" {
+			return nil, invalidArgument("notification language must be en or fi")
+		}
+	}
 	rows, err := s.store.Queries.UpdateDevicePushSettings(ctx, storedb.UpdateDevicePushSettingsParams{
 		ApnsToken: apnsToken, PushToStartToken: pushToStartToken, ApnsEnvironment: environment,
 		NotificationsEnabled: notificationsEnabled, LiveActivitiesEnabled: liveActivitiesEnabled,
-		ReminderLeadMinutes: reminderLead, LastSeenAt: formatTime(s.now().UTC()), ID: p.DeviceID, UserID: p.UserID,
+		ReminderLeadMinutes: reminderLead, RemoteRemindersUntil: remoteUntil, RemoteRemindersFrom: remoteFrom, NotificationLanguage: language, LastSeenAt: formatTime(s.now().UTC()), ID: p.DeviceID, UserID: p.UserID,
 	})
 	if err != nil || rows != 1 {
 		return nil, internalError("could not update device settings", err)
@@ -166,8 +198,16 @@ func (s *Server) UpdateDevicePushSettings(ctx context.Context, req *connect.Requ
 	if liveActivitiesEnabled == 1 && pushToStartToken.Valid {
 		go s.startMissingLiveActivities(p.DeviceID)
 	}
+	var remoteTimestamp *timestamppb.Timestamp
+	if remoteUntil.Valid {
+		until, parseErr := parseTime(remoteUntil.String)
+		if parseErr != nil {
+			return nil, internalError("invalid reminder ownership period", parseErr)
+		}
+		remoteTimestamp = timestamppb.New(until)
+	}
 	return connect.NewResponse(&unetonv1.UpdateDevicePushSettingsResponse{Settings: &unetonv1.DevicePushSettings{
-		NotificationsEnabled: notificationsEnabled == 1, LiveActivitiesEnabled: liveActivitiesEnabled == 1, ReminderLeadMinutes: int32(reminderLead),
+		NotificationsEnabled: notificationsEnabled == 1, LiveActivitiesEnabled: liveActivitiesEnabled == 1, ReminderLeadMinutes: int32(reminderLead), RemoteRemindersUntil: remoteTimestamp, NotificationLanguage: language,
 	}}), nil
 }
 

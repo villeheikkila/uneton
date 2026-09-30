@@ -59,7 +59,8 @@ delete from devices where id=sqlc.arg(id) and user_id=sqlc.arg(user_id);
 
 -- name: DevicePushSettings :one
 select apns_token, push_to_start_token, apns_environment,
-  notifications_enabled, live_activities_enabled, reminder_lead_minutes
+  notifications_enabled, live_activities_enabled, reminder_lead_minutes,
+  remote_reminders_until, remote_reminders_from, notification_language
 from devices where id=sqlc.arg(id) and user_id=sqlc.arg(user_id);
 
 -- name: UpdateDevicePushSettings :execrows
@@ -70,6 +71,9 @@ update devices set
   notifications_enabled=sqlc.arg(notifications_enabled),
   live_activities_enabled=sqlc.arg(live_activities_enabled),
   reminder_lead_minutes=sqlc.arg(reminder_lead_minutes),
+  remote_reminders_until=sqlc.narg(remote_reminders_until),
+  remote_reminders_from=sqlc.narg(remote_reminders_from),
+  notification_language=sqlc.arg(notification_language),
   last_seen_at=sqlc.arg(last_seen_at)
 where id=sqlc.arg(id) and user_id=sqlc.arg(user_id);
 

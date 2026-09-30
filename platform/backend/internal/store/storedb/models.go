@@ -56,6 +56,9 @@ type Device struct {
 	NotificationsEnabled  int64          `json:"notifications_enabled"`
 	LiveActivitiesEnabled int64          `json:"live_activities_enabled"`
 	ReminderLeadMinutes   int64          `json:"reminder_lead_minutes"`
+	RemoteRemindersUntil  sql.NullString `json:"remote_reminders_until"`
+	RemoteRemindersFrom   sql.NullString `json:"remote_reminders_from"`
+	NotificationLanguage  string         `json:"notification_language"`
 	LastSeenAt            string         `json:"last_seen_at"`
 }
 
@@ -127,6 +130,17 @@ type LiveActivityToken struct {
 	Token           string `json:"token"`
 	ApnsEnvironment string `json:"apns_environment"`
 	UpdatedAt       string `json:"updated_at"`
+}
+
+type SleepReminder struct {
+	DeviceID  string `json:"device_id"`
+	ChildID   string `json:"child_id"`
+	FamilyID  string `json:"family_id"`
+	SleepID   string `json:"sleep_id"`
+	TargetAt  string `json:"target_at"`
+	DueAt     string `json:"due_at"`
+	Status    string `json:"status"`
+	CreatedAt string `json:"created_at"`
 }
 
 type SleepSession struct {

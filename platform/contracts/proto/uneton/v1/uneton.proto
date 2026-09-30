@@ -63,6 +63,8 @@ message DevicePushSettings {
   bool notifications_enabled = 1;
   bool live_activities_enabled = 2;
   int32 reminder_lead_minutes = 3;
+  optional google.protobuf.Timestamp remote_reminders_until = 4;
+  string notification_language = 5;
 }
 
 message UpdateDevicePushSettingsRequest {
@@ -72,6 +74,9 @@ message UpdateDevicePushSettingsRequest {
   optional bool notifications_enabled = 4;
   optional bool live_activities_enabled = 5;
   optional int32 reminder_lead_minutes = 6;
+  // A bounded ownership period; an epoch timestamp explicitly disables it.
+  optional google.protobuf.Timestamp remote_reminders_until = 7;
+  optional string notification_language = 8;
 }
 
 message UpdateDevicePushSettingsResponse {

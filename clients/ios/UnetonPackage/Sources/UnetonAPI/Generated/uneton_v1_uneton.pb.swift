@@ -239,9 +239,22 @@ public nonisolated struct Uneton_V1_DevicePushSettings: Sendable {
 
   public var reminderLeadMinutes: Int32 = 0
 
+  public var remoteRemindersUntil: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_remoteRemindersUntil ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_remoteRemindersUntil = newValue}
+  }
+  /// Returns true if `remoteRemindersUntil` has been explicitly set.
+  public var hasRemoteRemindersUntil: Bool {self._remoteRemindersUntil != nil}
+  /// Clears the value of `remoteRemindersUntil`. Subsequent reads from it will return its default value.
+  public mutating func clearRemoteRemindersUntil() {self._remoteRemindersUntil = nil}
+
+  public var notificationLanguage: String = String()
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
+
+  fileprivate var _remoteRemindersUntil: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
 }
 
 public nonisolated struct Uneton_V1_UpdateDevicePushSettingsRequest: Sendable {
@@ -296,6 +309,25 @@ public nonisolated struct Uneton_V1_UpdateDevicePushSettingsRequest: Sendable {
   /// Clears the value of `reminderLeadMinutes`. Subsequent reads from it will return its default value.
   public mutating func clearReminderLeadMinutes() {self._reminderLeadMinutes = nil}
 
+  /// A bounded ownership period; an epoch timestamp explicitly disables it.
+  public var remoteRemindersUntil: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_remoteRemindersUntil ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_remoteRemindersUntil = newValue}
+  }
+  /// Returns true if `remoteRemindersUntil` has been explicitly set.
+  public var hasRemoteRemindersUntil: Bool {self._remoteRemindersUntil != nil}
+  /// Clears the value of `remoteRemindersUntil`. Subsequent reads from it will return its default value.
+  public mutating func clearRemoteRemindersUntil() {self._remoteRemindersUntil = nil}
+
+  public var notificationLanguage: String {
+    get {_notificationLanguage ?? String()}
+    set {_notificationLanguage = newValue}
+  }
+  /// Returns true if `notificationLanguage` has been explicitly set.
+  public var hasNotificationLanguage: Bool {self._notificationLanguage != nil}
+  /// Clears the value of `notificationLanguage`. Subsequent reads from it will return its default value.
+  public mutating func clearNotificationLanguage() {self._notificationLanguage = nil}
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -305,6 +337,8 @@ public nonisolated struct Uneton_V1_UpdateDevicePushSettingsRequest: Sendable {
   fileprivate var _notificationsEnabled: Bool? = nil
   fileprivate var _liveActivitiesEnabled: Bool? = nil
   fileprivate var _reminderLeadMinutes: Int32? = nil
+  fileprivate var _remoteRemindersUntil: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
+  fileprivate var _notificationLanguage: String? = nil
 }
 
 public nonisolated struct Uneton_V1_UpdateDevicePushSettingsResponse: Sendable {
@@ -2317,7 +2351,7 @@ nonisolated extension Uneton_V1_DeleteAccountResponse: SwiftProtobuf.Message, Sw
 
 nonisolated extension Uneton_V1_DevicePushSettings: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".DevicePushSettings"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}notifications_enabled\0\u{3}live_activities_enabled\0\u{3}reminder_lead_minutes\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}notifications_enabled\0\u{3}live_activities_enabled\0\u{3}reminder_lead_minutes\0\u{3}remote_reminders_until\0\u{3}notification_language\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2328,12 +2362,18 @@ nonisolated extension Uneton_V1_DevicePushSettings: SwiftProtobuf.Message, Swift
       case 1: try { try decoder.decodeSingularBoolField(value: &self.notificationsEnabled) }()
       case 2: try { try decoder.decodeSingularBoolField(value: &self.liveActivitiesEnabled) }()
       case 3: try { try decoder.decodeSingularInt32Field(value: &self.reminderLeadMinutes) }()
+      case 4: try { try decoder.decodeSingularMessageField(value: &self._remoteRemindersUntil) }()
+      case 5: try { try decoder.decodeSingularStringField(value: &self.notificationLanguage) }()
       default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
     if self.notificationsEnabled != false {
       try visitor.visitSingularBoolField(value: self.notificationsEnabled, fieldNumber: 1)
     }
@@ -2343,6 +2383,12 @@ nonisolated extension Uneton_V1_DevicePushSettings: SwiftProtobuf.Message, Swift
     if self.reminderLeadMinutes != 0 {
       try visitor.visitSingularInt32Field(value: self.reminderLeadMinutes, fieldNumber: 3)
     }
+    try { if let v = self._remoteRemindersUntil {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 4)
+    } }()
+    if !self.notificationLanguage.isEmpty {
+      try visitor.visitSingularStringField(value: self.notificationLanguage, fieldNumber: 5)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -2350,6 +2396,8 @@ nonisolated extension Uneton_V1_DevicePushSettings: SwiftProtobuf.Message, Swift
     if lhs.notificationsEnabled != rhs.notificationsEnabled {return false}
     if lhs.liveActivitiesEnabled != rhs.liveActivitiesEnabled {return false}
     if lhs.reminderLeadMinutes != rhs.reminderLeadMinutes {return false}
+    if lhs._remoteRemindersUntil != rhs._remoteRemindersUntil {return false}
+    if lhs.notificationLanguage != rhs.notificationLanguage {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -2357,7 +2405,7 @@ nonisolated extension Uneton_V1_DevicePushSettings: SwiftProtobuf.Message, Swift
 
 nonisolated extension Uneton_V1_UpdateDevicePushSettingsRequest: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".UpdateDevicePushSettingsRequest"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}apns_token\0\u{3}push_to_start_token\0\u{3}apns_environment\0\u{3}notifications_enabled\0\u{3}live_activities_enabled\0\u{3}reminder_lead_minutes\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}apns_token\0\u{3}push_to_start_token\0\u{3}apns_environment\0\u{3}notifications_enabled\0\u{3}live_activities_enabled\0\u{3}reminder_lead_minutes\0\u{3}remote_reminders_until\0\u{3}notification_language\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -2371,6 +2419,8 @@ nonisolated extension Uneton_V1_UpdateDevicePushSettingsRequest: SwiftProtobuf.M
       case 4: try { try decoder.decodeSingularBoolField(value: &self._notificationsEnabled) }()
       case 5: try { try decoder.decodeSingularBoolField(value: &self._liveActivitiesEnabled) }()
       case 6: try { try decoder.decodeSingularInt32Field(value: &self._reminderLeadMinutes) }()
+      case 7: try { try decoder.decodeSingularMessageField(value: &self._remoteRemindersUntil) }()
+      case 8: try { try decoder.decodeSingularStringField(value: &self._notificationLanguage) }()
       default: break
       }
     }
@@ -2399,6 +2449,12 @@ nonisolated extension Uneton_V1_UpdateDevicePushSettingsRequest: SwiftProtobuf.M
     try { if let v = self._reminderLeadMinutes {
       try visitor.visitSingularInt32Field(value: v, fieldNumber: 6)
     } }()
+    try { if let v = self._remoteRemindersUntil {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
+    } }()
+    try { if let v = self._notificationLanguage {
+      try visitor.visitSingularStringField(value: v, fieldNumber: 8)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -2409,6 +2465,8 @@ nonisolated extension Uneton_V1_UpdateDevicePushSettingsRequest: SwiftProtobuf.M
     if lhs._notificationsEnabled != rhs._notificationsEnabled {return false}
     if lhs._liveActivitiesEnabled != rhs._liveActivitiesEnabled {return false}
     if lhs._reminderLeadMinutes != rhs._reminderLeadMinutes {return false}
+    if lhs._remoteRemindersUntil != rhs._remoteRemindersUntil {return false}
+    if lhs._notificationLanguage != rhs._notificationLanguage {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

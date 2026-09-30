@@ -19,7 +19,15 @@ func (s *Server) RunPushDeliveries(ctx context.Context) {
 	}
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
+	nextReminders := time.Time{}
 	for {
+		if !s.now().Before(nextReminders) {
+			if err := s.reconcileSleepReminders(ctx); err != nil {
+				s.logger.ErrorContext(ctx, "could not schedule sleep reminders", "error", err)
+			}
+			nextReminders = s.now().Add(30 * time.Second)
+		}
+		s.sendDueSleepReminders(ctx)
 		s.runDuePushDeliveries(ctx)
 		select {
 		case <-ctx.Done():

@@ -320,7 +320,8 @@ func (q *Queries) DeleteUserDevices(ctx context.Context, userID string) error {
 
 const devicePushSettings = `-- name: DevicePushSettings :one
 select apns_token, push_to_start_token, apns_environment,
-  notifications_enabled, live_activities_enabled, reminder_lead_minutes
+  notifications_enabled, live_activities_enabled, reminder_lead_minutes,
+  remote_reminders_until, remote_reminders_from, notification_language
 from devices where id=?1 and user_id=?2
 `
 
@@ -336,6 +337,9 @@ type DevicePushSettingsRow struct {
 	NotificationsEnabled  int64          `json:"notifications_enabled"`
 	LiveActivitiesEnabled int64          `json:"live_activities_enabled"`
 	ReminderLeadMinutes   int64          `json:"reminder_lead_minutes"`
+	RemoteRemindersUntil  sql.NullString `json:"remote_reminders_until"`
+	RemoteRemindersFrom   sql.NullString `json:"remote_reminders_from"`
+	NotificationLanguage  string         `json:"notification_language"`
 }
 
 func (q *Queries) DevicePushSettings(ctx context.Context, arg DevicePushSettingsParams) (DevicePushSettingsRow, error) {
@@ -348,6 +352,9 @@ func (q *Queries) DevicePushSettings(ctx context.Context, arg DevicePushSettings
 		&i.NotificationsEnabled,
 		&i.LiveActivitiesEnabled,
 		&i.ReminderLeadMinutes,
+		&i.RemoteRemindersUntil,
+		&i.RemoteRemindersFrom,
+		&i.NotificationLanguage,
 	)
 	return i, err
 }
@@ -572,8 +579,11 @@ update devices set
   notifications_enabled=?4,
   live_activities_enabled=?5,
   reminder_lead_minutes=?6,
-  last_seen_at=?7
-where id=?8 and user_id=?9
+  remote_reminders_until=?7,
+  remote_reminders_from=?8,
+  notification_language=?9,
+  last_seen_at=?10
+where id=?11 and user_id=?12
 `
 
 type UpdateDevicePushSettingsParams struct {
@@ -583,6 +593,9 @@ type UpdateDevicePushSettingsParams struct {
 	NotificationsEnabled  int64          `json:"notifications_enabled"`
 	LiveActivitiesEnabled int64          `json:"live_activities_enabled"`
 	ReminderLeadMinutes   int64          `json:"reminder_lead_minutes"`
+	RemoteRemindersUntil  sql.NullString `json:"remote_reminders_until"`
+	RemoteRemindersFrom   sql.NullString `json:"remote_reminders_from"`
+	NotificationLanguage  string         `json:"notification_language"`
 	LastSeenAt            string         `json:"last_seen_at"`
 	ID                    string         `json:"id"`
 	UserID                string         `json:"user_id"`
@@ -596,6 +609,9 @@ func (q *Queries) UpdateDevicePushSettings(ctx context.Context, arg UpdateDevice
 		arg.NotificationsEnabled,
 		arg.LiveActivitiesEnabled,
 		arg.ReminderLeadMinutes,
+		arg.RemoteRemindersUntil,
+		arg.RemoteRemindersFrom,
+		arg.NotificationLanguage,
 		arg.LastSeenAt,
 		arg.ID,
 		arg.UserID,

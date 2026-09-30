@@ -26,6 +26,7 @@ final class SessionStore {
         static let notificationsEnabled = "push.notificationsEnabled"
         static let liveActivitiesEnabled = "push.liveActivitiesEnabled"
         static let reminderLeadMinutes = "push.reminderLeadMinutes"
+        static let remoteReminderUntil = "push.remoteReminderUntil"
         static let pendingInitialFamilyID = "session.pendingInitialFamilyID"
         static let watchSnapshotVersion = "watch.snapshotVersion"
     }
@@ -56,6 +57,9 @@ final class SessionStore {
     @ObservationIgnored private var liveActivityTokenTask: Task<Void, Never>?
     @ObservationIgnored private var apnsToken: String?
     @ObservationIgnored private var pushToStartToken: String?
+    @ObservationIgnored private var reminderOwnership = SleepReminderOwnership()
+    @ObservationIgnored private var isUploadingPushSettings = false
+    @ObservationIgnored private var needsPushSettingsUpload = false
     @ObservationIgnored private var activityTokens: [SleepSession.ID: String] = [:]
 
     init(demo: Bool = false) {
@@ -80,6 +84,7 @@ final class SessionStore {
         self.notificationsEnabled = defaults.object(forKey: Key.notificationsEnabled) as? Bool ?? true
         self.liveActivitiesEnabled = defaults.object(forKey: Key.liveActivitiesEnabled) as? Bool ?? true
         self.reminderLeadMinutes = defaults.object(forKey: Key.reminderLeadMinutes) as? Int ?? 15
+        self.reminderOwnership = SleepReminderOwnership(remoteUntil: defaults.object(forKey: Key.remoteReminderUntil) as? Date)
         self.coordinator = SyncCoordinator(
             deviceID: deviceID,
             accessToken: { CredentialStore().value(for: Key.accessToken) }
@@ -413,6 +418,7 @@ final class SessionStore {
         let startedAt = startedAt ?? now
         await perform {
             let sessionID = try await coordinator.startSleep(familyID: familyID, childID: childID, sessionID: sessionID, commandID: commandID, startedAt: startedAt)
+            await reminders.schedule(fireDate: nil)
             if liveActivitiesEnabled { await liveActivities.start(
                 familyID: familyID,
                 childID: childID,
@@ -615,7 +621,7 @@ final class SessionStore {
     func setReminderLeadMinutes(_ minutes: Int) async {
         reminderLeadMinutes = minutes
         UserDefaults.standard.set(minutes, forKey: Key.reminderLeadMinutes)
-        await reminders.schedule(forecast?.nextSleepIsProvisional == true ? nil : forecast?.nextSleepEstimate, leadMinutes: minutes)
+        await scheduleLocalReminder()
         await uploadPushSettings()
     }
 
@@ -843,9 +849,63 @@ final class SessionStore {
     }
 
     private func uploadPushSettings() async {
-        guard let accessToken else { return }
-        let settings = DevicePushSettings(notificationsEnabled: notificationsEnabled, liveActivitiesEnabled: liveActivitiesEnabled, reminderLeadMinutes: reminderLeadMinutes)
-        _ = try? await apiClient.updateDevicePushSettings(apnsToken, pushToStartToken, PushRegistrationController.environment, settings, accessToken)
+        // Serialize control-plane updates so older acknowledgements cannot undo
+        // a newer notification switch or ownership period.
+        needsPushSettingsUpload = true
+        guard !isUploadingPushSettings else { return }
+        isUploadingPushSettings = true
+        defer { isUploadingPushSettings = false }
+        repeat {
+            needsPushSettingsUpload = false
+            guard let accessToken else { return }
+            let until: Date?
+            if notificationsEnabled {
+                if apnsToken != nil {
+                    reminderOwnership.reserve(until: now.addingTimeInterval(SleepReminderOwnership.duration))
+                }
+                until = reminderOwnership.remoteUntil
+            } else {
+                until = nil
+            }
+            // Cancel conflicting local requests before a potentially lost response.
+            UserDefaults.standard.set(reminderOwnership.remoteUntil, forKey: Key.remoteReminderUntil)
+            await scheduleLocalReminder()
+            let settings = DevicePushSettings(notificationsEnabled: notificationsEnabled,
+                liveActivitiesEnabled: liveActivitiesEnabled, reminderLeadMinutes: reminderLeadMinutes,
+                remoteRemindersUntil: until,
+                notificationLanguage: Bundle.main.preferredLocalizations.first == "fi" ? "fi" : "en")
+            do {
+                let acknowledged = try await apiClient.updateDevicePushSettings(apnsToken, pushToStartToken,
+                    PushRegistrationController.environment, settings, accessToken)
+                // Sign-out may have completed while the request was in flight.
+                if self.accessToken == accessToken {
+                    reminderOwnership.remoteUntil = acknowledged.remoteRemindersUntil
+                    UserDefaults.standard.set(reminderOwnership.remoteUntil, forKey: Key.remoteReminderUntil)
+                    await scheduleLocalReminder()
+                }
+            } catch {
+                // Keep the reserved period after an ambiguous response. Re-enabling
+                // a local request here could duplicate an already-owned remote alert.
+            }
+        } while needsPushSettingsUpload
+    }
+
+    private func scheduleLocalReminder() async {
+        if let childID = forecast?.childID {
+            // Optimistic sleeping state must suppress even a cached awake estimate.
+            let familyIDs = memberships.map { Set($0.map(\.id)) }
+            let canRemind = (try? await database.read { db in
+                guard let child = try Child.find(childID).fetchOne(db),
+                      familyIDs?.contains(child.familyID) ?? true else { return false }
+                return try SleepSession.where {
+                    $0.childID.eq(childID) && $0.endedAt.is(nil)
+                        && $0.deletedAt.is(nil) && $0.supersededByID.is(nil)
+                }.fetchCount(db) == 0
+            }) ?? false
+            if !canRemind { await reminders.schedule(fireDate: nil); return }
+        }
+        await reminders.schedule(fireDate: reminderOwnership.localFireDate(forecast: forecast,
+            notificationsEnabled: notificationsEnabled, leadMinutes: reminderLeadMinutes, now: now))
     }
 
     private func uploadActivityToken(sessionID: SleepSession.ID, token: String) async {
@@ -863,7 +923,9 @@ final class SessionStore {
         credentials.removeValue(for: Key.appleUserID)
         UserDefaults.standard.removeObject(forKey: Key.pendingInitialFamilyID)
         forecast = nil
-        await reminders.schedule(nil, leadMinutes: reminderLeadMinutes)
+        await reminders.schedule(fireDate: nil)
+        reminderOwnership = SleepReminderOwnership()
+        UserDefaults.standard.removeObject(forKey: Key.remoteReminderUntil)
         try? await database.write { database in
             try SyncConflict.delete().execute(database)
             try PendingCommand.delete().execute(database)
@@ -909,7 +971,7 @@ final class SessionStore {
 
     private func setPrediction(_ value: SleepForecast?) async {
         forecast = value
-        await reminders.schedule(value?.nextSleepIsProvisional == true ? nil : value?.nextSleepEstimate, leadMinutes: reminderLeadMinutes)
+        await scheduleLocalReminder()
     }
 
     private func synchronizeWithRefresh(familyID: Family.ID) async throws -> SleepForecast? {
@@ -925,6 +987,7 @@ final class SessionStore {
             try await refreshAuthentication()
             result = try await coordinator.synchronize(familyID: familyID)
         }
+        await uploadPushSettings()
         await watchBridge.publishSnapshot()
         return result
     }
@@ -932,7 +995,9 @@ final class SessionStore {
     private func synchronizeInBackground(familyID: Family.ID) async -> Bool {
         guard accessToken != nil else { return false }
         do {
-            _ = try await synchronizeWithRefresh(familyID: familyID)
+            let value = try await synchronizeWithRefresh(familyID: familyID)
+            // A background pull for another family must not replace the visible forecast.
+            if forecast == nil || value?.childID == forecast?.childID { await setPrediction(value) }
             return true
         } catch {
             return false

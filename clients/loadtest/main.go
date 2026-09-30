@@ -489,7 +489,20 @@ func (s scenario) authenticate(ctx context.Context, name string) (*actor, error)
 		}
 		return callErr
 	})
+	if err == nil {
+		err = s.configureReminders(ctx, result)
+	}
 	return result, err
+}
+
+func (s scenario) configureReminders(ctx context.Context, user *actor) error {
+	return s.call("UpdateDevicePushSettings", func() error {
+		enabled, language := true, "en"
+		request := connect.NewRequest(&unetonv1.UpdateDevicePushSettingsRequest{ApnsEnvironment: "development", NotificationsEnabled: &enabled, NotificationLanguage: &language, RemoteRemindersUntil: timestamppb.New(time.Now().Add(24 * time.Hour))})
+		authorize(request, user.auth.GetAccessToken())
+		_, err := s.client.UpdateDevicePushSettings(ctx, request)
+		return err
+	})
 }
 
 func (s scenario) sync(ctx context.Context, user *actor, commands []*unetonv1.Command) (*unetonv1.SyncResponse, error) {
@@ -507,6 +520,9 @@ func (s scenario) sync(ctx context.Context, user *actor, commands []*unetonv1.Co
 		}
 		return callErr
 	})
+	if err == nil && message != nil {
+		err = s.configureReminders(ctx, user)
+	}
 	if err != nil || message == nil || !message.GetResetRequired() {
 		return message, err
 	}

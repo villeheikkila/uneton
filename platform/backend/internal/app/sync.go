@@ -895,7 +895,11 @@ func (s *Server) sleepForecast(ctx context.Context, familyID string) *SleepForec
 	if err != nil {
 		return nil
 	}
-	rows, err := s.store.Queries.SweetSpotHistory(ctx, child.ID)
+	return s.sleepForecastForChild(ctx, s.store.Queries, familyID, child)
+}
+
+func (s *Server) sleepForecastForChild(ctx context.Context, q *storedb.Queries, familyID string, child storedb.PredictionChildRow) *SleepForecast {
+	rows, err := q.SweetSpotHistory(ctx, child.ID)
 	if err != nil {
 		return nil
 	}
@@ -929,9 +933,9 @@ func (s *Server) sleepForecast(ctx context.Context, familyID string) *SleepForec
 		return nil
 	}
 	forecast := &SleepForecast{ChildID: child.ID}
-	activeID, activeErr := s.store.Queries.ActiveSleepForChild(ctx, storedb.ActiveSleepForChildParams{FamilyID: familyID, ChildID: child.ID})
+	activeID, activeErr := q.ActiveSleepForChild(ctx, storedb.ActiveSleepForChildParams{FamilyID: familyID, ChildID: child.ID})
 	if activeErr == nil {
-		row, readErr := s.store.Queries.SleepRecord(ctx, storedb.SleepRecordParams{ID: activeID, FamilyID: familyID})
+		row, readErr := q.SleepRecord(ctx, storedb.SleepRecordParams{ID: activeID, FamilyID: familyID})
 		if readErr != nil {
 			return nil
 		}

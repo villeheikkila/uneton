@@ -45,6 +45,10 @@ func NewAPNSProvider(config APNSConfig) *APNSProvider {
 }
 
 func (p *APNSProvider) send(ctx context.Context, token, environment, pushType, topic, priority, collapseID string, payload any) (invalidToken bool, err error) {
+	return p.sendWithExpiration(ctx, token, environment, pushType, topic, priority, collapseID, p.now().Add(24*time.Hour), payload)
+}
+
+func (p *APNSProvider) sendWithExpiration(ctx context.Context, token, environment, pushType, topic, priority, collapseID string, expiration time.Time, payload any) (invalidToken bool, err error) {
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return false, err
@@ -68,7 +72,7 @@ func (p *APNSProvider) send(ctx context.Context, token, environment, pushType, t
 	request.Header.Set("apns-push-type", pushType)
 	request.Header.Set("apns-topic", topic)
 	request.Header.Set("apns-priority", priority)
-	request.Header.Set("apns-expiration", strconv.FormatInt(p.now().Add(24*time.Hour).Unix(), 10))
+	request.Header.Set("apns-expiration", strconv.FormatInt(expiration.Unix(), 10))
 	if collapseID != "" {
 		request.Header.Set("apns-collapse-id", collapseID)
 	}

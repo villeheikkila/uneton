@@ -496,6 +496,8 @@ type DevicePushSettings struct {
 	NotificationsEnabled  bool                   `protobuf:"varint,1,opt,name=notifications_enabled,json=notificationsEnabled,proto3" json:"notifications_enabled,omitempty"`
 	LiveActivitiesEnabled bool                   `protobuf:"varint,2,opt,name=live_activities_enabled,json=liveActivitiesEnabled,proto3" json:"live_activities_enabled,omitempty"`
 	ReminderLeadMinutes   int32                  `protobuf:"varint,3,opt,name=reminder_lead_minutes,json=reminderLeadMinutes,proto3" json:"reminder_lead_minutes,omitempty"`
+	RemoteRemindersUntil  *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=remote_reminders_until,json=remoteRemindersUntil,proto3,oneof" json:"remote_reminders_until,omitempty"`
+	NotificationLanguage  string                 `protobuf:"bytes,5,opt,name=notification_language,json=notificationLanguage,proto3" json:"notification_language,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -551,6 +553,20 @@ func (x *DevicePushSettings) GetReminderLeadMinutes() int32 {
 	return 0
 }
 
+func (x *DevicePushSettings) GetRemoteRemindersUntil() *timestamppb.Timestamp {
+	if x != nil {
+		return x.RemoteRemindersUntil
+	}
+	return nil
+}
+
+func (x *DevicePushSettings) GetNotificationLanguage() string {
+	if x != nil {
+		return x.NotificationLanguage
+	}
+	return ""
+}
+
 type UpdateDevicePushSettingsRequest struct {
 	state                 protoimpl.MessageState `protogen:"open.v1"`
 	ApnsToken             *string                `protobuf:"bytes,1,opt,name=apns_token,json=apnsToken,proto3,oneof" json:"apns_token,omitempty"`
@@ -559,8 +575,11 @@ type UpdateDevicePushSettingsRequest struct {
 	NotificationsEnabled  *bool                  `protobuf:"varint,4,opt,name=notifications_enabled,json=notificationsEnabled,proto3,oneof" json:"notifications_enabled,omitempty"`
 	LiveActivitiesEnabled *bool                  `protobuf:"varint,5,opt,name=live_activities_enabled,json=liveActivitiesEnabled,proto3,oneof" json:"live_activities_enabled,omitempty"`
 	ReminderLeadMinutes   *int32                 `protobuf:"varint,6,opt,name=reminder_lead_minutes,json=reminderLeadMinutes,proto3,oneof" json:"reminder_lead_minutes,omitempty"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	// A bounded ownership period; an epoch timestamp explicitly disables it.
+	RemoteRemindersUntil *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=remote_reminders_until,json=remoteRemindersUntil,proto3,oneof" json:"remote_reminders_until,omitempty"`
+	NotificationLanguage *string                `protobuf:"bytes,8,opt,name=notification_language,json=notificationLanguage,proto3,oneof" json:"notification_language,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *UpdateDevicePushSettingsRequest) Reset() {
@@ -633,6 +652,20 @@ func (x *UpdateDevicePushSettingsRequest) GetReminderLeadMinutes() int32 {
 		return *x.ReminderLeadMinutes
 	}
 	return 0
+}
+
+func (x *UpdateDevicePushSettingsRequest) GetRemoteRemindersUntil() *timestamppb.Timestamp {
+	if x != nil {
+		return x.RemoteRemindersUntil
+	}
+	return nil
+}
+
+func (x *UpdateDevicePushSettingsRequest) GetNotificationLanguage() string {
+	if x != nil && x.NotificationLanguage != nil {
+		return *x.NotificationLanguage
+	}
+	return ""
 }
 
 type UpdateDevicePushSettingsResponse struct {
@@ -4974,11 +5007,14 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x0eSignOutRequestJ\x04\b\x01\x10\x02R\tdevice_id\"\x11\n" +
 	"\x0fSignOutResponse\"\x16\n" +
 	"\x14DeleteAccountRequest\"\x17\n" +
-	"\x15DeleteAccountResponse\"\xb5\x01\n" +
+	"\x15DeleteAccountResponse\"\xdc\x02\n" +
 	"\x12DevicePushSettings\x123\n" +
 	"\x15notifications_enabled\x18\x01 \x01(\bR\x14notificationsEnabled\x126\n" +
 	"\x17live_activities_enabled\x18\x02 \x01(\bR\x15liveActivitiesEnabled\x122\n" +
-	"\x15reminder_lead_minutes\x18\x03 \x01(\x05R\x13reminderLeadMinutes\"\xcb\x03\n" +
+	"\x15reminder_lead_minutes\x18\x03 \x01(\x05R\x13reminderLeadMinutes\x12U\n" +
+	"\x16remote_reminders_until\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampH\x00R\x14remoteRemindersUntil\x88\x01\x01\x123\n" +
+	"\x15notification_language\x18\x05 \x01(\tR\x14notificationLanguageB\x19\n" +
+	"\x17_remote_reminders_until\"\x91\x05\n" +
 	"\x1fUpdateDevicePushSettingsRequest\x12\"\n" +
 	"\n" +
 	"apns_token\x18\x01 \x01(\tH\x00R\tapnsToken\x88\x01\x01\x122\n" +
@@ -4986,12 +5022,16 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x10apns_environment\x18\x03 \x01(\tR\x0fapnsEnvironment\x128\n" +
 	"\x15notifications_enabled\x18\x04 \x01(\bH\x02R\x14notificationsEnabled\x88\x01\x01\x12;\n" +
 	"\x17live_activities_enabled\x18\x05 \x01(\bH\x03R\x15liveActivitiesEnabled\x88\x01\x01\x127\n" +
-	"\x15reminder_lead_minutes\x18\x06 \x01(\x05H\x04R\x13reminderLeadMinutes\x88\x01\x01B\r\n" +
+	"\x15reminder_lead_minutes\x18\x06 \x01(\x05H\x04R\x13reminderLeadMinutes\x88\x01\x01\x12U\n" +
+	"\x16remote_reminders_until\x18\a \x01(\v2\x1a.google.protobuf.TimestampH\x05R\x14remoteRemindersUntil\x88\x01\x01\x128\n" +
+	"\x15notification_language\x18\b \x01(\tH\x06R\x14notificationLanguage\x88\x01\x01B\r\n" +
 	"\v_apns_tokenB\x16\n" +
 	"\x14_push_to_start_tokenB\x18\n" +
 	"\x16_notifications_enabledB\x1a\n" +
 	"\x18_live_activities_enabledB\x18\n" +
-	"\x16_reminder_lead_minutes\"]\n" +
+	"\x16_reminder_lead_minutesB\x19\n" +
+	"\x17_remote_reminders_untilB\x18\n" +
+	"\x16_notification_language\"]\n" +
 	" UpdateDevicePushSettingsResponse\x129\n" +
 	"\bsettings\x18\x01 \x01(\v2\x1d.uneton.v1.DevicePushSettingsR\bsettings\"\x86\x01\n" +
 	"\x1bRegisterLiveActivityRequest\x12\x1d\n" +
@@ -5496,124 +5536,126 @@ var file_uneton_v1_uneton_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),            // 77: google.protobuf.Timestamp
 }
 var file_uneton_v1_uneton_proto_depIdxs = []int32{
-	10, // 0: uneton.v1.UpdateDevicePushSettingsResponse.settings:type_name -> uneton.v1.DevicePushSettings
-	16, // 1: uneton.v1.AuthenticationResponse.families:type_name -> uneton.v1.FamilyMembership
-	15, // 2: uneton.v1.DevelopmentAuthResponse.authentication:type_name -> uneton.v1.AuthenticationResponse
-	15, // 3: uneton.v1.AppleAuthResponse.authentication:type_name -> uneton.v1.AuthenticationResponse
-	15, // 4: uneton.v1.RefreshAuthResponse.authentication:type_name -> uneton.v1.AuthenticationResponse
-	77, // 5: uneton.v1.CreateInviteResponse.expires_at:type_name -> google.protobuf.Timestamp
-	77, // 6: uneton.v1.FamilyMemberInfo.joined_at:type_name -> google.protobuf.Timestamp
-	77, // 7: uneton.v1.FamilyInviteInfo.expires_at:type_name -> google.protobuf.Timestamp
-	77, // 8: uneton.v1.FamilyInviteInfo.created_at:type_name -> google.protobuf.Timestamp
-	27, // 9: uneton.v1.GetFamilyManagementResponse.members:type_name -> uneton.v1.FamilyMemberInfo
-	28, // 10: uneton.v1.GetFamilyManagementResponse.pending_invites:type_name -> uneton.v1.FamilyInviteInfo
-	45, // 11: uneton.v1.SyncRequest.commands:type_name -> uneton.v1.Command
-	46, // 12: uneton.v1.Command.create_child:type_name -> uneton.v1.CreateChild
-	47, // 13: uneton.v1.Command.update_child:type_name -> uneton.v1.UpdateChild
-	50, // 14: uneton.v1.Command.start_sleep:type_name -> uneton.v1.StartSleep
-	51, // 15: uneton.v1.Command.end_sleep:type_name -> uneton.v1.EndSleep
-	52, // 16: uneton.v1.Command.upsert_sleep:type_name -> uneton.v1.UpsertSleep
-	53, // 17: uneton.v1.Command.delete_sleep:type_name -> uneton.v1.DeleteSleep
-	54, // 18: uneton.v1.Command.upsert_growth_measurement:type_name -> uneton.v1.UpsertGrowthMeasurement
-	55, // 19: uneton.v1.Command.delete_growth_measurement:type_name -> uneton.v1.DeleteGrowthMeasurement
-	57, // 20: uneton.v1.Command.upsert_temperature_reading:type_name -> uneton.v1.UpsertTemperatureReading
-	58, // 21: uneton.v1.Command.delete_temperature_reading:type_name -> uneton.v1.DeleteTemperatureReading
-	48, // 22: uneton.v1.Command.delete_child:type_name -> uneton.v1.DeleteChild
-	49, // 23: uneton.v1.CreateChild.child:type_name -> uneton.v1.ChildInput
-	49, // 24: uneton.v1.UpdateChild.child:type_name -> uneton.v1.ChildInput
-	60, // 25: uneton.v1.StartSleep.sleep:type_name -> uneton.v1.SleepInput
-	77, // 26: uneton.v1.EndSleep.ended_at:type_name -> google.protobuf.Timestamp
-	60, // 27: uneton.v1.UpsertSleep.sleep:type_name -> uneton.v1.SleepInput
-	56, // 28: uneton.v1.UpsertGrowthMeasurement.measurement:type_name -> uneton.v1.GrowthMeasurementInput
-	77, // 29: uneton.v1.GrowthMeasurementInput.measured_at:type_name -> google.protobuf.Timestamp
-	59, // 30: uneton.v1.UpsertTemperatureReading.reading:type_name -> uneton.v1.TemperatureReadingInput
-	77, // 31: uneton.v1.TemperatureReadingInput.measured_at:type_name -> google.protobuf.Timestamp
-	77, // 32: uneton.v1.SleepInput.started_at:type_name -> google.protobuf.Timestamp
-	77, // 33: uneton.v1.SleepInput.ended_at:type_name -> google.protobuf.Timestamp
-	0,  // 34: uneton.v1.CommandResult.status:type_name -> uneton.v1.CommandStatus
-	62, // 35: uneton.v1.CommandResult.entity:type_name -> uneton.v1.Entity
-	64, // 36: uneton.v1.Entity.child:type_name -> uneton.v1.Child
-	65, // 37: uneton.v1.Entity.sleep_session:type_name -> uneton.v1.SleepSession
-	63, // 38: uneton.v1.Entity.deleted:type_name -> uneton.v1.DeletedEntity
-	66, // 39: uneton.v1.Entity.growth_measurement:type_name -> uneton.v1.GrowthMeasurement
-	67, // 40: uneton.v1.Entity.temperature_reading:type_name -> uneton.v1.TemperatureReading
-	77, // 41: uneton.v1.Child.updated_at:type_name -> google.protobuf.Timestamp
-	77, // 42: uneton.v1.Child.deleted_at:type_name -> google.protobuf.Timestamp
-	77, // 43: uneton.v1.SleepSession.started_at:type_name -> google.protobuf.Timestamp
-	77, // 44: uneton.v1.SleepSession.ended_at:type_name -> google.protobuf.Timestamp
-	77, // 45: uneton.v1.SleepSession.updated_at:type_name -> google.protobuf.Timestamp
-	77, // 46: uneton.v1.SleepSession.deleted_at:type_name -> google.protobuf.Timestamp
-	77, // 47: uneton.v1.GrowthMeasurement.measured_at:type_name -> google.protobuf.Timestamp
-	77, // 48: uneton.v1.GrowthMeasurement.updated_at:type_name -> google.protobuf.Timestamp
-	77, // 49: uneton.v1.GrowthMeasurement.deleted_at:type_name -> google.protobuf.Timestamp
-	77, // 50: uneton.v1.TemperatureReading.measured_at:type_name -> google.protobuf.Timestamp
-	77, // 51: uneton.v1.TemperatureReading.updated_at:type_name -> google.protobuf.Timestamp
-	77, // 52: uneton.v1.TemperatureReading.deleted_at:type_name -> google.protobuf.Timestamp
-	1,  // 53: uneton.v1.SyncEvent.entity_type:type_name -> uneton.v1.EntityType
-	2,  // 54: uneton.v1.SyncEvent.operation:type_name -> uneton.v1.EventOperation
-	62, // 55: uneton.v1.SyncEvent.entity:type_name -> uneton.v1.Entity
-	77, // 56: uneton.v1.SyncEvent.created_at:type_name -> google.protobuf.Timestamp
-	1,  // 57: uneton.v1.SnapshotEntity.entity_type:type_name -> uneton.v1.EntityType
-	62, // 58: uneton.v1.SnapshotEntity.entity:type_name -> uneton.v1.Entity
-	69, // 59: uneton.v1.FamilySnapshot.entities:type_name -> uneton.v1.SnapshotEntity
-	77, // 60: uneton.v1.FamilySnapshot.created_at:type_name -> google.protobuf.Timestamp
-	77, // 61: uneton.v1.SleepPrediction.target_at:type_name -> google.protobuf.Timestamp
-	77, // 62: uneton.v1.SleepPrediction.range_start_at:type_name -> google.protobuf.Timestamp
-	77, // 63: uneton.v1.SleepPrediction.range_end_at:type_name -> google.protobuf.Timestamp
-	71, // 64: uneton.v1.SleepForecast.wake_estimate:type_name -> uneton.v1.SleepPrediction
-	71, // 65: uneton.v1.SleepForecast.next_sleep_estimate:type_name -> uneton.v1.SleepPrediction
-	61, // 66: uneton.v1.SyncResponse.command_results:type_name -> uneton.v1.CommandResult
-	68, // 67: uneton.v1.SyncResponse.events:type_name -> uneton.v1.SyncEvent
-	71, // 68: uneton.v1.SyncResponse.next_sleep_estimate:type_name -> uneton.v1.SleepPrediction
-	77, // 69: uneton.v1.SyncResponse.server_time:type_name -> google.protobuf.Timestamp
-	72, // 70: uneton.v1.SyncResponse.sleep_forecast:type_name -> uneton.v1.SleepForecast
-	70, // 71: uneton.v1.SyncResponse.snapshot:type_name -> uneton.v1.FamilySnapshot
-	73, // 72: uneton.v1.SyncResponse.growth_reference_points:type_name -> uneton.v1.GrowthReferencePoint
-	3,  // 73: uneton.v1.UnetonService.DevelopmentAuth:input_type -> uneton.v1.DevelopmentAuthRequest
-	4,  // 74: uneton.v1.UnetonService.AppleAuth:input_type -> uneton.v1.AppleAuthRequest
-	5,  // 75: uneton.v1.UnetonService.RefreshAuth:input_type -> uneton.v1.RefreshAuthRequest
-	6,  // 76: uneton.v1.UnetonService.SignOut:input_type -> uneton.v1.SignOutRequest
-	8,  // 77: uneton.v1.UnetonService.DeleteAccount:input_type -> uneton.v1.DeleteAccountRequest
-	11, // 78: uneton.v1.UnetonService.UpdateDevicePushSettings:input_type -> uneton.v1.UpdateDevicePushSettingsRequest
-	13, // 79: uneton.v1.UnetonService.RegisterLiveActivity:input_type -> uneton.v1.RegisterLiveActivityRequest
-	20, // 80: uneton.v1.UnetonService.CreateFamily:input_type -> uneton.v1.CreateFamilyRequest
-	22, // 81: uneton.v1.UnetonService.CreateInvite:input_type -> uneton.v1.CreateInviteRequest
-	24, // 82: uneton.v1.UnetonService.AcceptInvite:input_type -> uneton.v1.AcceptInviteRequest
-	26, // 83: uneton.v1.UnetonService.GetFamilyManagement:input_type -> uneton.v1.GetFamilyManagementRequest
-	30, // 84: uneton.v1.UnetonService.UpdateProfile:input_type -> uneton.v1.UpdateProfileRequest
-	32, // 85: uneton.v1.UnetonService.RenameFamily:input_type -> uneton.v1.RenameFamilyRequest
-	34, // 86: uneton.v1.UnetonService.RemoveFamilyMember:input_type -> uneton.v1.RemoveFamilyMemberRequest
-	36, // 87: uneton.v1.UnetonService.LeaveFamily:input_type -> uneton.v1.LeaveFamilyRequest
-	38, // 88: uneton.v1.UnetonService.TransferFamilyOwnership:input_type -> uneton.v1.TransferFamilyOwnershipRequest
-	40, // 89: uneton.v1.UnetonService.RevokeInvite:input_type -> uneton.v1.RevokeInviteRequest
-	42, // 90: uneton.v1.UnetonService.DeleteFamily:input_type -> uneton.v1.DeleteFamilyRequest
-	44, // 91: uneton.v1.UnetonService.Sync:input_type -> uneton.v1.SyncRequest
-	75, // 92: uneton.v1.UnetonService.WatchFamily:input_type -> uneton.v1.WatchFamilyRequest
-	17, // 93: uneton.v1.UnetonService.DevelopmentAuth:output_type -> uneton.v1.DevelopmentAuthResponse
-	18, // 94: uneton.v1.UnetonService.AppleAuth:output_type -> uneton.v1.AppleAuthResponse
-	19, // 95: uneton.v1.UnetonService.RefreshAuth:output_type -> uneton.v1.RefreshAuthResponse
-	7,  // 96: uneton.v1.UnetonService.SignOut:output_type -> uneton.v1.SignOutResponse
-	9,  // 97: uneton.v1.UnetonService.DeleteAccount:output_type -> uneton.v1.DeleteAccountResponse
-	12, // 98: uneton.v1.UnetonService.UpdateDevicePushSettings:output_type -> uneton.v1.UpdateDevicePushSettingsResponse
-	14, // 99: uneton.v1.UnetonService.RegisterLiveActivity:output_type -> uneton.v1.RegisterLiveActivityResponse
-	21, // 100: uneton.v1.UnetonService.CreateFamily:output_type -> uneton.v1.CreateFamilyResponse
-	23, // 101: uneton.v1.UnetonService.CreateInvite:output_type -> uneton.v1.CreateInviteResponse
-	25, // 102: uneton.v1.UnetonService.AcceptInvite:output_type -> uneton.v1.AcceptInviteResponse
-	29, // 103: uneton.v1.UnetonService.GetFamilyManagement:output_type -> uneton.v1.GetFamilyManagementResponse
-	31, // 104: uneton.v1.UnetonService.UpdateProfile:output_type -> uneton.v1.UpdateProfileResponse
-	33, // 105: uneton.v1.UnetonService.RenameFamily:output_type -> uneton.v1.RenameFamilyResponse
-	35, // 106: uneton.v1.UnetonService.RemoveFamilyMember:output_type -> uneton.v1.RemoveFamilyMemberResponse
-	37, // 107: uneton.v1.UnetonService.LeaveFamily:output_type -> uneton.v1.LeaveFamilyResponse
-	39, // 108: uneton.v1.UnetonService.TransferFamilyOwnership:output_type -> uneton.v1.TransferFamilyOwnershipResponse
-	41, // 109: uneton.v1.UnetonService.RevokeInvite:output_type -> uneton.v1.RevokeInviteResponse
-	43, // 110: uneton.v1.UnetonService.DeleteFamily:output_type -> uneton.v1.DeleteFamilyResponse
-	74, // 111: uneton.v1.UnetonService.Sync:output_type -> uneton.v1.SyncResponse
-	76, // 112: uneton.v1.UnetonService.WatchFamily:output_type -> uneton.v1.WatchFamilyResponse
-	93, // [93:113] is the sub-list for method output_type
-	73, // [73:93] is the sub-list for method input_type
-	73, // [73:73] is the sub-list for extension type_name
-	73, // [73:73] is the sub-list for extension extendee
-	0,  // [0:73] is the sub-list for field type_name
+	77, // 0: uneton.v1.DevicePushSettings.remote_reminders_until:type_name -> google.protobuf.Timestamp
+	77, // 1: uneton.v1.UpdateDevicePushSettingsRequest.remote_reminders_until:type_name -> google.protobuf.Timestamp
+	10, // 2: uneton.v1.UpdateDevicePushSettingsResponse.settings:type_name -> uneton.v1.DevicePushSettings
+	16, // 3: uneton.v1.AuthenticationResponse.families:type_name -> uneton.v1.FamilyMembership
+	15, // 4: uneton.v1.DevelopmentAuthResponse.authentication:type_name -> uneton.v1.AuthenticationResponse
+	15, // 5: uneton.v1.AppleAuthResponse.authentication:type_name -> uneton.v1.AuthenticationResponse
+	15, // 6: uneton.v1.RefreshAuthResponse.authentication:type_name -> uneton.v1.AuthenticationResponse
+	77, // 7: uneton.v1.CreateInviteResponse.expires_at:type_name -> google.protobuf.Timestamp
+	77, // 8: uneton.v1.FamilyMemberInfo.joined_at:type_name -> google.protobuf.Timestamp
+	77, // 9: uneton.v1.FamilyInviteInfo.expires_at:type_name -> google.protobuf.Timestamp
+	77, // 10: uneton.v1.FamilyInviteInfo.created_at:type_name -> google.protobuf.Timestamp
+	27, // 11: uneton.v1.GetFamilyManagementResponse.members:type_name -> uneton.v1.FamilyMemberInfo
+	28, // 12: uneton.v1.GetFamilyManagementResponse.pending_invites:type_name -> uneton.v1.FamilyInviteInfo
+	45, // 13: uneton.v1.SyncRequest.commands:type_name -> uneton.v1.Command
+	46, // 14: uneton.v1.Command.create_child:type_name -> uneton.v1.CreateChild
+	47, // 15: uneton.v1.Command.update_child:type_name -> uneton.v1.UpdateChild
+	50, // 16: uneton.v1.Command.start_sleep:type_name -> uneton.v1.StartSleep
+	51, // 17: uneton.v1.Command.end_sleep:type_name -> uneton.v1.EndSleep
+	52, // 18: uneton.v1.Command.upsert_sleep:type_name -> uneton.v1.UpsertSleep
+	53, // 19: uneton.v1.Command.delete_sleep:type_name -> uneton.v1.DeleteSleep
+	54, // 20: uneton.v1.Command.upsert_growth_measurement:type_name -> uneton.v1.UpsertGrowthMeasurement
+	55, // 21: uneton.v1.Command.delete_growth_measurement:type_name -> uneton.v1.DeleteGrowthMeasurement
+	57, // 22: uneton.v1.Command.upsert_temperature_reading:type_name -> uneton.v1.UpsertTemperatureReading
+	58, // 23: uneton.v1.Command.delete_temperature_reading:type_name -> uneton.v1.DeleteTemperatureReading
+	48, // 24: uneton.v1.Command.delete_child:type_name -> uneton.v1.DeleteChild
+	49, // 25: uneton.v1.CreateChild.child:type_name -> uneton.v1.ChildInput
+	49, // 26: uneton.v1.UpdateChild.child:type_name -> uneton.v1.ChildInput
+	60, // 27: uneton.v1.StartSleep.sleep:type_name -> uneton.v1.SleepInput
+	77, // 28: uneton.v1.EndSleep.ended_at:type_name -> google.protobuf.Timestamp
+	60, // 29: uneton.v1.UpsertSleep.sleep:type_name -> uneton.v1.SleepInput
+	56, // 30: uneton.v1.UpsertGrowthMeasurement.measurement:type_name -> uneton.v1.GrowthMeasurementInput
+	77, // 31: uneton.v1.GrowthMeasurementInput.measured_at:type_name -> google.protobuf.Timestamp
+	59, // 32: uneton.v1.UpsertTemperatureReading.reading:type_name -> uneton.v1.TemperatureReadingInput
+	77, // 33: uneton.v1.TemperatureReadingInput.measured_at:type_name -> google.protobuf.Timestamp
+	77, // 34: uneton.v1.SleepInput.started_at:type_name -> google.protobuf.Timestamp
+	77, // 35: uneton.v1.SleepInput.ended_at:type_name -> google.protobuf.Timestamp
+	0,  // 36: uneton.v1.CommandResult.status:type_name -> uneton.v1.CommandStatus
+	62, // 37: uneton.v1.CommandResult.entity:type_name -> uneton.v1.Entity
+	64, // 38: uneton.v1.Entity.child:type_name -> uneton.v1.Child
+	65, // 39: uneton.v1.Entity.sleep_session:type_name -> uneton.v1.SleepSession
+	63, // 40: uneton.v1.Entity.deleted:type_name -> uneton.v1.DeletedEntity
+	66, // 41: uneton.v1.Entity.growth_measurement:type_name -> uneton.v1.GrowthMeasurement
+	67, // 42: uneton.v1.Entity.temperature_reading:type_name -> uneton.v1.TemperatureReading
+	77, // 43: uneton.v1.Child.updated_at:type_name -> google.protobuf.Timestamp
+	77, // 44: uneton.v1.Child.deleted_at:type_name -> google.protobuf.Timestamp
+	77, // 45: uneton.v1.SleepSession.started_at:type_name -> google.protobuf.Timestamp
+	77, // 46: uneton.v1.SleepSession.ended_at:type_name -> google.protobuf.Timestamp
+	77, // 47: uneton.v1.SleepSession.updated_at:type_name -> google.protobuf.Timestamp
+	77, // 48: uneton.v1.SleepSession.deleted_at:type_name -> google.protobuf.Timestamp
+	77, // 49: uneton.v1.GrowthMeasurement.measured_at:type_name -> google.protobuf.Timestamp
+	77, // 50: uneton.v1.GrowthMeasurement.updated_at:type_name -> google.protobuf.Timestamp
+	77, // 51: uneton.v1.GrowthMeasurement.deleted_at:type_name -> google.protobuf.Timestamp
+	77, // 52: uneton.v1.TemperatureReading.measured_at:type_name -> google.protobuf.Timestamp
+	77, // 53: uneton.v1.TemperatureReading.updated_at:type_name -> google.protobuf.Timestamp
+	77, // 54: uneton.v1.TemperatureReading.deleted_at:type_name -> google.protobuf.Timestamp
+	1,  // 55: uneton.v1.SyncEvent.entity_type:type_name -> uneton.v1.EntityType
+	2,  // 56: uneton.v1.SyncEvent.operation:type_name -> uneton.v1.EventOperation
+	62, // 57: uneton.v1.SyncEvent.entity:type_name -> uneton.v1.Entity
+	77, // 58: uneton.v1.SyncEvent.created_at:type_name -> google.protobuf.Timestamp
+	1,  // 59: uneton.v1.SnapshotEntity.entity_type:type_name -> uneton.v1.EntityType
+	62, // 60: uneton.v1.SnapshotEntity.entity:type_name -> uneton.v1.Entity
+	69, // 61: uneton.v1.FamilySnapshot.entities:type_name -> uneton.v1.SnapshotEntity
+	77, // 62: uneton.v1.FamilySnapshot.created_at:type_name -> google.protobuf.Timestamp
+	77, // 63: uneton.v1.SleepPrediction.target_at:type_name -> google.protobuf.Timestamp
+	77, // 64: uneton.v1.SleepPrediction.range_start_at:type_name -> google.protobuf.Timestamp
+	77, // 65: uneton.v1.SleepPrediction.range_end_at:type_name -> google.protobuf.Timestamp
+	71, // 66: uneton.v1.SleepForecast.wake_estimate:type_name -> uneton.v1.SleepPrediction
+	71, // 67: uneton.v1.SleepForecast.next_sleep_estimate:type_name -> uneton.v1.SleepPrediction
+	61, // 68: uneton.v1.SyncResponse.command_results:type_name -> uneton.v1.CommandResult
+	68, // 69: uneton.v1.SyncResponse.events:type_name -> uneton.v1.SyncEvent
+	71, // 70: uneton.v1.SyncResponse.next_sleep_estimate:type_name -> uneton.v1.SleepPrediction
+	77, // 71: uneton.v1.SyncResponse.server_time:type_name -> google.protobuf.Timestamp
+	72, // 72: uneton.v1.SyncResponse.sleep_forecast:type_name -> uneton.v1.SleepForecast
+	70, // 73: uneton.v1.SyncResponse.snapshot:type_name -> uneton.v1.FamilySnapshot
+	73, // 74: uneton.v1.SyncResponse.growth_reference_points:type_name -> uneton.v1.GrowthReferencePoint
+	3,  // 75: uneton.v1.UnetonService.DevelopmentAuth:input_type -> uneton.v1.DevelopmentAuthRequest
+	4,  // 76: uneton.v1.UnetonService.AppleAuth:input_type -> uneton.v1.AppleAuthRequest
+	5,  // 77: uneton.v1.UnetonService.RefreshAuth:input_type -> uneton.v1.RefreshAuthRequest
+	6,  // 78: uneton.v1.UnetonService.SignOut:input_type -> uneton.v1.SignOutRequest
+	8,  // 79: uneton.v1.UnetonService.DeleteAccount:input_type -> uneton.v1.DeleteAccountRequest
+	11, // 80: uneton.v1.UnetonService.UpdateDevicePushSettings:input_type -> uneton.v1.UpdateDevicePushSettingsRequest
+	13, // 81: uneton.v1.UnetonService.RegisterLiveActivity:input_type -> uneton.v1.RegisterLiveActivityRequest
+	20, // 82: uneton.v1.UnetonService.CreateFamily:input_type -> uneton.v1.CreateFamilyRequest
+	22, // 83: uneton.v1.UnetonService.CreateInvite:input_type -> uneton.v1.CreateInviteRequest
+	24, // 84: uneton.v1.UnetonService.AcceptInvite:input_type -> uneton.v1.AcceptInviteRequest
+	26, // 85: uneton.v1.UnetonService.GetFamilyManagement:input_type -> uneton.v1.GetFamilyManagementRequest
+	30, // 86: uneton.v1.UnetonService.UpdateProfile:input_type -> uneton.v1.UpdateProfileRequest
+	32, // 87: uneton.v1.UnetonService.RenameFamily:input_type -> uneton.v1.RenameFamilyRequest
+	34, // 88: uneton.v1.UnetonService.RemoveFamilyMember:input_type -> uneton.v1.RemoveFamilyMemberRequest
+	36, // 89: uneton.v1.UnetonService.LeaveFamily:input_type -> uneton.v1.LeaveFamilyRequest
+	38, // 90: uneton.v1.UnetonService.TransferFamilyOwnership:input_type -> uneton.v1.TransferFamilyOwnershipRequest
+	40, // 91: uneton.v1.UnetonService.RevokeInvite:input_type -> uneton.v1.RevokeInviteRequest
+	42, // 92: uneton.v1.UnetonService.DeleteFamily:input_type -> uneton.v1.DeleteFamilyRequest
+	44, // 93: uneton.v1.UnetonService.Sync:input_type -> uneton.v1.SyncRequest
+	75, // 94: uneton.v1.UnetonService.WatchFamily:input_type -> uneton.v1.WatchFamilyRequest
+	17, // 95: uneton.v1.UnetonService.DevelopmentAuth:output_type -> uneton.v1.DevelopmentAuthResponse
+	18, // 96: uneton.v1.UnetonService.AppleAuth:output_type -> uneton.v1.AppleAuthResponse
+	19, // 97: uneton.v1.UnetonService.RefreshAuth:output_type -> uneton.v1.RefreshAuthResponse
+	7,  // 98: uneton.v1.UnetonService.SignOut:output_type -> uneton.v1.SignOutResponse
+	9,  // 99: uneton.v1.UnetonService.DeleteAccount:output_type -> uneton.v1.DeleteAccountResponse
+	12, // 100: uneton.v1.UnetonService.UpdateDevicePushSettings:output_type -> uneton.v1.UpdateDevicePushSettingsResponse
+	14, // 101: uneton.v1.UnetonService.RegisterLiveActivity:output_type -> uneton.v1.RegisterLiveActivityResponse
+	21, // 102: uneton.v1.UnetonService.CreateFamily:output_type -> uneton.v1.CreateFamilyResponse
+	23, // 103: uneton.v1.UnetonService.CreateInvite:output_type -> uneton.v1.CreateInviteResponse
+	25, // 104: uneton.v1.UnetonService.AcceptInvite:output_type -> uneton.v1.AcceptInviteResponse
+	29, // 105: uneton.v1.UnetonService.GetFamilyManagement:output_type -> uneton.v1.GetFamilyManagementResponse
+	31, // 106: uneton.v1.UnetonService.UpdateProfile:output_type -> uneton.v1.UpdateProfileResponse
+	33, // 107: uneton.v1.UnetonService.RenameFamily:output_type -> uneton.v1.RenameFamilyResponse
+	35, // 108: uneton.v1.UnetonService.RemoveFamilyMember:output_type -> uneton.v1.RemoveFamilyMemberResponse
+	37, // 109: uneton.v1.UnetonService.LeaveFamily:output_type -> uneton.v1.LeaveFamilyResponse
+	39, // 110: uneton.v1.UnetonService.TransferFamilyOwnership:output_type -> uneton.v1.TransferFamilyOwnershipResponse
+	41, // 111: uneton.v1.UnetonService.RevokeInvite:output_type -> uneton.v1.RevokeInviteResponse
+	43, // 112: uneton.v1.UnetonService.DeleteFamily:output_type -> uneton.v1.DeleteFamilyResponse
+	74, // 113: uneton.v1.UnetonService.Sync:output_type -> uneton.v1.SyncResponse
+	76, // 114: uneton.v1.UnetonService.WatchFamily:output_type -> uneton.v1.WatchFamilyResponse
+	95, // [95:115] is the sub-list for method output_type
+	75, // [75:95] is the sub-list for method input_type
+	75, // [75:75] is the sub-list for extension type_name
+	75, // [75:75] is the sub-list for extension extendee
+	0,  // [0:75] is the sub-list for field type_name
 }
 
 func init() { file_uneton_v1_uneton_proto_init() }
@@ -5621,6 +5663,7 @@ func file_uneton_v1_uneton_proto_init() {
 	if File_uneton_v1_uneton_proto != nil {
 		return
 	}
+	file_uneton_v1_uneton_proto_msgTypes[7].OneofWrappers = []any{}
 	file_uneton_v1_uneton_proto_msgTypes[8].OneofWrappers = []any{}
 	file_uneton_v1_uneton_proto_msgTypes[42].OneofWrappers = []any{
 		(*Command_CreateChild)(nil),

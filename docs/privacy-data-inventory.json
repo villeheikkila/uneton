@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "authoritativeSchemaSha256": "5680335ab75009d57c05f71ba0be60a87788cfa7fa63ec9b40c8ecb997a003bd",
+  "authoritativeSchemaSha256": "1dc7cb7f2dffd87ba25d9027b575eb0434b96ee7145a7804220a233aa149f7b7",
   "tables": {
     "users": [
       "USER_ID",
@@ -77,6 +77,11 @@
     "temperature_readings": [
       "HEALTH",
       "OTHER_USER_CONTENT"
+    ],
+    "sleep_reminders": [
+      "DEVICE_ID",
+      "HEALTH",
+      "OTHER_USAGE_DATA"
     ]
   },
   "additionalCollection": {

@@ -247,11 +247,15 @@ public struct DevicePushSettings: Codable, Equatable, Sendable {
   public var notificationsEnabled: Bool
   public var liveActivitiesEnabled: Bool
   public var reminderLeadMinutes: Int
+  public var remoteRemindersUntil: Date?
+  public var notificationLanguage: String
 
-  public init(notificationsEnabled: Bool = true, liveActivitiesEnabled: Bool = true, reminderLeadMinutes: Int = 15) {
+  public init(notificationsEnabled: Bool = true, liveActivitiesEnabled: Bool = true, reminderLeadMinutes: Int = 15, remoteRemindersUntil: Date? = nil, notificationLanguage: String = "en") {
     self.notificationsEnabled = notificationsEnabled
     self.liveActivitiesEnabled = liveActivitiesEnabled
     self.reminderLeadMinutes = reminderLeadMinutes
+    self.remoteRemindersUntil = remoteRemindersUntil
+    self.notificationLanguage = notificationLanguage
   }
 }
 
@@ -410,8 +414,15 @@ extension APIClient {
         request.notificationsEnabled = settings.notificationsEnabled
         request.liveActivitiesEnabled = settings.liveActivitiesEnabled
         request.reminderLeadMinutes = Int32(settings.reminderLeadMinutes)
+        request.remoteRemindersUntil = Google_Protobuf_Timestamp(date: settings.remoteRemindersUntil ?? Date(timeIntervalSince1970: 0))
+        request.notificationLanguage = settings.notificationLanguage
         let response = try await generated.updateDevicePushSettings(request: request, headers: authorization(token)).result.get()
-        return DevicePushSettings(notificationsEnabled: response.settings.notificationsEnabled, liveActivitiesEnabled: response.settings.liveActivitiesEnabled, reminderLeadMinutes: Int(response.settings.reminderLeadMinutes))
+        if response.settings.hasRemoteRemindersUntil {
+          guard let requestedUntil = settings.remoteRemindersUntil,
+            response.settings.remoteRemindersUntil.date <= requestedUntil
+          else { throw APIError.invalidResponse("Remote reminder ownership exceeds the requested period") }
+        }
+        return DevicePushSettings(notificationsEnabled: response.settings.notificationsEnabled, liveActivitiesEnabled: response.settings.liveActivitiesEnabled, reminderLeadMinutes: Int(response.settings.reminderLeadMinutes), remoteRemindersUntil: response.settings.hasRemoteRemindersUntil ? response.settings.remoteRemindersUntil.date : nil, notificationLanguage: response.settings.notificationLanguage)
       },
       registerLiveActivity: { sessionID, pushToken, environment, token in
         var request = Uneton_V1_RegisterLiveActivityRequest()

@@ -130,6 +130,9 @@ create table devices (
   notifications_enabled integer not null default 1,
   live_activities_enabled integer not null default 1,
   reminder_lead_minutes integer not null default 15,
+  remote_reminders_until text,
+  remote_reminders_from text,
+  notification_language text not null default 'en' check (notification_language in ('en', 'fi')),
   last_seen_at text not null
 ) strict;
 create index devices_user on devices(user_id);
@@ -194,3 +197,18 @@ create table deliveries (
   created_at text not null
 ) strict;
 create index deliveries_due on deliveries(status, due_at);
+
+-- Derived presentation work, never diary state. Claim before APNs submission
+-- so an ambiguous response or process restart cannot submit the same window twice.
+create table sleep_reminders (
+  device_id text not null references devices(id) on delete cascade,
+  child_id text not null references children(id) on delete cascade,
+  family_id text not null references families(id) on delete cascade,
+  sleep_id text not null references sleep_sessions(id) on delete cascade,
+  target_at text not null,
+  due_at text not null,
+  status text not null default 'pending' check (status in ('pending', 'cancelled', 'attempted')),
+  created_at text not null,
+  primary key (device_id, child_id, sleep_id)
+) strict;
+create index sleep_reminders_due on sleep_reminders(status, due_at);

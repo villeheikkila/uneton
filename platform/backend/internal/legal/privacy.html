@@ -6,7 +6,7 @@
 <style>body{font:1rem/1.6 -apple-system,BlinkMacSystemFont,sans-serif;max-width:46rem;margin:2rem auto;padding:0 1rem;color:#18212d}h1,h2{line-height:1.25}a{color:#29489a}</style>
 <main>
 <h1>Uneton Privacy Policy</h1>
-<p><strong>Effective September 29, 2026.</strong> Uneton is operated by {{.Operator}}. For privacy questions or data requests, contact <a href="mailto:{{.Email}}">{{.Email}}</a>.</p>
+<p><strong>Effective September 30, 2026.</strong> Uneton is operated by {{.Operator}}. For privacy questions or data requests, contact <a href="mailto:{{.Email}}">{{.Email}}</a>.</p>
 
 <h2>What Uneton stores</h2>
 <p>Uneton stores your Sign in with Apple account identifier, the name you provide at sign-in, family membership and invitation records, device identifiers and notification settings. An Apple refresh credential is encrypted on the server. The app also stores the child nickname and birth date you enter, sleep sessions and their context, growth measurements, temperature readings and notes, prediction settings, and synchronization history needed to keep caregivers' devices consistent. These child records are health-related data and are visible to invited caregivers. The app keeps an offline copy and pending changes on your devices. The Watch can retain one unanswered action, including a temperature note, until the iPhone replies or you remove the Watch app.</p>
@@ -14,6 +14,8 @@
 
 <h2>How the data is used</h2>
 <p>Account and device information allows sign-in, session security, synchronization and notifications. Family and child records provide the shared diary, forecasts and growth charts. Forecasts are estimates based on acknowledged diary records and settings; they are not medical advice. Technical records help keep the service reliable and investigate failures. We process these records to provide the service you request and to protect its security and availability.</p>
+
+<p>When notifications are enabled, the server can schedule a generic sleep-window reminder from acknowledged diary records using your device’s lead time and notification language. It stores reminder timing and submission records and removes them when their due time is more than seven days old during worker cleanup. Your phone keeps a bounded remote-ownership timestamp so local and remote reminders do not overlap. Reminders are best effort; unsynchronized offline changes can make an estimate stale.</p>
 
 <h2>Sharing and service providers</h2>
 <p>People you invite into a family can see and change that family's baby records. The family owner can remove caregivers or revoke unclaimed invitations. A caregiver can leave a family after transferring ownership if they own it. Uneton does not make family data public. Apple processes Sign in with Apple and push notifications. The service runs on a server with an access-controlled SQLite database and a Litestream backup replica. We disclose data to a provider only as needed for these functions or when required by law.</p>
