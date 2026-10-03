@@ -2,6 +2,7 @@ import Foundation
 import ComposableArchitecture2
 import UnetonCore
 import SwiftUI
+import UnetonTheme
 
 struct ContentView: View {
     private struct Selection: Equatable {
@@ -11,6 +12,7 @@ struct ContentView: View {
 
     @Bindable var store: StoreOf<AppRoot>
     @Environment(SessionStore.self) private var session
+    @Environment(\.colorScheme) private var colorScheme
     private var visibleFamilies: [Family] {
         guard let memberships = session.memberships else { return store.families }
         let ids = Set(memberships.map(\.id))
@@ -40,7 +42,7 @@ struct ContentView: View {
                 FamilySetupScreen(store: store.scope(\.familySetup))
             }
         }
-        .tint(Color.sleepBlue)
+        .palette(Palette.make(mode: colorScheme == .dark ? .night : .day))
         .onOpenURL { url in
             store.send(.openedURL(url))
         }

@@ -829,78 +829,6 @@
         }
       }
     },
-    "locAwakeNow": {
-      "comment": "User-facing baby tracking text: “Awake now”. Preserve the action or meaning in translation.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Awake now"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hereillä nyt"
-          }
-        }
-      }
-    },
-    "locAwake": {
-      "comment": "User-facing baby tracking text: “Awake”. Preserve the action or meaning in translation.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Awake"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hereillä"
-          }
-        }
-      }
-    },
-    "locExpectedWakeUp": {
-      "comment": "User-facing baby tracking text: “Expected wake-up”. Preserve the action or meaning in translation.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Expected wake-up"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Arvioitu herääminen"
-          }
-        }
-      }
-    },
-    "locNextSweetSpot": {
-      "comment": "User-facing baby tracking text: “Next sweet spot”. Preserve the action or meaning in translation.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Next sweet spot"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seuraava otollinen uniaika"
-          }
-        }
-      }
-    },
     "locToday": {
       "comment": "User-facing baby tracking text: “Today”. Preserve the action or meaning in translation.",
       "extractionState": "manual",
@@ -919,42 +847,6 @@
         }
       }
     },
-    "locSleeps": {
-      "comment": "User-facing baby tracking text: “Sleeps”. Preserve the action or meaning in translation.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sleeps"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unijaksot"
-          }
-        }
-      }
-    },
-    "locLongest": {
-      "comment": "User-facing baby tracking text: “Longest”. Preserve the action or meaning in translation.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Longest"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pisin"
-          }
-        }
-      }
-    },
     "locNoSleepLoggedYet": {
       "comment": "User-facing baby tracking text: “No sleep logged yet”. Preserve the action or meaning in translation.",
       "extractionState": "manual",
@@ -969,42 +861,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ei unimerkintöjä vielä"
-          }
-        }
-      }
-    },
-    "locHourlyRhythm": {
-      "comment": "User-facing baby tracking text: “Hourly rhythm”. Preserve the action or meaning in translation.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hourly rhythm"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tuntirytmi"
-          }
-        }
-      }
-    },
-    "locNOW": {
-      "comment": "User-facing baby tracking text: “NOW”. Preserve the action or meaning in translation.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NOW"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NYT"
           }
         }
       }
@@ -1063,24 +919,6 @@
         }
       }
     },
-    "loc1Day": {
-      "comment": "User-facing baby tracking text: “1 day”. Preserve the action or meaning in translation.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 day"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 päivä"
-          }
-        }
-      }
-    },
     "locNowLowercase": {
       "comment": "User-facing baby tracking text: “now”. Preserve the action or meaning in translation.",
       "extractionState": "manual",
@@ -1113,42 +951,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kasvukäyrät"
-          }
-        }
-      }
-    },
-    "loc02Years": {
-      "comment": "User-facing baby tracking text: “0–2 years”. Preserve the action or meaning in translation.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "0–2 years"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "0–2 vuotta"
-          }
-        }
-      }
-    },
-    "locKeepHeightAndWeightInOnePlaceAndSeeHowTheyChangeOverTime": {
-      "comment": "User-facing baby tracking text: “Keep height and weight in one place and see how they change over time.”. Preserve the action or meaning in translation.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Keep height and weight in one place and see how they change over time."
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pidä pituus- ja painomerkinnät yhdessä paikassa ja seuraa niiden kehitystä."
           }
         }
       }
@@ -1261,24 +1063,6 @@
         }
       }
     },
-    "locFinnishReferenceCurvesWithYourRecordedMeasurements": {
-      "comment": "User-facing baby tracking text: “Finnish reference curves with your recorded measurements.”. Preserve the action or meaning in translation.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Finnish reference curves with your recorded measurements."
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Suomalaiset viitekäyrät ja tallentamasi mittaukset."
-          }
-        }
-      }
-    },
     "locHeightForAge": {
       "comment": "User-facing baby tracking text: “Height for age”. Preserve the action or meaning in translation.",
       "extractionState": "manual",
@@ -1383,24 +1167,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mittaus"
-          }
-        }
-      }
-    },
-    "locAgeMonths": {
-      "comment": "User-facing baby tracking text: “Age (months)”. Preserve the action or meaning in translation.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Age (months)"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ikä (kuukautta)"
           }
         }
       }
@@ -2157,24 +1923,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Päiväunet"
-          }
-        }
-      }
-    },
-    "locSleepInsights": {
-      "comment": "User-facing baby tracking text: “Sleep insights”. Preserve the action or meaning in translation.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sleep insights"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unitiedot"
           }
         }
       }
@@ -4033,24 +3781,6 @@
         }
       }
     },
-    "locWakeChild": {
-      "comment": "Button that records the named baby’s wake-up.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wake %@"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Merkitse %@ hereille"
-          }
-        }
-      }
-    },
     "locLikelyRange": {
       "comment": "Estimated sleep window; the two placeholders are localized times.",
       "extractionState": "manual",
@@ -4123,42 +3853,6 @@
         }
       }
     },
-    "locTrackedAcrossDays": {
-      "comment": "Sleep insight summary; placeholder is the number of days.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "tracked across %@ days"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "seurattu %@ päivän ajalta"
-          }
-        }
-      }
-    },
-    "locDaysCount": {
-      "comment": "Duration in whole days.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ days"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ päivää"
-          }
-        }
-      }
-    },
     "locMinutesCount": {
       "comment": "Manual sleep interval in minutes.",
       "extractionState": "manual",
@@ -4195,20 +3889,344 @@
         }
       }
     },
-    "locPeriodAccessibility": {
-      "comment": "VoiceOver summary: sleep or awake, duration, start date and time.",
+    "locAwakeFor": {
+      "comment": "Label above the running timer while the baby is awake; the duration follows below it",
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@, %@, from %@"
+            "value": "awake for"
           }
         },
         "fi": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@, %@, alkaen %@"
+            "value": "hereillä"
+          }
+        }
+      }
+    },
+    "locNappingFor": {
+      "comment": "Label above the running timer while the baby naps; the duration follows below it",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "napping for"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "päiväunilla"
+          }
+        }
+      }
+    },
+    "locSleepingFor": {
+      "comment": "Label above the running timer while the baby sleeps at night; the duration follows below it",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sleeping for"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "nukkunut"
+          }
+        }
+      }
+    },
+    "locSinceTime": {
+      "comment": "Under the running timer; the placeholder is the localized clock time the current state began",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "since %@"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "klo %@ alkaen"
+          }
+        }
+      }
+    },
+    "locNextSleepLikelyAround": {
+      "comment": "Estimate of the next sleep; placeholder is a localized clock time. Keep the cautious wording, it is not a certainty",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next sleep likely around %@"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seuraava uni todennäköisesti noin klo %@"
+          }
+        }
+      }
+    },
+    "locLikelyAwakeAround": {
+      "comment": "Estimate of when the sleeping baby wakes; placeholder is a localized clock time. Keep the cautious wording",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Likely awake around %@"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Herää todennäköisesti noin klo %@"
+          }
+        }
+      }
+    },
+    "locAsleepToday": {
+      "comment": "Total time the baby has slept today; placeholder is a short duration like 7h 55m",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ today"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ tänään"
+          }
+        }
+      }
+    },
+    "locChildWokeUp": {
+      "comment": "Main button that records that the named baby woke up now; placeholder is the baby's name",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ woke up"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ heräsi"
+          }
+        }
+      }
+    },
+    "locSwipeUpForDiary": {
+      "comment": "Hint under the main sleep button that the sleep diary is further down the screen",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swipe up for the diary"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pyyhkäise ylös päiväkirjaan"
+          }
+        }
+      }
+    },
+    "locNightLight": {
+      "comment": "Toggle for a very dim amber screen used while the baby sleeps at night",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Night light"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yövalo"
+          }
+        }
+      }
+    },
+    "locNapEntry": {
+      "comment": "Diary row title for a daytime sleep",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nap"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Päiväunet"
+          }
+        }
+      }
+    },
+    "locNightEntry": {
+      "comment": "Diary row title for a night sleep",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Night"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yöuni"
+          }
+        }
+      }
+    },
+    "locNextSleepEstimate": {
+      "comment": "Diary row for the predicted next sleep; it is an estimate, not a recorded sleep",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next sleep, estimate"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seuraava uni, arvio"
+          }
+        }
+      }
+    },
+    "locYesterday": {
+      "comment": "Diary section title for the previous day",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yesterday"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eilen"
+          }
+        }
+      }
+    },
+    "locDiaryAsleep": {
+      "comment": "Diary day summary of total sleep; placeholder is a short duration like 14h 52m",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ asleep"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ unta"
+          }
+        }
+      }
+    },
+    "locDiaryNapCount": {
+      "comment": "Diary day summary of how many naps the baby had; placeholder is a number",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Naps: %@"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Päiväunia: %@"
+          }
+        }
+      }
+    },
+    "locTimeRange": {
+      "comment": "A start and end clock time, for example 08:45–10:00; placeholders are localized times",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@–%@"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@–%@"
+          }
+        }
+      }
+    },
+    "locWeight": {
+      "comment": "Growth tile title for the latest recorded weight",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weight"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paino"
+          }
+        }
+      }
+    },
+    "locHeight": {
+      "comment": "Growth tile title for the latest recorded height",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Height"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pituus"
           }
         }
       }

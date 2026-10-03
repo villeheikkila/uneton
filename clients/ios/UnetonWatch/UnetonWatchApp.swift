@@ -1,11 +1,16 @@
 import Observation
 import SwiftUI
 import UnetonCore
+import UnetonTheme
 import WatchConnectivity
 
+/// The Watch is always dark, so it uses the night palette from the shared theme.
 private enum WatchPalette {
-    static let blue = Color(red: 0.35, green: 0.70, blue: 0.85)
-    static let turquoise = Color(red: 0.35, green: 0.78, blue: 0.76)
+    static let palette = Palette.make(seed: .sky, mode: .night)
+    static let accent = palette.accent.color
+    static let onAccent = palette.onAccent.color
+    static let wake = palette.wake.color
+    static let onWake = palette.onWake.color
 }
 
 @main
@@ -16,7 +21,7 @@ struct UnetonWatchApp: App {
         WindowGroup {
             WatchDiaryView()
                 .environment(bridge)
-                .tint(WatchPalette.blue)
+                .tint(WatchPalette.accent)
         }
     }
 }
@@ -192,7 +197,7 @@ private struct WatchDiaryView: View {
 
                     Image(systemName: child.activeSleepStartedAt == nil ? "sun.max.fill" : "moon.zzz.fill")
                         .font(.largeTitle)
-                        .foregroundStyle(child.activeSleepStartedAt == nil ? WatchPalette.turquoise : WatchPalette.blue)
+                        .foregroundStyle(child.activeSleepStartedAt == nil ? WatchPalette.wake : WatchPalette.accent)
                     if let startedAt = child.activeSleepStartedAt {
                         Text(timerInterval: startedAt...Date.distantFuture, countsDown: false)
                             .font(.title3.monospacedDigit())
@@ -209,7 +214,8 @@ private struct WatchDiaryView: View {
                         }
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(child.activeSleepStartedAt == nil ? WatchPalette.blue : WatchPalette.turquoise)
+                    .tint(child.activeSleepStartedAt == nil ? WatchPalette.accent : WatchPalette.wake)
+                    .foregroundStyle(child.activeSleepStartedAt == nil ? WatchPalette.onAccent : WatchPalette.onWake)
                     .disabled(bridge.isWorking || bridge.pendingRequest != nil
                         || (child.activeSleepStartedAt != nil && child.activeSleepID == nil))
 

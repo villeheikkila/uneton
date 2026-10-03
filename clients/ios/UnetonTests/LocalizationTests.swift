@@ -9,8 +9,8 @@ struct LocalizationTests {
 
         #expect(localized(.locAddBaby, in: english) == "Add baby")
         #expect(localized(.locAddBaby, in: finnish) == "Lisää vauva")
-        #expect(localized(.locWakeChild("Aino"), in: english) == "Wake Aino")
-        #expect(localized(.locWakeChild("Aino"), in: finnish) == "Merkitse Aino hereille")
+        #expect(localized(.locChildWokeUp("Aino"), in: english) == "Aino woke up")
+        #expect(localized(.locChildWokeUp("Aino"), in: finnish) == "Aino heräsi")
     }
 
     private func localized(_ value: LocalizedStringResource, in locale: Locale) -> String {

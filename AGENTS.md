@@ -9,6 +9,7 @@ Uneton is an iOS/watchOS family sleep tracker. The Apple client is offline-first
 - `clients/ios/UnetonWidgets/` — Live Activity, Lock Screen, and Dynamic Island UI.
 - `clients/ios/UnetonPackage/Sources/UnetonCore/` — local schema, projection, sync coordinator, and API adapter.
 - `clients/ios/UnetonPackage/Sources/UnetonAPI/` — generated Protobuf and Connect Swift SDK.
+- `clients/ios/UnetonPackage/Sources/UnetonTheme/` — seed-based OKLCH palette and color math for every Apple surface; see `docs/theme.md`.
 - `clients/loadtest/` — Go client that simulates realistic two-caregiver flows against a running API.
 - `platform/backend/` — Go ConnectRPC service, authentication, sync command processing, invitations, and authoritative SQLite database.
 - `platform/backend/internal/sweetspot/` — authoritative, testable next-sleep inference over a derived (never destructive) view of diary history.

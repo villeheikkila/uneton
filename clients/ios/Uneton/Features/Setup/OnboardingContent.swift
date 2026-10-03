@@ -1,32 +1,30 @@
 import AuthenticationServices
 import ComposableArchitecture2
 import SwiftUI
+import UnetonTheme
 
 struct OnboardingContent: View {
+    @Environment(\.palette) private var palette
     @Bindable var store: StoreOf<Onboarding>
     let prepareAppleAuthorization: (ASAuthorizationAppleIDRequest) -> Void
 
     var body: some View {
         ZStack {
-            Color.sleepCanvas.ignoresSafeArea()
-            LinearGradient(
-                colors: [Color.sleepSky.opacity(0.30), Color.sleepTurquoise.opacity(0.13), Color.clear],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            SkyBackground()
 
             VStack(spacing: 28) {
                 Spacer()
                 Image(systemName: "moon.stars.fill")
                     .font(.system(size: 48, weight: .medium))
-                    .foregroundStyle(Color.sleepBlue)
+                    .foregroundStyle(palette.accent.color)
                     .symbolEffect(.breathe)
                 VStack(spacing: 8) {
                     Text("locUneton", comment: "Text in Setup: Uneton")
-                        .font(.largeTitle.bold())
+                        .font(.soft(52))
+                        .foregroundStyle(palette.ink.color)
                     Text("locTrackYourBabySSleepGrowthAndTemperatureTogether", comment: "Text in Setup: Track your baby’s sleep, growth and temperature together.")
-                        .foregroundStyle(.secondary)
+                        .font(.soft(19, weight: .bold))
+                        .foregroundStyle(palette.inkSecondary.color)
                         .multilineTextAlignment(.center)
                 }
                 if !AppMode.isDemo {

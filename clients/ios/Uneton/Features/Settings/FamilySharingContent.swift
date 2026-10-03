@@ -1,7 +1,9 @@
 import ComposableArchitecture2
 import SwiftUI
+import UnetonTheme
 
 struct FamilySharingContent: View {
+    @Environment(\.palette) private var palette
     @Bindable var store: StoreOf<FamilySharing>
 
     var body: some View {
@@ -9,7 +11,7 @@ struct FamilySharingContent: View {
             VStack(spacing: 22) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 48))
-                    .foregroundStyle(Color.sleepBlue)
+                    .foregroundStyle(palette.accent.color)
                 Text("locDeviceAndAccount", comment: "Text in Settings: Device and account")
                     .font(.title2.bold())
 
@@ -53,6 +55,5 @@ struct FamilySharingContent: View {
             }
             .padding(24)
         }
-        .background(Color.sleepCanvas.ignoresSafeArea())
     }
 }

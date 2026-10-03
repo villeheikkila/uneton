@@ -1,6 +1,7 @@
 import ComposableArchitecture2
 import UnetonCore
 import SwiftUI
+import UnetonTheme
 
 extension FamilySync.Tab {
     var title: LocalizedStringResource {
@@ -32,7 +33,22 @@ struct TimelineScreen: View {
     let selectFamily: (Family.ID) -> Void
     let selectChild: (Child.ID) -> Void
 
-    @Namespace private var navigationNamespace
+    @Environment(\.colorScheme) private var systemColorScheme
+    @Environment(\.calendar) private var calendar
+    @AppStorage("nightLightEnabled") private var nightLightEnabled = false
+
+    private var nightSleepActive: Bool {
+        syncStore.activeSession.map { SleepKind(startedAt: $0.startedAt, calendar: calendar) == .night } ?? false
+    }
+
+    /// Every child uses the sky seed until a per-child color setting exists.
+    private var palette: Palette {
+        Palette.make(seed: .sky, mode: SleepAppearance.mode(
+            nightSleepActive: nightSleepActive,
+            prefersDark: systemColorScheme == .dark,
+            nightLightEnabled: nightLightEnabled
+        ))
+    }
 
     init(syncStore: StoreOf<FamilySync>, family: Family, child: Child,
          families: [Family] = [], children: [Child] = [],
@@ -49,13 +65,12 @@ struct TimelineScreen: View {
 
     var body: some View {
         NavigationStack {
-            TimelineContent(syncStore: syncStore, child: child,
-                navigationNamespace: navigationNamespace)
-                .navigationTitle(child.nickname)
+            TimelineContent(syncStore: syncStore, child: child)
+                .navigationTitle("")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
-                        Menu(LocalizedStringResource("locFamily", defaultValue: "Family", comment: "Text in Timeline: Family"), systemImage: "person.2.fill") {
+                        Menu {
                             if families.count > 1 {
                                 Section(LocalizedStringResource("locFamilies", defaultValue: "Families", comment: "Text in Timeline: Families")) {
                                     ForEach(families) { item in
@@ -77,6 +92,42 @@ struct TimelineScreen: View {
                             Button(LocalizedStringResource("locManageFamily", defaultValue: "Manage family", comment: "Button title in Timeline: Manage family"), systemImage: "person.2") {
                                 syncStore.send(.familyButtonTapped)
                             }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Text(child.nickname)
+                                    .font(.soft(17))
+                                Image(systemName: "chevron.down")
+                                    .font(.caption.weight(.heavy))
+                            }
+                            .foregroundStyle(palette.ink.color)
+                        }
+                        .accessibilityLabel(LocalizedStringResource("locFamily", defaultValue: "Family", comment: "Text in Timeline: Family"))
+                        .accessibilityValue(child.nickname)
+                    }
+
+                    if nightSleepActive {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Toggle(isOn: $nightLightEnabled) {
+                                Label(LocalizedStringResource("locNightLight", defaultValue: "Night light", comment: "Toggle for a very dim amber screen while the baby sleeps at night"), systemImage: nightLightEnabled ? "lightbulb.min.fill" : "lightbulb.min")
+                            }
+                            .toggleStyle(.button)
+                            .tint(palette.wake.color)
+                        }
+                    }
+
+                    if syncStore.selectedTab == .growth {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button(LocalizedStringResource("locAddMeasurement", defaultValue: "Add measurement", comment: "Label in Timeline: Add measurement"), systemImage: "plus") {
+                                syncStore.send(.newGrowthMeasurementButtonTapped(child.id))
+                            }
+                        }
+                    }
+
+                    if syncStore.selectedTab == .temperature {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button(LocalizedStringResource("locAddTemperature", defaultValue: "Add temperature", comment: "Label in Timeline: Add temperature"), systemImage: "plus") {
+                                syncStore.send(.newTemperatureReadingButtonTapped(child.id))
+                            }
                         }
                     }
 
@@ -85,7 +136,6 @@ struct TimelineScreen: View {
                             Button(LocalizedStringResource("locSyncConflicts", defaultValue: "Sync conflicts", comment: "Button title in Timeline: Sync conflicts"), systemImage: "exclamationmark.triangle.fill") {
                                 syncStore.send(.conflictListButtonTapped)
                             }
-                            .tint(Color.sleepAqua)
                         }
                     }
                 }
@@ -129,6 +179,7 @@ struct TimelineScreen: View {
                 }
             }
         }
+        .palette(palette)
     }
 }
 

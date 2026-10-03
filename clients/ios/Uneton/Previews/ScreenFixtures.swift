@@ -14,6 +14,10 @@ enum ScreenFixtures {
         case familySetup
         case invitationScannerSheet
         case sleepTab
+        case sleepTabNapping
+        case sleepTabNight
+        case sleepTabNightLight
+        case sleepDiary
         case growthTab
         case temperatureTab
         case insightsTab
@@ -24,6 +28,13 @@ enum ScreenFixtures {
         case childEditorSheet
         case syncConflictsSheet
 
+        var isSleepTab: Bool {
+            switch self {
+            case .sleepTab, .sleepTabNapping, .sleepTabNight, .sleepTabNightLight, .sleepDiary: true
+            default: false
+            }
+        }
+
         var hasSheet: Bool {
             switch self {
             case .invitationScannerSheet, .sleepEntrySheet, .growthEntrySheet, .familySharingSheet, .familyManagementSheet, .childEditorSheet, .syncConflictsSheet: true
@@ -33,6 +44,66 @@ enum ScreenFixtures {
     }
 
     static let now = ModelFixtures.now
+
+    /// Night scenarios look at the evening of the fixture day.
+    static func now(for scenario: Scenario) -> Date {
+        switch scenario {
+        case .sleepTabNight, .sleepTabNightLight: utcCalendar.startOfDay(for: now).addingTimeInterval((21 * 60 + 40) * 60)
+        default: now
+        }
+    }
+
+    /// A week-like history so the sleep tab shows a real diary.
+    private static func sleepHistory(_ scenario: Scenario) -> [SleepSession] {
+        let day = utcCalendar.startOfDay(for: now)
+        func at(_ dayOffset: Int, _ hour: Int, _ minute: Int) -> Date {
+            day.addingTimeInterval(Double(dayOffset * 86_400 + (hour * 60 + minute) * 60))
+        }
+        func sleep(_ index: Int, _ start: Date, _ end: Date?) -> SleepSession {
+            ModelFixtures.sleep(
+                id: SleepSession.ID(uuidString: String(format: "00000000-0000-4000-8000-%012d", 900 + index))!,
+                startedAt: start, endedAt: end
+            )
+        }
+        var history = [
+            sleep(1, at(-2, 19, 20), at(-1, 6, 50)),
+            sleep(2, at(-1, 8, 53), at(-1, 10, 12)),
+            sleep(3, at(-1, 12, 43), at(-1, 14, 10)),
+            sleep(4, at(-1, 16, 48), at(-1, 17, 24)),
+            sleep(5, at(-1, 19, 30), at(0, 6, 40)),
+            sleep(6, at(0, 8, 45), at(0, 10, 0)),
+        ]
+        switch scenario {
+        case .sleepTabNapping:
+            history.append(sleep(7, at(0, 13, 20), nil))
+        case .sleepTabNight, .sleepTabNightLight:
+            history.append(sleep(7, at(0, 11, 50), at(0, 13, 5)))
+            history.append(sleep(8, at(0, 15, 40), at(0, 16, 20)))
+            history.append(sleep(9, at(0, 19, 30), nil))
+        default:
+            history.append(sleep(7, at(0, 11, 50), at(0, 13, 5)))
+        }
+        return history
+    }
+
+    private static func forecast(_ scenario: Scenario) -> SleepForecast? {
+        let reference = now(for: scenario)
+        func prediction(_ target: Date) -> SleepPrediction {
+            SleepPrediction(targetAt: target, rangeStartAt: target.addingTimeInterval(-15 * 60),
+                rangeEndAt: target.addingTimeInterval(15 * 60), confidence: "medium", explanation: "", algorithmVersion: 1)
+        }
+        switch scenario {
+        case .sleepTab, .sleepDiary:
+            return SleepForecast(childID: ModelFixtures.childID, nextSleepEstimate: prediction(reference.addingTimeInterval(80 * 60)))
+        case .sleepTabNapping:
+            return SleepForecast(childID: ModelFixtures.childID, wakeEstimate: prediction(reference.addingTimeInterval(25 * 60)))
+        case .sleepTabNight, .sleepTabNightLight:
+            let morning = utcCalendar.startOfDay(for: reference).addingTimeInterval(86_400 + (6 * 60 + 15) * 60)
+            return SleepForecast(childID: ModelFixtures.childID, wakeEstimate: prediction(morning))
+        default:
+            return nil
+        }
+    }
     private static let databasePrepared: Void = {
         try! prepareDependencies {
             try $0.bootstrapDatabase(inMemory: true)
@@ -62,6 +133,7 @@ enum ScreenFixtures {
         let child = Self.child
         let sleep = Self.sleep
         let growth = Self.growth
+        let history = sleepHistory(scenario)
         let localConflictJSON = try JSONEncoder.uneton.encode(ConflictTimes(
             startedAt: now.addingTimeInterval(-4 * 3_600),
             endedAt: now.addingTimeInterval(-2 * 3_600)
@@ -82,7 +154,13 @@ enum ScreenFixtures {
             try Family.delete().execute(database)
             try Family.insert { family }.execute(database)
             try Child.insert { child }.execute(database)
-            try SleepSession.insert { sleep }.execute(database)
+            if scenario.isSleepTab {
+                for session in history {
+                    try SleepSession.insert { session }.execute(database)
+                }
+            } else {
+                try SleepSession.insert { sleep }.execute(database)
+            }
             try GrowthMeasurement.insert { growth }.execute(database)
             if scenario == .syncConflictsSheet {
                 try SyncConflict.insert { conflict }.execute(database)
@@ -92,13 +170,16 @@ enum ScreenFixtures {
 
     static func makeView(_ scenario: Scenario) -> AnyView {
         let session = SessionStore(demo: true)
+        session.forecast = forecast(scenario)
+        UserDefaults.standard.set(scenario == .sleepTabNightLight, forKey: "nightLightEnabled")
         let demo = DemoRuntime(session: session)
         return AnyView(screen(scenario, demo: demo)
             .environment(session)
             .environment(\.locale, Locale(identifier: "en_US"))
             .environment(\.timeZone, TimeZone(secondsFromGMT: 0)!)
             .environment(\.calendar, utcCalendar)
-            .environment(\.unetonDisplayNow, now)
+            .environment(\.unetonDisplayNow, now(for: scenario))
+            .environment(\.sleepHomeStartsAtDiary, scenario == .sleepDiary)
             .transaction { $0.disablesAnimations = true })
     }
 
@@ -107,7 +188,7 @@ enum ScreenFixtures {
         return ScreenPreview(scenario: scenario)
     }
 
-    private static var utcCalendar: Calendar {
+    nonisolated static var utcCalendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!
         return calendar

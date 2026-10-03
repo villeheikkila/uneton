@@ -14,6 +14,7 @@ let package = Package(
     .library(name: "UnetonIdentity", targets: ["UnetonIdentity"]),
     .library(name: "UnetonActivity", targets: ["UnetonActivity"]),
     .library(name: "UnetonAPI", targets: ["UnetonAPI"]),
+    .library(name: "UnetonTheme", targets: ["UnetonTheme"]),
   ],
   dependencies: [
     .package(url: "https://github.com/connectrpc/connect-swift", from: "1.0.0"),
@@ -47,8 +48,13 @@ let package = Package(
     ),
     .target(
       name: "UnetonActivity",
-      dependencies: ["UnetonIdentity"],
+      dependencies: ["UnetonIdentity", "UnetonTheme"],
       resources: [.process("Localizable.xcstrings")]
+    ),
+    .target(name: "UnetonTheme"),
+    .testTarget(
+      name: "UnetonThemeTests",
+      dependencies: ["UnetonTheme"]
     ),
     .testTarget(
       name: "UnetonCoreTests",

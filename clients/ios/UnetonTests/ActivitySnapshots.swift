@@ -21,7 +21,7 @@ struct ActivitySnapshots {
             childName: "Aino", startedAt: startedAt, elapsed: Text("1:58:16"), endURL: endURL
         )
         .frame(width: 402, height: 112)
-        .background(SleepActivityPalette.softBlue, in: .rect(cornerRadius: 26))
+        .background(SleepActivityPalette.cardBackground, in: .rect(cornerRadius: 26))
         try capture(content, size: CGSize(width: 402, height: 112), name: "lockScreen")
     }
 

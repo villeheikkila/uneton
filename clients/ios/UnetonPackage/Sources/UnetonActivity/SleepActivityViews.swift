@@ -1,13 +1,22 @@
 #if os(iOS)
 import SwiftUI
+import UnetonTheme
 
+/// Live Activity colors, taken from the shared palette so the lock screen and
+/// Dynamic Island match the app. The card is light; the Dynamic Island is dark.
 public enum SleepActivityPalette {
-  public static let ink = Color(red: 0.08, green: 0.20, blue: 0.27)
-  public static let blue = Color(red: 0.13, green: 0.39, blue: 0.56)
-  public static let turquoise = Color(red: 0.13, green: 0.49, blue: 0.52)
-  public static let softBlue = Color(red: 0.83, green: 0.94, blue: 0.97)
-  public static let mutedInk = Color(red: 0.29, green: 0.42, blue: 0.49)
-  public static let mutedOnDark = Color(red: 0.69, green: 0.74, blue: 0.79)
+  static let day = Palette.make(seed: .sky, mode: .day)
+  static let night = Palette.make(seed: .sky, mode: .night)
+
+  public static let ink = day.ink.color
+  public static let accent = day.accent.color
+  public static let onAccent = day.onAccent.color
+  public static let wake = day.wake.color
+  public static let onWake = day.onWake.color
+  public static let cardBackground = day.skyBottom.color
+  public static let mutedInk = day.inkSecondary.color
+  public static let mutedOnDark = night.inkSecondary.color
+  public static let islandAccent = night.accent.color
 }
 
 public struct SleepActivityIdentityView: View {
@@ -22,9 +31,9 @@ public struct SleepActivityIdentityView: View {
   public var body: some View {
     Text(String(childName.prefix(1)).uppercased())
       .font(.system(size: diameter * 0.46, weight: .medium, design: .rounded))
-      .foregroundStyle(.white)
+      .foregroundStyle(SleepActivityPalette.onAccent)
       .frame(width: diameter, height: diameter)
-      .background(SleepActivityPalette.blue, in: .circle)
+      .background(SleepActivityPalette.accent, in: .circle)
       .accessibilityLabel(Text(childName))
   }
 }
@@ -42,9 +51,9 @@ public struct SleepActivityWakeLink: View {
     Link(destination: endURL) {
       Image(systemName: "stop.fill")
         .font(.system(size: diameter * 0.33, weight: .bold))
-        .foregroundStyle(.white)
+        .foregroundStyle(SleepActivityPalette.onWake)
         .frame(width: diameter, height: diameter)
-        .background(SleepActivityPalette.turquoise, in: .circle)
+        .background(SleepActivityPalette.wake, in: .circle)
     }
     .accessibilityLabel(Text("locWakeUp", bundle: .module, comment: "Accessible label for the Live Activity stop icon that opens the wake action"))
   }
@@ -63,9 +72,9 @@ public struct SleepActivitySinceView: View {
     HStack(spacing: 7) {
       Image(systemName: "moon.fill")
         .font(.system(size: 12, weight: .semibold))
-        .foregroundStyle(.white)
+        .foregroundStyle(SleepActivityPalette.onAccent)
         .frame(width: 24, height: 24)
-        .background(SleepActivityPalette.blue, in: .circle)
+        .background(SleepActivityPalette.accent, in: .circle)
       Text(.locSleepingSince(startedAt.formatted(date: .omitted, time: .shortened)))
         .font(.caption)
         .foregroundStyle(onDarkBackground ? SleepActivityPalette.mutedOnDark : SleepActivityPalette.mutedInk)

@@ -78,6 +78,8 @@ targets:
         product: UnetonCore
       - package: UnetonPackage
         product: UnetonActivity
+      - package: UnetonPackage
+        product: UnetonTheme
       - target: UnetonWidgets
         embed: true
       - target: UnetonWatch
@@ -129,6 +131,8 @@ targets:
     dependencies:
       - package: UnetonPackage
         product: UnetonCore
+      - package: UnetonPackage
+        product: UnetonTheme
   UnetonWatchUITests:
     type: bundle.ui-testing
     platform: watchOS

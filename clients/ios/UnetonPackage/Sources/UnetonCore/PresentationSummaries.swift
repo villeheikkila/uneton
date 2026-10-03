@@ -88,3 +88,66 @@ public struct GrowthChartData: Sendable {
         isHeight ? Double(point.value) / 10 : Double(point.value) / 1_000
     }
 }
+
+/// Whether a sleep reads as a nap or a night. A sleep that starts inside the night
+/// window is a night; the window is generous so an early bedtime still counts.
+public enum SleepKind: Sendable, Equatable {
+    case nap
+    case night
+
+    public static let nightStartMinutes = 18 * 60
+    public static let nightEndMinutes = 6 * 60
+
+    public init(startedAt: Date, calendar: Calendar) {
+        let minutes = SleepTrends.minuteOfDay(startedAt, calendar: calendar)
+        self = minutes >= Self.nightStartMinutes || minutes < Self.nightEndMinutes ? .night : .nap
+    }
+}
+
+/// Sleep history grouped the way parents read it: each day lists the sleeps that
+/// ended on it, so last night appears under today in the morning.
+public struct SleepDiary: Sendable {
+    public struct Entry: Identifiable, Sendable {
+        public var id: SleepSession.ID { session.id }
+        public let session: SleepSession
+        public let kind: SleepKind
+        public let duration: TimeInterval
+        public var isActive: Bool { session.endedAt == nil }
+    }
+
+    public struct Day: Identifiable, Sendable {
+        public var id: Date { date }
+        public let date: Date
+        /// Newest first.
+        public let entries: [Entry]
+        /// Time asleep within this calendar day, including parts of sleeps that cross midnight.
+        public let asleepSeconds: TimeInterval
+        public let napCount: Int
+    }
+
+    public let days: [Day]
+
+    public init(sessions: [SleepSession], now: Date, calendar: Calendar, dayLimit: Int = 14) {
+        let live = sessions.filter { $0.deletedAt == nil && $0.supersededByID == nil }
+        let grouped = Dictionary(grouping: live) { calendar.startOfDay(for: $0.endedAt ?? now) }
+        days = grouped.keys.sorted(by: >).prefix(dayLimit).map { day in
+            let end = calendar.date(byAdding: .day, value: 1, to: day) ?? day
+            let entries = (grouped[day] ?? [])
+                .sorted { $0.startedAt > $1.startedAt }
+                .map { session in
+                    Entry(
+                        session: session,
+                        kind: SleepKind(startedAt: session.startedAt, calendar: calendar),
+                        duration: max(0, (session.endedAt ?? now).timeIntervalSince(session.startedAt))
+                    )
+                }
+            let asleep = live.reduce(0.0) { total, session in
+                total + max(0, min(end, session.endedAt ?? now).timeIntervalSince(max(day, session.startedAt)))
+            }
+            return Day(
+                date: day, entries: entries, asleepSeconds: asleep,
+                napCount: entries.filter { $0.kind == .nap }.count
+            )
+        }
+    }
+}

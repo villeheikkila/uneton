@@ -8,19 +8,18 @@ struct TimelineContent: View {
     @Environment(SessionStore.self) private var session
     @Bindable var syncStore: StoreOf<FamilySync>
     let child: Child
-    let navigationNamespace: Namespace.ID
-
-    private var activeSession: SleepSession? { syncStore.activeSession }
 
     var body: some View {
         TabView(selection: $syncStore.selectedTab) {
             ZStack {
-                SleepBackground()
-                SleepTimelineContent(
+                SkyBackground()
+                SleepHome(
                     childName: child.nickname,
                     sessions: syncStore.sessions,
                     forecast: session.forecast?.childID == child.id ? session.forecast : nil,
-                    navigationNamespace: navigationNamespace,
+                    isWaking: syncStore.wake.isRunning,
+                    onStart: { syncStore.send(.newSleepButtonTapped(child.id, child.nickname)) },
+                    onWake: { syncStore.send(.endSleepButtonTapped($0)) },
                     onSelectSession: { sleep in
                         syncStore.send(.sleepSelected(child.id, child.nickname, sleep.id, sleep.startedAt, sleep.endedAt))
                     }
@@ -32,7 +31,7 @@ struct TimelineContent: View {
             }
 
             ZStack {
-                SleepBackground()
+                SkyBackground()
                 GrowthContent(
                     child: child,
                     measurements: syncStore.growthMeasurements,
@@ -55,7 +54,7 @@ struct TimelineContent: View {
             }
 
             ZStack {
-                SleepBackground()
+                SkyBackground()
                 TemperatureContent(readings: syncStore.temperatureReadings,
                     onAdd: { syncStore.send(.newTemperatureReadingButtonTapped(child.id)) },
                     onSelect: { reading in
@@ -67,49 +66,13 @@ struct TimelineContent: View {
             .tabItem { Label(Mode.temperature.title, systemImage: Mode.temperature.systemImage) }
 
             ZStack {
-                SleepBackground()
+                SkyBackground()
                 TrendsContent(sessions: syncStore.sessions, range: $syncStore.insightsRangeDays)
             }
             .tag(Mode.trends)
             .tabItem {
                 Label(Mode.trends.title, systemImage: Mode.trends.systemImage)
             }
-        }
-        .tabViewBottomAccessory(isEnabled: syncStore.selectedTab == .timeline) {
-            bottomControl
-                .padding(.vertical, 8)
-        }
-        .tint(Color.sleepBlue)
-    }
-
-    @ViewBuilder
-    private var bottomControl: some View {
-        if let activeSession {
-            Button {
-                syncStore.send(.endSleepButtonTapped(activeSession.id))
-            } label: {
-                Label(.locWakeChild(child.nickname), systemImage: "sun.max.fill")
-                    .font(.headline.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .foregroundStyle(Color.sleepAqua)
-                    .contentShape(.rect)
-            }
-            .buttonStyle(.plain)
-            .disabled(syncStore.wake.isRunning)
-            .accessibilityHint(LocalizedStringResource("locEndsTheCurrentSleepAtThePresentTime", defaultValue: "Ends the current sleep at the present time", comment: "Text in Timeline: Ends the current sleep at the present time"))
-        } else {
-            Button {
-                syncStore.send(.newSleepButtonTapped(child.id, child.nickname))
-            } label: {
-                Label(LocalizedStringResource("locStartSleep", defaultValue: "Start sleep", comment: "Label in Timeline: Start sleep"), systemImage: "moon.fill")
-                    .font(.headline.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .foregroundStyle(Color.sleepBlue)
-                    .contentShape(.rect)
-            }
-            .buttonStyle(.plain)
         }
     }
 }

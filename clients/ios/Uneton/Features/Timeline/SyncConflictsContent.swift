@@ -2,8 +2,10 @@ import ComposableArchitecture2
 import Foundation
 import UnetonCore
 import SwiftUI
+import UnetonTheme
 
 struct SyncConflictsContent: View {
+    @Environment(\.palette) private var palette
     let conflicts: [SyncConflict]
     let syncStore: StoreOf<FamilySync>
 
@@ -31,13 +33,13 @@ struct SyncConflictsContent: View {
                                     title: String(localized: LocalizedStringResource("locMyChange", defaultValue: "My change", comment: "Message in Timeline: My change")),
                                     startedAt: comparison.local.startedAt,
                                     endedAt: comparison.local.endedAt,
-                                    tint: .sleepBlue
+                                    tint: palette.accent.color
                                 )
                                 ConflictVersionRow(
                                     title: String(localized: LocalizedStringResource("locServerVersion", defaultValue: "Server version", comment: "Message in Timeline: Server version")),
                                     startedAt: comparison.server.startedAt,
                                     endedAt: comparison.server.endedAt,
-                                    tint: .sleepTurquoise
+                                    tint: palette.accentSoft.color
                                 )
                             }
                         }

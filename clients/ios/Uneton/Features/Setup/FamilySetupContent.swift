@@ -1,7 +1,9 @@
 import ComposableArchitecture2
 import SwiftUI
+import UnetonTheme
 
 struct FamilySetupContent: View {
+    @Environment(\.palette) private var palette
     @Bindable var store: StoreOf<FamilySetup>
 
     var body: some View {
@@ -10,10 +12,11 @@ struct FamilySetupContent: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Image(systemName: "figure.child")
                         .font(.system(size: 38, weight: .medium))
-                        .foregroundStyle(Color.sleepBlue)
+                        .foregroundStyle(palette.accent.color)
                         .padding(.bottom, 4)
                     Text("locAddYourBaby", comment: "Text in Setup: Add your baby")
-                        .font(.largeTitle.bold())
+                        .font(.soft(34))
+                        .foregroundStyle(palette.ink.color)
                     Text("locKeepSleepGrowthAndTemperatureInOneSharedPlaceHaveAnInvitationScanItBelow", comment: "Text in Setup: Keep sleep, growth and temperature in one shared place. Have an invitation? Scan it below.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
