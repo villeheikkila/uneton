@@ -62,6 +62,7 @@ final class SessionStore {
     @ObservationIgnored private var pushRetryTask: Task<Void, Never>?
     @ObservationIgnored private var isUploadingActivityTokens = false
     private let pushLogger = Logger(subsystem: "solutions.bytesized.uneton", category: "push-registration")
+    private let sessionLogger = Logger(subsystem: "solutions.bytesized.uneton", category: "session")
     private var apnsToken: String? { tokenRegistrations.apnsToken }
     private var pushToStartToken: String? { tokenRegistrations.pushToStartToken }
     @ObservationIgnored private var reminderOwnership = SleepReminderOwnership()
@@ -575,6 +576,9 @@ final class SessionStore {
                         Family(id: accepted.familyID, name: String(localized: LocalizedStringResource("locSharedFamily", defaultValue: "Shared family", comment: "Message in SessionStore: Shared family")), role: accepted.role, updatedAt: acceptedAt)
                     }.execute(database)
                 }
+                // Refresh after the placeholder row so the server's family name wins
+                // and the joined family enters the membership list.
+                try await refreshAuthentication()
                 await setPrediction(try await synchronizeWithRefresh(familyID: accepted.familyID))
             }
             return
@@ -824,6 +828,9 @@ final class SessionStore {
         // Persist the client-generated identity before the network request. If the
         // response is lost, onboarding retries the same idempotent server operation.
         try await apiClient.createFamily(familyID, String(localized: LocalizedStringResource("locOurFamily", defaultValue: "Our family", comment: "Message in SessionStore: Our family")), accessToken)
+        // Memberships gate which families the app shows and syncs; take the
+        // server's updated list so the new family becomes visible.
+        try await refreshAuthentication()
         _ = try await coordinator.createChild(
             familyID: familyID,
             nickname: childName,
@@ -1177,6 +1184,8 @@ final class SessionStore {
         do {
             try await operation()
         } catch {
+            // The UI shows a generic message; keep the cause for diagnosis without exposing it.
+            sessionLogger.error("Session operation failed: \(String(describing: error), privacy: .private)")
             errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated"))
         }
         await watchBridge.publishSnapshot()
