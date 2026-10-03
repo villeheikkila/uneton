@@ -4774,8 +4774,12 @@ type SyncResponse struct {
 	Snapshot              *FamilySnapshot         `protobuf:"bytes,9,opt,name=snapshot,proto3,oneof" json:"snapshot,omitempty"`
 	ResetRequired         bool                    `protobuf:"varint,10,opt,name=reset_required,json=resetRequired,proto3" json:"reset_required,omitempty"`
 	GrowthReferencePoints []*GrowthReferencePoint `protobuf:"bytes,11,rep,name=growth_reference_points,json=growthReferencePoints,proto3" json:"growth_reference_points,omitempty"`
-	unknownFields         protoimpl.UnknownFields
-	sizeCache             protoimpl.SizeCache
+	// Commands acknowledged before this server time are contained in every
+	// database lineage the operator can still restore, so clients may drop them
+	// from their acknowledged-command journal. Absent on reset responses.
+	JournalRetentionCutoff *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=journal_retention_cutoff,json=journalRetentionCutoff,proto3,oneof" json:"journal_retention_cutoff,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *SyncResponse) Reset() {
@@ -4881,6 +4885,13 @@ func (x *SyncResponse) GetResetRequired() bool {
 func (x *SyncResponse) GetGrowthReferencePoints() []*GrowthReferencePoint {
 	if x != nil {
 		return x.GrowthReferencePoints
+	}
+	return nil
+}
+
+func (x *SyncResponse) GetJournalRetentionCutoff() *timestamppb.Timestamp {
+	if x != nil {
+		return x.JournalRetentionCutoff
 	}
 	return nil
 }
@@ -5390,7 +5401,7 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\n" +
 	"age_months\x18\x03 \x01(\x05R\tageMonths\x12\x0e\n" +
 	"\x02sd\x18\x04 \x01(\x05R\x02sd\x12\x14\n" +
-	"\x05value\x18\x05 \x01(\x05R\x05value\"\xa3\x05\n" +
+	"\x05value\x18\x05 \x01(\x05R\x05value\"\x9b\x06\n" +
 	"\fSyncResponse\x12A\n" +
 	"\x0fcommand_results\x18\x01 \x03(\v2\x18.uneton.v1.CommandResultR\x0ecommandResults\x12,\n" +
 	"\x06events\x18\x02 \x03(\v2\x14.uneton.v1.SyncEventR\x06events\x12\x1f\n" +
@@ -5407,10 +5418,12 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\bsnapshot\x18\t \x01(\v2\x19.uneton.v1.FamilySnapshotH\x02R\bsnapshot\x88\x01\x01\x12%\n" +
 	"\x0ereset_required\x18\n" +
 	" \x01(\bR\rresetRequired\x12W\n" +
-	"\x17growth_reference_points\x18\v \x03(\v2\x1f.uneton.v1.GrowthReferencePointR\x15growthReferencePointsB\x16\n" +
+	"\x17growth_reference_points\x18\v \x03(\v2\x1f.uneton.v1.GrowthReferencePointR\x15growthReferencePoints\x12Y\n" +
+	"\x18journal_retention_cutoff\x18\f \x01(\v2\x1a.google.protobuf.TimestampH\x03R\x16journalRetentionCutoff\x88\x01\x01B\x16\n" +
 	"\x14_next_sleep_estimateB\x11\n" +
 	"\x0f_sleep_forecastB\v\n" +
-	"\t_snapshot\"t\n" +
+	"\t_snapshotB\x1b\n" +
+	"\x19_journal_retention_cutoff\"t\n" +
 	"\x12WatchFamilyRequest\x12\x1b\n" +
 	"\tfamily_id\x18\x01 \x01(\tR\bfamilyId\x12!\n" +
 	"\fafter_cursor\x18\x02 \x01(\x03R\vafterCursor\x12\x1e\n" +
@@ -5630,51 +5643,52 @@ var file_uneton_v1_uneton_proto_depIdxs = []int32{
 	72, // 72: uneton.v1.SyncResponse.sleep_forecast:type_name -> uneton.v1.SleepForecast
 	70, // 73: uneton.v1.SyncResponse.snapshot:type_name -> uneton.v1.FamilySnapshot
 	73, // 74: uneton.v1.SyncResponse.growth_reference_points:type_name -> uneton.v1.GrowthReferencePoint
-	3,  // 75: uneton.v1.UnetonService.DevelopmentAuth:input_type -> uneton.v1.DevelopmentAuthRequest
-	4,  // 76: uneton.v1.UnetonService.AppleAuth:input_type -> uneton.v1.AppleAuthRequest
-	5,  // 77: uneton.v1.UnetonService.RefreshAuth:input_type -> uneton.v1.RefreshAuthRequest
-	6,  // 78: uneton.v1.UnetonService.SignOut:input_type -> uneton.v1.SignOutRequest
-	8,  // 79: uneton.v1.UnetonService.DeleteAccount:input_type -> uneton.v1.DeleteAccountRequest
-	11, // 80: uneton.v1.UnetonService.UpdateDevicePushSettings:input_type -> uneton.v1.UpdateDevicePushSettingsRequest
-	13, // 81: uneton.v1.UnetonService.RegisterLiveActivity:input_type -> uneton.v1.RegisterLiveActivityRequest
-	20, // 82: uneton.v1.UnetonService.CreateFamily:input_type -> uneton.v1.CreateFamilyRequest
-	22, // 83: uneton.v1.UnetonService.CreateInvite:input_type -> uneton.v1.CreateInviteRequest
-	24, // 84: uneton.v1.UnetonService.AcceptInvite:input_type -> uneton.v1.AcceptInviteRequest
-	26, // 85: uneton.v1.UnetonService.GetFamilyManagement:input_type -> uneton.v1.GetFamilyManagementRequest
-	30, // 86: uneton.v1.UnetonService.UpdateProfile:input_type -> uneton.v1.UpdateProfileRequest
-	32, // 87: uneton.v1.UnetonService.RenameFamily:input_type -> uneton.v1.RenameFamilyRequest
-	34, // 88: uneton.v1.UnetonService.RemoveFamilyMember:input_type -> uneton.v1.RemoveFamilyMemberRequest
-	36, // 89: uneton.v1.UnetonService.LeaveFamily:input_type -> uneton.v1.LeaveFamilyRequest
-	38, // 90: uneton.v1.UnetonService.TransferFamilyOwnership:input_type -> uneton.v1.TransferFamilyOwnershipRequest
-	40, // 91: uneton.v1.UnetonService.RevokeInvite:input_type -> uneton.v1.RevokeInviteRequest
-	42, // 92: uneton.v1.UnetonService.DeleteFamily:input_type -> uneton.v1.DeleteFamilyRequest
-	44, // 93: uneton.v1.UnetonService.Sync:input_type -> uneton.v1.SyncRequest
-	75, // 94: uneton.v1.UnetonService.WatchFamily:input_type -> uneton.v1.WatchFamilyRequest
-	17, // 95: uneton.v1.UnetonService.DevelopmentAuth:output_type -> uneton.v1.DevelopmentAuthResponse
-	18, // 96: uneton.v1.UnetonService.AppleAuth:output_type -> uneton.v1.AppleAuthResponse
-	19, // 97: uneton.v1.UnetonService.RefreshAuth:output_type -> uneton.v1.RefreshAuthResponse
-	7,  // 98: uneton.v1.UnetonService.SignOut:output_type -> uneton.v1.SignOutResponse
-	9,  // 99: uneton.v1.UnetonService.DeleteAccount:output_type -> uneton.v1.DeleteAccountResponse
-	12, // 100: uneton.v1.UnetonService.UpdateDevicePushSettings:output_type -> uneton.v1.UpdateDevicePushSettingsResponse
-	14, // 101: uneton.v1.UnetonService.RegisterLiveActivity:output_type -> uneton.v1.RegisterLiveActivityResponse
-	21, // 102: uneton.v1.UnetonService.CreateFamily:output_type -> uneton.v1.CreateFamilyResponse
-	23, // 103: uneton.v1.UnetonService.CreateInvite:output_type -> uneton.v1.CreateInviteResponse
-	25, // 104: uneton.v1.UnetonService.AcceptInvite:output_type -> uneton.v1.AcceptInviteResponse
-	29, // 105: uneton.v1.UnetonService.GetFamilyManagement:output_type -> uneton.v1.GetFamilyManagementResponse
-	31, // 106: uneton.v1.UnetonService.UpdateProfile:output_type -> uneton.v1.UpdateProfileResponse
-	33, // 107: uneton.v1.UnetonService.RenameFamily:output_type -> uneton.v1.RenameFamilyResponse
-	35, // 108: uneton.v1.UnetonService.RemoveFamilyMember:output_type -> uneton.v1.RemoveFamilyMemberResponse
-	37, // 109: uneton.v1.UnetonService.LeaveFamily:output_type -> uneton.v1.LeaveFamilyResponse
-	39, // 110: uneton.v1.UnetonService.TransferFamilyOwnership:output_type -> uneton.v1.TransferFamilyOwnershipResponse
-	41, // 111: uneton.v1.UnetonService.RevokeInvite:output_type -> uneton.v1.RevokeInviteResponse
-	43, // 112: uneton.v1.UnetonService.DeleteFamily:output_type -> uneton.v1.DeleteFamilyResponse
-	74, // 113: uneton.v1.UnetonService.Sync:output_type -> uneton.v1.SyncResponse
-	76, // 114: uneton.v1.UnetonService.WatchFamily:output_type -> uneton.v1.WatchFamilyResponse
-	95, // [95:115] is the sub-list for method output_type
-	75, // [75:95] is the sub-list for method input_type
-	75, // [75:75] is the sub-list for extension type_name
-	75, // [75:75] is the sub-list for extension extendee
-	0,  // [0:75] is the sub-list for field type_name
+	77, // 75: uneton.v1.SyncResponse.journal_retention_cutoff:type_name -> google.protobuf.Timestamp
+	3,  // 76: uneton.v1.UnetonService.DevelopmentAuth:input_type -> uneton.v1.DevelopmentAuthRequest
+	4,  // 77: uneton.v1.UnetonService.AppleAuth:input_type -> uneton.v1.AppleAuthRequest
+	5,  // 78: uneton.v1.UnetonService.RefreshAuth:input_type -> uneton.v1.RefreshAuthRequest
+	6,  // 79: uneton.v1.UnetonService.SignOut:input_type -> uneton.v1.SignOutRequest
+	8,  // 80: uneton.v1.UnetonService.DeleteAccount:input_type -> uneton.v1.DeleteAccountRequest
+	11, // 81: uneton.v1.UnetonService.UpdateDevicePushSettings:input_type -> uneton.v1.UpdateDevicePushSettingsRequest
+	13, // 82: uneton.v1.UnetonService.RegisterLiveActivity:input_type -> uneton.v1.RegisterLiveActivityRequest
+	20, // 83: uneton.v1.UnetonService.CreateFamily:input_type -> uneton.v1.CreateFamilyRequest
+	22, // 84: uneton.v1.UnetonService.CreateInvite:input_type -> uneton.v1.CreateInviteRequest
+	24, // 85: uneton.v1.UnetonService.AcceptInvite:input_type -> uneton.v1.AcceptInviteRequest
+	26, // 86: uneton.v1.UnetonService.GetFamilyManagement:input_type -> uneton.v1.GetFamilyManagementRequest
+	30, // 87: uneton.v1.UnetonService.UpdateProfile:input_type -> uneton.v1.UpdateProfileRequest
+	32, // 88: uneton.v1.UnetonService.RenameFamily:input_type -> uneton.v1.RenameFamilyRequest
+	34, // 89: uneton.v1.UnetonService.RemoveFamilyMember:input_type -> uneton.v1.RemoveFamilyMemberRequest
+	36, // 90: uneton.v1.UnetonService.LeaveFamily:input_type -> uneton.v1.LeaveFamilyRequest
+	38, // 91: uneton.v1.UnetonService.TransferFamilyOwnership:input_type -> uneton.v1.TransferFamilyOwnershipRequest
+	40, // 92: uneton.v1.UnetonService.RevokeInvite:input_type -> uneton.v1.RevokeInviteRequest
+	42, // 93: uneton.v1.UnetonService.DeleteFamily:input_type -> uneton.v1.DeleteFamilyRequest
+	44, // 94: uneton.v1.UnetonService.Sync:input_type -> uneton.v1.SyncRequest
+	75, // 95: uneton.v1.UnetonService.WatchFamily:input_type -> uneton.v1.WatchFamilyRequest
+	17, // 96: uneton.v1.UnetonService.DevelopmentAuth:output_type -> uneton.v1.DevelopmentAuthResponse
+	18, // 97: uneton.v1.UnetonService.AppleAuth:output_type -> uneton.v1.AppleAuthResponse
+	19, // 98: uneton.v1.UnetonService.RefreshAuth:output_type -> uneton.v1.RefreshAuthResponse
+	7,  // 99: uneton.v1.UnetonService.SignOut:output_type -> uneton.v1.SignOutResponse
+	9,  // 100: uneton.v1.UnetonService.DeleteAccount:output_type -> uneton.v1.DeleteAccountResponse
+	12, // 101: uneton.v1.UnetonService.UpdateDevicePushSettings:output_type -> uneton.v1.UpdateDevicePushSettingsResponse
+	14, // 102: uneton.v1.UnetonService.RegisterLiveActivity:output_type -> uneton.v1.RegisterLiveActivityResponse
+	21, // 103: uneton.v1.UnetonService.CreateFamily:output_type -> uneton.v1.CreateFamilyResponse
+	23, // 104: uneton.v1.UnetonService.CreateInvite:output_type -> uneton.v1.CreateInviteResponse
+	25, // 105: uneton.v1.UnetonService.AcceptInvite:output_type -> uneton.v1.AcceptInviteResponse
+	29, // 106: uneton.v1.UnetonService.GetFamilyManagement:output_type -> uneton.v1.GetFamilyManagementResponse
+	31, // 107: uneton.v1.UnetonService.UpdateProfile:output_type -> uneton.v1.UpdateProfileResponse
+	33, // 108: uneton.v1.UnetonService.RenameFamily:output_type -> uneton.v1.RenameFamilyResponse
+	35, // 109: uneton.v1.UnetonService.RemoveFamilyMember:output_type -> uneton.v1.RemoveFamilyMemberResponse
+	37, // 110: uneton.v1.UnetonService.LeaveFamily:output_type -> uneton.v1.LeaveFamilyResponse
+	39, // 111: uneton.v1.UnetonService.TransferFamilyOwnership:output_type -> uneton.v1.TransferFamilyOwnershipResponse
+	41, // 112: uneton.v1.UnetonService.RevokeInvite:output_type -> uneton.v1.RevokeInviteResponse
+	43, // 113: uneton.v1.UnetonService.DeleteFamily:output_type -> uneton.v1.DeleteFamilyResponse
+	74, // 114: uneton.v1.UnetonService.Sync:output_type -> uneton.v1.SyncResponse
+	76, // 115: uneton.v1.UnetonService.WatchFamily:output_type -> uneton.v1.WatchFamilyResponse
+	96, // [96:116] is the sub-list for method output_type
+	76, // [76:96] is the sub-list for method input_type
+	76, // [76:76] is the sub-list for extension type_name
+	76, // [76:76] is the sub-list for extension extendee
+	0,  // [0:76] is the sub-list for field type_name
 }
 
 func init() { file_uneton_v1_uneton_proto_init() }

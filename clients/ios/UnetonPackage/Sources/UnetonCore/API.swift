@@ -155,6 +155,8 @@ public struct SyncResponse: Codable, Equatable, Sendable {
   public var snapshot: FamilySnapshot? = nil
   public var resetRequired: Bool = false
   public var growthReferencePoints: [GrowthReferenceBootstrapPoint] = []
+  /// Server time before which acknowledged commands survive any restorable database.
+  public var journalRetentionCutoff: Date? = nil
 }
 
 public struct AuthenticationResponse: Codable, Equatable, Sendable {
@@ -733,7 +735,8 @@ private func syncResponse(_ value: Uneton_V1_SyncResponse) throws -> SyncRespons
     resetRequired: value.resetRequired,
     growthReferencePoints: value.growthReferencePoints.map {
       GrowthReferenceBootstrapPoint(reference: $0.reference, metric: $0.metric, ageMonths: Int($0.ageMonths), sd: Int($0.sd), value: Int($0.value))
-    }
+    },
+    journalRetentionCutoff: value.hasJournalRetentionCutoff ? value.journalRetentionCutoff.date : nil
   )
 }
 
@@ -868,7 +871,7 @@ extension JSONDecoder {
       let container = try decoder.singleValueContainer()
       let value = try container.decode(String.self)
       guard let date = ISO8601DateFormatter.uneton.date(from: value)
-        ?? ISO8601DateFormatter().date(from: value)
+        ?? ISO8601DateFormatter.unetonWholeSeconds.date(from: value)
       else { throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid ISO-8601 date") }
       return date
     }
@@ -877,9 +880,13 @@ extension JSONDecoder {
 }
 
 extension ISO8601DateFormatter {
-  fileprivate static var uneton: ISO8601DateFormatter {
+  // Creating a formatter costs far more than using one, and every stored
+  // payload date passes through here. ISO8601DateFormatter is thread-safe.
+  fileprivate nonisolated(unsafe) static let uneton: ISO8601DateFormatter = {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
     return formatter
-  }
+  }()
+
+  fileprivate nonisolated(unsafe) static let unetonWholeSeconds = ISO8601DateFormatter()
 }

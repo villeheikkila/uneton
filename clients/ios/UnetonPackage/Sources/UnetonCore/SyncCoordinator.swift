@@ -49,7 +49,7 @@ public actor SyncCoordinator {
     let pending = try pendingCommand(id: commandID, familyID: familyID, kind: "createChild", payload: payload)
     try await database.write { database in
       try Self.enqueue(pending, database: database)
-      try Projection.rebuild(familyID: familyID, database: database)
+      try Projection.refresh(familyID: familyID, keys: [Projection.key(for: pending)], database: database)
     }
     return childID
   }
@@ -70,7 +70,7 @@ public actor SyncCoordinator {
     let pending = try pendingCommand(id: commandID, familyID: familyID, kind: "startSleep", payload: payload)
     try await database.write { database in
       try Self.enqueue(pending, database: database)
-      try Projection.rebuild(familyID: familyID, database: database)
+      try Projection.refresh(familyID: familyID, keys: [Projection.key(for: pending)], database: database)
     }
     return sessionID
   }
@@ -95,7 +95,7 @@ public actor SyncCoordinator {
     let fallbackRevision = max(1, session.revision)
     try await database.write { database in
       try Self.enqueue(pending, reserving: "sleepSession", EntityID(rawValue: sessionID.rawValue), fallback: fallbackRevision, database: database)
-      try Projection.rebuild(familyID: familyID, database: database)
+      try Projection.refresh(familyID: familyID, keys: [Projection.key(for: pending)], database: database)
     }
   }
 
@@ -127,7 +127,7 @@ public actor SyncCoordinator {
     let fallbackRevision = existing?.revision
     try await database.write { database in
       try Self.enqueue(pending, reserving: "sleepSession", EntityID(rawValue: id.rawValue), fallback: fallbackRevision, database: database)
-      try Projection.rebuild(familyID: familyID, database: database)
+      try Projection.refresh(familyID: familyID, keys: [Projection.key(for: pending)], database: database)
     }
   }
 
@@ -154,7 +154,7 @@ public actor SyncCoordinator {
     let fallbackRevision = existing?.revision
     try await database.write { database in
       try Self.enqueue(pending, reserving: "growthMeasurement", EntityID(rawValue: id.rawValue), fallback: fallbackRevision, database: database)
-      try Projection.rebuild(familyID: familyID, database: database)
+      try Projection.refresh(familyID: familyID, keys: [Projection.key(for: pending)], database: database)
     }
   }
 
@@ -169,7 +169,7 @@ public actor SyncCoordinator {
     let fallbackRevision = max(1, existing.revision)
     try await database.write { database in
       try Self.enqueue(pending, reserving: "growthMeasurement", EntityID(rawValue: measurementID.rawValue), fallback: fallbackRevision, database: database)
-      try Projection.rebuild(familyID: familyID, database: database)
+      try Projection.refresh(familyID: familyID, keys: [Projection.key(for: pending)], database: database)
     }
   }
 
@@ -186,7 +186,7 @@ public actor SyncCoordinator {
     let pending = try pendingCommand(id: nextID(), familyID: familyID, kind: "upsertTemperatureReading", payload: payload)
     try await database.write { database in
       try Self.enqueue(pending, reserving: "temperatureReading", EntityID(rawValue: id.rawValue), fallback: fallbackRevision, database: database)
-      try Projection.rebuild(familyID: familyID, database: database)
+      try Projection.refresh(familyID: familyID, keys: [Projection.key(for: pending)], database: database)
     }
   }
 
@@ -199,7 +199,7 @@ public actor SyncCoordinator {
     let pending = try pendingCommand(id: nextID(), familyID: familyID, kind: "deleteTemperatureReading", payload: payload)
     try await database.write { database in
       try Self.enqueue(pending, reserving: "temperatureReading", EntityID(rawValue: readingID.rawValue), fallback: fallbackRevision, database: database)
-      try Projection.rebuild(familyID: familyID, database: database)
+      try Projection.refresh(familyID: familyID, keys: [Projection.key(for: pending)], database: database)
     }
   }
 
@@ -244,7 +244,7 @@ public actor SyncCoordinator {
     let fallbackRevision = child.revision == 0 ? nil : child.revision
     try await database.write { database in
       try Self.enqueue(pending, reserving: "child", EntityID(rawValue: childID.rawValue), fallback: fallbackRevision, database: database)
-      try Projection.rebuild(familyID: familyID, database: database)
+      try Projection.refresh(familyID: familyID, keys: [Projection.key(for: pending)], database: database)
     }
   }
 
@@ -256,7 +256,7 @@ public actor SyncCoordinator {
     let fallbackRevision = max(1, child.revision)
     try await database.write { database in
       try Self.enqueue(pending, reserving: "child", EntityID(rawValue: childID.rawValue), fallback: fallbackRevision, database: database)
-      try Projection.rebuild(familyID: familyID, database: database)
+      try Projection.refresh(familyID: familyID, keys: [Projection.key(for: pending)], database: database)
     }
   }
 
@@ -300,12 +300,23 @@ public actor SyncCoordinator {
     // A command can arrive after the flight's final outbox read. A caller joining
     // that flight must not report success while its newly queued intent is unsent.
     let hasPending = try await database.read { database in
-      try PendingCommand.where { $0.familyID.eq(familyID) }.fetchCount(database) > 0
+      try !Self.sendableCommands(familyID: familyID, database: database).isEmpty
     }
     if hasPending {
       return try await synchronize(familyID: familyID)
     }
     return forecast
+  }
+
+  /// Pending commands in sequence order, minus those deferred until the family
+  /// cursor moves past the point where the server did not have their target.
+  private nonisolated static func sendableCommands(familyID: Family.ID, database: Database) throws -> [PendingCommand] {
+    let cursor = try SyncState.find(familyID).fetchOne(database)?.cursor ?? 0
+    return try PendingCommand
+      .where { $0.familyID.eq(familyID) }
+      .order(by: \.sequence)
+      .fetchAll(database)
+      .filter { command in command.deferredAtCursor.map { $0 < cursor } ?? true }
   }
 
   public func cursor(familyID: Family.ID) async throws -> Int64 {
@@ -329,11 +340,7 @@ public actor SyncCoordinator {
     while shouldContinue {
       let snapshot = try await database.read { database -> (Int64, String, [PendingCommand]) in
         let state = try SyncState.find(familyID).fetchOne(database)
-        let commands = try PendingCommand
-          .where { $0.familyID.eq(familyID) }
-          .order(by: \.sequence)
-          .limit(100)
-          .fetchAll(database)
+        let commands = try Array(Self.sendableCommands(familyID: familyID, database: database).prefix(100))
         return (state?.cursor ?? 0, state?.generation ?? "", commands)
       }
       let commands = includeCommands ? try snapshot.2.map(apiCommand) : []
@@ -353,7 +360,7 @@ public actor SyncCoordinator {
         includeCommands = false
       } else {
         let hasPending = try await database.read { database in
-          try PendingCommand.where { $0.familyID.eq(familyID) }.fetchCount(database) > 0
+          try !Self.sendableCommands(familyID: familyID, database: database).isEmpty
         }
         if hasPending && commandPasses >= 100 { throw SyncError.incompleteSynchronization }
         shouldContinue = hasPending
@@ -377,6 +384,7 @@ public actor SyncCoordinator {
       }
       let currentState = try SyncState.find(familyID).fetchOne(database)
       let currentCursor = currentState?.cursor ?? 0
+      let advancedCursor = response.resetRequired ? response.nextCursor : max(currentCursor, response.nextCursor)
       if let snapshot = response.snapshot {
         try AuthoritativeRecord.where { $0.familyID.eq(familyID) }.delete().execute(database)
         for entity in snapshot.entities {
@@ -386,13 +394,20 @@ public actor SyncCoordinator {
             entityType: entity.entityType,
             entityID: entity.entityID,
             revision: entity.revision,
-            operation: "upsert",
+            // Snapshots carry tombstones so a replayed create cannot resurrect a deleted entity.
+            operation: Self.isTombstone(entity.payload) ? "delete" : "upsert",
             payloadJSON: try JSONEncoder.uneton.encode(entity.payload)
           )
           try AuthoritativeRecord.upsert { record }.execute(database)
         }
       }
       if response.resetRequired {
+        // Cursors restart in a restored lineage; a deferral measured against the
+        // old one would stall until the new cursor happened to pass it.
+        try PendingCommand
+          .where { $0.familyID.eq(familyID) }
+          .update { $0.deferredAtCursor = #bind(nil) }
+          .execute(database)
         let acknowledged = try AcknowledgedCommand
           .where { $0.familyID.eq(familyID) }
           .order(by: \.sequence)
@@ -414,8 +429,15 @@ public actor SyncCoordinator {
       // The server maps a duplicate start onto the child's existing active sleep.
       // Later intent for the local session must follow the canonical identity.
       var aliases: [EntityID: SessionAlias] = [:]
+      var touched = Set<Projection.Key>()
+      for event in response.events {
+        touched.insert(Projection.Key(entityType: event.entityType, entityID: event.entityID))
+      }
       for result in response.commandResults {
         guard let command = try PendingCommand.find(result.id).fetchOne(database) else { continue }
+        let key = try Projection.key(for: command)
+        touched.insert(key)
+        if let entityID = result.entityID { touched.insert(Projection.Key(entityType: key.entityType, entityID: entityID)) }
         try Self.ingestResultPayload(result, command: command, familyID: familyID, database: database)
         if result.status == "accepted", command.kind == "startSleep",
            let alias = try Self.sessionAlias(result, command: command) {
@@ -437,11 +459,27 @@ public actor SyncCoordinator {
               expectedRevision: command.expectedRevision,
               payloadJSON: command.payloadJSON,
               createdAt: command.createdAt,
-              acknowledgedAt: appliedAt,
+              acknowledgedAt: response.serverTime,
               sequence: command.sequence
             )
           }.execute(database)
           try PendingCommand.find(result.id).delete().execute(database)
+        } else if result.payload == nil, Self.targetsExistingEntity(command),
+                  response.serverTime.timeIntervalSince(command.deferredSince ?? response.serverTime) < Self.deferralLimit {
+          // The server has no such entity yet. After a restore every device replays
+          // its own journal, so another device's replay may still create it. Retry
+          // once the family cursor moves; give up into a conflict after a day. The
+          // server stored this rejection under the command ID, and nothing was
+          // applied under it, so the retry needs a new ID in the same position.
+          try PendingCommand.find(result.id).delete().execute(database)
+          let deferred = PendingCommand(
+            id: replacementIDs[result.id]!, familyID: command.familyID, kind: command.kind,
+            expectedRevision: command.expectedRevision, payloadJSON: command.payloadJSON,
+            createdAt: command.createdAt, lastError: result.error, rebaseAttempt: command.rebaseAttempt,
+            sequence: command.sequence, deferredAtCursor: advancedCursor,
+            deferredSince: command.deferredSince ?? response.serverTime, deferrals: command.deferrals + 1
+          )
+          try PendingCommand.insert { deferred }.execute(database)
         } else {
           try PendingCommand.find(result.id).delete().execute(database)
           let resolution = try Self.automaticResolution(
@@ -456,30 +494,34 @@ public actor SyncCoordinator {
           case .serverWins:
             break
           case .requiresUser:
-            let identity = try Self.commandIdentity(command)
-            let serverPayload = try result.payload.map { try JSONEncoder.uneton.encode($0) }
-            try SyncConflict.upsert {
-              SyncConflict(
-                id: SyncConflict.ID(rawValue: command.id.rawValue),
-                familyID: familyID,
-                entityType: identity.entityType,
-                entityID: identity.entityID,
-                commandKind: command.kind,
-                expectedRevision: command.expectedRevision,
-                localPayloadJSON: command.payloadJSON,
-                serverPayloadJSON: serverPayload,
-                reason: result.error ?? "The server rejected this change.",
-                createdAt: appliedAt
-              )
-            }.execute(database)
+            try Self.recordConflict(
+              command, serverPayload: try result.payload.map { try JSONEncoder.uneton.encode($0) },
+              reason: result.error, at: appliedAt, database: database
+            )
           }
         }
+      }
+      for command in try PendingCommand.where({ $0.familyID.eq(familyID) }).fetchAll(database) {
+        guard let since = command.deferredSince,
+              response.serverTime.timeIntervalSince(since) >= Self.deferralLimit else { continue }
+        try PendingCommand.find(command.id).delete().execute(database)
+        touched.insert(try Projection.key(for: command))
+        try Self.recordConflict(command, serverPayload: nil, reason: command.lastError, at: appliedAt, database: database)
       }
       if !aliases.isEmpty {
         for pending in try PendingCommand.where({ $0.familyID.eq(familyID) }).fetchAll(database) {
           guard let redirected = try Self.redirect(pending, aliases: aliases, id: pending.id) else { continue }
           try PendingCommand.upsert { redirected }.execute(database)
         }
+      }
+      // The journal only repairs a database restored behind this device. Entries
+      // older than the server's restorable window can never be needed again.
+      // A reset response carries no cutoff: its journal is about to be replayed.
+      if !response.resetRequired, let cutoff = response.journalRetentionCutoff {
+        try AcknowledgedCommand
+          .where { $0.familyID.eq(familyID) && $0.acknowledgedAt < cutoff }
+          .delete()
+          .execute(database)
       }
       let eventBaseline = response.snapshot?.cursor ?? currentCursor
       for event in response.events {
@@ -499,7 +541,11 @@ public actor SyncCoordinator {
       let cursor = response.resetRequired ? response.nextCursor : max(currentCursor, response.nextCursor)
       let state = SyncState(id: familyID, cursor: cursor, generation: response.generation, lastSyncedAt: response.serverTime)
       try SyncState.upsert { state }.execute(database)
-      try Projection.rebuild(familyID: familyID, database: database)
+      if response.snapshot != nil || response.resetRequired {
+        try Projection.rebuild(familyID: familyID, database: database)
+      } else {
+        try Projection.refresh(familyID: familyID, keys: touched, database: database)
+      }
     }
   }
 
@@ -630,7 +676,11 @@ public actor SyncCoordinator {
         try Self.enqueue(replacement, database: database)
       }
       try SyncConflict.find(conflictID).delete().execute(database)
-      try Projection.rebuild(familyID: conflict.familyID, database: database)
+      try Projection.refresh(
+        familyID: conflict.familyID,
+        keys: [Projection.Key(entityType: conflict.entityType, entityID: conflict.entityID)],
+        database: database
+      )
     }
   }
 
@@ -654,6 +704,42 @@ public actor SyncCoordinator {
       operation: result.status == "accepted" && command.kind.hasPrefix("delete") ? "delete" : "upsert",
       payloadJSON: payloadData
     ), database: database)
+  }
+
+  static let deferralLimit: TimeInterval = 24 * 3_600
+
+  /// Commands that only make sense against an entity the server already has.
+  private nonisolated static func targetsExistingEntity(_ command: PendingCommand) -> Bool {
+    switch command.kind {
+    case "endSleep", "updateChild", "deleteChild", "deleteSleep", "deleteGrowthMeasurement", "deleteTemperatureReading": true
+    case "upsertSleep", "upsertGrowthMeasurement", "upsertTemperatureReading": command.expectedRevision != nil
+    default: false
+    }
+  }
+
+  private nonisolated static func recordConflict(
+    _ command: PendingCommand, serverPayload: Data?, reason: String?, at date: Date, database: Database
+  ) throws {
+    let identity = try commandIdentity(command)
+    try SyncConflict.upsert {
+      SyncConflict(
+        id: SyncConflict.ID(rawValue: command.id.rawValue),
+        familyID: command.familyID,
+        entityType: identity.entityType,
+        entityID: identity.entityID,
+        commandKind: command.kind,
+        expectedRevision: command.expectedRevision,
+        localPayloadJSON: command.payloadJSON,
+        serverPayloadJSON: serverPayload,
+        reason: reason ?? "The server rejected this change.",
+        createdAt: date
+      )
+    }.execute(database)
+  }
+
+  private nonisolated static func isTombstone(_ payload: JSONValue) -> Bool {
+    guard case let .object(object) = payload, let deletedAt = object["deletedAt"] else { return false }
+    return deletedAt != .null
   }
 
   private nonisolated static func ingest(_ record: AuthoritativeRecord, database: Database) throws {
@@ -713,6 +799,8 @@ public actor SyncCoordinator {
       }
       guard let localEnd = local.endedAt, let serverEnd = server.endedAt else { return .requiresUser }
       guard localEnd < serverEnd else { return .serverWins }
+      // An end before the server's start is not this session's wake; never send an empty interval.
+      guard localEnd > server.startedAt else { return .requiresUser }
       let merged = SleepCommandPayload(
         id: server.id,
         childID: server.childID,

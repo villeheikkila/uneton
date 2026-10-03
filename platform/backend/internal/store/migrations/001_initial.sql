@@ -57,8 +57,13 @@ create table sleep_sessions (
   id text primary key not null,
   family_id text not null references families(id) on delete cascade,
   child_id text not null,
+  -- started_at/ended_at/superseded_by_id are the presented diary entry, derived
+  -- from every session's recorded interval when merging overlaps. Only the
+  -- recorded interval is caregiver intent, so a merge can always be undone.
   started_at text not null,
   ended_at text,
+  recorded_started_at text not null,
+  recorded_ended_at text,
   revision integer not null default 1,
   author_id text not null references users(id),
   source text not null default 'phone',

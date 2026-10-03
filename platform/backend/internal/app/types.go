@@ -106,6 +106,7 @@ type SyncResponse struct {
 	Snapshot              *FamilySnapshot        `json:"snapshot,omitempty"`
 	ResetRequired         bool                   `json:"resetRequired"`
 	GrowthReferencePoints []GrowthReferencePoint `json:"growthReferencePoints"`
+	JournalCutoff         *time.Time             `json:"journalCutoff,omitempty"`
 }
 
 type principal struct {

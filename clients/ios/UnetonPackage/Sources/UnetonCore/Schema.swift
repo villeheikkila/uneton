@@ -267,8 +267,13 @@ public struct PendingCommand: Identifiable, Equatable, Sendable {
   public var lastError: String?
   public var rebaseAttempt: Int
   public var sequence: Int64
+  /// A command whose target the server does not have yet (another device's replay
+  /// may still create it) waits until the family cursor passes this value.
+  public var deferredAtCursor: Int64?
+  public var deferredSince: Date?
+  public var deferrals: Int
 
-  public init(id: ID, familyID: Family.ID, kind: String, expectedRevision: Int? = nil, payloadJSON: Data, createdAt: Date, lastError: String? = nil, rebaseAttempt: Int = 0, sequence: Int64 = 0) {
+  public init(id: ID, familyID: Family.ID, kind: String, expectedRevision: Int? = nil, payloadJSON: Data, createdAt: Date, lastError: String? = nil, rebaseAttempt: Int = 0, sequence: Int64 = 0, deferredAtCursor: Int64? = nil, deferredSince: Date? = nil, deferrals: Int = 0) {
     self.id = id
     self.familyID = familyID
     self.kind = kind
@@ -278,6 +283,9 @@ public struct PendingCommand: Identifiable, Equatable, Sendable {
     self.lastError = lastError
     self.rebaseAttempt = rebaseAttempt
     self.sequence = sequence
+    self.deferredAtCursor = deferredAtCursor
+    self.deferredSince = deferredSince
+    self.deferrals = deferrals
   }
 }
 
@@ -367,14 +375,19 @@ nonisolated func uuid() -> UUID {
 }
 
 extension DependencyValues {
-  public mutating func bootstrapDatabase(inMemory: Bool = false) throws {
+  /// `path` opens a specific database file; simulations give every virtual device its own.
+  public mutating func bootstrapDatabase(inMemory: Bool = false, path: String? = nil) throws {
     var configuration = Configuration()
     configuration.prepareDatabase { database in
       database.add(function: $uuid)
     }
-    let database: any DatabaseWriter = inMemory
-      ? try DatabaseQueue(configuration: configuration)
-      : try SQLiteData.defaultDatabase(configuration: configuration)
+    let database: any DatabaseWriter = if let path {
+      try DatabaseQueue(path: path, configuration: configuration)
+    } else if inMemory {
+      try DatabaseQueue(configuration: configuration)
+    } else {
+      try SQLiteData.defaultDatabase(configuration: configuration)
+    }
     var migrator = DatabaseMigrator()
     #if DEBUG
       migrator.eraseDatabaseOnSchemaChange = true
@@ -590,17 +603,23 @@ extension DependencyValues {
     migrator.registerMigration("Order the durable command journal") { database in
       try #sql("ALTER TABLE pendingCommands ADD COLUMN sequence INTEGER NOT NULL DEFAULT 0").execute(database)
       try #sql("ALTER TABLE acknowledgedCommands ADD COLUMN sequence INTEGER NOT NULL DEFAULT 0").execute(database)
-      let pending = try PendingCommand.fetchAll(database)
-      let acknowledged = try AcknowledgedCommand.fetchAll(database)
-      let identities = (pending.map { ($0.id, $0.createdAt) } + acknowledged.map { ($0.id, $0.createdAt) })
-        .sorted { ($0.1, $0.0.uuidString) < ($1.1, $1.0.uuidString) }
-      for (index, identity) in identities.enumerated() {
-        let sequence = Int64(index + 1)
-        try PendingCommand.find(identity.0).update { $0.sequence = sequence }.execute(database)
-        try AcknowledgedCommand.find(identity.0).update { $0.sequence = sequence }.execute(database)
+      // Plain SQL: model queries would select columns that later migrations add.
+      for table in ["pendingCommands", "acknowledgedCommands"] {
+        try #sql("""
+          WITH ordered AS (
+            SELECT id, ROW_NUMBER() OVER (ORDER BY createdAt, id) AS position
+            FROM (SELECT id, createdAt FROM pendingCommands UNION ALL SELECT id, createdAt FROM acknowledgedCommands)
+          )
+          UPDATE \(raw: table) SET sequence = (SELECT position FROM ordered WHERE ordered.id = \(raw: table).id)
+          """).execute(database)
       }
       try #sql("CREATE INDEX index_pendingCommands_on_sequence ON pendingCommands(sequence)").execute(database)
       try #sql("CREATE INDEX index_acknowledgedCommands_on_sequence ON acknowledgedCommands(sequence)").execute(database)
+    }
+    migrator.registerMigration("Defer commands whose target is not on the server yet") { database in
+      try #sql("ALTER TABLE pendingCommands ADD COLUMN deferredAtCursor INTEGER").execute(database)
+      try #sql("ALTER TABLE pendingCommands ADD COLUMN deferredSince TEXT").execute(database)
+      try #sql("ALTER TABLE pendingCommands ADD COLUMN deferrals INTEGER NOT NULL DEFAULT 0").execute(database)
     }
     try migrator.migrate(database)
     defaultDatabase = database

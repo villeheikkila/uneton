@@ -13,7 +13,7 @@ See [`../architecture.md`](../architecture.md) for the complete client/server li
 - An accepted result without its canonical payload cannot remove a pending command.
 - `WatchFamily` is an invalidation hint; only `Sync` transfers durable state.
 - A generation mismatch or cursor rollback returns a full snapshot before any new command is evaluated.
-- Clients retain accepted commands so an acknowledged mutation can be replayed after a restored older database.
+- Clients retain accepted commands so an acknowledged mutation can be replayed after a restored older database. They drop entries acknowledged before the server's `journal_retention_cutoff`, which only non-reset responses carry; that window must exceed backup retention.
 - Events may be compacted only behind a durable family snapshot; a stale cursor receives that snapshot plus later events.
 
 The authenticated device comes from the access token, not a duplicate Sync field. Keep behavior tests around retries, conflicts, pagination, reconnects, and two-caregiver ordering, and keep the load client aligned with the Apple client command sequence.

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 	_ "time/tzdata"
 
@@ -211,14 +212,22 @@ func (s *Server) synchronize(ctx context.Context, familyID, userID string, reque
 		s.broker.publish(familyID, committedCursor)
 	}
 	s.pruneSentDeliveries(ctx, s.store.Queries)
-	return s.syncResponse(ctx, familyID, results, events, nextCursor, hasMore, snapshot), nil
+	response := s.syncResponse(ctx, familyID, results, events, nextCursor, hasMore, snapshot)
+	cutoff := response.ServerTime.Add(-s.journalRetention)
+	response.JournalCutoff = &cutoff
+	return response, nil
 }
 
 func (s *Server) syncResponse(ctx context.Context, familyID string, results []CommandResult, events []Event, nextCursor int64, hasMore bool, snapshot *FamilySnapshot) SyncResponse {
 	response := SyncResponse{
 		CommandResults: results, Events: events, NextCursor: nextCursor, HasMore: hasMore, ServerTime: s.now().UTC(), Generation: s.store.SyncGeneration, Snapshot: snapshot,
-		SleepForecast: s.sleepForecast(ctx, familyID),
 	}
+	// A client keeps only the last page's forecast and reference data, so
+	// intermediate pages of a catch-up skip both.
+	if hasMore {
+		return response
+	}
+	response.SleepForecast = s.sleepForecast(ctx, familyID)
 	if response.SleepForecast != nil {
 		response.NextSleepEstimate = response.SleepForecast.NextSleepEstimate
 	}
@@ -275,6 +284,15 @@ func (s *Server) applyCommand(ctx context.Context, tx *sql.Tx, familyID, userID,
 		var result CommandResult
 		if json.Unmarshal(prior, &result) != nil {
 			return CommandResult{}, errors.New("invalid stored command")
+		}
+		if result.Status != "accepted" {
+			// The decision stays stored, but the entity it names may exist now (for
+			// example after another device's replay into a restored database). Send
+			// it as a fresh rejection would, so the client rebases instead of
+			// waiting for a target that is already there.
+			if entityID, payload := currentCommandEntity(ctx, tx, familyID, command); payload != nil {
+				result.EntityID, result.Payload = entityID, payload
+			}
 		}
 		return result, nil
 	}
@@ -419,6 +437,9 @@ func (s *Server) deleteChild(ctx context.Context, tx *sql.Tx, familyID string, c
 	return CommandResult{ID: command.ID, Status: "accepted", EntityID: payload.ID, Payload: encoded}, err
 }
 
+// duplicateStartWindow bounds how far apart two starts of the same sleep can be.
+const duplicateStartWindow = 15 * time.Minute
+
 func (s *Server) startSleep(ctx context.Context, tx *sql.Tx, familyID, userID, deviceID string, command Command) (CommandResult, error) {
 	var payload sleepPayload
 	if json.Unmarshal(command.Payload, &payload) != nil || payload.ID == "" || payload.ChildID == "" || payload.StartedAt.IsZero() {
@@ -432,23 +453,50 @@ func (s *Server) startSleep(ctx context.Context, tx *sql.Tx, familyID, userID, d
 	if _, err := q.ChildRevision(ctx, storedb.ChildRevisionParams{ID: payload.ChildID, FamilyID: familyID}); err != nil {
 		return CommandResult{ID: command.ID}, errors.New("child not found")
 	}
-	activeID, err := q.ActiveSleepForChild(ctx, storedb.ActiveSleepForChildParams{FamilyID: familyID, ChildID: payload.ChildID})
+	now := formatTime(s.now().UTC())
+	duplicate, err := q.DuplicateStartCandidate(ctx, storedb.DuplicateStartCandidateParams{
+		FamilyID: familyID, ChildID: payload.ChildID, StartedAt: formatTime(payload.StartedAt),
+		WindowStart: formatTime(payload.StartedAt.Add(-duplicateStartWindow)), WindowEnd: formatTime(payload.StartedAt.Add(duplicateStartWindow)),
+	})
 	if err == nil {
-		encoded, _, readErr := sleepJSON(ctx, tx, familyID, activeID)
-		return CommandResult{ID: command.ID, Status: "accepted", EntityID: activeID, Payload: encoded}, readErr
-	}
-	if !errors.Is(err, sql.ErrNoRows) {
+		// Two caregivers tapping start for the same sleep share one session. Map
+		// onto the entry the diary presents, so the alias names a visible session.
+		encoded, _, readErr := sleepJSON(ctx, tx, familyID, duplicate.PresentedID)
+		return CommandResult{ID: command.ID, Status: "accepted", EntityID: duplicate.PresentedID, Payload: encoded}, readErr
+	} else if !errors.Is(err, sql.ErrNoRows) {
 		return CommandResult{ID: command.ID}, err
 	}
-	now := formatTime(s.now().UTC())
+	// A later start is a new sleep; the presentation shows the active one ended
+	// at this start until its own end arrives.
+	activeID, err := q.ActiveSleepForChild(ctx, storedb.ActiveSleepForChildParams{FamilyID: familyID, ChildID: payload.ChildID})
+	if errors.Is(err, sql.ErrNoRows) {
+		activeID = ""
+	} else if err != nil {
+		return CommandResult{ID: command.ID}, err
+	}
 	err = q.CreateActiveSleep(ctx, storedb.CreateActiveSleepParams{ID: payload.ID, FamilyID: familyID, ChildID: payload.ChildID, StartedAt: formatTime(payload.StartedAt), AuthorID: userID, Source: payload.Source, StartCondition: payload.StartCondition, SleepLocation: payload.SleepLocation, EndCondition: payload.EndCondition, WakeMood: payload.WakeMood, WakeReason: payload.WakeReason, CaregiverIntervened: nullableBool(payload.CaregiverIntervened), UpdatedAt: now})
 	if err != nil {
 		return CommandResult{ID: command.ID}, err
 	}
-	encoded, revision, err := sleepJSON(ctx, tx, familyID, payload.ID)
-	if err == nil {
-		err = appendEvent(ctx, q, familyID, "sleepSession", payload.ID, "upsert", revision, encoded, now)
+	if err := s.presentSleeps(ctx, tx, familyID, payload.ChildID, payload.ID); err != nil {
+		return CommandResult{ID: command.ID}, err
 	}
+	if activeID != "" {
+		previous, readErr := q.SleepRecord(ctx, storedb.SleepRecordParams{ID: activeID, FamilyID: familyID})
+		if readErr != nil {
+			return CommandResult{ID: command.ID}, readErr
+		}
+		if previous.EndedAt.Valid {
+			ended, _, err := sleepJSON(ctx, tx, familyID, activeID)
+			if err == nil {
+				err = queueActivityDelivery(ctx, q, familyID, "activityEnd", deviceID, ended, s.now().UTC())
+			}
+			if err != nil {
+				return CommandResult{ID: command.ID}, err
+			}
+		}
+	}
+	encoded, _, err := sleepJSON(ctx, tx, familyID, payload.ID)
 	if err == nil {
 		err = queueActivityDelivery(ctx, q, familyID, "activityStart", deviceID, encoded, s.now().UTC())
 	}
@@ -462,36 +510,41 @@ func (s *Server) endSleep(ctx context.Context, tx *sql.Tx, familyID, deviceID st
 	}
 	q := s.store.Queries.WithTx(tx)
 	normalizeSleepContext(&payload)
-	var id, started string
-	var revision int64
-	if payload.ID == "" {
+	id := payload.ID
+	if id == "" {
 		active, err := q.ActiveSleepForFamily(ctx, familyID)
 		if err != nil {
 			return CommandResult{ID: command.ID}, errors.New("active sleep not found")
 		}
-		id, started, revision = active.ID, active.StartedAt, active.Revision
-	} else {
-		active, err := q.ActiveSleepByID(ctx, storedb.ActiveSleepByIDParams{FamilyID: familyID, ID: payload.ID})
-		if err != nil {
-			return CommandResult{ID: command.ID}, errors.New("active sleep not found")
-		}
-		id, started, revision = active.ID, active.StartedAt, active.Revision
+		id = active.ID
 	}
-	startedAt, _ := parseTime(started)
+	// The recorded sleep, not its presentation: a later sleep may already show
+	// it ended, or a merge may fold it into another session, and its own end
+	// still belongs to it.
+	active, err := q.RecordedActiveSleep(ctx, storedb.RecordedActiveSleepParams{FamilyID: familyID, ID: id})
+	if err != nil {
+		return CommandResult{ID: command.ID}, errors.New("active sleep not found")
+	}
+	startedAt, _ := parseTime(active.RecordedStartedAt)
 	if !payload.EndedAt.After(startedAt) {
 		return CommandResult{ID: command.ID}, errors.New("end must be after start")
 	}
-	if command.ExpectedRevision == nil || *command.ExpectedRevision != int(revision) {
+	if command.ExpectedRevision == nil || *command.ExpectedRevision != int(active.Revision) {
 		return CommandResult{ID: command.ID}, errors.New("stale revision")
 	}
 	now := formatTime(s.now().UTC())
 	if err := q.EndSleep(ctx, storedb.EndSleepParams{EndedAt: nullableString(payload.EndedAt), EndCondition: payload.EndCondition, WakeMood: payload.WakeMood, WakeReason: payload.WakeReason, CaregiverIntervened: nullableBool(payload.CaregiverIntervened), UpdatedAt: now, ID: id, FamilyID: familyID}); err != nil {
 		return CommandResult{ID: command.ID}, err
 	}
-	encoded, currentRevision, err := sleepJSON(ctx, tx, familyID, id)
-	if err == nil {
-		err = appendEvent(ctx, q, familyID, "sleepSession", id, "upsert", currentRevision, encoded, now)
+	record, err := q.SleepRecord(ctx, storedb.SleepRecordParams{ID: id, FamilyID: familyID})
+	if err != nil {
+		return CommandResult{ID: command.ID}, err
 	}
+	// A timer started offline can cover a sleep another caregiver logged by hand.
+	if err := s.presentSleeps(ctx, tx, familyID, record.ChildID, id); err != nil {
+		return CommandResult{ID: command.ID}, err
+	}
+	encoded, _, err := sleepJSON(ctx, tx, familyID, id)
 	if err == nil {
 		err = queueActivityDelivery(ctx, q, familyID, "activityEnd", deviceID, encoded, s.now().UTC())
 	}
@@ -532,13 +585,10 @@ func (s *Server) upsertSleep(ctx context.Context, tx *sql.Tx, familyID, userID s
 	if err != nil {
 		return CommandResult{ID: command.ID}, err
 	}
-	if err := s.mergeOverlaps(ctx, tx, familyID, payload.ChildID); err != nil {
+	if err := s.presentSleeps(ctx, tx, familyID, payload.ChildID, payload.ID); err != nil {
 		return CommandResult{ID: command.ID}, err
 	}
-	encoded, currentRevision, err := sleepJSON(ctx, tx, familyID, payload.ID)
-	if err == nil {
-		err = appendEvent(ctx, q, familyID, "sleepSession", payload.ID, "upsert", currentRevision, encoded, now)
-	}
+	encoded, _, err := sleepJSON(ctx, tx, familyID, payload.ID)
 	return CommandResult{ID: command.ID, Status: "accepted", EntityID: payload.ID, Payload: encoded}, err
 }
 
@@ -557,19 +607,28 @@ func (s *Server) deleteSleep(ctx context.Context, tx *sql.Tx, familyID string, c
 	if command.ExpectedRevision == nil || *command.ExpectedRevision != int(revision) {
 		return CommandResult{ID: command.ID}, errors.New("stale revision")
 	}
-	now := formatTime(s.now().UTC())
-	revision++
-	if err := q.DeleteSleep(ctx, storedb.DeleteSleepParams{DeletedAt: nullString(now), Revision: revision, UpdatedAt: now, ID: payload.ID}); err != nil {
-		return CommandResult{ID: command.ID}, err
-	}
-	encoded, _, err := sleepJSON(ctx, tx, familyID, payload.ID)
+	record, err := q.SleepRecord(ctx, storedb.SleepRecordParams{ID: payload.ID, FamilyID: familyID})
 	if err != nil {
 		return CommandResult{ID: command.ID}, err
 	}
-	if err := appendEvent(ctx, q, familyID, "sleepSession", payload.ID, "delete", int(revision), encoded, now); err != nil {
+	now := formatTime(s.now().UTC())
+	if err := q.DeleteSleep(ctx, storedb.DeleteSleepParams{DeletedAt: nullString(now), Revision: revision + 1, UpdatedAt: now, ID: payload.ID}); err != nil {
 		return CommandResult{ID: command.ID}, err
 	}
-	return CommandResult{ID: command.ID, Status: "accepted", EntityID: payload.ID, Payload: encoded}, nil
+	deleted, deletedRevision, err := sleepJSON(ctx, tx, familyID, payload.ID)
+	if err != nil {
+		return CommandResult{ID: command.ID}, err
+	}
+	if err := appendEvent(ctx, q, familyID, "sleepSession", payload.ID, "delete", deletedRevision, deleted, now); err != nil {
+		return CommandResult{ID: command.ID}, err
+	}
+	// Only the named session goes. Sessions it presented reappear, and one it
+	// presented as ending an earlier unfinished sleep no longer ends it.
+	if err := s.presentSleeps(ctx, tx, familyID, record.ChildID, ""); err != nil {
+		return CommandResult{ID: command.ID}, err
+	}
+	encoded, _, err := sleepJSON(ctx, tx, familyID, payload.ID)
+	return CommandResult{ID: command.ID, Status: "accepted", EntityID: payload.ID, Payload: encoded}, err
 }
 
 func (s *Server) upsertGrowthMeasurement(ctx context.Context, tx *sql.Tx, familyID string, command Command) (CommandResult, error) {
@@ -696,82 +755,104 @@ func (s *Server) deleteTemperatureReading(ctx context.Context, tx *sql.Tx, famil
 	return CommandResult{ID: command.ID, Status: "accepted", EntityID: payload.ID, Payload: encoded}, nil
 }
 
-func (s *Server) mergeOverlaps(ctx context.Context, tx *sql.Tx, familyID, childID string) error {
+// presentSleeps derives what the diary shows from every session's recorded
+// interval, and writes and announces only rows whose presentation changed
+// (plus touched, the row the caller just wrote). Overlapping or near-duplicate
+// sessions form a run; the earliest is presented with the run's latest end and
+// the others are hidden behind it. An unfinished session is presented as ended
+// where a sleep starting well after it begins. Because nothing here edits a
+// recorded interval, correcting, deleting, or replaying any session reshapes
+// the presentation instead of losing a sleep a merge once absorbed.
+func (s *Server) presentSleeps(ctx context.Context, tx *sql.Tx, familyID, childID, touched string) error {
 	q := s.store.Queries.WithTx(tx)
 	rows, err := q.SleepIntervals(ctx, storedb.SleepIntervalsParams{FamilyID: familyID, ChildID: childID})
 	if err != nil {
 		return err
 	}
-	type interval struct {
-		id    string
-		start time.Time
-		end   *time.Time
+	type presentation struct {
+		start      time.Time
+		end        *time.Time
+		supersedes *string
 	}
-	values := make([]interval, 0, len(rows))
-	for _, row := range rows {
-		value := interval{id: row.ID}
-		value.start, _ = parseTime(row.StartedAt)
-		if row.EndedAt.Valid {
-			parsed, _ := parseTime(row.EndedAt.String)
-			value.end = &parsed
+	starts := make([]time.Time, len(rows))
+	ends := make([]*time.Time, len(rows))
+	for index, row := range rows {
+		starts[index], _ = parseTime(row.RecordedStartedAt)
+		if row.RecordedEndedAt.Valid {
+			parsed, _ := parseTime(row.RecordedEndedAt.String)
+			ends[index] = &parsed
 		}
-		values = append(values, value)
 	}
-	// Rows are ordered by start then id, so the first row of each overlapping run
-	// is canonical. The run's merged interval is carried forward: comparing only
-	// adjacent rows would miss a later row that overlaps an earlier, longer one,
-	// and could merge into a row that was already superseded in this pass.
-	flush := func(canonical interval, duplicates []string) error {
-		if len(duplicates) == 0 {
-			return nil
+	desired := make([]presentation, len(rows))
+	for index := 0; index < len(rows); {
+		first := index
+		merged, presented := ends[index], ends[index]
+		previousStart := starts[index]
+		group := []int{index}
+		next := index + 1
+		for ; next < len(rows); next++ {
+			if merged == nil && starts[next].After(starts[first].Add(duplicateStartWindow)) {
+				derived := starts[next]
+				presented = &derived
+				break
+			}
+			near := starts[next].Sub(previousStart) <= 2*time.Minute
+			// Touching intervals are separate sleeps.
+			overlap := merged == nil || starts[next].Before(*merged)
+			if !near && !overlap {
+				break
+			}
+			group = append(group, next)
+			previousStart = starts[next]
+			if merged != nil && (ends[next] == nil || ends[next].After(*merged)) {
+				merged = ends[next]
+			}
+			presented = merged
 		}
-		now := formatTime(s.now().UTC())
-		if err := q.MergeSleep(ctx, storedb.MergeSleepParams{StartedAt: formatTime(canonical.start), EndedAt: nullableString(canonical.end), UpdatedAt: now, ID: canonical.id}); err != nil {
-			return err
+		// An unfinished session represents a run that is still running, so the
+		// wake a caregiver taps on the presented entry reaches a recorded sleep
+		// that can take it. Otherwise the earliest session represents the run.
+		canonical := first
+		for _, member := range group {
+			if ends[member] == nil {
+				canonical = member
+				break
+			}
 		}
-		canonicalJSON, canonicalRevision, err := sleepJSON(ctx, tx, familyID, canonical.id)
-		if err != nil {
-			return err
+		canonicalID := rows[canonical].ID
+		for _, member := range group {
+			if member != canonical {
+				desired[member] = presentation{start: starts[member], end: ends[member], supersedes: &canonicalID}
+			}
 		}
-		if err := appendEvent(ctx, q, familyID, "sleepSession", canonical.id, "upsert", canonicalRevision, canonicalJSON, now); err != nil {
-			return err
+		desired[canonical] = presentation{start: starts[first], end: presented}
+		index = next
+	}
+	now := formatTime(s.now().UTC())
+	for index, row := range rows {
+		want := desired[index]
+		wantEnd := nullableString(want.end)
+		wantSuperseded := sql.NullString{}
+		if want.supersedes != nil {
+			wantSuperseded = nullString(*want.supersedes)
 		}
-		for _, duplicateID := range duplicates {
-			if err := q.SupersedeSleep(ctx, storedb.SupersedeSleepParams{SupersededByID: nullString(canonical.id), UpdatedAt: now, ID: duplicateID}); err != nil {
+		changed := row.StartedAt != formatTime(want.start) || row.EndedAt != wantEnd || row.SupersededByID != wantSuperseded
+		if changed {
+			if err := q.PresentSleep(ctx, storedb.PresentSleepParams{StartedAt: formatTime(want.start), EndedAt: wantEnd, SupersededByID: wantSuperseded, UpdatedAt: now, ID: row.ID, FamilyID: familyID}); err != nil {
 				return err
 			}
-			duplicateJSON, duplicateRevision, err := sleepJSON(ctx, tx, familyID, duplicateID)
+		}
+		if changed || row.ID == touched {
+			encoded, revision, err := sleepJSON(ctx, tx, familyID, row.ID)
 			if err != nil {
 				return err
 			}
-			if err := appendEvent(ctx, q, familyID, "sleepSession", duplicateID, "upsert", duplicateRevision, duplicateJSON, now); err != nil {
+			if err := appendEvent(ctx, q, familyID, "sleepSession", row.ID, "upsert", revision, encoded, now); err != nil {
 				return err
 			}
 		}
-		return nil
 	}
-	if len(values) == 0 {
-		return nil
-	}
-	canonical, previousStart := values[0], values[0].start
-	var duplicates []string
-	for _, next := range values[1:] {
-		near := next.start.Sub(previousStart) <= 2*time.Minute
-		overlap := canonical.end == nil || !next.start.After(*canonical.end)
-		previousStart = next.start
-		if !near && !overlap {
-			if err := flush(canonical, duplicates); err != nil {
-				return err
-			}
-			canonical, duplicates = next, nil
-			continue
-		}
-		if canonical.end != nil && (next.end == nil || next.end.After(*canonical.end)) {
-			canonical.end = next.end
-		}
-		duplicates = append(duplicates, next.id)
-	}
-	return flush(canonical, duplicates)
+	return nil
 }
 
 func childJSON(ctx context.Context, tx *sql.Tx, familyID, id string) (json.RawMessage, int, error) {
@@ -950,7 +1031,7 @@ func (s *Server) sleepForecastForChild(ctx context.Context, q *storedb.Queries, 
 		value := int(child.ManualIntervalMinutes.Int64)
 		manualMinutes = &value
 	}
-	location, err := time.LoadLocation(child.TimeZone)
+	location, err := cachedLocation(child.TimeZone)
 	if err != nil {
 		return nil
 	}
@@ -996,6 +1077,22 @@ func (s *Server) sleepForecastForChild(ctx context.Context, q *storedb.Queries, 
 	value := predictionFromEstimate(estimate)
 	forecast.NextSleepEstimate = &value
 	return forecast
+}
+
+var locations sync.Map
+
+// cachedLocation avoids re-reading zoneinfo on every forecast; a family's
+// child time zone rarely changes and *time.Location is immutable.
+func cachedLocation(name string) (*time.Location, error) {
+	if location, ok := locations.Load(name); ok {
+		return location.(*time.Location), nil
+	}
+	location, err := time.LoadLocation(name)
+	if err != nil {
+		return nil, err
+	}
+	locations.Store(name, location)
+	return location, nil
 }
 
 func predictionFromEstimate(estimate sweetspot.Estimate) Prediction {

@@ -11,11 +11,11 @@ where c.id=sqlc.arg(child_id)
 
 -- name: ImportSleep :execrows
 insert into sleep_sessions(
-  id, family_id, child_id, started_at, ended_at, revision,
+  id, family_id, child_id, started_at, ended_at, recorded_started_at, recorded_ended_at, revision,
   author_id, source, updated_at
 ) values (
   sqlc.arg(id), sqlc.arg(family_id), sqlc.arg(child_id),
-  sqlc.arg(started_at), sqlc.arg(ended_at), 1,
+  sqlc.arg(started_at), sqlc.arg(ended_at), sqlc.arg(started_at), sqlc.arg(ended_at), 1,
   sqlc.arg(author_id), 'history_import', sqlc.arg(updated_at)
 )
 on conflict(id) do nothing;

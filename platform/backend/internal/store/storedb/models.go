@@ -151,6 +151,8 @@ type SleepSession struct {
 	ChildID             string         `json:"child_id"`
 	StartedAt           string         `json:"started_at"`
 	EndedAt             sql.NullString `json:"ended_at"`
+	RecordedStartedAt   string         `json:"recorded_started_at"`
+	RecordedEndedAt     sql.NullString `json:"recorded_ended_at"`
 	Revision            int64          `json:"revision"`
 	AuthorID            string         `json:"author_id"`
 	Source              string         `json:"source"`

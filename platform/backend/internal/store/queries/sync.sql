@@ -77,23 +77,37 @@ where family_id=sqlc.arg(family_id)
   and superseded_by_id is null
 order by started_at limit 1;
 
--- name: ActiveSleepByID :one
-select id, started_at, revision from sleep_sessions
+-- An unfinished recorded sleep can be ended even while the presentation shows
+-- it ended by a later sleep or folded into another session.
+-- name: RecordedActiveSleep :one
+select id, recorded_started_at, revision from sleep_sessions
 where family_id=sqlc.arg(family_id)
   and id=sqlc.arg(id)
-  and ended_at is null
+  and recorded_ended_at is null
+  and deleted_at is null;
+
+-- A second tap for the same sleep: a session starting within the duplicate
+-- window that had not ended by the new start, whether or not it has ended since
+-- (after a restore its end can be replayed before the duplicate start).
+-- name: DuplicateStartCandidate :one
+select id, coalesce(superseded_by_id, id) as presented_id from sleep_sessions
+where family_id=sqlc.arg(family_id)
+  and child_id=sqlc.arg(child_id)
   and deleted_at is null
-  and superseded_by_id is null
-order by started_at limit 1;
+  and recorded_started_at >= cast(sqlc.arg(window_start) as text)
+  and recorded_started_at <= cast(sqlc.arg(window_end) as text)
+  and (recorded_ended_at is null or recorded_ended_at > cast(sqlc.arg(started_at) as text))
+order by recorded_started_at, id
+limit 1;
 
 -- name: CreateActiveSleep :exec
 insert into sleep_sessions(
-  id, family_id, child_id, started_at, ended_at, revision,
+  id, family_id, child_id, started_at, ended_at, recorded_started_at, recorded_ended_at, revision,
   author_id, source, start_condition, sleep_location, end_condition,
   wake_mood, wake_reason, caregiver_intervened, updated_at
 ) values (
   sqlc.arg(id), sqlc.arg(family_id), sqlc.arg(child_id),
-  sqlc.arg(started_at), null, 1, sqlc.arg(author_id),
+  sqlc.arg(started_at), null, sqlc.arg(started_at), null, 1, sqlc.arg(author_id),
   sqlc.arg(source), sqlc.arg(start_condition), sqlc.arg(sleep_location),
   sqlc.arg(end_condition), sqlc.arg(wake_mood), sqlc.arg(wake_reason),
   sqlc.narg(caregiver_intervened), sqlc.arg(updated_at)
@@ -101,12 +115,12 @@ insert into sleep_sessions(
 
 -- name: CreateSleep :exec
 insert into sleep_sessions(
-  id, family_id, child_id, started_at, ended_at, revision,
+  id, family_id, child_id, started_at, ended_at, recorded_started_at, recorded_ended_at, revision,
   author_id, source, start_condition, sleep_location, end_condition,
   wake_mood, wake_reason, caregiver_intervened, updated_at
 ) values (
   sqlc.arg(id), sqlc.arg(family_id), sqlc.arg(child_id),
-  sqlc.arg(started_at), sqlc.narg(ended_at), 1, sqlc.arg(author_id),
+  sqlc.arg(started_at), sqlc.narg(ended_at), sqlc.arg(started_at), sqlc.narg(ended_at), 1, sqlc.arg(author_id),
   sqlc.arg(source), sqlc.arg(start_condition), sqlc.arg(sleep_location),
   sqlc.arg(end_condition), sqlc.arg(wake_mood), sqlc.arg(wake_reason),
   sqlc.narg(caregiver_intervened), sqlc.arg(updated_at)
@@ -118,6 +132,7 @@ where id=sqlc.arg(id) and family_id=sqlc.arg(family_id) and deleted_at is null;
 
 -- name: EndSleep :exec
 update sleep_sessions set
+  recorded_ended_at=sqlc.arg(ended_at),
   ended_at=sqlc.arg(ended_at),
   end_condition=sqlc.arg(end_condition),
   wake_mood=sqlc.arg(wake_mood),
@@ -129,6 +144,8 @@ where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
 
 -- name: UpdateSleep :exec
 update sleep_sessions set
+  recorded_started_at=sqlc.arg(started_at),
+  recorded_ended_at=sqlc.narg(ended_at),
   started_at=sqlc.arg(started_at),
   ended_at=sqlc.narg(ended_at),
   start_condition=sqlc.arg(start_condition),
@@ -156,27 +173,21 @@ from sleep_sessions
 where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
 
 -- name: SleepIntervals :many
-select id, started_at, ended_at from sleep_sessions
+select id, recorded_started_at, recorded_ended_at, started_at, ended_at, superseded_by_id
+from sleep_sessions
 where family_id=sqlc.arg(family_id)
   and child_id=sqlc.arg(child_id)
   and deleted_at is null
-  and superseded_by_id is null
-order by started_at, id;
+order by recorded_started_at, id;
 
--- name: MergeSleep :exec
+-- name: PresentSleep :exec
 update sleep_sessions set
   started_at=sqlc.arg(started_at),
   ended_at=sqlc.narg(ended_at),
+  superseded_by_id=sqlc.narg(superseded_by_id),
   revision=revision+1,
   updated_at=sqlc.arg(updated_at)
-where id=sqlc.arg(id);
-
--- name: SupersedeSleep :exec
-update sleep_sessions set
-  superseded_by_id=sqlc.arg(superseded_by_id),
-  revision=revision+1,
-  updated_at=sqlc.arg(updated_at)
-where id=sqlc.arg(id);
+where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
 
 -- name: CreateGrowthMeasurement :exec
 insert into growth_measurements(
@@ -266,21 +277,23 @@ select count(*) from sync_events where family_id=sqlc.arg(family_id);
 delete from sync_events
 where family_id=sqlc.arg(family_id) and cursor<=sqlc.arg(cursor);
 
+-- Snapshots include tombstones: a client replaying its journal after a reset
+-- must see that a replayed create was later deleted, or it resurrects it.
 -- name: SnapshotChildIDs :many
 select id from children
-where family_id=sqlc.arg(family_id) and deleted_at is null
+where family_id=sqlc.arg(family_id)
 order by id;
 
 -- name: SnapshotSleepIDs :many
 select id from sleep_sessions
-where family_id=sqlc.arg(family_id) and deleted_at is null
+where family_id=sqlc.arg(family_id)
 order by id;
 
 -- name: SnapshotGrowthIDs :many
-select id from growth_measurements where family_id=sqlc.arg(family_id) and deleted_at is null order by id;
+select id from growth_measurements where family_id=sqlc.arg(family_id) order by id;
 
 -- name: SnapshotTemperatureIDs :many
-select id from temperature_readings where family_id=sqlc.arg(family_id) and deleted_at is null order by id;
+select id from temperature_readings where family_id=sqlc.arg(family_id) order by id;
 
 -- name: FamilySyncSnapshot :one
 select generation, cursor, entities_json, created_at

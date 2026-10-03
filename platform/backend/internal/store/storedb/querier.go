@@ -13,7 +13,6 @@ type Querier interface {
 	ActiveDeviceSession(ctx context.Context, arg ActiveDeviceSessionParams) (bool, error)
 	ActiveFamilyMemberCount(ctx context.Context, familyID string) (int64, error)
 	ActiveFamilyMembers(ctx context.Context, familyID string) ([]ActiveFamilyMembersRow, error)
-	ActiveSleepByID(ctx context.Context, arg ActiveSleepByIDParams) (ActiveSleepByIDRow, error)
 	ActiveSleepForChild(ctx context.Context, arg ActiveSleepForChildParams) (string, error)
 	ActiveSleepForFamily(ctx context.Context, familyID string) (ActiveSleepForFamilyRow, error)
 	ActiveSleepsMissingFromDevice(ctx context.Context, deviceID string) ([]ActiveSleepsMissingFromDeviceRow, error)
@@ -64,6 +63,10 @@ type Querier interface {
 	DeviceSession(ctx context.Context, id string) (DeviceSessionRow, error)
 	DueDeliveries(ctx context.Context, arg DueDeliveriesParams) ([]DueDeliveriesRow, error)
 	DueSleepReminders(ctx context.Context, now string) ([]DueSleepRemindersRow, error)
+	// A second tap for the same sleep: a session starting within the duplicate
+	// window that had not ended by the new start, whether or not it has ended since
+	// (after a restore its end can be replayed before the duplicate start).
+	DuplicateStartCandidate(ctx context.Context, arg DuplicateStartCandidateParams) (DuplicateStartCandidateRow, error)
 	EndSleep(ctx context.Context, arg EndSleepParams) error
 	ExistingGrowthMeasurementRevision(ctx context.Context, arg ExistingGrowthMeasurementRevisionParams) (int64, error)
 	ExistingSleepRevision(ctx context.Context, arg ExistingSleepRevisionParams) (int64, error)
@@ -88,16 +91,19 @@ type Querier interface {
 	MarkDeliveryFailed(ctx context.Context, arg MarkDeliveryFailedParams) error
 	MarkDeliverySending(ctx context.Context, id string) (int64, error)
 	MarkDeliverySent(ctx context.Context, id string) error
-	MergeSleep(ctx context.Context, arg MergeSleepParams) error
 	OwnedFamilyIDs(ctx context.Context, ownerID string) ([]string, error)
 	PendingFamilyInvites(ctx context.Context, arg PendingFamilyInvitesParams) ([]PendingFamilyInvitesRow, error)
 	PendingLiveActivityTokens(ctx context.Context, arg PendingLiveActivityTokensParams) (int64, error)
 	PredictionChild(ctx context.Context, familyID string) (PredictionChildRow, error)
+	PresentSleep(ctx context.Context, arg PresentSleepParams) error
 	PromoteFamilyOwner(ctx context.Context, arg PromoteFamilyOwnerParams) (int64, error)
 	QueueActivityReconciliation(ctx context.Context, arg QueueActivityReconciliationParams) error
 	QueueDelivery(ctx context.Context, arg QueueDeliveryParams) error
 	ReadEvents(ctx context.Context, arg ReadEventsParams) ([]ReadEventsRow, error)
 	RecordCommand(ctx context.Context, arg RecordCommandParams) error
+	// An unfinished recorded sleep can be ended even while the presentation shows
+	// it ended by a later sleep or folded into another session.
+	RecordedActiveSleep(ctx context.Context, arg RecordedActiveSleepParams) (RecordedActiveSleepRow, error)
 	RegisterLiveActivity(ctx context.Context, arg RegisterLiveActivityParams) error
 	ReleaseLiveActivityStart(ctx context.Context, arg ReleaseLiveActivityStartParams) error
 	ReminderAnchor(ctx context.Context, childID string) (string, error)
@@ -110,12 +116,13 @@ type Querier interface {
 	RevokePendingInvite(ctx context.Context, arg RevokePendingInviteParams) (int64, error)
 	SessionLiveActivityTokens(ctx context.Context, sessionID string) ([]SessionLiveActivityTokensRow, error)
 	SleepIntervals(ctx context.Context, arg SleepIntervalsParams) ([]SleepIntervalsRow, error)
-	SleepRecord(ctx context.Context, arg SleepRecordParams) (SleepSession, error)
+	SleepRecord(ctx context.Context, arg SleepRecordParams) (SleepRecordRow, error)
+	// Snapshots include tombstones: a client replaying its journal after a reset
+	// must see that a replayed create was later deleted, or it resurrects it.
 	SnapshotChildIDs(ctx context.Context, familyID string) ([]string, error)
 	SnapshotGrowthIDs(ctx context.Context, familyID string) ([]string, error)
 	SnapshotSleepIDs(ctx context.Context, familyID string) ([]string, error)
 	SnapshotTemperatureIDs(ctx context.Context, familyID string) ([]string, error)
-	SupersedeSleep(ctx context.Context, arg SupersedeSleepParams) error
 	SweetSpotHistory(ctx context.Context, childID string) ([]SweetSpotHistoryRow, error)
 	TemperatureReadingRecord(ctx context.Context, arg TemperatureReadingRecordParams) (TemperatureReading, error)
 	TouchDeviceSession(ctx context.Context, arg TouchDeviceSessionParams) (int64, error)

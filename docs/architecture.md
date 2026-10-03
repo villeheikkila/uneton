@@ -67,8 +67,8 @@ The local database deliberately separates server knowledge from what the user se
 
 1. `AuthoritativeRecord` stores the latest acknowledged server representation of each entity.
 2. `PendingCommand` stores unresolved local intent in a durable sequence allocated in the same transaction as insertion.
-3. `AcknowledgedCommand` retains the complete accepted command journal. It is not part of the visible projection; it exists solely to repair a server restored behind an acknowledged client.
-4. `Projection.rebuild` materializes the visible `Child`, `SleepSession`, `GrowthMeasurement`, and `TemperatureReading` diary tables, scoped by the locally stored family membership, by replaying pending intent over the authoritative base.
+3. `AcknowledgedCommand` retains accepted commands for the restorable window. It is not part of the visible projection; it exists solely to repair a server restored behind an acknowledged client. Each entry records the server time of its acknowledgement. Every non-reset `Sync` response carries `journal_retention_cutoff`, the server time minus `JournalRetention` (default seven days), and the client deletes entries acknowledged before it in the same transaction. A reset response carries no cutoff, because its journal is about to be replayed.
+4. `Projection.rebuild` and `Projection.refresh` materialize the visible `Child`, `SleepSession`, `GrowthMeasurement`, and `TemperatureReading` diary tables, scoped by the locally stored family membership, by replaying pending intent over the authoritative base.
 5. `SyncState` stores the committed family event cursor, server generation, and last synchronization time.
 6. `SyncConflict` stores a rejected intent that needs an explicit user decision.
 
@@ -139,7 +139,7 @@ The entity change, event, delivery intent, and stored command result commit toge
 
 Creation upserts omit `expected_revision`; an upsert naming a missing entity with an expected revision is rejected rather than recreating it. Deletes return the complete canonical entity with its new revision and deletion timestamp in both the result and event, using the same representation as snapshots.
 
-A rejected command is also returned deterministically. Its savepoint rolls back partial entity, event, and delivery work without preventing later commands in the batch from progressing.
+A rejected command is also returned deterministically: a retry gets the same status and error, with the entity as it is now attached, so a client whose target was created since (for example by another device's replay into a restored database) rebases instead of waiting. Its savepoint rolls back partial entity, event, and delivery work without preventing later commands in the batch from progressing.
 
 ### 4. Reconcile locally in one transaction
 
@@ -152,25 +152,37 @@ It then performs one local SQLite transaction:
 3. rebase a supported stale command once, accept the server version, or create `SyncConflict`;
 4. fold newer events into `AuthoritativeRecord` by revision;
 5. advance `SyncState.cursor` only after those writes succeed;
-6. rebuild the visible projection from authoritative records plus remaining commands.
+6. refresh the visible projection from authoritative records plus remaining commands. Local mutations and ordinary responses re-materialize only the entities they touch; a snapshot, a reset, or any child change rebuilds the family. Tests run with `Projection.verifiesIncrementalRefresh`, which compares every incremental refresh against a full rebuild.
 
 Server timestamps, canonical entity IDs, and revisions win after acknowledgement. A stored result returned for a retry may describe an older revision than the current cache or a compaction snapshot; it settles the command without rolling the entity backwards. Results and events share the same revision guard. If this local transaction fails, the old cursor and pending commands remain available for a safe retry.
 
 ### Snapshots, compaction, and restore recovery
 
-The event log is an incremental transport optimization, not the only representation of family state. The server can return a complete `FamilySnapshot` at a cursor, containing every current child, sleep-session, growth-measurement, and temperature-reading entity. A new device receives a snapshot instead of replaying years of diary events. Once a family crosses the configured event threshold, the server stores a snapshot in the same transaction and deletes events through its cursor; a device behind that point receives the snapshot plus any later events.
+The event log is an incremental transport optimization, not the only representation of family state. The server can return a complete `FamilySnapshot` at a cursor, containing every child, sleep-session, growth-measurement, and temperature-reading entity, tombstones included. The client stores a tombstone as a delete record, so the revision guard still rejects an older stored result when a reset replays the journal entry that created the entity. A new device receives a snapshot instead of replaying years of diary events. Once a family crosses the configured event threshold, the server stores a snapshot in the same transaction and deletes events through its cursor; a device behind that point receives the snapshot plus any later events.
 
 Every database lineage also has a durable `generation` sidecar. A restored database receives a new generation before it is reopened. If a client sees a generation mismatch—or defensively finds its cursor ahead of the server—it receives a reset snapshot before the server evaluates new commands. The client atomically replaces its authoritative cache, restores its accepted-command journal into the pending outbox, and replays it in original order. Commands already present in the restored database return their stored result; commands lost after the backup point apply once. This closes the otherwise irrecoverable gap between an acknowledged client and a restored older database.
+
+Snapshots bound how much history a lagging client downloads; they cannot bound the journal, because the journal covers data the restored server no longer has. The journal is bounded by backup retention instead. A restore can only reach a point inside Litestream's retention (24 hours), so a command acknowledged more than `JournalRetention` before a successful same-generation `Sync` is present in every database the operator can restore. The client only prunes on such a response: if a restore happened while it was offline, its next response is a reset, which carries no cutoff, so the entries it still needs are replayed first. `JournalRetention` must stay longer than Litestream retention plus replication lag; raise it before raising backup retention.
 
 ## Conflict model
 
 Updates and deletes carry the revision the user edited. A mismatched revision is a conflict, never an implicit last-write-wins update.
 
-Some conflicts have a bounded automatic resolution, such as one rebase against the returned server revision. Automation runs at most once. Anything ambiguous becomes a durable `SyncConflict`; the user can keep the local intent as a new command or accept the server version.
+Some conflicts have a bounded automatic resolution, such as one rebase against the returned server revision. Automation runs at most once.
 
-Duplicate active-sleep starts are a domain exception handled idempotently: the server maps the new attempt to the existing canonical session rather than creating overlapping active sessions. The client treats the local session ID as an alias: in the same reconciliation transaction it rewrites queued wake, edit, and delete commands for that session to the canonical ID and shifts their expected revisions by the canonical revision minus one. A command in the same batch that was rejected only because it named the local ID is re-queued under a new command ID. A stale wake for a session that is still active on the server retries once against the server revision.
+A rejection without a server entity, for a command that needs an existing one (a wake, an edit with an expected revision, or a delete), is deferred rather than shown as a conflict. After a restore every device replays its own journal, so one phone's wake can reach the server before another phone's replayed start recreates the session. The command stays pending and visible in its original position, is not resent until the family cursor moves past the response that rejected it, is resent under a new command ID (the server stored the rejection under the old one, and nothing was applied under it), and becomes an ordinary conflict if it is still unresolved a day (server time) after the first rejection. Anything ambiguous becomes a durable `SyncConflict`; the user can keep the local intent as a new command or accept the server version.
 
-An accepted sleep upsert merges every session of that child that overlaps or starts within two minutes of the previous one. Each overlapping run keeps its earliest session as canonical, extends it to the run's latest end, and marks the others superseded by it; the merged interval carries through the whole run, so a session that bridges two others joins all three. Updates that name a deleted or superseded entity, or that move a sleep session or growth measurement to another child, are rejected as stale and return the current server entity.
+Duplicate active-sleep starts are a domain exception handled idempotently: a start within 15 minutes (either direction) of another session's start, when that session had not ended by the new start, is mapped to the session the diary presents for it rather than creating a second one. The session may have ended since: after a restore, its end can be replayed before the other phone's duplicate tap. A start after that session's end is a new sleep, however close. The client treats the local session ID as an alias: in the same reconciliation transaction it rewrites queued wake, edit, and delete commands for that session to the canonical ID and shifts their expected revisions by the canonical revision minus one. A command in the same batch that was rejected only because it named the local ID is re-queued under a new command ID. A stale wake for a session that is still active on the server retries once against the server revision.
+
+### Recorded intervals and the presented diary
+
+Overlap handling never edits caregiver intent. Every sleep row stores its recorded interval (`recorded_started_at`, `recorded_ended_at`), which only start, wake, and edit commands change. The presented interval and `superseded_by_id`, which events, snapshots, and clients see, are derived by `presentSleeps` from all of the child's recorded intervals after every sleep write:
+
+- sessions that overlap (touching intervals are separate) or start within two minutes of the previous one form a run, presented as one entry from the run's earliest start to its latest end; an unfinished session in the run represents it (so a wake reaches a session that can take it), otherwise the earliest does, and the others are presented as superseded by it;
+- an unfinished session is presented as ended where a session starting more than 15 minutes after it begins, because a new sleep implies the earlier one ended (a missed wake tap, or journals replayed per device after a restore, which loses the cross-device order);
+- only rows whose presentation changes get a new revision and event.
+
+Because the presentation is recomputed rather than stored as a merge, correcting an overlong sleep, deleting a session, or replaying commands in any order after a restore reshapes the diary instead of permanently hiding a sleep that an earlier merge absorbed. A wake applies to the recorded unfinished session even when the presentation already shows it ended or folded into another. Deleting removes only the named session; anything it was presenting reappears, so a mistaken entry that overlapped a running sleep can be removed without losing that sleep. Updates that name a deleted or superseded entity, or that move a sleep session or growth measurement to another child, are rejected as stale and return the current server entity.
 
 ## Freshness and app lifecycle
 
@@ -291,6 +303,8 @@ The highest-value tests exercise invariants rather than transport syntax:
 - restore rehearsal with generation rotation and acknowledged-command replay.
 
 The executable checks live in `UnetonCoreTests/SyncCoordinatorTests.swift` (projection, response validation, ordering, pagination, batching, and journal recovery), backend `internal/app/server_test.go` (two caregivers, retries, reconnect, compaction, and restore), `internal/app/sync_boundaries_test.go` (required revisions, idempotent rejection, and deletion payloads), and `internal/app/apns_test.go` (delivery payloads). `mise run test` runs backend, load-client, and shared Swift tests; `mise run ios:build` checks the iPhone, Watch, and widget integration. These checks do not prove real-device background scheduling or APNs delivery, which remain best-effort channels and require device validation.
+
+Two simulations compress years of family use into minutes against the real backend on a simulated clock. `mise run sim` (`platform/backend/cmd/simulate-family`) runs virtual devices that mirror `SyncCoordinator` with lost responses, restarts, restores inside the backup window, offline stretches, expired refresh tokens and a second child, and checks convergence, acknowledged intent, cursor monotonicity, stored-result stability and sleep overlap every simulated day; its short seeded runs are part of `mise run test`. `mise run sim:client` drives real `SyncCoordinator` instances, each with its own SQLite file, against `simulate-family serve`, checks that every phone and a fresh device converge, and that a restore brings back every acknowledged entity. Both print the seed of a failure.
 
 `clients/loadtest` must remain behaviorally aligned with the real two-caregiver command sequence. Capacity results are meaningful only after the correctness scenario passes.
 

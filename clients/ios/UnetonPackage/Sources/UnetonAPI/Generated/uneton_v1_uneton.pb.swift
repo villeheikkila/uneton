@@ -2108,6 +2108,18 @@ public nonisolated struct Uneton_V1_SyncResponse: @unchecked Sendable {
     set {_uniqueStorage()._growthReferencePoints = newValue}
   }
 
+  /// Commands acknowledged before this server time are contained in every
+  /// database lineage the operator can still restore, so clients may drop them
+  /// from their acknowledged-command journal. Absent on reset responses.
+  public var journalRetentionCutoff: SwiftProtobuf.Google_Protobuf_Timestamp {
+    get {_storage._journalRetentionCutoff ?? SwiftProtobuf.Google_Protobuf_Timestamp()}
+    set {_uniqueStorage()._journalRetentionCutoff = newValue}
+  }
+  /// Returns true if `journalRetentionCutoff` has been explicitly set.
+  public var hasJournalRetentionCutoff: Bool {_storage._journalRetentionCutoff != nil}
+  /// Clears the value of `journalRetentionCutoff`. Subsequent reads from it will return its default value.
+  public mutating func clearJournalRetentionCutoff() {_uniqueStorage()._journalRetentionCutoff = nil}
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -5624,7 +5636,7 @@ nonisolated extension Uneton_V1_GrowthReferencePoint: SwiftProtobuf.Message, Swi
 
 nonisolated extension Uneton_V1_SyncResponse: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SyncResponse"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}command_results\0\u{1}events\0\u{3}next_cursor\0\u{3}has_more\0\u{3}next_sleep_estimate\0\u{3}server_time\0\u{3}sleep_forecast\0\u{1}generation\0\u{1}snapshot\0\u{3}reset_required\0\u{3}growth_reference_points\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}command_results\0\u{1}events\0\u{3}next_cursor\0\u{3}has_more\0\u{3}next_sleep_estimate\0\u{3}server_time\0\u{3}sleep_forecast\0\u{1}generation\0\u{1}snapshot\0\u{3}reset_required\0\u{3}growth_reference_points\0\u{3}journal_retention_cutoff\0")
 
   fileprivate class _StorageClass {
     var _commandResults: [Uneton_V1_CommandResult] = []
@@ -5638,6 +5650,7 @@ nonisolated extension Uneton_V1_SyncResponse: SwiftProtobuf.Message, SwiftProtob
     var _snapshot: Uneton_V1_FamilySnapshot? = nil
     var _resetRequired: Bool = false
     var _growthReferencePoints: [Uneton_V1_GrowthReferencePoint] = []
+    var _journalRetentionCutoff: SwiftProtobuf.Google_Protobuf_Timestamp? = nil
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -5659,6 +5672,7 @@ nonisolated extension Uneton_V1_SyncResponse: SwiftProtobuf.Message, SwiftProtob
       _snapshot = source._snapshot
       _resetRequired = source._resetRequired
       _growthReferencePoints = source._growthReferencePoints
+      _journalRetentionCutoff = source._journalRetentionCutoff
     }
   }
 
@@ -5688,6 +5702,7 @@ nonisolated extension Uneton_V1_SyncResponse: SwiftProtobuf.Message, SwiftProtob
         case 9: try { try decoder.decodeSingularMessageField(value: &_storage._snapshot) }()
         case 10: try { try decoder.decodeSingularBoolField(value: &_storage._resetRequired) }()
         case 11: try { try decoder.decodeRepeatedMessageField(value: &_storage._growthReferencePoints) }()
+        case 12: try { try decoder.decodeSingularMessageField(value: &_storage._journalRetentionCutoff) }()
         default: break
         }
       }
@@ -5733,6 +5748,9 @@ nonisolated extension Uneton_V1_SyncResponse: SwiftProtobuf.Message, SwiftProtob
       if !_storage._growthReferencePoints.isEmpty {
         try visitor.visitRepeatedMessageField(value: _storage._growthReferencePoints, fieldNumber: 11)
       }
+      try { if let v = _storage._journalRetentionCutoff {
+        try visitor.visitSingularMessageField(value: v, fieldNumber: 12)
+      } }()
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -5753,6 +5771,7 @@ nonisolated extension Uneton_V1_SyncResponse: SwiftProtobuf.Message, SwiftProtob
         if _storage._snapshot != rhs_storage._snapshot {return false}
         if _storage._resetRequired != rhs_storage._resetRequired {return false}
         if _storage._growthReferencePoints != rhs_storage._growthReferencePoints {return false}
+        if _storage._journalRetentionCutoff != rhs_storage._journalRetentionCutoff {return false}
         return true
       }
       if !storagesAreEqual {return false}

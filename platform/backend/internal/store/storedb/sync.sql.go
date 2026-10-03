@@ -10,34 +10,6 @@ import (
 	"database/sql"
 )
 
-const activeSleepByID = `-- name: ActiveSleepByID :one
-select id, started_at, revision from sleep_sessions
-where family_id=?1
-  and id=?2
-  and ended_at is null
-  and deleted_at is null
-  and superseded_by_id is null
-order by started_at limit 1
-`
-
-type ActiveSleepByIDParams struct {
-	FamilyID string `json:"family_id"`
-	ID       string `json:"id"`
-}
-
-type ActiveSleepByIDRow struct {
-	ID        string `json:"id"`
-	StartedAt string `json:"started_at"`
-	Revision  int64  `json:"revision"`
-}
-
-func (q *Queries) ActiveSleepByID(ctx context.Context, arg ActiveSleepByIDParams) (ActiveSleepByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, activeSleepByID, arg.FamilyID, arg.ID)
-	var i ActiveSleepByIDRow
-	err := row.Scan(&i.ID, &i.StartedAt, &i.Revision)
-	return i, err
-}
-
 const activeSleepForChild = `-- name: ActiveSleepForChild :one
 select id from sleep_sessions
 where family_id=?1
@@ -185,12 +157,12 @@ func (q *Queries) CommandResult(ctx context.Context, arg CommandResultParams) ([
 
 const createActiveSleep = `-- name: CreateActiveSleep :exec
 insert into sleep_sessions(
-  id, family_id, child_id, started_at, ended_at, revision,
+  id, family_id, child_id, started_at, ended_at, recorded_started_at, recorded_ended_at, revision,
   author_id, source, start_condition, sleep_location, end_condition,
   wake_mood, wake_reason, caregiver_intervened, updated_at
 ) values (
   ?1, ?2, ?3,
-  ?4, null, 1, ?5,
+  ?4, null, ?4, null, 1, ?5,
   ?6, ?7, ?8,
   ?9, ?10, ?11,
   ?12, ?13
@@ -338,12 +310,12 @@ func (q *Queries) CreateGrowthReferencePoint(ctx context.Context, arg CreateGrow
 
 const createSleep = `-- name: CreateSleep :exec
 insert into sleep_sessions(
-  id, family_id, child_id, started_at, ended_at, revision,
+  id, family_id, child_id, started_at, ended_at, recorded_started_at, recorded_ended_at, revision,
   author_id, source, start_condition, sleep_location, end_condition,
   wake_mood, wake_reason, caregiver_intervened, updated_at
 ) values (
   ?1, ?2, ?3,
-  ?4, ?5, 1, ?6,
+  ?4, ?5, ?4, ?5, 1, ?6,
   ?7, ?8, ?9,
   ?10, ?11, ?12,
   ?13, ?14
@@ -605,8 +577,50 @@ func (q *Queries) DueDeliveries(ctx context.Context, arg DueDeliveriesParams) ([
 	return items, nil
 }
 
+const duplicateStartCandidate = `-- name: DuplicateStartCandidate :one
+select id, coalesce(superseded_by_id, id) as presented_id from sleep_sessions
+where family_id=?1
+  and child_id=?2
+  and deleted_at is null
+  and recorded_started_at >= cast(?3 as text)
+  and recorded_started_at <= cast(?4 as text)
+  and (recorded_ended_at is null or recorded_ended_at > cast(?5 as text))
+order by recorded_started_at, id
+limit 1
+`
+
+type DuplicateStartCandidateParams struct {
+	FamilyID    string `json:"family_id"`
+	ChildID     string `json:"child_id"`
+	WindowStart string `json:"window_start"`
+	WindowEnd   string `json:"window_end"`
+	StartedAt   string `json:"started_at"`
+}
+
+type DuplicateStartCandidateRow struct {
+	ID          string `json:"id"`
+	PresentedID string `json:"presented_id"`
+}
+
+// A second tap for the same sleep: a session starting within the duplicate
+// window that had not ended by the new start, whether or not it has ended since
+// (after a restore its end can be replayed before the duplicate start).
+func (q *Queries) DuplicateStartCandidate(ctx context.Context, arg DuplicateStartCandidateParams) (DuplicateStartCandidateRow, error) {
+	row := q.db.QueryRowContext(ctx, duplicateStartCandidate,
+		arg.FamilyID,
+		arg.ChildID,
+		arg.WindowStart,
+		arg.WindowEnd,
+		arg.StartedAt,
+	)
+	var i DuplicateStartCandidateRow
+	err := row.Scan(&i.ID, &i.PresentedID)
+	return i, err
+}
+
 const endSleep = `-- name: EndSleep :exec
 update sleep_sessions set
+  recorded_ended_at=?1,
   ended_at=?1,
   end_condition=?2,
   wake_mood=?3,
@@ -847,32 +861,6 @@ func (q *Queries) MarkDeliverySent(ctx context.Context, id string) error {
 	return err
 }
 
-const mergeSleep = `-- name: MergeSleep :exec
-update sleep_sessions set
-  started_at=?1,
-  ended_at=?2,
-  revision=revision+1,
-  updated_at=?3
-where id=?4
-`
-
-type MergeSleepParams struct {
-	StartedAt string         `json:"started_at"`
-	EndedAt   sql.NullString `json:"ended_at"`
-	UpdatedAt string         `json:"updated_at"`
-	ID        string         `json:"id"`
-}
-
-func (q *Queries) MergeSleep(ctx context.Context, arg MergeSleepParams) error {
-	_, err := q.db.ExecContext(ctx, mergeSleep,
-		arg.StartedAt,
-		arg.EndedAt,
-		arg.UpdatedAt,
-		arg.ID,
-	)
-	return err
-}
-
 const predictionChild = `-- name: PredictionChild :one
 select id, birth_date, prediction_mode, manual_interval_minutes, time_zone
 from children
@@ -899,6 +887,37 @@ func (q *Queries) PredictionChild(ctx context.Context, familyID string) (Predict
 		&i.TimeZone,
 	)
 	return i, err
+}
+
+const presentSleep = `-- name: PresentSleep :exec
+update sleep_sessions set
+  started_at=?1,
+  ended_at=?2,
+  superseded_by_id=?3,
+  revision=revision+1,
+  updated_at=?4
+where id=?5 and family_id=?6
+`
+
+type PresentSleepParams struct {
+	StartedAt      string         `json:"started_at"`
+	EndedAt        sql.NullString `json:"ended_at"`
+	SupersededByID sql.NullString `json:"superseded_by_id"`
+	UpdatedAt      string         `json:"updated_at"`
+	ID             string         `json:"id"`
+	FamilyID       string         `json:"family_id"`
+}
+
+func (q *Queries) PresentSleep(ctx context.Context, arg PresentSleepParams) error {
+	_, err := q.db.ExecContext(ctx, presentSleep,
+		arg.StartedAt,
+		arg.EndedAt,
+		arg.SupersededByID,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.FamilyID,
+	)
+	return err
 }
 
 const queueDelivery = `-- name: QueueDelivery :exec
@@ -1011,6 +1030,34 @@ func (q *Queries) RecordCommand(ctx context.Context, arg RecordCommandParams) er
 	return err
 }
 
+const recordedActiveSleep = `-- name: RecordedActiveSleep :one
+select id, recorded_started_at, revision from sleep_sessions
+where family_id=?1
+  and id=?2
+  and recorded_ended_at is null
+  and deleted_at is null
+`
+
+type RecordedActiveSleepParams struct {
+	FamilyID string `json:"family_id"`
+	ID       string `json:"id"`
+}
+
+type RecordedActiveSleepRow struct {
+	ID                string `json:"id"`
+	RecordedStartedAt string `json:"recorded_started_at"`
+	Revision          int64  `json:"revision"`
+}
+
+// An unfinished recorded sleep can be ended even while the presentation shows
+// it ended by a later sleep or folded into another session.
+func (q *Queries) RecordedActiveSleep(ctx context.Context, arg RecordedActiveSleepParams) (RecordedActiveSleepRow, error) {
+	row := q.db.QueryRowContext(ctx, recordedActiveSleep, arg.FamilyID, arg.ID)
+	var i RecordedActiveSleepRow
+	err := row.Scan(&i.ID, &i.RecordedStartedAt, &i.Revision)
+	return i, err
+}
+
 const resetSendingDeliveries = `-- name: ResetSendingDeliveries :exec
 update deliveries set status='failed', last_error='backend restarted during delivery'
 where status='sending'
@@ -1022,12 +1069,12 @@ func (q *Queries) ResetSendingDeliveries(ctx context.Context) error {
 }
 
 const sleepIntervals = `-- name: SleepIntervals :many
-select id, started_at, ended_at from sleep_sessions
+select id, recorded_started_at, recorded_ended_at, started_at, ended_at, superseded_by_id
+from sleep_sessions
 where family_id=?1
   and child_id=?2
   and deleted_at is null
-  and superseded_by_id is null
-order by started_at, id
+order by recorded_started_at, id
 `
 
 type SleepIntervalsParams struct {
@@ -1036,9 +1083,12 @@ type SleepIntervalsParams struct {
 }
 
 type SleepIntervalsRow struct {
-	ID        string         `json:"id"`
-	StartedAt string         `json:"started_at"`
-	EndedAt   sql.NullString `json:"ended_at"`
+	ID                string         `json:"id"`
+	RecordedStartedAt string         `json:"recorded_started_at"`
+	RecordedEndedAt   sql.NullString `json:"recorded_ended_at"`
+	StartedAt         string         `json:"started_at"`
+	EndedAt           sql.NullString `json:"ended_at"`
+	SupersededByID    sql.NullString `json:"superseded_by_id"`
 }
 
 func (q *Queries) SleepIntervals(ctx context.Context, arg SleepIntervalsParams) ([]SleepIntervalsRow, error) {
@@ -1050,7 +1100,14 @@ func (q *Queries) SleepIntervals(ctx context.Context, arg SleepIntervalsParams) 
 	items := []SleepIntervalsRow{}
 	for rows.Next() {
 		var i SleepIntervalsRow
-		if err := rows.Scan(&i.ID, &i.StartedAt, &i.EndedAt); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.RecordedStartedAt,
+			&i.RecordedEndedAt,
+			&i.StartedAt,
+			&i.EndedAt,
+			&i.SupersededByID,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -1077,9 +1134,29 @@ type SleepRecordParams struct {
 	FamilyID string `json:"family_id"`
 }
 
-func (q *Queries) SleepRecord(ctx context.Context, arg SleepRecordParams) (SleepSession, error) {
+type SleepRecordRow struct {
+	ID                  string         `json:"id"`
+	FamilyID            string         `json:"family_id"`
+	ChildID             string         `json:"child_id"`
+	StartedAt           string         `json:"started_at"`
+	EndedAt             sql.NullString `json:"ended_at"`
+	Revision            int64          `json:"revision"`
+	AuthorID            string         `json:"author_id"`
+	Source              string         `json:"source"`
+	StartCondition      string         `json:"start_condition"`
+	SleepLocation       string         `json:"sleep_location"`
+	EndCondition        string         `json:"end_condition"`
+	WakeMood            string         `json:"wake_mood"`
+	WakeReason          string         `json:"wake_reason"`
+	CaregiverIntervened sql.NullInt64  `json:"caregiver_intervened"`
+	SupersededByID      sql.NullString `json:"superseded_by_id"`
+	UpdatedAt           string         `json:"updated_at"`
+	DeletedAt           sql.NullString `json:"deleted_at"`
+}
+
+func (q *Queries) SleepRecord(ctx context.Context, arg SleepRecordParams) (SleepRecordRow, error) {
 	row := q.db.QueryRowContext(ctx, sleepRecord, arg.ID, arg.FamilyID)
-	var i SleepSession
+	var i SleepRecordRow
 	err := row.Scan(
 		&i.ID,
 		&i.FamilyID,
@@ -1104,10 +1181,12 @@ func (q *Queries) SleepRecord(ctx context.Context, arg SleepRecordParams) (Sleep
 
 const snapshotChildIDs = `-- name: SnapshotChildIDs :many
 select id from children
-where family_id=?1 and deleted_at is null
+where family_id=?1
 order by id
 `
 
+// Snapshots include tombstones: a client replaying its journal after a reset
+// must see that a replayed create was later deleted, or it resurrects it.
 func (q *Queries) SnapshotChildIDs(ctx context.Context, familyID string) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, snapshotChildIDs, familyID)
 	if err != nil {
@@ -1132,7 +1211,7 @@ func (q *Queries) SnapshotChildIDs(ctx context.Context, familyID string) ([]stri
 }
 
 const snapshotGrowthIDs = `-- name: SnapshotGrowthIDs :many
-select id from growth_measurements where family_id=?1 and deleted_at is null order by id
+select id from growth_measurements where family_id=?1 order by id
 `
 
 func (q *Queries) SnapshotGrowthIDs(ctx context.Context, familyID string) ([]string, error) {
@@ -1160,7 +1239,7 @@ func (q *Queries) SnapshotGrowthIDs(ctx context.Context, familyID string) ([]str
 
 const snapshotSleepIDs = `-- name: SnapshotSleepIDs :many
 select id from sleep_sessions
-where family_id=?1 and deleted_at is null
+where family_id=?1
 order by id
 `
 
@@ -1188,7 +1267,7 @@ func (q *Queries) SnapshotSleepIDs(ctx context.Context, familyID string) ([]stri
 }
 
 const snapshotTemperatureIDs = `-- name: SnapshotTemperatureIDs :many
-select id from temperature_readings where family_id=?1 and deleted_at is null order by id
+select id from temperature_readings where family_id=?1 order by id
 `
 
 func (q *Queries) SnapshotTemperatureIDs(ctx context.Context, familyID string) ([]string, error) {
@@ -1212,25 +1291,6 @@ func (q *Queries) SnapshotTemperatureIDs(ctx context.Context, familyID string) (
 		return nil, err
 	}
 	return items, nil
-}
-
-const supersedeSleep = `-- name: SupersedeSleep :exec
-update sleep_sessions set
-  superseded_by_id=?1,
-  revision=revision+1,
-  updated_at=?2
-where id=?3
-`
-
-type SupersedeSleepParams struct {
-	SupersededByID sql.NullString `json:"superseded_by_id"`
-	UpdatedAt      string         `json:"updated_at"`
-	ID             string         `json:"id"`
-}
-
-func (q *Queries) SupersedeSleep(ctx context.Context, arg SupersedeSleepParams) error {
-	_, err := q.db.ExecContext(ctx, supersedeSleep, arg.SupersededByID, arg.UpdatedAt, arg.ID)
-	return err
 }
 
 const sweetSpotHistory = `-- name: SweetSpotHistory :many
@@ -1396,6 +1456,8 @@ func (q *Queries) UpdateGrowthMeasurement(ctx context.Context, arg UpdateGrowthM
 
 const updateSleep = `-- name: UpdateSleep :exec
 update sleep_sessions set
+  recorded_started_at=?1,
+  recorded_ended_at=?2,
   started_at=?1,
   ended_at=?2,
   start_condition=?3,

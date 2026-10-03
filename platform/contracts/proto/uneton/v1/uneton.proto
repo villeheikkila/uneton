@@ -472,6 +472,10 @@ message SyncResponse {
   optional FamilySnapshot snapshot = 9;
   bool reset_required = 10;
   repeated GrowthReferencePoint growth_reference_points = 11;
+  // Commands acknowledged before this server time are contained in every
+  // database lineage the operator can still restore, so clients may drop them
+  // from their acknowledged-command journal. Absent on reset responses.
+  optional google.protobuf.Timestamp journal_retention_cutoff = 12;
 }
 
 message WatchFamilyRequest {

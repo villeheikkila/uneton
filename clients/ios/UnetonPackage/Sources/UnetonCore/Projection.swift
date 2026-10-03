@@ -39,6 +39,104 @@ enum Projection {
     }
   }
 
+  struct Key: Hashable, Sendable {
+    var entityType: String
+    var entityID: EntityID
+  }
+
+  /// Re-materializes only the given entities. A full rebuild rewrites every row of
+  /// the family, which grows with years of history; one tap touches one entity.
+  /// The result is identical to `rebuild`: child changes, which can hide or reveal
+  /// a whole diary, fall back to a full rebuild.
+  /// Tests and simulations set this to prove every refresh equals a full rebuild.
+  nonisolated(unsafe) public static var verifiesIncrementalRefresh = false
+
+  static func refresh(familyID: Family.ID, keys: Set<Key>, database: Database) throws {
+    try refreshIncrementally(familyID: familyID, keys: keys, database: database)
+    guard verifiesIncrementalRefresh else { return }
+    let incremental = try rows(familyID: familyID, database: database)
+    try rebuild(familyID: familyID, database: database)
+    let full = try rows(familyID: familyID, database: database)
+    guard incremental == full else {
+      throw ProjectionMismatch(description: "incremental refresh of \(keys) differs from a full rebuild:\nincremental \(incremental)\nfull \(full)")
+    }
+  }
+
+  struct ProjectionMismatch: Error, CustomStringConvertible { var description: String }
+
+  private struct Rows: Equatable {
+    var children: [Child]
+    var sleeps: [SleepSession]
+    var growth: [GrowthMeasurement]
+    var temperatures: [TemperatureReading]
+  }
+
+  private static func rows(familyID: Family.ID, database: Database) throws -> Rows {
+    Rows(
+      children: try Child.where { $0.familyID.eq(familyID) }.order(by: \.id).fetchAll(database),
+      sleeps: try SleepSession.where { $0.familyID.eq(familyID) }.order(by: \.id).fetchAll(database),
+      growth: try GrowthMeasurement.where { $0.familyID.eq(familyID) }.order(by: \.id).fetchAll(database),
+      temperatures: try TemperatureReading.where { $0.familyID.eq(familyID) }.order(by: \.id).fetchAll(database)
+    )
+  }
+
+  private static func refreshIncrementally(familyID: Family.ID, keys: Set<Key>, database: Database) throws {
+    guard !keys.isEmpty else { return }
+    let commands = try PendingCommand
+      .where { $0.familyID.eq(familyID) }
+      .order(by: \.sequence)
+      .fetchAll(database)
+    let childCommandKinds: Set<String> = ["createChild", "updateChild", "deleteChild"]
+    if keys.contains(where: { $0.entityType == "child" }) || commands.contains(where: { childCommandKinds.contains($0.kind) }) {
+      return try rebuild(familyID: familyID, database: database)
+    }
+    for key in keys {
+      switch key.entityType {
+      case "sleepSession":
+        try SleepSession.where { $0.familyID.eq(familyID) && $0.id.eq(SleepSession.ID(rawValue: key.entityID.rawValue)) }.delete().execute(database)
+      case "growthMeasurement":
+        try GrowthMeasurement.where { $0.familyID.eq(familyID) && $0.id.eq(GrowthMeasurement.ID(rawValue: key.entityID.rawValue)) }.delete().execute(database)
+      case "temperatureReading":
+        try TemperatureReading.where { $0.familyID.eq(familyID) && $0.id.eq(TemperatureReading.ID(rawValue: key.entityID.rawValue)) }.delete().execute(database)
+      default:
+        return try rebuild(familyID: familyID, database: database)
+      }
+    }
+    // With no pending child commands the projected children equal the
+    // authoritative ones, so this matches the full rebuild's child check.
+    for key in keys {
+      let recordID = AuthoritativeRecord.ID(rawValue: "\(key.entityType):\(key.entityID.uuidString)")
+      guard let record = try AuthoritativeRecord.find(recordID).fetchOne(database),
+            record.familyID == familyID, record.operation != "delete"
+      else { continue }
+      let childID: Child.ID = switch key.entityType {
+      case "sleepSession": try JSONDecoder.uneton.decode(ServerSleepPayload.self, from: record.payloadJSON).childID
+      case "growthMeasurement": try JSONDecoder.uneton.decode(ServerGrowthMeasurementPayload.self, from: record.payloadJSON).childID
+      default: try JSONDecoder.uneton.decode(ServerTemperatureReadingPayload.self, from: record.payloadJSON).childID
+      }
+      guard try Child.find(childID).fetchOne(database) != nil else { continue }
+      try applyAuthoritative(record, familyID: familyID, database: database)
+    }
+    for command in commands {
+      guard keys.contains(try key(for: command)) else { continue }
+      try applyPending(command, database: database)
+    }
+  }
+
+  static func key(for command: PendingCommand) throws -> Key {
+    let decoder = JSONDecoder.uneton
+    struct Identity: Decodable { var id: UUID }
+    let id = try decoder.decode(Identity.self, from: command.payloadJSON).id
+    let entityType = switch command.kind {
+    case "createChild", "updateChild", "deleteChild": "child"
+    case "startSleep", "endSleep", "upsertSleep", "deleteSleep": "sleepSession"
+    case "upsertGrowthMeasurement", "deleteGrowthMeasurement": "growthMeasurement"
+    case "upsertTemperatureReading", "deleteTemperatureReading": "temperatureReading"
+    default: "unknown"
+    }
+    return Key(entityType: entityType, entityID: EntityID(rawValue: id))
+  }
+
   static func applyAuthoritative(
     _ record: AuthoritativeRecord,
     familyID: Family.ID,

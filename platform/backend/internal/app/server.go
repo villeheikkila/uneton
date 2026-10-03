@@ -35,8 +35,12 @@ type Config struct {
 	StreamLifetime         time.Duration
 	SnapshotEventThreshold int
 	DeliveryRetention      time.Duration
-	LegalOperator          string
-	LegalContactEmail      string
+	// JournalRetention must exceed how far back a database restore can go
+	// (Litestream retention plus replication lag). Clients keep acknowledged
+	// commands this long so they can replay them into a restored database.
+	JournalRetention  time.Duration
+	LegalOperator     string
+	LegalContactEmail string
 }
 
 type Server struct {
@@ -54,6 +58,7 @@ type Server struct {
 	streamLifetime         time.Duration
 	snapshotEventThreshold int
 	deliveryRetention      time.Duration
+	journalRetention       time.Duration
 	legalOperator          string
 	legalContactEmail      string
 	readiness              atomic.Bool
@@ -79,13 +84,18 @@ func NewServer(config Config) *Server {
 	if config.DeliveryRetention <= 0 {
 		config.DeliveryRetention = 7 * 24 * time.Hour
 	}
+	if config.JournalRetention <= 0 {
+		// Litestream keeps 24 hours; a week leaves margin for a delayed restore.
+		config.JournalRetention = 7 * 24 * time.Hour
+	}
 	s := &Server{
 		store: config.Store, tokenSecret: config.TokenSecret, development: config.Development,
 		logger: config.Logger, now: config.Now, broker: newBroker(), mux: http.NewServeMux(),
 		streamShutdown:  make(chan struct{}),
 		streamHeartbeat: config.StreamHeartbeat, streamLifetime: config.StreamLifetime,
 		snapshotEventThreshold: config.SnapshotEventThreshold, deliveryRetention: config.DeliveryRetention,
-		legalOperator: config.LegalOperator, legalContactEmail: config.LegalContactEmail,
+		journalRetention: config.JournalRetention,
+		legalOperator:    config.LegalOperator, legalContactEmail: config.LegalContactEmail,
 	}
 	tokenKeys, err := newAppleTokenKeyring(config.Apple.TokenKeyring, config.Apple.TokenActiveKeyID, config.TokenSecret)
 	if err != nil {

@@ -710,6 +710,9 @@ func timeFromProto(value *timestamppb.Timestamp) *time.Time {
 
 func syncResponseToProto(response SyncResponse, commandKinds map[string]string) *unetonv1.SyncResponse {
 	result := &unetonv1.SyncResponse{NextCursor: response.NextCursor, HasMore: response.HasMore, ServerTime: timestamppb.New(response.ServerTime), Generation: response.Generation, ResetRequired: response.ResetRequired}
+	if response.JournalCutoff != nil {
+		result.JournalRetentionCutoff = timestamppb.New(*response.JournalCutoff)
+	}
 	for _, value := range response.CommandResults {
 		status := unetonv1.CommandStatus_COMMAND_STATUS_REJECTED
 		if value.Status == "accepted" {

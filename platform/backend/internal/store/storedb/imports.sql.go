@@ -12,11 +12,11 @@ import (
 
 const importSleep = `-- name: ImportSleep :execrows
 insert into sleep_sessions(
-  id, family_id, child_id, started_at, ended_at, revision,
+  id, family_id, child_id, started_at, ended_at, recorded_started_at, recorded_ended_at, revision,
   author_id, source, updated_at
 ) values (
   ?1, ?2, ?3,
-  ?4, ?5, 1,
+  ?4, ?5, ?4, ?5, 1,
   ?6, 'history_import', ?7
 )
 on conflict(id) do nothing

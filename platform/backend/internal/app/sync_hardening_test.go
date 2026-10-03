@@ -255,3 +255,72 @@ func TestAppleKeyCacheThrottlesUnknownKeysAndSurvivesOutages(t *testing.T) {
 		t.Fatalf("cached key unavailable during provider outage: %v", err)
 	}
 }
+
+func TestSyncTellsClientsWhichJournalEntriesAreRestoreSafe(t *testing.T) {
+	f := newHardeningFixture(t)
+	response := f.sync(t)
+	cutoff := response.GetJournalRetentionCutoff()
+	if cutoff == nil || !cutoff.AsTime().Equal(response.GetServerTime().AsTime().Add(-7*24*time.Hour)) {
+		t.Fatalf("journal cutoff = %v, server time %v", cutoff, response.GetServerTime())
+	}
+	reset := syncFamily(t, f.ctx, f.client, f.token, &unetonv1.SyncRequest{FamilyId: f.familyID, Generation: "restored-elsewhere"})
+	if !reset.GetResetRequired() || reset.GetJournalRetentionCutoff() != nil {
+		t.Fatalf("reset response must not let clients prune the journal it is about to replay: %v", reset)
+	}
+}
+
+func TestAnEarlierReplayedStartIsItsOwnSleepNotADuplicate(t *testing.T) {
+	f := newHardeningFixture(t)
+	night := time.Date(2026, time.September, 25, 21, 36, 0, 0, time.UTC)
+	nightID, napID := newID(), newID()
+	f.mustAccept(t, &unetonv1.Command{Id: newID(), Payload: &unetonv1.Command_StartSleep{StartSleep: &unetonv1.StartSleep{Sleep: sleepInput(nightID, f.childID, night, nil, "phone")}}})
+	// After a restore another phone replays the morning nap while the night is active.
+	nap := f.mustAccept(t, &unetonv1.Command{Id: newID(), Payload: &unetonv1.Command_StartSleep{StartSleep: &unetonv1.StartSleep{Sleep: sleepInput(napID, f.childID, night.Add(-14*time.Hour), nil, "phone")}}})
+	if nap.GetEntityId() != napID {
+		t.Fatalf("morning nap was mapped onto the night session %s", nap.GetEntityId())
+	}
+	napEnd := night.Add(-13 * time.Hour)
+	ended := f.mustAccept(t, &unetonv1.Command{Id: newID(), ExpectedRevision: new(nap.GetEntity().GetSleepSession().GetRevision()), Payload: &unetonv1.Command_EndSleep{EndSleep: &unetonv1.EndSleep{Id: napID, EndedAt: timestamppb.New(napEnd)}}})
+	if !ended.GetEntity().GetSleepSession().GetEndedAt().AsTime().Equal(napEnd) {
+		t.Fatalf("nap end = %v", ended.GetEntity().GetSleepSession().GetEndedAt().AsTime())
+	}
+	reset := syncFamily(t, f.ctx, f.client, f.token, &unetonv1.SyncRequest{FamilyId: f.familyID, Generation: "stale"})
+	for _, entity := range reset.GetSnapshot().GetEntities() {
+		if session := entity.GetEntity().GetSleepSession(); session.GetId() == nightID && (session.EndedAt != nil || session.SupersededById != nil) {
+			t.Fatalf("night session changed by an earlier nap: %v", session)
+		}
+	}
+}
+
+func TestDuplicateStartReplayedAfterTheSleepEndedDoesNotRestartIt(t *testing.T) {
+	f := newHardeningFixture(t)
+	start := time.Date(2028, time.July, 3, 16, 38, 0, 0, time.UTC)
+	first, duplicate, resettle := newID(), newID(), newID()
+	started := f.mustAccept(t, &unetonv1.Command{Id: newID(), Payload: &unetonv1.Command_StartSleep{StartSleep: &unetonv1.StartSleep{Sleep: sleepInput(first, f.childID, start, nil, "phone")}}})
+	end := start.Add(10 * time.Hour)
+	f.mustAccept(t, &unetonv1.Command{Id: newID(), ExpectedRevision: new(started.GetEntity().GetSleepSession().GetRevision()), Payload: &unetonv1.Command_EndSleep{EndSleep: &unetonv1.EndSleep{Id: first, EndedAt: timestamppb.New(end)}}})
+	// After a restore the other phone's duplicate tap arrives after the end.
+	mapped := f.mustAccept(t, &unetonv1.Command{Id: newID(), Payload: &unetonv1.Command_StartSleep{StartSleep: &unetonv1.StartSleep{Sleep: sleepInput(duplicate, f.childID, start.Add(20*time.Second), nil, "phone")}}})
+	if mapped.GetEntityId() != first || mapped.GetEntity().GetSleepSession().GetEndedAt() == nil {
+		t.Fatalf("duplicate start was not mapped onto the ended sleep: %v", mapped)
+	}
+	// A real new sleep after a short wake is separate even inside the window.
+	shortWake := f.mustAccept(t, upsertSleepCommand(newID(), f.childID, end.Add(time.Hour), end.Add(time.Hour+2*time.Minute), nil))
+	again := f.mustAccept(t, &unetonv1.Command{Id: newID(), Payload: &unetonv1.Command_StartSleep{StartSleep: &unetonv1.StartSleep{Sleep: sleepInput(resettle, f.childID, end.Add(time.Hour+5*time.Minute), nil, "phone")}}})
+	if again.GetEntityId() != resettle || shortWake.GetEntityId() == resettle {
+		t.Fatalf("resettle after a short wake was treated as a duplicate: %v", again)
+	}
+}
+
+func TestSimultaneousStartsForTwoChildrenStaySeparate(t *testing.T) {
+	f := newHardeningFixture(t)
+	sibling := newID()
+	f.mustAccept(t, &unetonv1.Command{Id: newID(), Payload: &unetonv1.Command_CreateChild{CreateChild: &unetonv1.CreateChild{Child: &unetonv1.ChildInput{Id: sibling, Nickname: "Sibling", BirthDate: "2027-01-01"}}}})
+	start := time.Date(2027, time.August, 28, 19, 31, 0, 0, time.UTC)
+	first, second := newID(), newID()
+	f.mustAccept(t, &unetonv1.Command{Id: newID(), Payload: &unetonv1.Command_StartSleep{StartSleep: &unetonv1.StartSleep{Sleep: sleepInput(first, f.childID, start, nil, "phone")}}})
+	result := f.mustAccept(t, &unetonv1.Command{Id: newID(), Payload: &unetonv1.Command_StartSleep{StartSleep: &unetonv1.StartSleep{Sleep: sleepInput(second, sibling, start, nil, "phone")}}})
+	if result.GetEntityId() != second || result.GetEntity().GetSleepSession().GetChildId() != sibling {
+		t.Fatalf("sibling's start was mapped onto another child's sleep: %v", result)
+	}
+}
