@@ -112,10 +112,6 @@ insert into sleep_sessions(
   sqlc.narg(caregiver_intervened), sqlc.arg(updated_at)
 );
 
--- name: SleepRevision :one
-select revision from sleep_sessions
-where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
-
 -- name: ExistingSleepRevision :one
 select revision from sleep_sessions
 where id=sqlc.arg(id) and family_id=sqlc.arg(family_id) and deleted_at is null;
@@ -191,10 +187,6 @@ insert into growth_measurements(
   sqlc.narg(weight_grams), sqlc.narg(height_millimeters), sqlc.arg(note), 1,
   sqlc.arg(updated_at)
 );
-
--- name: GrowthMeasurementRevision :one
-select revision from growth_measurements
-where id=sqlc.arg(id) and family_id=sqlc.arg(family_id);
 
 -- name: ExistingGrowthMeasurementRevision :one
 select revision from growth_measurements

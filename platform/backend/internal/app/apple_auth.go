@@ -68,10 +68,13 @@ type AppleAuthenticator struct {
 	mu            sync.Mutex
 	keys          map[string]*rsa.PublicKey
 	keysFetchedAt time.Time
-	tokenURL      string
-	keysURL       string
-	revokeURL     string
-	now           func() time.Time
+	// keysAttemptedAt throttles refetches. The server-notification endpoint
+	// is public, so an arbitrary key ID must not force a provider request.
+	keysAttemptedAt time.Time
+	tokenURL        string
+	keysURL         string
+	revokeURL       string
+	now             func() time.Time
 }
 
 func NewAppleAuthenticator(config AppleConfig) *AppleAuthenticator {
@@ -300,48 +303,62 @@ func (a *AppleAuthenticator) keyForToken(token *jwt.Token) (any, error) {
 	kid, _ := token.Header["kid"].(string)
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if a.now().Sub(a.keysFetchedAt) > time.Hour || a.keys[kid] == nil {
-		request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, a.keysURL, nil)
-		if err != nil {
+	now := a.now()
+	stale := now.Sub(a.keysFetchedAt) > time.Hour
+	if (stale || a.keys[kid] == nil) && now.Sub(a.keysAttemptedAt) >= time.Minute {
+		a.keysAttemptedAt = now
+		// Keep serving cached keys when Apple is unreachable; a failed
+		// refresh must not turn every sign-in into an error.
+		if keys, err := a.fetchKeys(); err == nil {
+			a.keys = keys
+			a.keysFetchedAt = now
+		} else if a.keys[kid] == nil {
 			return nil, err
 		}
-		response, err := a.client.Do(request)
-		if err != nil {
-			return nil, err
-		}
-		defer func() { _ = response.Body.Close() }()
-		var set struct {
-			Keys []struct {
-				Kid string `json:"kid"`
-				Kty string `json:"kty"`
-				N   string `json:"n"`
-				E   string `json:"e"`
-			} `json:"keys"`
-		}
-		if response.StatusCode != http.StatusOK || json.NewDecoder(response.Body).Decode(&set) != nil {
-			return nil, errors.New("could not fetch apple keys")
-		}
-		a.keys = make(map[string]*rsa.PublicKey)
-		for _, value := range set.Keys {
-			n, err := base64.RawURLEncoding.DecodeString(value.N)
-			if err != nil {
-				continue
-			}
-			e, err := base64.RawURLEncoding.DecodeString(value.E)
-			if err != nil {
-				continue
-			}
-			exponent := 0
-			for _, byteValue := range e {
-				exponent = exponent<<8 + int(byteValue)
-			}
-			a.keys[value.Kid] = &rsa.PublicKey{N: new(big.Int).SetBytes(n), E: exponent}
-		}
-		a.keysFetchedAt = a.now()
 	}
 	key := a.keys[kid]
 	if key == nil {
 		return nil, errors.New("apple signing key not found")
 	}
 	return key, nil
+}
+
+func (a *AppleAuthenticator) fetchKeys() (map[string]*rsa.PublicKey, error) {
+	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, a.keysURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	response, err := a.client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = response.Body.Close() }()
+	var set struct {
+		Keys []struct {
+			Kid string `json:"kid"`
+			Kty string `json:"kty"`
+			N   string `json:"n"`
+			E   string `json:"e"`
+		} `json:"keys"`
+	}
+	if response.StatusCode != http.StatusOK || json.NewDecoder(response.Body).Decode(&set) != nil {
+		return nil, errors.New("could not fetch apple keys")
+	}
+	keys := make(map[string]*rsa.PublicKey)
+	for _, value := range set.Keys {
+		n, err := base64.RawURLEncoding.DecodeString(value.N)
+		if err != nil {
+			continue
+		}
+		e, err := base64.RawURLEncoding.DecodeString(value.E)
+		if err != nil {
+			continue
+		}
+		exponent := 0
+		for _, byteValue := range e {
+			exponent = exponent<<8 + int(byteValue)
+		}
+		keys[value.Kid] = &rsa.PublicKey{N: new(big.Int).SetBytes(n), E: exponent}
+	}
+	return keys, nil
 }

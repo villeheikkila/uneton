@@ -98,7 +98,7 @@ Deployment must serve the association file directly over HTTPS on `api.uneton.ap
 
 An iPhone action creates stable entity and command UUIDs, inserts a `PendingCommand`, and rebuilds the projection in one local SQLite transaction. The UI updates immediately. Network availability is irrelevant to accepting the action.
 
-Projection replay, command batching, and acknowledged-journal restore all use the same local sequence. Timestamps and random UUIDs do not determine ordering, so equal timestamps or a clock rollback cannot reorder a start and its wake-up. The acknowledged journal retains each command’s sequence. Sequential offline edits reserve the expected revision produced by the preceding queued mutation for that entity.
+Projection replay, command batching, and acknowledged-journal restore all use the same local sequence. Timestamps and random UUIDs do not determine ordering, so equal timestamps or a clock rollback cannot reorder a start and its wake-up. The acknowledged journal retains each command’s sequence. Sequential offline edits reserve the expected revision produced by the preceding queued mutation for that entity. The reservation is read inside the enqueue transaction, so concurrent edits cannot reserve the same revision.
 
 The Watch app sends selected-child sleep and temperature intent to the paired phone through a typed `UnetonCore` Watch diary contract. The phone validates family and child identity, creates the same durable command used by its own UI, and returns the local projection. Watch replies and application-context updates are presentation snapshots only: they contain no event cursor and never apply authoritative entity state. The phone assigns a persistent, increasing version to each presentation snapshot; the Watch ignores older snapshots so a delayed reply cannot replace newer displayed state. The Watch persists its single outstanding request before sending, restores it after restart, and retries when the phone becomes reachable. Start-sleep requests carry a stable session ID that also identifies their durable command, so the phone recognizes retries through its pending and acknowledged command journals even if the visible session was later removed. Wake requests name the exact displayed session and cannot end a later one. The phone checks repeated temperature intent against its projection so an ambiguous reply does not create a duplicate reading. The Watch has no independent diary database or general command queue, so the paired iPhone must be reachable to accept an action. When the iPhone is offline from the backend, it still accepts the command durably and retries `Sync` later.
 
@@ -168,7 +168,9 @@ Updates and deletes carry the revision the user edited. A mismatched revision is
 
 Some conflicts have a bounded automatic resolution, such as one rebase against the returned server revision. Automation runs at most once. Anything ambiguous becomes a durable `SyncConflict`; the user can keep the local intent as a new command or accept the server version.
 
-Duplicate active-sleep starts are a domain exception handled idempotently: the server maps the new attempt to the existing canonical session rather than creating overlapping active sessions.
+Duplicate active-sleep starts are a domain exception handled idempotently: the server maps the new attempt to the existing canonical session rather than creating overlapping active sessions. The client treats the local session ID as an alias: in the same reconciliation transaction it rewrites queued wake, edit, and delete commands for that session to the canonical ID and shifts their expected revisions by the canonical revision minus one. A command in the same batch that was rejected only because it named the local ID is re-queued under a new command ID. A stale wake for a session that is still active on the server retries once against the server revision.
+
+An accepted sleep upsert merges every session of that child that overlaps or starts within two minutes of the previous one. Each overlapping run keeps its earliest session as canonical, extends it to the run's latest end, and marks the others superseded by it; the merged interval carries through the whole run, so a session that bridges two others joins all three. Updates that name a deleted or superseded entity, or that move a sleep session or growth measurement to another child, are rejected as stale and return the current server entity.
 
 ## Freshness and app lifecycle
 
@@ -177,7 +179,7 @@ All freshness paths converge on `Sync`:
 | Mechanism | When | Guarantee | Action |
 | --- | --- | --- | --- |
 | direct sync | launch, foreground entry, local action, pull to refresh | authoritative when successful | send commands and fetch events |
-| `WatchFamily` Connect stream | while the scene is active | transient invalidation only, including generation/cursor rollback | close hint wait and call `Sync` |
+| `WatchFamily` Connect stream | while the scene is active; a `Sync` that commits new events announces the family's newest committed cursor | transient invalidation only, including generation/cursor rollback | close hint wait and call `Sync` |
 | silent APNs push | another device commits a family mutation | best effort; iOS may delay or drop it | sync the named family during the wake window |
 | `BGAppRefreshTask` | scheduled by iOS | discretionary | sync all locally known families |
 | visible APNs alert | enabled device, sleep start/end | user communication only | never apply its payload as state |
@@ -213,11 +215,13 @@ A device is an authenticated session owned by a user. One user can have several 
 
 The initiating phone starts its Live Activity locally. Other enabled caregiver devices receive push-to-start messages. Each activity uploads its rotating activity push token so the backend can end it later. Per-session/per-device start claims make retries idempotent. A device joining while sleep is already active is reconciled from authoritative active sessions.
 
-Disabling visible alerts does not disable silent sync invalidations. Disabling Live Activities ends local activities and prevents future remote starts for that device. Signing out deletes that device row and its tokens only after the phone has synchronized every family and has no pending commands or unresolved conflicts.
+Disabling visible alerts does not disable silent sync invalidations. Disabling Live Activities ends local activities and prevents future remote starts for that device. Signing out deletes that device row and its tokens only after the phone has synchronized every family it still belongs to and has no pending commands or unresolved conflicts for those families. Retained commands for families the account was removed from cannot sync, so they do not block signing out or account deletion; signing out deletes them with the rest of the local data, including the acknowledged-command journal.
+
+If the backend rejects the refresh token (expired after 30 days without use, signed out elsewhere, or erased), the app removes its tokens and shows sign-in but keeps the local database, pending commands, and journal. The app stores the signed-in user ID. Signing in again as the same account resumes with that local work; signing in as a different account clears local data first, so one account never sees or replays another's diary. A database error during refresh is reported as an internal error, not as unauthenticated, so a server fault does not force sign-in.
 
 ## Authentication and account lifecycle
 
-Sign in with Apple is verified by the backend through code exchange and nonce-bound identity-token validation. Access tokens name both user and device; handlers derive device identity from the authenticated principal rather than trusting a body field.
+Sign in with Apple is verified by the backend through code exchange and nonce-bound identity-token validation. Access tokens name both user and device; handlers derive device identity from the authenticated principal rather than trusting a body field. When a different account signs in with an existing client device identifier, the backend deletes that device row first, so push, Live Activity, and reminder state never carries across accounts. Apple signing keys are cached for an hour; an unknown key ID triggers at most one refetch per minute, and cached keys keep working while Apple's key endpoint is unreachable.
 
 Apple refresh tokens are encrypted server credentials. User-requested deletion and verified Apple `consent-revoked` or `account-deleted` notifications call the same idempotent local-erasure transaction. Provider revocation is best effort and never blocks deleting local identity, devices, memberships, or owned data according to the transfer policy.
 

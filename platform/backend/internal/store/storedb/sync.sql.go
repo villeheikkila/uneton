@@ -757,23 +757,6 @@ func (q *Queries) GrowthMeasurementRecord(ctx context.Context, arg GrowthMeasure
 	return i, err
 }
 
-const growthMeasurementRevision = `-- name: GrowthMeasurementRevision :one
-select revision from growth_measurements
-where id=?1 and family_id=?2
-`
-
-type GrowthMeasurementRevisionParams struct {
-	ID       string `json:"id"`
-	FamilyID string `json:"family_id"`
-}
-
-func (q *Queries) GrowthMeasurementRevision(ctx context.Context, arg GrowthMeasurementRevisionParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, growthMeasurementRevision, arg.ID, arg.FamilyID)
-	var revision int64
-	err := row.Scan(&revision)
-	return revision, err
-}
-
 const growthReferencePoints = `-- name: GrowthReferencePoints :many
 select reference, metric, age_months, sd, value
 from growth_reference_points
@@ -1117,23 +1100,6 @@ func (q *Queries) SleepRecord(ctx context.Context, arg SleepRecordParams) (Sleep
 		&i.DeletedAt,
 	)
 	return i, err
-}
-
-const sleepRevision = `-- name: SleepRevision :one
-select revision from sleep_sessions
-where id=?1 and family_id=?2
-`
-
-type SleepRevisionParams struct {
-	ID       string `json:"id"`
-	FamilyID string `json:"family_id"`
-}
-
-func (q *Queries) SleepRevision(ctx context.Context, arg SleepRevisionParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, sleepRevision, arg.ID, arg.FamilyID)
-	var revision int64
-	err := row.Scan(&revision)
-	return revision, err
 }
 
 const snapshotChildIDs = `-- name: SnapshotChildIDs :many

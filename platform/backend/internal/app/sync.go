@@ -198,11 +198,17 @@ func (s *Server) synchronize(ctx context.Context, familyID, userID string, reque
 	if err != nil {
 		return SyncResponse{}, err
 	}
+	committedCursor, err := q.LatestFamilyCursor(ctx, familyID)
+	if err != nil {
+		return SyncResponse{}, fmt.Errorf("read committed family cursor: %w", err)
+	}
 	if err := tx.Commit(); err != nil {
 		return SyncResponse{}, err
 	}
-	if nextCursor > request.Cursor {
-		s.broker.publish(familyID, nextCursor)
+	// Announce the family's newest cursor, not this caller's page boundary: a
+	// paginated caller can be far behind watchers that are already past it.
+	if committedCursor > latestCursor {
+		s.broker.publish(familyID, committedCursor)
 	}
 	s.pruneSentDeliveries(ctx, s.store.Queries)
 	return s.syncResponse(ctx, familyID, results, events, nextCursor, hasMore, snapshot), nil
@@ -505,7 +511,7 @@ func (s *Server) upsertSleep(ctx context.Context, tx *sql.Tx, familyID, userID s
 	if _, err := q.ChildRevision(ctx, storedb.ChildRevisionParams{ID: payload.ChildID, FamilyID: familyID}); err != nil {
 		return CommandResult{ID: command.ID}, errors.New("child not found")
 	}
-	revision, err := q.SleepRevision(ctx, storedb.SleepRevisionParams{ID: payload.ID, FamilyID: familyID})
+	current, err := q.SleepRecord(ctx, storedb.SleepRecordParams{ID: payload.ID, FamilyID: familyID})
 	now := formatTime(s.now().UTC())
 	if errors.Is(err, sql.ErrNoRows) {
 		if command.ExpectedRevision != nil {
@@ -516,7 +522,9 @@ func (s *Server) upsertSleep(ctx context.Context, tx *sql.Tx, familyID, userID s
 		}
 		err = q.CreateSleep(ctx, storedb.CreateSleepParams{ID: payload.ID, FamilyID: familyID, ChildID: payload.ChildID, StartedAt: formatTime(payload.StartedAt), EndedAt: nullableString(payload.EndedAt), AuthorID: userID, Source: payload.Source, StartCondition: payload.StartCondition, SleepLocation: payload.SleepLocation, EndCondition: payload.EndCondition, WakeMood: payload.WakeMood, WakeReason: payload.WakeReason, CaregiverIntervened: nullableBool(payload.CaregiverIntervened), UpdatedAt: now})
 	} else if err == nil {
-		if command.ExpectedRevision == nil || *command.ExpectedRevision != int(revision) {
+		// A tombstoned or superseded row is hidden everywhere, and moving a
+		// session to another child is not an edit this command supports.
+		if current.DeletedAt.Valid || current.SupersededByID.Valid || current.ChildID != payload.ChildID || command.ExpectedRevision == nil || *command.ExpectedRevision != int(current.Revision) {
 			return CommandResult{ID: command.ID}, errors.New("stale revision")
 		}
 		err = q.UpdateSleep(ctx, storedb.UpdateSleepParams{StartedAt: formatTime(payload.StartedAt), EndedAt: nullableString(payload.EndedAt), StartCondition: payload.StartCondition, SleepLocation: payload.SleepLocation, EndCondition: payload.EndCondition, WakeMood: payload.WakeMood, WakeReason: payload.WakeReason, CaregiverIntervened: nullableBool(payload.CaregiverIntervened), UpdatedAt: now, ID: payload.ID, FamilyID: familyID})
@@ -573,7 +581,7 @@ func (s *Server) upsertGrowthMeasurement(ctx context.Context, tx *sql.Tx, family
 	if _, err := q.ChildRevision(ctx, storedb.ChildRevisionParams{ID: payload.ChildID, FamilyID: familyID}); err != nil {
 		return CommandResult{ID: command.ID}, errors.New("child not found")
 	}
-	revision, err := q.GrowthMeasurementRevision(ctx, storedb.GrowthMeasurementRevisionParams{ID: payload.ID, FamilyID: familyID})
+	current, err := q.GrowthMeasurementRecord(ctx, storedb.GrowthMeasurementRecordParams{ID: payload.ID, FamilyID: familyID})
 	now := formatTime(s.now().UTC())
 	if errors.Is(err, sql.ErrNoRows) {
 		if command.ExpectedRevision != nil {
@@ -581,7 +589,7 @@ func (s *Server) upsertGrowthMeasurement(ctx context.Context, tx *sql.Tx, family
 		}
 		err = q.CreateGrowthMeasurement(ctx, storedb.CreateGrowthMeasurementParams{ID: payload.ID, FamilyID: familyID, ChildID: payload.ChildID, MeasuredAt: formatTime(payload.MeasuredAt), WeightGrams: nullableInt(payload.WeightGrams), HeightMillimeters: nullableInt(payload.HeightMillimeters), Note: payload.Note, UpdatedAt: now})
 	} else if err == nil {
-		if command.ExpectedRevision == nil || *command.ExpectedRevision != int(revision) {
+		if current.DeletedAt.Valid || current.ChildID != payload.ChildID || command.ExpectedRevision == nil || *command.ExpectedRevision != int(current.Revision) {
 			return CommandResult{ID: command.ID}, errors.New("stale revision")
 		}
 		err = q.UpdateGrowthMeasurement(ctx, storedb.UpdateGrowthMeasurementParams{MeasuredAt: formatTime(payload.MeasuredAt), WeightGrams: nullableInt(payload.WeightGrams), HeightMillimeters: nullableInt(payload.HeightMillimeters), Note: payload.Note, UpdatedAt: now, ID: payload.ID, FamilyID: familyID})
@@ -709,30 +717,16 @@ func (s *Server) mergeOverlaps(ctx context.Context, tx *sql.Tx, familyID, childI
 		}
 		values = append(values, value)
 	}
-	for index := 1; index < len(values); index++ {
-		left, right := values[index-1], values[index]
-		near := right.start.Sub(left.start) <= 2*time.Minute
-		overlap := left.end == nil || !right.start.After(*left.end)
-		if !near && !overlap {
-			continue
-		}
-		canonical, duplicate := left, right
-		if right.start.Before(left.start) || (right.start.Equal(left.start) && right.id < left.id) {
-			canonical, duplicate = right, left
-		}
-		mergedStart := canonical.start
-		if duplicate.start.Before(mergedStart) {
-			mergedStart = duplicate.start
-		}
-		mergedEnd := canonical.end
-		if mergedEnd != nil && (duplicate.end == nil || duplicate.end.After(*mergedEnd)) {
-			mergedEnd = duplicate.end
+	// Rows are ordered by start then id, so the first row of each overlapping run
+	// is canonical. The run's merged interval is carried forward: comparing only
+	// adjacent rows would miss a later row that overlaps an earlier, longer one,
+	// and could merge into a row that was already superseded in this pass.
+	flush := func(canonical interval, duplicates []string) error {
+		if len(duplicates) == 0 {
+			return nil
 		}
 		now := formatTime(s.now().UTC())
-		if err := q.MergeSleep(ctx, storedb.MergeSleepParams{StartedAt: formatTime(mergedStart), EndedAt: nullableString(mergedEnd), UpdatedAt: now, ID: canonical.id}); err != nil {
-			return err
-		}
-		if err := q.SupersedeSleep(ctx, storedb.SupersedeSleepParams{SupersededByID: nullString(canonical.id), UpdatedAt: now, ID: duplicate.id}); err != nil {
+		if err := q.MergeSleep(ctx, storedb.MergeSleepParams{StartedAt: formatTime(canonical.start), EndedAt: nullableString(canonical.end), UpdatedAt: now, ID: canonical.id}); err != nil {
 			return err
 		}
 		canonicalJSON, canonicalRevision, err := sleepJSON(ctx, tx, familyID, canonical.id)
@@ -742,15 +736,42 @@ func (s *Server) mergeOverlaps(ctx context.Context, tx *sql.Tx, familyID, childI
 		if err := appendEvent(ctx, q, familyID, "sleepSession", canonical.id, "upsert", canonicalRevision, canonicalJSON, now); err != nil {
 			return err
 		}
-		duplicateJSON, duplicateRevision, err := sleepJSON(ctx, tx, familyID, duplicate.id)
-		if err != nil {
-			return err
+		for _, duplicateID := range duplicates {
+			if err := q.SupersedeSleep(ctx, storedb.SupersedeSleepParams{SupersededByID: nullString(canonical.id), UpdatedAt: now, ID: duplicateID}); err != nil {
+				return err
+			}
+			duplicateJSON, duplicateRevision, err := sleepJSON(ctx, tx, familyID, duplicateID)
+			if err != nil {
+				return err
+			}
+			if err := appendEvent(ctx, q, familyID, "sleepSession", duplicateID, "upsert", duplicateRevision, duplicateJSON, now); err != nil {
+				return err
+			}
 		}
-		if err := appendEvent(ctx, q, familyID, "sleepSession", duplicate.id, "upsert", duplicateRevision, duplicateJSON, now); err != nil {
-			return err
-		}
+		return nil
 	}
-	return nil
+	if len(values) == 0 {
+		return nil
+	}
+	canonical, previousStart := values[0], values[0].start
+	var duplicates []string
+	for _, next := range values[1:] {
+		near := next.start.Sub(previousStart) <= 2*time.Minute
+		overlap := canonical.end == nil || !next.start.After(*canonical.end)
+		previousStart = next.start
+		if !near && !overlap {
+			if err := flush(canonical, duplicates); err != nil {
+				return err
+			}
+			canonical, duplicates = next, nil
+			continue
+		}
+		if canonical.end != nil && (next.end == nil || next.end.After(*canonical.end)) {
+			canonical.end = next.end
+		}
+		duplicates = append(duplicates, next.id)
+	}
+	return flush(canonical, duplicates)
 }
 
 func childJSON(ctx context.Context, tx *sql.Tx, familyID, id string) (json.RawMessage, int, error) {

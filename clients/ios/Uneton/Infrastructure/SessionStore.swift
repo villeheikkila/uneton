@@ -24,6 +24,7 @@ final class SessionStore {
         static let refreshToken = "session.refreshToken"
         static let deviceID = "session.deviceID"
         static let appleUserID = "session.appleUserID"
+        static let userID = "session.userID"
         static let notificationsEnabled = "push.notificationsEnabled"
         static let liveActivitiesEnabled = "push.liveActivitiesEnabled"
         static let reminderLeadMinutes = "push.reminderLeadMinutes"
@@ -330,6 +331,7 @@ final class SessionStore {
     func developmentAuthenticate(name: String) async {
         await perform {
             let authentication = try await apiClient.developmentAuth(name, deviceID)
+            await prepareLocalData(for: authentication.userID)
             save(authentication)
             await configurePushRegistration()
             if let familyID = try await restoreAuthenticatedFamily(authentication) {
@@ -353,6 +355,7 @@ final class SessionStore {
             else { throw SessionError.invalidAppleCredential }
             let components = [credential.fullName?.givenName, credential.fullName?.familyName].compactMap { $0 }
             let authentication = try await apiClient.appleAuth(code, nonce, components.joined(separator: " "), deviceID)
+            await prepareLocalData(for: authentication.userID)
             credentials.set(credential.user, for: Key.appleUserID)
             save(authentication)
             await configurePushRegistration()
@@ -541,6 +544,7 @@ final class SessionStore {
         var retryDelay = 1
         try? await refreshAuthentication()
         while !Task.isCancelled {
+            guard accessToken != nil else { return }
             if let memberships, !memberships.contains(where: { $0.id == familyID }) { return }
             do {
                 await setPrediction(try await synchronizeWithRefresh(familyID: familyID))
@@ -847,6 +851,7 @@ final class SessionStore {
         persistTokenRegistrations()
         credentials.set(authentication.accessToken, for: Key.accessToken)
         credentials.set(authentication.refreshToken, for: Key.refreshToken)
+        credentials.set(authentication.userID.uuidString, for: Key.userID)
         UserDefaults.standard.set(authentication.deviceID.uuidString, forKey: Key.deviceID)
         isAuthenticated = true
         memberships = authentication.families
@@ -1031,9 +1036,6 @@ final class SessionStore {
     }
 
     private func clearLocalSession() async {
-        for activity in Activity<SleepActivityAttributes>.activities {
-            await activity.end(nil, dismissalPolicy: .immediate)
-        }
         pushRetryGeneration += 1
         pushRetryTask?.cancel()
         pushRetryTask = nil
@@ -1042,14 +1044,28 @@ final class SessionStore {
         credentials.removeValue(for: Key.accessToken)
         credentials.removeValue(for: Key.refreshToken)
         credentials.removeValue(for: Key.appleUserID)
+        reminderOwnership = SleepReminderOwnership()
+        UserDefaults.standard.removeObject(forKey: Key.remoteReminderUntil)
+        await clearLocalData()
+        isAuthenticated = false
+        memberships = nil
+        await watchBridge.publishSnapshot()
+    }
+
+    /// Removes every diary record, command, and journal entry owned by the
+    /// signed-in account. Callers decide whether credentials go with it.
+    private func clearLocalData() async {
+        for activity in Activity<SleepActivityAttributes>.activities {
+            await activity.end(nil, dismissalPolicy: .immediate)
+        }
+        credentials.removeValue(for: Key.userID)
         UserDefaults.standard.removeObject(forKey: Key.pendingInitialFamilyID)
         forecast = nil
         await reminders.schedule(fireDate: nil)
-        reminderOwnership = SleepReminderOwnership()
-        UserDefaults.standard.removeObject(forKey: Key.remoteReminderUntil)
         try? await database.write { database in
             try SyncConflict.delete().execute(database)
             try PendingCommand.delete().execute(database)
+            try AcknowledgedCommand.delete().execute(database)
             try AuthoritativeRecord.delete().execute(database)
             try SleepSession.delete().execute(database)
             try GrowthMeasurement.delete().execute(database)
@@ -1059,6 +1075,27 @@ final class SessionStore {
             try SyncState.delete().execute(database)
             try Family.delete().execute(database)
         }
+    }
+
+    /// Local work survives re-authentication by the same account. Another
+    /// account must never inherit, replay, or see the previous account's diary.
+    private func prepareLocalData(for userID: UserID) async {
+        guard let owner = credentials.value(for: Key.userID).flatMap(UserID.init(uuidString:)),
+              owner != userID
+        else { return }
+        await clearLocalData()
+    }
+
+    /// The server rejected the refresh token (expired, signed out elsewhere, or
+    /// erased). Show sign-in but keep pending commands and the projection.
+    private func requireReauthentication() async {
+        guard isAuthenticated else { return }
+        sessionLogger.notice("Session credentials were rejected; local changes are kept until sign-in")
+        pushRetryGeneration += 1
+        pushRetryTask?.cancel()
+        pushRetryTask = nil
+        credentials.removeValue(for: Key.accessToken)
+        credentials.removeValue(for: Key.refreshToken)
         isAuthenticated = false
         memberships = nil
         await watchBridge.publishSnapshot()
@@ -1142,9 +1179,14 @@ final class SessionStore {
         return success && !Task.isCancelled
     }
 
+    /// Families the account no longer belongs to can never sync, so their
+    /// retained work must not block signing out or deleting the account.
     private func hasUnresolvedSyncState() async -> Bool {
-        (try? await database.read { database in
-            try PendingCommand.fetchCount(database) > 0 || SyncConflict.fetchCount(database) > 0
+        let allowedFamilyIDs = memberships.map { Set($0.map(\.id)) }
+        return (try? await database.read { database in
+            let familyIDs = try PendingCommand.select(\.familyID).fetchAll(database)
+                + SyncConflict.select(\.familyID).fetchAll(database)
+            return familyIDs.contains { allowedFamilyIDs?.contains($0) ?? true }
         }) ?? true
     }
 
@@ -1156,6 +1198,15 @@ final class SessionStore {
     }
 
     private func refreshAuthentication() async throws {
+        do {
+            try await performRefreshAuthentication()
+        } catch where isUnauthenticatedAPIError(error) {
+            await requireReauthentication()
+            throw error
+        }
+    }
+
+    private func performRefreshAuthentication() async throws {
         if let refreshTask {
             let authentication = try await refreshTask.value
             save(authentication)

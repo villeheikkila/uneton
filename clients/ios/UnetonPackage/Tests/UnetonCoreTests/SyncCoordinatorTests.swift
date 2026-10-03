@@ -595,6 +595,164 @@ struct SyncCoordinatorTests {
     #expect(state.2?.endedAt == date(3_500))
   }
 
+  @Test func endInTheSameBatchFollowsTheCanonicalActiveSleep() async throws {
+    let familyID = Family.ID(rawValue: UUID(-301))
+    let childID = Child.ID(rawValue: UUID(-302))
+    let localID = SleepSession.ID(rawValue: UUID(-303))
+    let canonical = Fixture(familyID: familyID, childID: childID, sessionID: SleepSession.ID(rawValue: UUID(-304)))
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    let responder = ScriptedResponder { index, request in
+      switch index {
+      case 1:
+        expectNoDifference(request.commands.map(\.kind), ["startSleep", "endSleep"])
+        let active = try jsonValue(serverSleep(fixture: canonical, revision: 3, endedAt: nil))
+        return SyncResponse(
+          commandResults: [
+            APICommandResult(id: request.commands[0].id, status: "accepted",
+              entityID: EntityID(rawValue: canonical.sessionID.rawValue), payload: active),
+            APICommandResult(id: request.commands[1].id, status: "rejected", error: "active sleep not found"),
+          ],
+          events: [SyncEvent(cursor: 1, entityType: "sleepSession",
+            entityID: EntityID(rawValue: canonical.sessionID.rawValue), operation: "upsert",
+            revision: 3, payload: active, createdAt: date(2_000))],
+          nextCursor: 1, hasMore: false, serverTime: date(2_000))
+      default:
+        return try endResponse(request, fixture: canonical, cursor: 2, revision: 4)
+      }
+    }
+    var api = APIClient.testValue
+    api.sync = { _, _, request in try await responder.response(for: request) }
+    try await withDependencies { $0.apiClient = api } operation: {
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-305)), accessToken: { "token" })
+      try await coordinator.startSleep(familyID: familyID, childID: childID, sessionID: localID, startedAt: date(1_000))
+      try await coordinator.endSleep(familyID: familyID, sessionID: localID, endedAt: date(3_600))
+      _ = try await coordinator.synchronize(familyID: familyID)
+    }
+    let requests = await responder.requests
+    #expect(requests.count == 2)
+    let retried = try #require(requests.last?.commands.first)
+    #expect(retried.kind == "endSleep")
+    #expect(retried.expectedRevision == 3)
+    #expect(try sleepCommandPayload(retried).id == canonical.sessionID)
+    let state = try await database.read { db in
+      (try SleepSession.find(localID).fetchOne(db), try SleepSession.find(canonical.sessionID).fetchOne(db),
+        try PendingCommand.fetchCount(db), try SyncConflict.fetchCount(db))
+    }
+    #expect(state.0 == nil)
+    #expect(state.1?.endedAt == date(3_600))
+    #expect(state.2 == 0)
+    #expect(state.3 == 0)
+  }
+
+  @Test func queuedEndIsRedirectedWhenStartMapsToAnotherActiveSleep() async throws {
+    let familyID = Family.ID(rawValue: UUID(-311))
+    let childID = Child.ID(rawValue: UUID(-312))
+    let localID = SleepSession.ID(rawValue: UUID(-313))
+    let canonical = Fixture(familyID: familyID, childID: childID, sessionID: SleepSession.ID(rawValue: UUID(-314)))
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    @Dependency(\.defaultDatabase) var database
+    let queuedEnd = PendingCommand(
+      id: PendingCommand.ID(rawValue: UUID(-315)), familyID: familyID, kind: "endSleep", expectedRevision: 1,
+      payloadJSON: try JSONEncoder.uneton.encode(SleepCommandPayload(id: localID, childID: childID,
+        startedAt: date(1_000), endedAt: date(3_600), source: "phone")),
+      createdAt: date(1_500), sequence: 1_000)
+    let responder = ScriptedResponder { index, request in
+      switch index {
+      case 1:
+        expectNoDifference(request.commands.map(\.kind), ["startSleep"])
+        // The caregiver ends the sleep while the start is still in flight.
+        try await database.write { db in try PendingCommand.insert { queuedEnd }.execute(db) }
+        let active = try jsonValue(serverSleep(fixture: canonical, revision: 3, endedAt: nil))
+        return SyncResponse(
+          commandResults: [APICommandResult(id: request.commands[0].id, status: "accepted",
+            entityID: EntityID(rawValue: canonical.sessionID.rawValue), payload: active)],
+          events: [SyncEvent(cursor: 1, entityType: "sleepSession",
+            entityID: EntityID(rawValue: canonical.sessionID.rawValue), operation: "upsert",
+            revision: 3, payload: active, createdAt: date(2_000))],
+          nextCursor: 1, hasMore: false, serverTime: date(2_000))
+      default:
+        return try endResponse(request, fixture: canonical, cursor: 2, revision: 4)
+      }
+    }
+    var api = APIClient.testValue
+    api.sync = { _, _, request in try await responder.response(for: request) }
+    try await withDependencies { $0.apiClient = api } operation: {
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-316)), accessToken: { "token" })
+      try await coordinator.startSleep(familyID: familyID, childID: childID, sessionID: localID, startedAt: date(1_000))
+      _ = try await coordinator.synchronize(familyID: familyID)
+    }
+    let requests = await responder.requests
+    let redirected = try #require(requests.last?.commands.first)
+    #expect(redirected.id == queuedEnd.id)
+    #expect(redirected.expectedRevision == 3)
+    #expect(try sleepCommandPayload(redirected).id == canonical.sessionID)
+    let state = try await database.read { db in
+      (try SleepSession.find(localID).fetchOne(db), try SleepSession.find(canonical.sessionID).fetchOne(db),
+        try SyncConflict.fetchCount(db))
+    }
+    #expect(state.0 == nil)
+    #expect(state.1?.endedAt == date(3_600))
+    #expect(state.2 == 0)
+  }
+
+  @Test func staleEndOfAStillActiveSleepRebasesInsteadOfConflicting() async throws {
+    let fixture = try await seedAuthoritativeSession(revision: 3, endedAt: nil)
+    let responder = ScriptedResponder { index, request in
+      switch index {
+      case 1:
+        let command = try #require(request.commands.first)
+        #expect(command.expectedRevision == 3)
+        let edited = try jsonValue(serverSleep(fixture: fixture, revision: 4, endedAt: nil))
+        return SyncResponse(
+          commandResults: [APICommandResult(id: command.id, status: "rejected", error: "stale revision",
+            entityID: EntityID(rawValue: fixture.sessionID.rawValue), payload: edited)],
+          events: [SyncEvent(cursor: 1, entityType: "sleepSession",
+            entityID: EntityID(rawValue: fixture.sessionID.rawValue), operation: "upsert",
+            revision: 4, payload: edited, createdAt: date(2_000))],
+          nextCursor: 1, hasMore: false, serverTime: date(2_000))
+      default:
+        return try endResponse(request, fixture: fixture, cursor: 2, revision: 5)
+      }
+    }
+    var api = APIClient.testValue
+    api.sync = { _, _, request in try await responder.response(for: request) }
+    try await withDependencies { $0.apiClient = api } operation: {
+      let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-10)), accessToken: { "token" })
+      try await coordinator.endSleep(familyID: fixture.familyID, sessionID: fixture.sessionID, endedAt: date(3_600))
+      _ = try await coordinator.synchronize(familyID: fixture.familyID)
+    }
+    let retried = try #require(await responder.requests.last?.commands.first)
+    #expect(retried.kind == "endSleep")
+    #expect(retried.expectedRevision == 4)
+    let state = try await database.read { db in
+      (try SyncConflict.fetchCount(db), try SleepSession.find(fixture.sessionID).fetchOne(db))
+    }
+    #expect(state.0 == 0)
+    #expect(state.1?.endedAt == date(3_600))
+  }
+
+  @Test func concurrentEditsReserveDistinctRevisions() async throws {
+    let familyID = Family.ID(rawValue: UUID(-321))
+    let childID = Child.ID(rawValue: UUID(-322))
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    let coordinator = SyncCoordinator(deviceID: DeviceID(rawValue: UUID(-323)), accessToken: { "token" })
+    try await withThrowingTaskGroup(of: Void.self) { group in
+      for minutes in [120, 150, 180, 210] {
+        group.addTask {
+          try await coordinator.updateChild(familyID: familyID, childID: childID,
+            nickname: "Muru", birthDate: date(1_000), predictionMode: "manual",
+            manualIntervalMinutes: minutes, quietHoursStartMinutes: 1_200,
+            quietHoursEndMinutes: 360, timeZone: "Europe/Helsinki", growthReference: "none")
+        }
+      }
+      try await group.waitForAll()
+    }
+    let commands = try await database.read { db in
+      try PendingCommand.where { $0.familyID.eq(familyID) }.order(by: \.sequence).fetchAll(db)
+    }
+    expectNoDifference(commands.map(\.expectedRevision), [1, 2, 3, 4])
+  }
+
   @Test func paginationAppliesEveryPageAndAdvancesCursor() async throws {
     let fixture = Fixture(familyID: Family.ID(rawValue: UUID(-1)), childID: Child.ID(rawValue: UUID(-2)), sessionID: SleepSession.ID(rawValue: UUID(-3)))
     try await seedFamilyAndChild(familyID: fixture.familyID, childID: fixture.childID)
@@ -1331,6 +1489,34 @@ private actor SnapshotRecoveryResponder {
       nextCursor: Int64(request.commands.count), hasMore: false, serverTime: date(2_200), generation: generation
     )
   }
+}
+
+private actor ScriptedResponder {
+  private(set) var requests: [SyncRequest] = []
+  let script: @Sendable (Int, SyncRequest) async throws -> SyncResponse
+
+  init(_ script: @escaping @Sendable (Int, SyncRequest) async throws -> SyncResponse) { self.script = script }
+
+  func response(for request: SyncRequest) async throws -> SyncResponse {
+    requests.append(request)
+    return try await script(requests.count, request)
+  }
+}
+
+private func endResponse(_ request: SyncRequest, fixture: Fixture, cursor: Int64, revision: Int) throws -> SyncResponse {
+  let command = try #require(request.commands.first)
+  let ended = try jsonValue(serverSleep(fixture: fixture, revision: revision, endedAt: date(3_600)))
+  return SyncResponse(
+    commandResults: [APICommandResult(id: command.id, status: "accepted",
+      entityID: EntityID(rawValue: fixture.sessionID.rawValue), payload: ended)],
+    events: [SyncEvent(cursor: cursor, entityType: "sleepSession",
+      entityID: EntityID(rawValue: fixture.sessionID.rawValue), operation: "upsert",
+      revision: revision, payload: ended, createdAt: date(3_700))],
+    nextCursor: cursor, hasMore: false, serverTime: date(3_700))
+}
+
+private func sleepCommandPayload(_ command: APICommand) throws -> SleepCommandPayload {
+  try JSONDecoder.uneton.decode(SleepCommandPayload.self, from: JSONEncoder.uneton.encode(command.payload))
 }
 
 private func serverSleep(fixture: Fixture, revision: Int, endedAt: Date?) -> ServerSleepPayload {

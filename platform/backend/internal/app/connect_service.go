@@ -312,6 +312,11 @@ func (s *Server) RefreshAuth(ctx context.Context, req *connect.Request[unetonv1.
 		return nil, invalidArgument("device and refresh token are required")
 	}
 	stored, err := s.store.Queries.DeviceSession(ctx, req.Msg.GetDeviceId())
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		// Unauthenticated tells the client to discard its session; a database
+		// failure must stay retryable.
+		return nil, internalError("could not read device session", err)
+	}
 	if err != nil || !authenticateRefresh(stored.RefreshTokenHash, stored.RefreshExpiresAt, req.Msg.GetRefreshToken(), s.now()) {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid refresh token"))
 	}
@@ -340,25 +345,46 @@ func (s *Server) RefreshAuth(ctx context.Context, req *connect.Request[unetonv1.
 
 func (s *Server) authenticateSubject(ctx context.Context, subject, displayName, deviceID string, appleRefreshToken []byte) (*unetonv1.AuthenticationResponse, error) {
 	now := s.now().UTC()
-	userID, err := s.store.Queries.UserIDByAppleSubject(ctx, subject)
+	tx, err := s.store.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback() }()
+	q := s.store.Queries.WithTx(tx)
+	userID, err := q.UserIDByAppleSubject(ctx, subject)
 	if errors.Is(err, sql.ErrNoRows) {
 		userID = newID()
-		err = s.store.Queries.CreateUser(ctx, storedb.CreateUserParams{ID: userID, AppleSubject: subject, DisplayName: displayName, AppleRefreshTokenCiphertext: appleRefreshToken, CreatedAt: formatTime(now)})
+		err = q.CreateUser(ctx, storedb.CreateUserParams{ID: userID, AppleSubject: subject, DisplayName: displayName, AppleRefreshTokenCiphertext: appleRefreshToken, CreatedAt: formatTime(now)})
 	}
 	if err != nil {
 		return nil, err
 	}
 	if len(appleRefreshToken) > 0 {
-		if err := s.store.Queries.UpdateAppleRefreshToken(ctx, storedb.UpdateAppleRefreshTokenParams{ID: userID, AppleRefreshTokenCiphertext: appleRefreshToken}); err != nil {
+		if err := q.UpdateAppleRefreshToken(ctx, storedb.UpdateAppleRefreshTokenParams{ID: userID, AppleRefreshTokenCiphertext: appleRefreshToken}); err != nil {
 			return nil, err
 		}
 	}
+	// A device row carries push tokens, Live Activity tokens, and reminder
+	// claims for its user's families. When another account signs in with the
+	// same client device identifier, start from a fresh row so none of that
+	// state is inherited across accounts.
+	existing, err := q.DeviceSession(ctx, deviceID)
+	if err == nil && existing.UserID != userID {
+		if _, err := q.DeleteDeviceForUser(ctx, storedb.DeleteDeviceForUserParams{ID: deviceID, UserID: existing.UserID}); err != nil {
+			return nil, err
+		}
+	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
 	refreshToken := randomToken()
-	err = s.store.Queries.UpsertDevice(ctx, storedb.UpsertDeviceParams{
+	err = q.UpsertDevice(ctx, storedb.UpsertDeviceParams{
 		ID: deviceID, UserID: userID, RefreshTokenHash: hashToken(refreshToken),
 		RefreshExpiresAt: nullString(formatTime(now.Add(30 * 24 * time.Hour))), LastSeenAt: formatTime(now),
 	})
 	if err != nil {
+		return nil, err
+	}
+	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
 	accessToken, err := signToken(s.tokenSecret, userID, deviceID, now.Add(15*time.Minute))
