@@ -57,6 +57,13 @@ let package = Package(
       dependencies: ["UnetonTheme"]
     ),
     .testTarget(
+      name: "UnetonSimulationTests",
+      dependencies: [
+        "UnetonCore",
+        .product(name: "Dependencies", package: "swift-dependencies"),
+      ]
+    ),
+    .testTarget(
       name: "UnetonCoreTests",
       dependencies: [
         "UnetonCore",

@@ -105,6 +105,21 @@ run = "env -u GOROOT go run ./platform/backend/cmd/seed-growth-reference"
 description = "Create and provision a 2-vCPU/4-GB/40-GB OrbStack load-test VM"
 run = "platform/infra/vps/operations/load-test.sh prepare"
 
+[tasks.sim]
+description = "Simulate a family's years of diary use against the real backend and check sync invariants"
+env.GOCACHE = "/tmp/uneton-go-cache"
+run = "env -u GOROOT go run ./platform/backend/cmd/simulate-family run"
+
+[tasks."sim:serve"]
+description = "Serve the real API on a controllable simulated clock for client harnesses"
+env.GOCACHE = "/tmp/uneton-go-cache"
+run = "env -u GOROOT go run ./platform/backend/cmd/simulate-family serve"
+
+[tasks."sim:client"]
+description = "Drive real SyncCoordinator devices through simulated years against sim:serve (UNETON_SIM_YEARS, UNETON_SIM_SEED, UNETON_SIM_VERIFY_PROJECTION)"
+env.GOCACHE = "/tmp/uneton-go-cache"
+run = "tooling/simulation/client.sh"
+
 [tasks."loadtest:vm"]
 description = "Provision the constrained VM and ramp the behavioral API workload"
 run = "platform/infra/vps/operations/load-test.sh all"
