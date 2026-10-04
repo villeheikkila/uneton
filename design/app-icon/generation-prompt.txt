@@ -1,0 +1,13 @@
+Use case: logo-brand
+Asset type: production foreground artwork for Uneton, an iOS baby sleep and family care app, to import into Apple Icon Composer.
+Primary request: Create a beautifully simple iconic emblem of a peacefully sleeping baby nestled in a broad crescent moon cradle. A single cohesive centered symbol with very few shapes, premium friendly Scandinavian restraint, immediately legible at tiny app icon sizes.
+Scene/backdrop: genuinely transparent background, square 1024x1024 canvas, no icon tile or rounded-square container.
+Subject: large soft powder sky-blue crescent cradling a minimal warm ivory round baby face in its inner opening; two tiny dark blue gently curved closed eyes, no mouth, no limbs, no hair details. The crescent curves underneath like a protective swaddle. Make the baby and moon feel like one calm connected emblem, not separate floating clip art.
+Style/medium: immaculate flat smooth vector-like artwork with gently rounded geometry. Solid fills only, no simulated glass, no dimensional rendering.
+Composition/framing: centered, balanced, emblem occupies roughly 70 percent of canvas with generous equal transparent outer padding. Broad sturdy curves. No extra stars or decorative elements.
+Color palette: moon soft sky blue #88BDE8, baby warm ivory #FFF2DB, tiny eye strokes deep navy #264864.
+Constraints: no text, letters, watermark, border, drop shadows, bevels, glow, reflections, gradients, opaque backdrop, or pre-rounded icon mask. Actual transparent alpha.
+
+Generated with the built-in image_gen tool. Transparent source: uneton-foreground.png.
+Native Icon Composer document: ../../clients/ios/Uneton/UnetonIcon.icon.
+The native document supplies the navy background and system glass effects; the PNG is foreground artwork only.

@@ -1,0 +1,32 @@
+{
+  "fill": {
+    "automatic-gradient": "srgb:0.14,0.28,0.43,1.0"
+  },
+  "groups": [
+    {
+      "layers": [
+        {
+          "blend-mode": "normal",
+          "image-name": "sleeping-moon.png",
+          "name": "Sleeping baby and moon",
+          "position": {
+            "scale": 0.82,
+            "translation-in-points": [0, 0]
+          }
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.3
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.15
+      }
+    }
+  ],
+  "supported-platforms": {
+    "circles": ["watchOS"],
+    "squares": "shared"
+  }
+}

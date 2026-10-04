@@ -74,6 +74,7 @@
 		7552C6C49492BC08F2098244 /* capture-_-size-name.expandedIsland.png in Resources */ = {isa = PBXBuildFile; fileRef = 38376736129AAB287CA94BA0 /* capture-_-size-name.expandedIsland.png */; };
 		776E41E259D54BB9647721BB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57CD1A2D27F650526FE3F833 /* Assets.xcassets */; };
 		77BDF8F05FD30B16CC98962F /* FamilyManagementContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51087A1C33B3095C3127AAC3 /* FamilyManagementContent.swift */; };
+		798BC19182FD1281EB73D1AF /* UnetonIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 3A046870A2DAE306D49E4102 /* UnetonIcon.icon */; };
 		7B0AC7E48D6CA990D4C033C3 /* LiveActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95FC0EB3F083AB0587264171 /* LiveActivityController.swift */; };
 		7EE9F7B1BE2D150CC89A5B30 /* UnetonActivity in Frameworks */ = {isa = PBXBuildFile; productRef = E8389CBA533E782935A9D730 /* UnetonActivity */; };
 		80D8EAD7366BA3498D2CA583 /* SessionSyncClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37BBA6E529FDA150CF89123E /* SessionSyncClient.swift */; };
@@ -199,6 +200,7 @@
 		37BBA6E529FDA150CF89123E /* SessionSyncClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSyncClient.swift; sourceTree = "<group>"; };
 		38376736129AAB287CA94BA0 /* capture-_-size-name.expandedIsland.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_-size-name.expandedIsland.png"; sourceTree = "<group>"; };
 		395CBE91EF0C2DB487417C2E /* capture-_.sleepTabNight.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_.sleepTabNight.png"; sourceTree = "<group>"; };
+		3A046870A2DAE306D49E4102 /* UnetonIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = UnetonIcon.icon; sourceTree = "<group>"; };
 		3C8893A3594EB823C661CF83 /* capture-_.familySetup.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_.familySetup.png"; sourceTree = "<group>"; };
 		3CC64DF0D2640D8A806E4A61 /* capture-_.sleepEntrySheet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "capture-_.sleepEntrySheet.png"; sourceTree = "<group>"; };
 		3D896FB7D71440107A4ABABE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -492,6 +494,7 @@
 				B293649851B1A89B1E172B15 /* PrivacyInfo.xcprivacy */,
 				D4F4ED37643D6B68949D2915 /* Uneton.entitlements */,
 				D31FE1C3ACB3CB882029856B /* UnetonApp.swift */,
+				3A046870A2DAE306D49E4102 /* UnetonIcon.icon */,
 				CBBD18411B96398030F20EFA /* Features */,
 				2015CBE2F3D1B55447167A0E /* Infrastructure */,
 				059C9551455BFF536951CE48 /* Previews */,
@@ -830,6 +833,7 @@
 				32F06599D1BC3EBBA57CA1B0 /* InfoPlist.xcstrings in Resources */,
 				82D910AE8B5B33F0FD0F5938 /* Localizable.xcstrings in Resources */,
 				0AE8D08DB064AAA222E8B1CE /* PrivacyInfo.xcprivacy in Resources */,
+				798BC19182FD1281EB73D1AF /* UnetonIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1006,7 +1010,7 @@
 		71679953B910A42780CE5422 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = UnetonIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Uneton/Uneton.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -1167,7 +1171,7 @@
 		B8A68C6A1C0983BB465673C2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = UnetonIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Uneton/Uneton.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
