@@ -24,6 +24,17 @@
       no_log: true
       tags: [always]
 
+    - name: Read the GHCR pull credential on the controller
+      ansible.builtin.set_fact:
+        uneton_ghcr_username: "{{ lookup('ansible.builtin.pipe', fnox_get ~ ' UNETON_GHCR_USERNAME') }}"
+        uneton_ghcr_token: "{{ lookup('ansible.builtin.pipe', fnox_get ~ ' UNETON_GHCR_TOKEN') }}"
+      vars:
+        fnox_get: "fnox --config {{ (playbook_dir ~ '/../../../../fnox.toml') | quote }} --no-daemon --profile production get"
+      delegate_to: localhost
+      become: false
+      no_log: true
+      tags: [always]
+
   tasks:
     - name: Require Docker Compose, installed by the maku shared-services playbook
       ansible.builtin.command:
@@ -81,15 +92,36 @@
         chdir: "{{ runtime_dir }}"
       changed_when: false
 
+    # The backend image is private. Log in with Uneton's own credential in a
+    # project-local Docker config, leaving the host's root Docker login untouched.
+    - name: Create the project Docker config directory
+      ansible.builtin.file:
+        path: "{{ runtime_dir }}/.docker"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Log in to GHCR for Uneton pulls
+      ansible.builtin.command:
+        argv: [docker, login, ghcr.io, --username, "{{ uneton_ghcr_username }}", --password-stdin]
+        stdin: "{{ uneton_ghcr_token }}"
+      environment:
+        DOCKER_CONFIG: "{{ runtime_dir }}/.docker"
+      changed_when: false
+      no_log: true
+
     - name: Pull images
       ansible.builtin.command:
         argv: [docker, compose, pull]
         chdir: "{{ runtime_dir }}"
+      environment:
+        DOCKER_CONFIG: "{{ runtime_dir }}/.docker"
       changed_when: true
 
     - name: Start Uneton
       ansible.builtin.command:
-        argv: [docker, compose, up, --detach, --remove-orphans, --wait, --wait-timeout, "120"]
+        argv: [docker, compose, up, --detach, --remove-orphans, --pull, never, --wait, --wait-timeout, "120"]
         chdir: "{{ runtime_dir }}"
       changed_when: true
 

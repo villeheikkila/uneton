@@ -7,6 +7,7 @@ Production Uneton runs on `maku-shared` (Hetzner CX23, hel1, `77.42.74.51` / `2a
 | maku `platform/infra/tenants/uneton/` | The tenant declaration: `tenant.yml` (site), `dns.tfvars`, `storage.tfvars` |
 | maku Terraform `tenant-uneton-dns` | Bunny DNS zone for `uneton.app` and the `api` records |
 | maku Terraform `tenant-uneton-storage` | Bunny S3 storage zone `uneton-litestream` (DE) for Litestream |
+| maku Terraform `tenant-uneton-registrar` | Porkbun nameserver delegation (and later DS) for `uneton.app`, using maku's Porkbun account |
 | maku Ansible `shared-services.yml` | Docker, the `shared-edge` network, and the only public Caddy (80/443), which renders the `api.uneton.app` site from `tenant.yml` |
 | Uneton Ansible `platform/infra/vps/ansible/shared.yml` | `/srv/uneton`: the `uneton` Compose project (API, Litestream, data init) and its root-only `.env` |
 | Uneton Fnox `production` profile | Every Uneton runtime secret, age-encrypted in `fnox.toml` |
@@ -32,11 +33,11 @@ Run maku steps from the maku checkout and Uneton steps from this one.
 
    The plan guard refuses to create storage zones unless the address is named, so a zone lost from state can never be recreated silently. Use `ALLOW_TERRAFORM_CREATE` only for this first creation. Note the `nameservers` output of the DNS scope.
 
-2. **Porkbun.** Delegate `uneton.app` to Bunny; see [Porkbun delegation](#porkbun-delegation).
+2. **Porkbun.** Delegate `uneton.app` to Bunny with `tenant-uneton-registrar`; see [Porkbun delegation](#porkbun-delegation).
 
 3. **Secrets (Uneton).** `mise run deploy:shared:secrets` generates the token secret and the Apple refresh-token keyring once and never replaces them. Read the backup values from the `storage_s3` output of `tenant-uneton-storage` (key `litestream`) and store each one with the commands the task prints. The replica URL is `s3://uneton-litestream/production`. Legal, Sign in with Apple and APNs values are inherited from the default Fnox secrets.
 
-4. **Image (Uneton).** From a clean commit, `mise run release:ghcr -- --publish`, then record the printed index digest. Make the `uneton-backend` GHCR package public (the source is AGPL and public), or the host cannot pull it.
+4. **Image (Uneton).** From a clean commit, `mise run release:ghcr -- --publish`, then record the printed index digest. The `uneton-backend` package stays private: the deploy logs in with `UNETON_GHCR_USERNAME` and `UNETON_GHCR_TOKEN` (a token with `read:packages`) from the `production` profile, in a Docker config under `/srv/uneton/.docker`, so the host's root Docker login is never touched.
 
 5. **Shared host (maku).** `mise run //platform/infra:vps:ansible:shared:apply` creates `shared-edge`, attaches Caddy, renders the `api.uneton.app` site from `tenant.yml` and reloads Caddy. Caddy requests the certificate once DNS resolves to the host.
 
@@ -50,15 +51,22 @@ Later releases repeat steps 4 and 6 only.
 
 ## Porkbun delegation
 
-Porkbun currently serves only its parking defaults for `uneton.app` (apex and wildcard to `pixie.porkbun.com`), with no mail or verification records, so nothing needs copying.
+`uneton.app` is registered in maku's Porkbun account, and maku's Terraform owns its delegation. Porkbun held only its parking defaults (apex and wildcard to `pixie.porkbun.com`), with no mail or verification records, so nothing needs copying.
 
-1. Apply `tenant-uneton-dns` first and confirm Bunny answers: `dig +short A api.uneton.app @<first Bunny nameserver>` returns `77.42.74.51`.
-2. In Porkbun, open **Domain Management**, then **Details** for `uneton.app`, then **Authoritative Nameservers**. Replace the four `*.ns.porkbun.com` entries with the two Bunny nameservers from the `nameservers` output, and save.
-3. In the same domain's details, leave **DNSSEC** empty for now. A stale DS record would make the domain unresolvable after delegation.
+1. In Porkbun, create an API key (Account, API Access) and store both halves in maku's `terraform` Fnox profile, from the maku checkout:
+
+   ```sh
+   fnox --profile terraform set --provider age PORKBUN_API_KEY
+   fnox --profile terraform set --provider age PORKBUN_SECRET_API_KEY
+   ```
+
+   Then enable **API Access** in the details of `uneton.app` itself, and rerun `terraform:bootstrap-hcp` so the registrar workspace receives the key.
+2. Apply `tenant-uneton-dns` first and confirm Bunny answers: `dig +short A api.uneton.app @kiki.bunny.net` returns `77.42.74.51`.
+3. Plan and apply `tenant-uneton-registrar`. It sets the nameservers to `kiki.bunny.net` and `coco.bunny.net` (`tenants/uneton/registrar.tfvars` in maku).
 4. Wait for `dig +short NS uneton.app` to return the Bunny nameservers and `dig +short A api.uneton.app` to return `77.42.74.51`. This is usually done within an hour but can take up to 48 hours. `.app` is HSTS-preloaded, so the API only works once Caddy has its certificate.
-5. Optional, once delegation is stable: set `dnssec_enabled = true` in maku's `tenants/uneton/dns.tfvars`, apply, read the sensitive `dnssec` output, and add that DS record in Porkbun's **DNSSEC** section (key tag, algorithm, digest type, digest).
+5. Optional, once delegation is stable: set `dnssec_enabled = true` in `tenants/uneton/dns.tfvars` and apply, then copy the `dnssec` output into `dnssec_ds` in `registrar.tfvars` and apply the registrar scope.
 
-Keep URL forwarding and Porkbun's email forwarding off for the domain; Bunny now owns every record.
+Destroying the registrar resource would clear the domain's nameservers; `prevent_destroy` and maku's plan guard refuse it.
 
 ## Restore
 
