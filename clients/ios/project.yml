@@ -41,6 +41,8 @@ targets:
       path: Uneton/Uneton.entitlements
       properties:
         aps-environment: "$(UNETON_APNS_ENVIRONMENT)"
+        com.apple.developer.applesignin:
+          - Default
         com.apple.developer.associated-domains:
           - applinks:api.uneton.app
     info:
