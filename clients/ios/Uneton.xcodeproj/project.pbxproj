@@ -68,6 +68,7 @@
 		6C871D010C72683AE72B3F59 /* FamilyManagement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 539E981CF395ADD8FB6F4A7B /* FamilyManagement.swift */; };
 		6DCAA7A90DD049D71141218E /* DisplayClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82803025A1AFBF44B863CFC7 /* DisplayClock.swift */; };
 		6E6D55F9E412E08C2DADE3F8 /* FamilySync.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F945BC674777D2A0DEB1BA /* FamilySync.swift */; };
+		7046D1BA6F835C3E59DEA720 /* UnetonIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 3A046870A2DAE306D49E4102 /* UnetonIcon.icon */; };
 		707080C16FCA4B9794586321 /* capture-_-size-name.lockScreen.png in Resources */ = {isa = PBXBuildFile; fileRef = EFB649923BF006E6AF9B4F23 /* capture-_-size-name.lockScreen.png */; };
 		742C301AEC69E4045C83019B /* TimelineContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EEB0AF92DFC01A8916D3ED7 /* TimelineContent.swift */; };
 		75403028B84412E1F1236D46 /* UnetonActivity in Frameworks */ = {isa = PBXBuildFile; productRef = D8550C2501F7A8807B6C0F66 /* UnetonActivity */; };
@@ -788,6 +789,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1A4CBFEC1A1DAD595973DA48 /* Localizable.xcstrings in Resources */,
+				7046D1BA6F835C3E59DEA720 /* UnetonIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1082,7 +1084,7 @@
 		A8352C078A353790A47327AC /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = UnetonIcon;
 				CODE_SIGN_ENTITLEMENTS = UnetonWatch/UnetonWatch.entitlements;
 				INFOPLIST_FILE = UnetonWatch/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = solutions.bytesized.uneton.watchkitapp;
@@ -1095,7 +1097,7 @@
 		AD812418C56780B2C66C76CE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = UnetonIcon;
 				CODE_SIGN_ENTITLEMENTS = UnetonWatch/UnetonWatch.entitlements;
 				INFOPLIST_FILE = UnetonWatch/Info.plist;
 				PRODUCT_BUNDLE_IDENTIFIER = solutions.bytesized.uneton.watchkitapp;
