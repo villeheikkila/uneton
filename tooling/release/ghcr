@@ -30,8 +30,12 @@ args=(
 if [[ "$mode" == --publish ]]; then
   # Log in with the GHCR credential from the production Fnox profile inside a
   # throwaway Docker config, so no registry token is saved on this machine.
+  buildx_plugin="$(docker info --format '{{range .ClientInfo.Plugins}}{{if eq .Name "buildx"}}{{.Path}}{{end}}{{end}}')"
+  [[ -n "$buildx_plugin" ]] || { echo "docker buildx is required" >&2; exit 127; }
   DOCKER_CONFIG="$(mktemp -d)"
   export DOCKER_CONFIG
+  # Keep the CLI plugins (buildx) that the default Docker config provides.
+  printf '{"cliPluginsExtraDirs":["%s"]}\n' "$(dirname "$buildx_plugin")" >"$DOCKER_CONFIG/config.json"
   builder="uneton-release-$$"
   cleanup() {
     docker buildx rm "$builder" >/dev/null 2>&1 || true
