@@ -4519,8 +4519,10 @@ type SleepPrediction struct {
 	AlgorithmVersion int32                  `protobuf:"varint,6,opt,name=algorithm_version,json=algorithmVersion,proto3" json:"algorithm_version,omitempty"`
 	Kind             string                 `protobuf:"bytes,7,opt,name=kind,proto3" json:"kind,omitempty"`
 	SampleCount      int32                  `protobuf:"varint,8,opt,name=sample_count,json=sampleCount,proto3" json:"sample_count,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// Probability the range claims to contain the outcome, measured by backtests.
+	Coverage      float64 `protobuf:"fixed64,9,opt,name=coverage,proto3" json:"coverage,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SleepPrediction) Reset() {
@@ -4609,6 +4611,13 @@ func (x *SleepPrediction) GetSampleCount() int32 {
 	return 0
 }
 
+func (x *SleepPrediction) GetCoverage() float64 {
+	if x != nil {
+		return x.Coverage
+	}
+	return 0
+}
+
 type SleepForecast struct {
 	state                  protoimpl.MessageState `protogen:"open.v1"`
 	ChildId                string                 `protobuf:"bytes,1,opt,name=child_id,json=childId,proto3" json:"child_id,omitempty"`
@@ -4616,8 +4625,12 @@ type SleepForecast struct {
 	WakeEstimate           *SleepPrediction       `protobuf:"bytes,3,opt,name=wake_estimate,json=wakeEstimate,proto3,oneof" json:"wake_estimate,omitempty"`
 	NextSleepEstimate      *SleepPrediction       `protobuf:"bytes,4,opt,name=next_sleep_estimate,json=nextSleepEstimate,proto3,oneof" json:"next_sleep_estimate,omitempty"`
 	NextSleepIsProvisional bool                   `protobuf:"varint,5,opt,name=next_sleep_is_provisional,json=nextSleepIsProvisional,proto3" json:"next_sleep_is_provisional,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	// Median naps on recent complete days, and whether that differs from the
+	// days before them (a nap transition in progress). Zero when unknown.
+	TypicalNaps   int32 `protobuf:"varint,6,opt,name=typical_naps,json=typicalNaps,proto3" json:"typical_naps,omitempty"`
+	NapTransition bool  `protobuf:"varint,7,opt,name=nap_transition,json=napTransition,proto3" json:"nap_transition,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SleepForecast) Reset() {
@@ -4681,6 +4694,20 @@ func (x *SleepForecast) GetNextSleepEstimate() *SleepPrediction {
 func (x *SleepForecast) GetNextSleepIsProvisional() bool {
 	if x != nil {
 		return x.NextSleepIsProvisional
+	}
+	return false
+}
+
+func (x *SleepForecast) GetTypicalNaps() int32 {
+	if x != nil {
+		return x.TypicalNaps
+	}
+	return 0
+}
+
+func (x *SleepForecast) GetNapTransition() bool {
+	if x != nil {
+		return x.NapTransition
 	}
 	return false
 }
@@ -5373,7 +5400,7 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\x06cursor\x18\x01 \x01(\x03R\x06cursor\x125\n" +
 	"\bentities\x18\x02 \x03(\v2\x19.uneton.v1.SnapshotEntityR\bentities\x129\n" +
 	"\n" +
-	"created_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xf0\x02\n" +
+	"created_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x8c\x03\n" +
 	"\x0fSleepPrediction\x127\n" +
 	"\ttarget_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\btargetAt\x12@\n" +
 	"\x0erange_start_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\frangeStartAt\x12<\n" +
@@ -5385,13 +5412,16 @@ const file_uneton_v1_uneton_proto_rawDesc = "" +
 	"\vexplanation\x18\x05 \x01(\tR\vexplanation\x12+\n" +
 	"\x11algorithm_version\x18\x06 \x01(\x05R\x10algorithmVersion\x12\x12\n" +
 	"\x04kind\x18\a \x01(\tR\x04kind\x12!\n" +
-	"\fsample_count\x18\b \x01(\x05R\vsampleCount\"\xe7\x02\n" +
+	"\fsample_count\x18\b \x01(\x05R\vsampleCount\x12\x1a\n" +
+	"\bcoverage\x18\t \x01(\x01R\bcoverage\"\xb1\x03\n" +
 	"\rSleepForecast\x12\x19\n" +
 	"\bchild_id\x18\x01 \x01(\tR\achildId\x12+\n" +
 	"\x0factive_sleep_id\x18\x02 \x01(\tH\x00R\ractiveSleepId\x88\x01\x01\x12D\n" +
 	"\rwake_estimate\x18\x03 \x01(\v2\x1a.uneton.v1.SleepPredictionH\x01R\fwakeEstimate\x88\x01\x01\x12O\n" +
 	"\x13next_sleep_estimate\x18\x04 \x01(\v2\x1a.uneton.v1.SleepPredictionH\x02R\x11nextSleepEstimate\x88\x01\x01\x129\n" +
-	"\x19next_sleep_is_provisional\x18\x05 \x01(\bR\x16nextSleepIsProvisionalB\x12\n" +
+	"\x19next_sleep_is_provisional\x18\x05 \x01(\bR\x16nextSleepIsProvisional\x12!\n" +
+	"\ftypical_naps\x18\x06 \x01(\x05R\vtypicalNaps\x12%\n" +
+	"\x0enap_transition\x18\a \x01(\bR\rnapTransitionB\x12\n" +
 	"\x10_active_sleep_idB\x10\n" +
 	"\x0e_wake_estimateB\x16\n" +
 	"\x14_next_sleep_estimate\"\x91\x01\n" +

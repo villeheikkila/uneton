@@ -1954,6 +1954,9 @@ public nonisolated struct Uneton_V1_SleepPrediction: Sendable {
 
   public var sampleCount: Int32 = 0
 
+  /// Probability the range claims to contain the outcome, measured by backtests.
+  public var coverage: Double = 0
+
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -2003,6 +2006,18 @@ public nonisolated struct Uneton_V1_SleepForecast: @unchecked Sendable {
   public var nextSleepIsProvisional: Bool {
     get {_storage._nextSleepIsProvisional}
     set {_uniqueStorage()._nextSleepIsProvisional = newValue}
+  }
+
+  /// Median naps on recent complete days, and whether that differs from the
+  /// days before them (a nap transition in progress). Zero when unknown.
+  public var typicalNaps: Int32 {
+    get {_storage._typicalNaps}
+    set {_uniqueStorage()._typicalNaps = newValue}
+  }
+
+  public var napTransition: Bool {
+    get {_storage._napTransition}
+    set {_uniqueStorage()._napTransition = newValue}
   }
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -5419,7 +5434,7 @@ nonisolated extension Uneton_V1_FamilySnapshot: SwiftProtobuf.Message, SwiftProt
 
 nonisolated extension Uneton_V1_SleepPrediction: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SleepPrediction"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}target_at\0\u{3}range_start_at\0\u{3}range_end_at\0\u{1}confidence\0\u{1}explanation\0\u{3}algorithm_version\0\u{1}kind\0\u{3}sample_count\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}target_at\0\u{3}range_start_at\0\u{3}range_end_at\0\u{1}confidence\0\u{1}explanation\0\u{3}algorithm_version\0\u{1}kind\0\u{3}sample_count\0\u{1}coverage\0")
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
     while let fieldNumber = try decoder.nextFieldNumber() {
@@ -5435,6 +5450,7 @@ nonisolated extension Uneton_V1_SleepPrediction: SwiftProtobuf.Message, SwiftPro
       case 6: try { try decoder.decodeSingularInt32Field(value: &self.algorithmVersion) }()
       case 7: try { try decoder.decodeSingularStringField(value: &self.kind) }()
       case 8: try { try decoder.decodeSingularInt32Field(value: &self.sampleCount) }()
+      case 9: try { try decoder.decodeSingularDoubleField(value: &self.coverage) }()
       default: break
       }
     }
@@ -5469,6 +5485,9 @@ nonisolated extension Uneton_V1_SleepPrediction: SwiftProtobuf.Message, SwiftPro
     if self.sampleCount != 0 {
       try visitor.visitSingularInt32Field(value: self.sampleCount, fieldNumber: 8)
     }
+    if self.coverage.bitPattern != 0 {
+      try visitor.visitSingularDoubleField(value: self.coverage, fieldNumber: 9)
+    }
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -5481,6 +5500,7 @@ nonisolated extension Uneton_V1_SleepPrediction: SwiftProtobuf.Message, SwiftPro
     if lhs.algorithmVersion != rhs.algorithmVersion {return false}
     if lhs.kind != rhs.kind {return false}
     if lhs.sampleCount != rhs.sampleCount {return false}
+    if lhs.coverage != rhs.coverage {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -5488,7 +5508,7 @@ nonisolated extension Uneton_V1_SleepPrediction: SwiftProtobuf.Message, SwiftPro
 
 nonisolated extension Uneton_V1_SleepForecast: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
   public static let protoMessageName: String = _protobuf_package + ".SleepForecast"
-  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}child_id\0\u{3}active_sleep_id\0\u{3}wake_estimate\0\u{3}next_sleep_estimate\0\u{3}next_sleep_is_provisional\0")
+  public static let _protobuf_nameMap = SwiftProtobuf._NameMap(bytecode: "\0\u{3}child_id\0\u{3}active_sleep_id\0\u{3}wake_estimate\0\u{3}next_sleep_estimate\0\u{3}next_sleep_is_provisional\0\u{3}typical_naps\0\u{3}nap_transition\0")
 
   fileprivate class _StorageClass {
     var _childID: String = String()
@@ -5496,6 +5516,8 @@ nonisolated extension Uneton_V1_SleepForecast: SwiftProtobuf.Message, SwiftProto
     var _wakeEstimate: Uneton_V1_SleepPrediction? = nil
     var _nextSleepEstimate: Uneton_V1_SleepPrediction? = nil
     var _nextSleepIsProvisional: Bool = false
+    var _typicalNaps: Int32 = 0
+    var _napTransition: Bool = false
 
       // This property is used as the initial default value for new instances of the type.
       // The type itself is protecting the reference to its storage via CoW semantics.
@@ -5511,6 +5533,8 @@ nonisolated extension Uneton_V1_SleepForecast: SwiftProtobuf.Message, SwiftProto
       _wakeEstimate = source._wakeEstimate
       _nextSleepEstimate = source._nextSleepEstimate
       _nextSleepIsProvisional = source._nextSleepIsProvisional
+      _typicalNaps = source._typicalNaps
+      _napTransition = source._napTransition
     }
   }
 
@@ -5534,6 +5558,8 @@ nonisolated extension Uneton_V1_SleepForecast: SwiftProtobuf.Message, SwiftProto
         case 3: try { try decoder.decodeSingularMessageField(value: &_storage._wakeEstimate) }()
         case 4: try { try decoder.decodeSingularMessageField(value: &_storage._nextSleepEstimate) }()
         case 5: try { try decoder.decodeSingularBoolField(value: &_storage._nextSleepIsProvisional) }()
+        case 6: try { try decoder.decodeSingularInt32Field(value: &_storage._typicalNaps) }()
+        case 7: try { try decoder.decodeSingularBoolField(value: &_storage._napTransition) }()
         default: break
         }
       }
@@ -5561,6 +5587,12 @@ nonisolated extension Uneton_V1_SleepForecast: SwiftProtobuf.Message, SwiftProto
       if _storage._nextSleepIsProvisional != false {
         try visitor.visitSingularBoolField(value: _storage._nextSleepIsProvisional, fieldNumber: 5)
       }
+      if _storage._typicalNaps != 0 {
+        try visitor.visitSingularInt32Field(value: _storage._typicalNaps, fieldNumber: 6)
+      }
+      if _storage._napTransition != false {
+        try visitor.visitSingularBoolField(value: _storage._napTransition, fieldNumber: 7)
+      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -5575,6 +5607,8 @@ nonisolated extension Uneton_V1_SleepForecast: SwiftProtobuf.Message, SwiftProto
         if _storage._wakeEstimate != rhs_storage._wakeEstimate {return false}
         if _storage._nextSleepEstimate != rhs_storage._nextSleepEstimate {return false}
         if _storage._nextSleepIsProvisional != rhs_storage._nextSleepIsProvisional {return false}
+        if _storage._typicalNaps != rhs_storage._typicalNaps {return false}
+        if _storage._napTransition != rhs_storage._napTransition {return false}
         return true
       }
       if !storagesAreEqual {return false}

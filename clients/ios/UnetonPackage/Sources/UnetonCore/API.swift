@@ -106,8 +106,11 @@ public struct SleepPrediction: Codable, Equatable, Sendable {
   public var algorithmVersion: Int
   public var kind: String
   public var sampleCount: Int
+  /// Probability the range claims to contain the outcome. Optional so cached
+  /// forecasts from before algorithm version 4 still decode.
+  public var coverage: Double?
 
-  public init(targetAt: Date, rangeStartAt: Date, rangeEndAt: Date, confidence: String, explanation: String, algorithmVersion: Int, kind: String = "offline", sampleCount: Int = 0) {
+  public init(targetAt: Date, rangeStartAt: Date, rangeEndAt: Date, confidence: String, explanation: String, algorithmVersion: Int, kind: String = "offline", sampleCount: Int = 0, coverage: Double? = nil) {
     self.targetAt = targetAt
     self.rangeStartAt = rangeStartAt
     self.rangeEndAt = rangeEndAt
@@ -116,6 +119,7 @@ public struct SleepPrediction: Codable, Equatable, Sendable {
     self.algorithmVersion = algorithmVersion
     self.kind = kind
     self.sampleCount = sampleCount
+    self.coverage = coverage
   }
 }
 
@@ -125,13 +129,18 @@ public struct SleepForecast: Codable, Equatable, Sendable {
   public var wakeEstimate: SleepPrediction?
   public var nextSleepEstimate: SleepPrediction?
   public var nextSleepIsProvisional: Bool
+  /// Median naps on recent complete days, and whether a nap transition is under way.
+  public var typicalNaps: Int?
+  public var napTransition: Bool?
 
-  public init(childID: Child.ID? = nil, activeSleepID: SleepSession.ID? = nil, wakeEstimate: SleepPrediction? = nil, nextSleepEstimate: SleepPrediction? = nil, nextSleepIsProvisional: Bool = false) {
+  public init(childID: Child.ID? = nil, activeSleepID: SleepSession.ID? = nil, wakeEstimate: SleepPrediction? = nil, nextSleepEstimate: SleepPrediction? = nil, nextSleepIsProvisional: Bool = false, typicalNaps: Int? = nil, napTransition: Bool? = nil) {
     self.childID = childID
     self.activeSleepID = activeSleepID
     self.wakeEstimate = wakeEstimate
     self.nextSleepEstimate = nextSleepEstimate
     self.nextSleepIsProvisional = nextSleepIsProvisional
+    self.typicalNaps = typicalNaps
+    self.napTransition = napTransition
   }
 }
 
@@ -767,7 +776,8 @@ private func sleepPrediction(_ value: Uneton_V1_SleepPrediction) -> SleepPredict
     explanation: value.explanation,
     algorithmVersion: Int(value.algorithmVersion),
     kind: value.kind,
-    sampleCount: Int(value.sampleCount)
+    sampleCount: Int(value.sampleCount),
+    coverage: value.coverage > 0 ? value.coverage : nil
   )
 }
 
@@ -778,7 +788,9 @@ private func sleepForecast(_ value: Uneton_V1_SleepForecast) throws -> SleepFore
     activeSleepID: value.hasActiveSleepID ? SleepSession.ID(uuidString: value.activeSleepID) : nil,
     wakeEstimate: value.hasWakeEstimate ? sleepPrediction(value.wakeEstimate) : nil,
     nextSleepEstimate: value.hasNextSleepEstimate ? sleepPrediction(value.nextSleepEstimate) : nil,
-    nextSleepIsProvisional: value.nextSleepIsProvisional
+    nextSleepIsProvisional: value.nextSleepIsProvisional,
+    typicalNaps: value.typicalNaps > 0 ? Int(value.typicalNaps) : nil,
+    napTransition: value.typicalNaps > 0 ? value.napTransition : nil
   )
 }
 

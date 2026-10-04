@@ -76,6 +76,7 @@ type Prediction struct {
 	AlgorithmVersion int       `json:"algorithmVersion"`
 	Kind             string    `json:"kind"`
 	SampleCount      int       `json:"sampleCount"`
+	Coverage         float64   `json:"coverage"`
 }
 
 type SleepForecast struct {
@@ -84,6 +85,8 @@ type SleepForecast struct {
 	WakeEstimate           *Prediction `json:"wakeEstimate,omitempty"`
 	NextSleepEstimate      *Prediction `json:"nextSleepEstimate,omitempty"`
 	NextSleepIsProvisional bool        `json:"nextSleepIsProvisional"`
+	TypicalNaps            int         `json:"typicalNaps"`
+	NapTransition          bool        `json:"napTransition"`
 }
 
 type GrowthReferencePoint struct {

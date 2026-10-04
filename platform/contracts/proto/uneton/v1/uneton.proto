@@ -442,6 +442,8 @@ message SleepPrediction {
   int32 algorithm_version = 6;
   string kind = 7;
   int32 sample_count = 8;
+  // Probability the range claims to contain the outcome, measured by backtests.
+  double coverage = 9;
 }
 
 message SleepForecast {
@@ -450,6 +452,10 @@ message SleepForecast {
   optional SleepPrediction wake_estimate = 3;
   optional SleepPrediction next_sleep_estimate = 4;
   bool next_sleep_is_provisional = 5;
+  // Median naps on recent complete days, and whether that differs from the
+  // days before them (a nap transition in progress). Zero when unknown.
+  int32 typical_naps = 6;
+  bool nap_transition = 7;
 }
 
 message GrowthReferencePoint {

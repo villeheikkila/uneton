@@ -734,7 +734,7 @@ func syncResponseToProto(response SyncResponse, commandKinds map[string]string) 
 	}
 	if response.SleepForecast != nil {
 		forecast := response.SleepForecast
-		result.SleepForecast = &unetonv1.SleepForecast{ChildId: forecast.ChildID, ActiveSleepId: forecast.ActiveSleepID, WakeEstimate: predictionToProto(forecast.WakeEstimate), NextSleepEstimate: predictionToProto(forecast.NextSleepEstimate), NextSleepIsProvisional: forecast.NextSleepIsProvisional}
+		result.SleepForecast = &unetonv1.SleepForecast{ChildId: forecast.ChildID, ActiveSleepId: forecast.ActiveSleepID, WakeEstimate: predictionToProto(forecast.WakeEstimate), NextSleepEstimate: predictionToProto(forecast.NextSleepEstimate), NextSleepIsProvisional: forecast.NextSleepIsProvisional, TypicalNaps: int32(forecast.TypicalNaps), NapTransition: forecast.NapTransition}
 	}
 	for _, point := range response.GrowthReferencePoints {
 		result.GrowthReferencePoints = append(result.GrowthReferencePoints, &unetonv1.GrowthReferencePoint{Reference: point.Reference, Metric: point.Metric, AgeMonths: int32(point.AgeMonths), Sd: int32(point.SD), Value: int32(point.Value)})
@@ -746,7 +746,7 @@ func predictionToProto(value *Prediction) *unetonv1.SleepPrediction {
 	if value == nil {
 		return nil
 	}
-	return &unetonv1.SleepPrediction{TargetAt: timestamppb.New(value.TargetAt), RangeStartAt: timestamppb.New(value.RangeStartAt), RangeEndAt: timestamppb.New(value.RangeEndAt), Confidence: value.Confidence, Explanation: value.Explanation, AlgorithmVersion: int32(value.AlgorithmVersion), Kind: value.Kind, SampleCount: int32(value.SampleCount)}
+	return &unetonv1.SleepPrediction{TargetAt: timestamppb.New(value.TargetAt), RangeStartAt: timestamppb.New(value.RangeStartAt), RangeEndAt: timestamppb.New(value.RangeEndAt), Confidence: value.Confidence, Explanation: value.Explanation, AlgorithmVersion: int32(value.AlgorithmVersion), Kind: value.Kind, SampleCount: int32(value.SampleCount), Coverage: value.Coverage}
 }
 
 func commandEntityType(kind string) string {

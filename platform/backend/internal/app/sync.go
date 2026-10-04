@@ -1060,6 +1060,7 @@ func (s *Server) sleepForecastForChild(ctx context.Context, q *storedb.Queries, 
 		if next, ok := sweetspot.Predict(sweetspot.Request{WokeAt: wake.Target, BirthDate: birth, Location: location, History: sessions, Current: &predictedSession, ManualMinutes: manualMinutes}); ok {
 			value := predictionFromEstimate(next)
 			forecast.NextSleepEstimate = &value
+			forecast.TypicalNaps, forecast.NapTransition = next.TypicalNaps, next.NapTransition
 		}
 		return forecast
 	}
@@ -1076,6 +1077,7 @@ func (s *Server) sleepForecastForChild(ctx context.Context, q *storedb.Queries, 
 	}
 	value := predictionFromEstimate(estimate)
 	forecast.NextSleepEstimate = &value
+	forecast.TypicalNaps, forecast.NapTransition = estimate.TypicalNaps, estimate.NapTransition
 	return forecast
 }
 
@@ -1096,7 +1098,7 @@ func cachedLocation(name string) (*time.Location, error) {
 }
 
 func predictionFromEstimate(estimate sweetspot.Estimate) Prediction {
-	return Prediction{TargetAt: estimate.Target, RangeStartAt: estimate.RangeStart, RangeEndAt: estimate.RangeEnd, Confidence: estimate.Confidence, Explanation: estimate.Explanation, AlgorithmVersion: sweetspot.AlgorithmVersion, Kind: estimate.Kind, SampleCount: estimate.SampleCount}
+	return Prediction{TargetAt: estimate.Target, RangeStartAt: estimate.RangeStart, RangeEndAt: estimate.RangeEnd, Confidence: estimate.Confidence, Explanation: estimate.Explanation, AlgorithmVersion: sweetspot.AlgorithmVersion, Kind: estimate.Kind, SampleCount: estimate.SampleCount, Coverage: estimate.Coverage}
 }
 
 func normalizeSleepContext(payload *sleepPayload) {

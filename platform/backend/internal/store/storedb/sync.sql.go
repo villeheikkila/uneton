@@ -1299,6 +1299,7 @@ select started_at, ended_at, start_condition, sleep_location, end_condition,
 from sleep_sessions
 where child_id=?1
   and ended_at is not null
+  and recorded_ended_at is not null
   and deleted_at is null
   and superseded_by_id is null
 order by started_at
@@ -1315,6 +1316,9 @@ type SweetSpotHistoryRow struct {
 	CaregiverIntervened sql.NullInt64  `json:"caregiver_intervened"`
 }
 
+// Presented entries whose end a caregiver recorded. An unfinished recorded
+// session represents its run, so a derived end ("the next sleep started")
+// never becomes training data.
 func (q *Queries) SweetSpotHistory(ctx context.Context, childID string) ([]SweetSpotHistoryRow, error) {
 	rows, err := q.db.QueryContext(ctx, sweetSpotHistory, childID)
 	if err != nil {

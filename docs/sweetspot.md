@@ -21,19 +21,37 @@ Primary sources:
 - [Infant signaling and self-soothing review](https://pmc.ncbi.nlm.nih.gov/articles/PMC10104392/)
 - [Physiological modelling of infant sleep regulation](https://pmc.ncbi.nlm.nih.gov/articles/PMC11527290/)
 
-## Algorithm version 3
+## Algorithm version 4
 
-For each completed sleep, the system considers the interval from its recorded end to the next recorded start. It rejects overlaps, gaps under five minutes, and gaps too long to distinguish from missing logging. It then:
+The model reads only presented diary entries whose end a caregiver recorded, so an end the server derived ("the next sleep started") never becomes training data.
 
-1. Classifies the wake by local clock phase: nighttime resettling, morning, daytime, or bedtime.
-2. Uses only earlier observations from the same phase, preventing nighttime feeds from distorting daytime nap estimates.
-3. Weights observations by recency (28-day half-life), circular clock-time similarity, and preceding sleep duration.
-4. Requires comparable observations on at least five separate local days before personal history can move the estimate. Multiple naps from one day do not count as repeated evidence.
-5. Uses a weighted median as the personal target and weighted quartiles as the uncertainty range, with a minimum range width to avoid false precision.
-6. Blends the personal distribution with an age-appropriate prior as repeated days accumulate, retaining at least 25% of the prior. Daytime predictions are constrained to that age range; overnight resettling remains separate because a recorded night gap is often an incomplete observation.
-7. Falls back to a broad age-based estimate until five comparable days are available.
+**Day structure.** Sleeps starting between 18:00 and 04:00 begin a night; the night continues through wakings of at most three hours that resume before 06:00. Its last segment is the morning wake when it ends between 04:00 and 12:00. Every other sleep is a nap, numbered from the morning. Each wake period is therefore a nighttime resettle, the first wake window of the day, or the window after nap *n*. While a sleep has just ended, a night segment ending at least 45 minutes before the child's usual morning (median of the last 14 mornings) is treated as a resettle. The structure also yields the median nap count of the last five complete days and flags a nap transition when it differs from the nine days before.
 
-The 120-day history cap and recency weighting let the model follow rapid developmental change. Predictions are computed on demand from the server's current authoritative projection, so retries, offline commands, and reconnects do not create separate model state or conflict semantics. The version is returned with every estimate so evaluation can compare revisions without mixing their results.
+**Samples.** Earlier wake periods of the same kind (night or day) are weighted by recency (28-day half-life, 112-day horizon), by clock-time similarity (180-minute Gaussian), by similarity of the preceding sleep's length, by learned context, and by nap number (a different nap number halves the weight). Clock time carries the circadian signal; the nap number refines it once days are structured.
+
+**Centre.** In log-minutes, gross outliers (beyond three robust deviations, typically a missed entry) are dropped. With at least a week of age spread and eight effective observations, a weighted linear trend in age is fitted and the centre is the weighted median of the detrended values at the current age, so a growing child is not predicted from its younger self. That centre is combined with the age prior by precision: the observed spread is pooled with the prior's over three pseudo-observations, so a few near-identical days cannot claim certainty, and the prior's influence fades with evidence instead of being kept at a fixed share. There is no hard age cap.
+
+**Range.** The 10% and 90% quantiles of the fit's residuals, blended with the prior's spread while the effective sample size is small, inflated by the finite-sample factor and a calibration constant set from backtests, give an 80% range (`Coverage` 0.8). Confidence reflects the measured width and effective sample size.
+
+**Age prior.** An 80% band of typical wake windows from birth (30-70 minutes) to four years (330-480 minutes), interpolated geometrically by age in days, so there are no month-boundary jumps. Nighttime resettles use 15-120 minutes. These are low-confidence starting points, not recommendations.
+
+**Wake estimates.** For an ongoing night, the estimate is the morning wake as a clock time from the last 28 mornings, moving later while the night continues. For a nap, it is the recent distribution of naps with the same number, conditioned on the child still being asleep.
+
+## Evaluation results
+
+`evaluate-sweetspot` compares the live model with the frozen version 3 (`cmd/evaluate-sweetspot/v3`), the age prior alone, "same as the last comparable window", and a 14-day personal median, on events every model can predict. On one family's real diary (392 sleeps, birth to 4 months, 336 next-sleep events):
+
+| | v3 | v4 |
+| --- | --- | --- |
+| next sleep, mean absolute error | 46.8 min | 45.8 min |
+| next sleep within 15 / 30 min | 35% / 56% | 42% / 60% |
+| next sleep pinball loss | 21.4 | 17.9 |
+| range coverage, actual / claimed | 45% / 50% | 77% / 80% |
+| nighttime resettle within 15 min | 46% | 60% |
+| morning wake, mean absolute error | not modelled (266 min) | 44.5 min |
+| nap end, mean absolute error, coverage | 34.3 min, 52% / 50% | 32.8 min, 81% / 80% |
+
+The calibration constants (1.3 for wake windows, 1.05 for nap ends) were set on this diary, which covers only early infancy, when schedules are least regular; ranges are correspondingly wide. Nap numbering and the age trend made little difference at this age and are expected to matter more from about six months, when days consolidate. Re-run the backtest on more diaries, especially older children, before trusting the constants beyond infancy.
 
 ## Optional context
 
@@ -43,13 +61,13 @@ The most useful low-friction questions at wake time are “How did they wake?”
 
 ## Evaluation
 
-Run a chronological backtest with:
+Run a chronological backtest with a Huckleberry export (`-csv`) or a plain `started_at,ended_at` CSV of RFC 3339 timestamps (`-sessions`):
 
 ```sh
 go run ./platform/backend/cmd/evaluate-sweetspot \
-  -csv /path/to/sleep-history.csv \
+  -sessions /path/to/sleeps.csv \
   -timezone Europe/Helsinki \
   -birth-date YYYY-MM-DD
 ```
 
-Every estimate uses only records preceding the event being predicted. The command prints aggregate error, within-15/30-minute rates, interval coverage, phase breakdowns, and the latest estimate; it does not print individual sleep records. This is validation against an imperfect diary, not clinical validation or a guarantee of generalization.
+Every estimate uses only records preceding the event being predicted. The command prints mean and median absolute error, within-15/30-minute rates, pinball loss, actual versus claimed range coverage and width, by clock phase and age band, plus wake-estimate accuracy for nights (against the morning wake) and naps; it never prints individual sleep records. Keep diaries used for evaluation outside the repository. This is validation against an imperfect diary, not clinical validation or a guarantee of generalization.

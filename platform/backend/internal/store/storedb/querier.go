@@ -123,6 +123,9 @@ type Querier interface {
 	SnapshotGrowthIDs(ctx context.Context, familyID string) ([]string, error)
 	SnapshotSleepIDs(ctx context.Context, familyID string) ([]string, error)
 	SnapshotTemperatureIDs(ctx context.Context, familyID string) ([]string, error)
+	// Presented entries whose end a caregiver recorded. An unfinished recorded
+	// session represents its run, so a derived end ("the next sleep started")
+	// never becomes training data.
 	SweetSpotHistory(ctx context.Context, childID string) ([]SweetSpotHistoryRow, error)
 	TemperatureReadingRecord(ctx context.Context, arg TemperatureReadingRecordParams) (TemperatureReading, error)
 	TouchDeviceSession(ctx context.Context, arg TouchDeviceSessionParams) (int64, error)

@@ -347,12 +347,16 @@ from children
 where family_id=sqlc.arg(family_id) and deleted_at is null
 order by updated_at limit 1;
 
+-- Presented entries whose end a caregiver recorded. An unfinished recorded
+-- session represents its run, so a derived end ("the next sleep started")
+-- never becomes training data.
 -- name: SweetSpotHistory :many
 select started_at, ended_at, start_condition, sleep_location, end_condition,
   wake_mood, wake_reason, caregiver_intervened
 from sleep_sessions
 where child_id=sqlc.arg(child_id)
   and ended_at is not null
+  and recorded_ended_at is not null
   and deleted_at is null
   and superseded_by_id is null
 order by started_at;
