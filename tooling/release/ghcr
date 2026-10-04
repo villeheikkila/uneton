@@ -34,16 +34,21 @@ if [[ "$mode" == --publish ]]; then
   [[ -n "$buildx_plugin" ]] || { echo "docker buildx is required" >&2; exit 127; }
   DOCKER_CONFIG="$(mktemp -d)"
   export DOCKER_CONFIG
-  # Keep the CLI plugins (buildx) that the default Docker config provides.
-  printf '{"cliPluginsExtraDirs":["%s"]}\n' "$(dirname "$buildx_plugin")" >"$DOCKER_CONFIG/config.json"
+  fnox_get() { fnox --config "$repo_root/fnox.toml" --no-daemon --profile production get "$1"; }
+  # Write the registry auth into the throwaway config instead of `docker login`.
+  # A config that already holds auths keeps Docker on its file store; otherwise
+  # macOS Docker picks osxkeychain and would save the token in Keychain. Keep the
+  # CLI plugin directory (buildx) that the default config provides.
+  auth="$(printf '%s:%s' "$(fnox_get UNETON_GHCR_USERNAME)" "$(fnox_get UNETON_GHCR_TOKEN)" | base64 | tr -d '\n')"
+  printf '{"auths":{"ghcr.io":{"auth":"%s"}},"cliPluginsExtraDirs":["%s"]}\n' \
+    "$auth" "$(dirname "$buildx_plugin")" >"$DOCKER_CONFIG/config.json"
+  unset auth
   builder="uneton-release-$$"
   cleanup() {
     docker buildx rm "$builder" >/dev/null 2>&1 || true
     rm -rf "$DOCKER_CONFIG"
   }
   trap cleanup EXIT
-  fnox_get() { fnox --config "$repo_root/fnox.toml" --no-daemon --profile production get "$1"; }
-  fnox_get UNETON_GHCR_TOKEN | docker login ghcr.io --username "$(fnox_get UNETON_GHCR_USERNAME)" --password-stdin >/dev/null
   # SBOM and provenance attestations need a docker-container builder; the
   # default docker driver rejects them.
   docker buildx create --name "$builder" --driver docker-container >/dev/null
