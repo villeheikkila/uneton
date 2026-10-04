@@ -28,8 +28,13 @@ args=(
 )
 
 if [[ "$mode" == --publish ]]; then
+  # SBOM and provenance attestations need a docker-container builder; the
+  # default docker driver rejects them.
+  builder="uneton-release"
+  docker buildx inspect "$builder" >/dev/null 2>&1 ||
+    docker buildx create --name "$builder" --driver docker-container >/dev/null
   # Attach an SBOM and build provenance so the published digest can be audited.
-  args+=(--platform "linux/amd64,linux/arm64" --sbom=true --provenance=mode=max --push)
+  args+=(--builder "$builder" --platform "linux/amd64,linux/arm64" --sbom=true --provenance=mode=max --push)
 else
   args+=(--platform linux/arm64 --load)
 fi
