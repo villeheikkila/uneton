@@ -45,6 +45,9 @@ func (s *Server) AppleAuth(ctx context.Context, req *connect.Request[unetonv1.Ap
 	}
 	identity, err := s.apple.subject(ctx, req.Msg.GetAuthorizationCode(), req.Msg.GetNonce())
 	if err != nil {
+		// The client only learns that authorization failed; the cause (token
+		// exchange, identity token, nonce) is for the operator.
+		s.logger.WarnContext(ctx, "apple authorization failed", "error", err)
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("apple authorization failed"))
 	}
 	var encryptedRefreshToken []byte

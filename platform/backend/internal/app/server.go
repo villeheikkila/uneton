@@ -164,7 +164,10 @@ func (s *Server) routes() {
 	path, handler := unetonv1connect.NewUnetonServiceHandler(
 		s,
 		connect.WithReadMaxBytes(1<<20),
-		connect.WithInterceptors(connectapi.NewPolicyInterceptor(s.authenticateConnectRequest, s.development)),
+		connect.WithInterceptors(
+			connectapi.NewErrorLogInterceptor(s.logger),
+			connectapi.NewPolicyInterceptor(s.authenticateConnectRequest, s.development),
+		),
 	)
 	s.mux.Handle(path, handler)
 }
