@@ -36,10 +36,24 @@ asc xcode archive \
   --xcodebuild-flag="CURRENT_PROJECT_VERSION=$build_number" \
   --output json
 
+# Distribution signing uses the App Store Connect API key that asc already
+# holds, so the Mac needs no Apple ID signed in to Xcode. The key is exported
+# to a private temporary directory for this export only.
+key_dir="$(mktemp -d)"
+trap 'rm -rf "$key_dir"' EXIT
+asc auth export-to-config --confirm --config "$key_dir/config.json" --private-key-dir "$key_dir" --output json >/dev/null
+key_id="$(jq -er '.key_id' "$key_dir/config.json")"
+issuer_id="$(jq -er '.issuer_id' "$key_dir/config.json")"
+key_path="$(jq -er '.private_key_path' "$key_dir/config.json")"
+[[ -f "$key_path" ]] || { echo "App Store Connect API key file not found" >&2; exit 2; }
+
 asc xcode export \
   --archive-path "$archive" \
   --ipa-path "$ipa" \
   --xcodebuild-flag=-allowProvisioningUpdates \
+  --xcodebuild-flag=-authenticationKeyPath --xcodebuild-flag="$key_path" \
+  --xcodebuild-flag=-authenticationKeyID --xcodebuild-flag="$key_id" \
+  --xcodebuild-flag=-authenticationKeyIssuerID --xcodebuild-flag="$issuer_id" \
   --output json
 
 echo "App Store IPA: $ipa"
