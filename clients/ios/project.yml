@@ -47,6 +47,9 @@ targets:
       path: Uneton/Info.plist
       properties:
         CFBundleDisplayName: Uneton
+        # Only HTTPS, a SHA-256 Sign in with Apple nonce and Keychain storage:
+        # exempt encryption, so uploads need no export-compliance answer.
+        ITSAppUsesNonExemptEncryption: false
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         UILaunchScreen: {}
