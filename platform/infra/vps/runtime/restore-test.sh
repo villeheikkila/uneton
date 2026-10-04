@@ -28,7 +28,8 @@ rm -f "$database-shm" "$database-wal"
 docker run --rm \
   -v uneton_uneton-data:/data \
   -v uneton_uneton-backups:/backup \
-  litestream/litestream:0.3 restore -o /data/uneton.sqlite file:///backup
+  litestream/litestream:0.5.17@sha256:4b02b9859a6b6b4087d8b8944e15f7e984bd7957cba322bbeee38b0e27b9656a \
+  restore -integrity-check full -o /data/uneton.sqlite file:///backup
 chown --reference="$backup" "$database"
 chmod --reference="$backup" "$database"
 rm -f "$database.sync-generation"

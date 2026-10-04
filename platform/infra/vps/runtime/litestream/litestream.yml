@@ -1,5 +1,13 @@
+# Litestream 0.5. Snapshot retention is global and bounds how far back a restore
+# can go. Keep it below the backend's JournalRetention (seven days): clients only
+# keep acknowledged commands that long, and a restore must be able to replay them.
+snapshot:
+  interval: 6h
+  retention: 24h
+
 dbs:
   - path: /data/uneton.sqlite
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}
-        retention: 24h
+    replica:
+      url: ${LITESTREAM_REPLICA_URL}
+      # Only needed for S3-compatible stores Litestream cannot detect from the URL.
+      endpoint: ${LITESTREAM_S3_ENDPOINT}

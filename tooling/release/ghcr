@@ -28,7 +28,8 @@ args=(
 )
 
 if [[ "$mode" == --publish ]]; then
-  args+=(--platform "linux/amd64,linux/arm64" --push)
+  # Attach an SBOM and build provenance so the published digest can be audited.
+  args+=(--platform "linux/amd64,linux/arm64" --sbom=true --provenance=mode=max --push)
 else
   args+=(--platform linux/arm64 --load)
 fi

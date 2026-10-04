@@ -38,6 +38,7 @@ services:
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
     environment:
+      GOMEMLIMIT: 400MiB
       UNETON_RUNTIME_ENVIRONMENT: production
       UNETON_DATABASE_PATH: /data/uneton.sqlite
       UNETON_HTTP_LISTEN_ADDRESS: 0.0.0.0:8080
@@ -64,10 +65,13 @@ services:
       retries: 6
 
   uneton-litestream:
-    image: litestream/litestream:0.3
-    pull_policy: always
+    image: litestream/litestream:0.5.17@sha256:4b02b9859a6b6b4087d8b8944e15f7e984bd7957cba322bbeee38b0e27b9656a
     restart: unless-stopped
-    command: replicate
+    stop_grace_period: 30s
+    command: ["replicate"]
+    user: "10001:10001"
+    mem_limit: 256m
+    pids_limit: 64
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,nodev,size=16m
@@ -75,8 +79,9 @@ services:
     cap_drop: [ALL]
     environment:
       LITESTREAM_REPLICA_URL: ${UNETON_LITESTREAM_REPLICA_URL:?set off-host replica URL}
-      LITESTREAM_ACCESS_KEY_ID: ${UNETON_BACKUP_ACCESS_KEY_ID:?set backup access key}
-      LITESTREAM_SECRET_ACCESS_KEY: ${UNETON_BACKUP_SECRET_ACCESS_KEY:?set backup secret key}
+      LITESTREAM_S3_ENDPOINT: ${UNETON_LITESTREAM_S3_ENDPOINT:-}
+      AWS_ACCESS_KEY_ID: ${UNETON_BACKUP_ACCESS_KEY_ID:?set backup access key}
+      AWS_SECRET_ACCESS_KEY: ${UNETON_BACKUP_SECRET_ACCESS_KEY:?set backup secret key}
     volumes:
       - uneton_data:/data
       - ./uneton-litestream.yml:/etc/litestream.yml:ro
@@ -88,19 +93,23 @@ volumes:
   uneton_data:
 ```
 
-There are no `ports` or blanket `env_file` entries on these services. This keeps the API reachable only through the shared Compose network and avoids passing other services' secrets to Uneton. The image's `/data` directory is owned by UID 10001; the init service also repairs ownership of a newly created named volume. Pin the Litestream image by digest in the final host configuration. The 512 MiB API limit is a starting allocation, not a capacity claim; measure it alongside the host's other services.
+There are no `ports` or blanket `env_file` entries on these services. This keeps the API reachable only through the shared Compose network, keeps backup credentials out of the API, and avoids passing other services' secrets to Uneton. The image's `/data` directory is owned by UID 10001; the init service also repairs ownership of a newly created named volume, and Litestream runs as the same UID so it needs no capabilities. The 512 MiB API limit is a starting allocation, not a capacity claim; measure it alongside the host's other services. `GOMEMLIMIT` keeps the Go heap below that limit. Add the host's log rotation (for example `json-file` with `max-size`) if the shared project does not already set it.
 
 Place `uneton-litestream.yml` beside the host's Compose file:
 
 ```yaml
+snapshot:
+  interval: 6h
+  retention: 24h
+
 dbs:
   - path: /data/uneton.sqlite
-    replicas:
-      - url: ${LITESTREAM_REPLICA_URL}
-        retention: 24h
+    replica:
+      url: ${LITESTREAM_REPLICA_URL}
+      endpoint: ${LITESTREAM_S3_ENDPOINT}
 ```
 
-Use an off-host object-store URL such as `s3://<bucket>/uneton/production`. The local rehearsal's `file:///backup` is on the same machine and does not protect against host loss. If the chosen store uses an S3-compatible endpoint, add the endpoint to the Litestream replica configuration and test restore with that provider before rollout. Grant the replica credentials access only to Uneton's backup prefix. Retention and recovery objectives should be agreed before treating this as production storage.
+This is Litestream 0.5: one `replica` per database, and retention lives in the global `snapshot` block. Use an off-host object-store URL such as `s3://<bucket>/uneton/production`. The local rehearsal's `file:///backup` is on the same machine and does not protect against host loss. For an S3-compatible store that Litestream cannot detect from the URL, set `UNETON_LITESTREAM_S3_ENDPOINT` (for example `https://<region>.your-objectstorage.com`) and test a restore with that provider before rollout. Grant the replica credentials access only to Uneton's backup prefix. Retention and recovery objectives should be agreed before treating this as production storage.
 
 ## Shared Caddy and DNS
 
@@ -139,9 +148,9 @@ Extend the host's local deployment process to install the Litestream file, rende
 | `UNETON_LEGAL_OPERATOR_NAME`, `UNETON_LEGAL_CONTACT_EMAIL` | The same legal identity used for local privacy and ASC metadata |
 | `UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_ACTIVE_KEY_ID`, `UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_KEYRING_JSON` | Preserve old keys while encrypted refresh tokens exist |
 | `UNETON_INTEGRATION_APPLE_TEAM_ID`, `UNETON_INTEGRATION_APPLE_PRIVATE_KEY_ID`, `UNETON_INTEGRATION_APPLE_PRIVATE_KEY_PEM` | Sign in with Apple credentials; encode PEM newlines as literal `\n` |
-| `UNETON_LITESTREAM_REPLICA_URL`, `UNETON_BACKUP_ACCESS_KEY_ID`, `UNETON_BACKUP_SECRET_ACCESS_KEY` | Dedicated off-host backup destination and scoped credentials |
+| `UNETON_LITESTREAM_REPLICA_URL`, `UNETON_LITESTREAM_S3_ENDPOINT`, `UNETON_BACKUP_ACCESS_KEY_ID`, `UNETON_BACKUP_SECRET_ACCESS_KEY` | Dedicated off-host backup destination, optional S3-compatible endpoint, and scoped credentials |
 
-If the Apple integration key cannot send APNs, add the four `UNETON_INTEGRATION_APNS_*` variables from `platform/backend/.env.example` to the API service and the secret template. The App Review phone is for local ASC submission, not a backend runtime variable. Keep personal contact values age-encrypted in Uneton's local `fnox.toml`; the server secret source must supply its own production copy. The `.env` file and `docker compose config` output contain secrets, so do not log or commit the rendered configuration.
+If the Apple integration key cannot send APNs, add all four `UNETON_INTEGRATION_APNS_*` variables from `platform/backend/.env.example` to the API service and the secret template. Setting only some of them, including the topic alone, fails configuration validation. The App Review phone is for local ASC submission, not a backend runtime variable. Keep personal contact values age-encrypted in Uneton's local `fnox.toml`; the server secret source must supply its own production copy. The `.env` file and `docker compose config` output contain secrets, so do not log or commit the rendered configuration.
 
 Have the host's deployment process verify `uneton-api` health, backup freshness, and the public listener allowlist after rollout. Drive deployment from the local machine; no remote CI/CD is needed. If that process uses `--remove-orphans`, services added only through a temporary local Compose override will be removed on its next run.
 
@@ -152,4 +161,4 @@ Have the host's deployment process verify `uneton-api` health, backup freshness,
 3. In the host configuration, integrate the Compose services, Caddy site, Litestream file, secret template, and health checks above. Deploy that project from the local machine. Check internal API health and Litestream replication before changing DNS.
 4. Point `api.uneton.app` at the shared host, then verify HTTPS `/health/ready`, legal pages, an authenticated app flow, and Apple server notification reachability. Verify backup freshness again after real traffic begins.
 
-For a restore, stop **both** `uneton-api` and `uneton-litestream` before replacing the SQLite files from the off-host replica. Rotate `/data/uneton.sqlite.sync-generation` before starting the API so clients receive a snapshot after lineage changes. Ensure restored files are writable by UID 10001, start the API and then Litestream, and verify readiness, sync recovery, and a new backup. The existing `infra:orb:restore-test` script assumes `/srv/uneton` and a local file replica; it is not a shared-host restore procedure. Add and rehearse a host-specific restore operation as part of the deployment integration.
+For a restore, stop **both** `uneton-api` and `uneton-litestream` before replacing the SQLite files from the off-host replica. Rotate `/data/uneton.sqlite.sync-generation` before starting the API so clients receive a snapshot after lineage changes. Ensure restored files are writable by UID 10001, start the API and then Litestream, and verify readiness, sync recovery, and a new backup. Restore with the same pinned Litestream image and `restore -integrity-check full`; Litestream 0.5 also reads backups written by 0.3. The existing `infra:orb:restore-test` script assumes `/srv/uneton` and a local file replica; it is not a shared-host restore procedure. Add and rehearse a host-specific restore operation as part of the deployment integration.
