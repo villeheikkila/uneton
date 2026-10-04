@@ -1,0 +1,116 @@
+- name: Deploy Uneton to the shared maku host
+  hosts: shared
+  become: true
+  gather_facts: false
+  vars:
+    runtime_dir: /srv/uneton
+    runtime_source: "{{ playbook_dir }}/../runtime"
+  pre_tasks:
+    - name: Require a digest-pinned backend image
+      ansible.builtin.assert:
+        that:
+          - uneton_backend_image is defined
+          - uneton_backend_image is search('@sha256:[0-9a-f]{64}$')
+        fail_msg: Pass -e uneton_backend_image=ghcr.io/villeheikkila/uneton-backend@sha256:<digest>
+      tags: [always]
+
+    - name: Render the production environment on the controller
+      ansible.builtin.set_fact:
+        uneton_env: >-
+          {{ lookup('ansible.builtin.pipe',
+             (playbook_dir ~ '/../operations/shared-env.py') | quote ~ ' --image ' ~ (uneton_backend_image | quote)) }}
+      delegate_to: localhost
+      become: false
+      no_log: true
+      tags: [always]
+
+  tasks:
+    - name: Require Docker Compose, installed by the maku shared-services playbook
+      ansible.builtin.command:
+        argv: [docker, compose, version]
+      changed_when: false
+
+    - name: Check the shared edge network
+      ansible.builtin.command:
+        argv: [docker, network, inspect, shared-edge]
+      register: shared_edge_network
+      changed_when: false
+      failed_when: false
+
+    - name: Create the shared edge network
+      ansible.builtin.command:
+        argv: [docker, network, create, --driver, bridge, shared-edge]
+      when: shared_edge_network.rc != 0
+      changed_when: true
+
+    - name: Create runtime directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0750"
+      loop:
+        - "{{ runtime_dir }}"
+        - "{{ runtime_dir }}/litestream"
+
+    - name: Copy the runtime definition
+      ansible.builtin.copy:
+        src: "{{ runtime_source }}/{{ item }}"
+        dest: "{{ runtime_dir }}/{{ item }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - compose.yaml
+        - compose.shared.yaml
+        - litestream/litestream.yml
+
+    - name: Install the production environment
+      ansible.builtin.copy:
+        content: "{{ uneton_env }}\n"
+        dest: "{{ runtime_dir }}/.env"
+        owner: root
+        group: root
+        mode: "0600"
+      no_log: true
+
+    - name: Validate the Compose configuration
+      ansible.builtin.command:
+        argv: [docker, compose, config, --quiet]
+        chdir: "{{ runtime_dir }}"
+      changed_when: false
+
+    - name: Pull images
+      ansible.builtin.command:
+        argv: [docker, compose, pull]
+        chdir: "{{ runtime_dir }}"
+      changed_when: true
+
+    - name: Start Uneton
+      ansible.builtin.command:
+        argv: [docker, compose, up, --detach, --remove-orphans, --wait, --wait-timeout, "120"]
+        chdir: "{{ runtime_dir }}"
+      changed_when: true
+
+    - name: Check that the shared Caddy reaches the API over shared-edge
+      ansible.builtin.shell:
+        cmd: >-
+          set -eu;
+          caddy="$(docker ps -q --filter label=com.docker.compose.project=maku-shared-observability
+          --filter label=com.docker.compose.service=caddy)";
+          test -n "$caddy" || { echo "maku shared Caddy is not running" >&2; exit 1; };
+          docker exec "$caddy" wget -qO- http://uneton-api:8080/health/ready
+      register: edge_readiness
+      changed_when: false
+      failed_when: edge_readiness.rc != 0 or '"status":"ready"' not in edge_readiness.stdout
+
+    - name: Wait for the first Litestream snapshot
+      ansible.builtin.shell:
+        cmd: docker compose logs --no-color litestream | grep -q 'snapshot complete'
+        chdir: "{{ runtime_dir }}"
+      register: litestream_snapshot
+      retries: 20
+      delay: 3
+      until: litestream_snapshot.rc == 0
+      changed_when: false

@@ -1,0 +1,15 @@
+# Overlay for the shared maku host. That host's Caddy owns ports 80/443 and
+# reaches the API as `uneton-api` on the external shared-edge network. Select it
+# with COMPOSE_FILE=compose.yaml:compose.shared.yaml so every compose command,
+# including manual restores, sees the same project.
+services:
+  api:
+    networks:
+      default: {}
+      shared-edge:
+        aliases: [uneton-api]
+
+networks:
+  shared-edge:
+    external: true
+    name: shared-edge

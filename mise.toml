@@ -292,6 +292,18 @@ description = "Deploy an already-built backend image to the disposable OrbStack 
 run = "platform/infra/vps/operations/orb-machine.sh rollout"
 
 [tasks."infra:ansible:check"]
-description = "Validate the production rehearsal playbook without contacting a VM"
+description = "Validate the rehearsal and shared-host playbooks without contacting a host"
 dir = "platform/infra/vps/ansible"
-run = "ansible-playbook --syntax-check -i inventory.orb.ini playbook.yml"
+run = [
+  "ansible-playbook --syntax-check -i inventory.orb.ini playbook.yml",
+  "ansible-playbook --syntax-check -i inventory.shared.ini shared.yml -e uneton_backend_image=check@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+]
+
+[tasks."deploy:shared:secrets"]
+description = "Generate missing Uneton-owned production secrets into the production Fnox profile"
+run = "platform/infra/vps/operations/shared-secrets.sh"
+
+[tasks."deploy:shared"]
+description = "Deploy a published backend digest to the shared maku host; pass the image@sha256 reference"
+depends = ["infra:ansible:check"]
+run = "platform/infra/vps/operations/shared-deploy.sh"

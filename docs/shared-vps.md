@@ -1,164 +1,78 @@
-# Uneton in a shared VPS Compose stack
+# Uneton on the shared maku host
 
-This is a host-neutral configuration for running Uneton inside an existing shared Docker Compose project. It assumes the host already has a public Caddy service and a local deployment process that owns the Compose file, Caddyfile, and private environment. Adapt the host paths and deployment commands to that project. This guide does not deploy Uneton.
+Production Uneton runs on `maku-shared` (Hetzner CX23, hel1, `77.42.74.51` / `2a01:4f9:c012:5b0a::2`) beside Traceway. Ownership is split so each project deploys independently:
 
-Use the existing Caddy on ports 80 and 443. Add Uneton's API and Litestream to **that same Compose file and project**, on its default network. Do not start `platform/infra/vps/runtime/compose.yaml` on the shared host: that standalone Caddy would compete for the public ports. If the host rollout uses `up -d --remove-orphans`, commit the new services to its canonical Compose definition so the next rollout retains them. Keep Uneton's standalone stack for disposable OrbStack rehearsal.
-
-## Shared Compose additions
-
-Merge these services and volume into the host's canonical Compose file. Keep its existing project name and services. Set the backend image to a published, multi-platform **digest** that includes the host's architecture. A commit tag identifies source, but a digest fixes the exact bytes deployed.
-
-```yaml
-services:
-  uneton-data-init:
-    image: alpine:3.23@sha256:85fe1e81d6758c208f3e1eed4338a1997e19d4be002d4dd32d3100c9a8c010a0
-    pull_policy: always
-    restart: "no"
-    user: "0:0"
-    read_only: true
-    security_opt: [no-new-privileges:true]
-    cap_drop: [ALL]
-    cap_add: [CHOWN]
-    entrypoint: ["/bin/sh", "-ec"]
-    command: ["chown 10001:10001 /data"]
-    volumes:
-      - uneton_data:/data
-
-  uneton-api:
-    image: ${UNETON_BACKEND_IMAGE:?set UNETON_BACKEND_IMAGE to a manifest digest}
-    pull_policy: always
-    restart: unless-stopped
-    stop_grace_period: 40s
-    user: "10001:10001"
-    mem_limit: 512m
-    pids_limit: 128
-    read_only: true
-    tmpfs:
-      - /tmp:rw,noexec,nosuid,nodev,size=32m
-    security_opt: [no-new-privileges:true]
-    cap_drop: [ALL]
-    environment:
-      GOMEMLIMIT: 400MiB
-      UNETON_RUNTIME_ENVIRONMENT: production
-      UNETON_DATABASE_PATH: /data/uneton.sqlite
-      UNETON_HTTP_LISTEN_ADDRESS: 0.0.0.0:8080
-      UNETON_AUTH_TOKEN_SECRET: ${UNETON_AUTH_TOKEN_SECRET:?set UNETON_AUTH_TOKEN_SECRET}
-      UNETON_LEGAL_OPERATOR_NAME: ${UNETON_LEGAL_OPERATOR_NAME:?set UNETON_LEGAL_OPERATOR_NAME}
-      UNETON_LEGAL_CONTACT_EMAIL: ${UNETON_LEGAL_CONTACT_EMAIL:?set UNETON_LEGAL_CONTACT_EMAIL}
-      UNETON_AUTH_APPLE_CLIENT_ID: solutions.bytesized.uneton
-      UNETON_AUTH_APPLE_SERVER_NOTIFICATION_URL: https://api.uneton.app/apple/server-notifications
-      UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_ACTIVE_KEY_ID: ${UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_ACTIVE_KEY_ID:?set active key ID}
-      UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_KEYRING_JSON: ${UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_KEYRING_JSON:?set keyring}
-      UNETON_INTEGRATION_APPLE_TEAM_ID: ${UNETON_INTEGRATION_APPLE_TEAM_ID:?set Apple team ID}
-      UNETON_INTEGRATION_APPLE_PRIVATE_KEY_ID: ${UNETON_INTEGRATION_APPLE_PRIVATE_KEY_ID:?set Apple key ID}
-      UNETON_INTEGRATION_APPLE_PRIVATE_KEY_PEM: ${UNETON_INTEGRATION_APPLE_PRIVATE_KEY_PEM:?set Apple private key}
-    volumes:
-      - uneton_data:/data
-    depends_on:
-      uneton-data-init:
-        condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD", "uneton", "healthcheck"]
-      interval: 5s
-      timeout: 3s
-      start_period: 5s
-      retries: 6
-
-  uneton-litestream:
-    image: litestream/litestream:0.5.17@sha256:4b02b9859a6b6b4087d8b8944e15f7e984bd7957cba322bbeee38b0e27b9656a
-    restart: unless-stopped
-    stop_grace_period: 30s
-    command: ["replicate"]
-    user: "10001:10001"
-    mem_limit: 256m
-    pids_limit: 64
-    read_only: true
-    tmpfs:
-      - /tmp:rw,noexec,nosuid,nodev,size=16m
-    security_opt: [no-new-privileges:true]
-    cap_drop: [ALL]
-    environment:
-      LITESTREAM_REPLICA_URL: ${UNETON_LITESTREAM_REPLICA_URL:?set off-host replica URL}
-      LITESTREAM_S3_ENDPOINT: ${UNETON_LITESTREAM_S3_ENDPOINT:-}
-      AWS_ACCESS_KEY_ID: ${UNETON_BACKUP_ACCESS_KEY_ID:?set backup access key}
-      AWS_SECRET_ACCESS_KEY: ${UNETON_BACKUP_SECRET_ACCESS_KEY:?set backup secret key}
-    volumes:
-      - uneton_data:/data
-      - ./uneton-litestream.yml:/etc/litestream.yml:ro
-    depends_on:
-      uneton-api:
-        condition: service_healthy
-
-volumes:
-  uneton_data:
-```
-
-There are no `ports` or blanket `env_file` entries on these services. This keeps the API reachable only through the shared Compose network, keeps backup credentials out of the API, and avoids passing other services' secrets to Uneton. The image's `/data` directory is owned by UID 10001; the init service also repairs ownership of a newly created named volume, and Litestream runs as the same UID so it needs no capabilities. The 512 MiB API limit is a starting allocation, not a capacity claim; measure it alongside the host's other services. `GOMEMLIMIT` keeps the Go heap below that limit. Add the host's log rotation (for example `json-file` with `max-size`) if the shared project does not already set it.
-
-Place `uneton-litestream.yml` beside the host's Compose file:
-
-```yaml
-snapshot:
-  interval: 6h
-  retention: 24h
-
-dbs:
-  - path: /data/uneton.sqlite
-    replica:
-      url: ${LITESTREAM_REPLICA_URL}
-      endpoint: ${LITESTREAM_S3_ENDPOINT}
-```
-
-This is Litestream 0.5: one `replica` per database, and retention lives in the global `snapshot` block. Use an off-host object-store URL such as `s3://<bucket>/uneton/production`. The local rehearsal's `file:///backup` is on the same machine and does not protect against host loss. For an S3-compatible store that Litestream cannot detect from the URL, set `UNETON_LITESTREAM_S3_ENDPOINT` (for example `https://<region>.your-objectstorage.com`) and test a restore with that provider before rollout. Grant the replica credentials access only to Uneton's backup prefix. Retention and recovery objectives should be agreed before treating this as production storage.
-
-## Shared Caddy and DNS
-
-Append a site to the host's **existing** `Caddyfile`:
-
-```caddyfile
-api.uneton.app {
-	encode zstd gzip
-	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains"
-		X-Content-Type-Options nosniff
-		X-Frame-Options DENY
-		Referrer-Policy strict-origin-when-cross-origin
-		-Server
-	}
-	reverse_proxy uneton-api:8080 {
-		header_up X-Real-IP {remote_host}
-		transport http {
-			dial_timeout 5s
-			response_header_timeout 35s
-		}
-	}
-}
-```
-
-Point `api.uneton.app` A and AAAA records to the shared VPS public addresses in the DNS zone that owns `uneton.app`. Assign ownership of those records in the host's DNS configuration. Caddy obtains the certificate once DNS points to this host. Expose TCP 80/443 and, if HTTP/3 is enabled, UDP 443; no Uneton-specific public port is needed. Preserve all API paths, including ConnectRPC, `/health/ready`, `/privacy`, `/terms`, `/support`, and Apple's `/apple/server-notifications` callback.
-
-## Secrets and host rollout
-
-Extend the host's local deployment process to install the Litestream file, render Uneton's values into a root-owned `0600` `.env` next to the Compose file, and validate the merged Compose configuration before pulling images and starting services. Put the values in the host's secret source, not in Git. The Compose example consumes these `.env` names:
-
-| Name | Source or purpose |
+| Owner | What |
 | --- | --- |
-| `UNETON_BACKEND_IMAGE` | `ghcr.io/villeheikkila/uneton-backend@sha256:<multiarch digest>` |
-| `UNETON_AUTH_TOKEN_SECRET` | At least 32 random bytes; preserve across restarts |
-| `UNETON_LEGAL_OPERATOR_NAME`, `UNETON_LEGAL_CONTACT_EMAIL` | The same legal identity used for local privacy and ASC metadata |
-| `UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_ACTIVE_KEY_ID`, `UNETON_AUTH_APPLE_TOKEN_ENCRYPTION_KEYRING_JSON` | Preserve old keys while encrypted refresh tokens exist |
-| `UNETON_INTEGRATION_APPLE_TEAM_ID`, `UNETON_INTEGRATION_APPLE_PRIVATE_KEY_ID`, `UNETON_INTEGRATION_APPLE_PRIVATE_KEY_PEM` | Sign in with Apple credentials; encode PEM newlines as literal `\n` |
-| `UNETON_LITESTREAM_REPLICA_URL`, `UNETON_LITESTREAM_S3_ENDPOINT`, `UNETON_BACKUP_ACCESS_KEY_ID`, `UNETON_BACKUP_SECRET_ACCESS_KEY` | Dedicated off-host backup destination, optional S3-compatible endpoint, and scoped credentials |
+| maku `platform/infra/tenants/uneton/` | The tenant declaration: `tenant.yml` (site), `dns.tfvars`, `storage.tfvars` |
+| maku Terraform `tenant-uneton-dns` | Bunny DNS zone for `uneton.app` and the `api` records |
+| maku Terraform `tenant-uneton-storage` | Bunny S3 storage zone `uneton-litestream` (DE) for Litestream |
+| maku Ansible `shared-services.yml` | Docker, the `shared-edge` network, and the only public Caddy (80/443), which renders the `api.uneton.app` site from `tenant.yml` |
+| Uneton Ansible `platform/infra/vps/ansible/shared.yml` | `/srv/uneton`: the `uneton` Compose project (API, Litestream, data init) and its root-only `.env` |
+| Uneton Fnox `production` profile | Every Uneton runtime secret, age-encrypted in `fnox.toml` |
 
-If the Apple integration key cannot send APNs, add all four `UNETON_INTEGRATION_APNS_*` variables from `platform/backend/.env.example` to the API service and the secret template. Setting only some of them, including the topic alone, fails configuration validation. The App Review phone is for local ASC submission, not a backend runtime variable. Keep personal contact values age-encrypted in Uneton's local `fnox.toml`; the server secret source must supply its own production copy. The `.env` file and `docker compose config` output contain secrets, so do not log or commit the rendered configuration.
+Uneton is a tenant of that host under maku's tenant contract (`platform/infra/tenants/README.md` in maku): a separate Compose project, not services merged into maku's. maku's rollout runs `up --remove-orphans` on its own project, which never touches `uneton`, and a Uneton release needs no maku change. The API joins the external `shared-edge` network under the alias `uneton-api`; maku's Caddy joins the same network and proxies `api.uneton.app` to `uneton-api:8080`. No Uneton port is published on the host. If Uneton is down, that site returns 502 and Traceway is unaffected.
 
-Have the host's deployment process verify `uneton-api` health, backup freshness, and the public listener allowlist after rollout. Drive deployment from the local machine; no remote CI/CD is needed. If that process uses `--remove-orphans`, services added only through a temporary local Compose override will be removed on its next run.
+`platform/infra/vps/runtime/compose.yaml` is the single service definition. On the shared host, `.env` sets `COMPOSE_FILE=compose.yaml:compose.shared.yaml`, which adds the edge network, and leaves the `standalone` profile off, so Uneton's own Caddy never starts. OrbStack rehearsal sets `COMPOSE_PROFILES=standalone` and keeps its own Caddy and file replica.
 
-## Release and recovery sequence
+## First deployment
 
-1. From a clean Uneton commit, run local tests and rehearsal, then `mise run release:ghcr -- --publish`. Inspect the published manifest for both `linux/amd64` and `linux/arm64`, and record its digest. Publishing does not deploy.
-2. Prepare an off-host backup bucket and credentials. Test a backup and a restore with disposable data using the chosen object store. Verify that the shared host has enough CPU, memory, and disk headroom for Uneton and its existing services.
-3. In the host configuration, integrate the Compose services, Caddy site, Litestream file, secret template, and health checks above. Deploy that project from the local machine. Check internal API health and Litestream replication before changing DNS.
-4. Point `api.uneton.app` at the shared host, then verify HTTPS `/health/ready`, legal pages, an authenticated app flow, and Apple server notification reachability. Verify backup freshness again after real traffic begins.
+Run maku steps from the maku checkout and Uneton steps from this one.
 
-For a restore, stop **both** `uneton-api` and `uneton-litestream` before replacing the SQLite files from the off-host replica. Rotate `/data/uneton.sqlite.sync-generation` before starting the API so clients receive a snapshot after lineage changes. Ensure restored files are writable by UID 10001, start the API and then Litestream, and verify readiness, sync recovery, and a new backup. Restore with the same pinned Litestream image and `restore -integrity-check full`; Litestream 0.5 also reads backups written by 0.3. The existing `infra:orb:restore-test` script assumes `/srv/uneton` and a local file replica; it is not a shared-host restore procedure. Add and rehearse a host-specific restore operation as part of the deployment integration.
+1. **Terraform (maku).** Run `mise run //platform/infra:terraform:bootstrap-hcp`; it creates `maku-tenant-uneton-dns` and `maku-tenant-uneton-storage` from the files in `tenants/uneton/` and gives them the Bunny credential. Then:
+
+   ```sh
+   mise run //platform/infra:terraform plan tenant-uneton-dns
+   CONFIRM_TERRAFORM_APPLY=tenant-uneton-dns mise run //platform/infra:terraform apply tenant-uneton-dns
+   export ALLOW_TERRAFORM_CREATE='bunnynet_storage_zone.this["litestream"]'
+   mise run //platform/infra:terraform plan tenant-uneton-storage
+   CONFIRM_TERRAFORM_APPLY=tenant-uneton-storage mise run //platform/infra:terraform apply tenant-uneton-storage
+   unset ALLOW_TERRAFORM_CREATE
+   ```
+
+   The plan guard refuses to create storage zones unless the address is named, so a zone lost from state can never be recreated silently. Use `ALLOW_TERRAFORM_CREATE` only for this first creation. Note the `nameservers` output of the DNS scope.
+
+2. **Porkbun.** Delegate `uneton.app` to Bunny; see [Porkbun delegation](#porkbun-delegation).
+
+3. **Secrets (Uneton).** `mise run deploy:shared:secrets` generates the token secret and the Apple refresh-token keyring once and never replaces them. Read the backup values from the `storage_s3` output of `tenant-uneton-storage` (key `litestream`) and store each one with the commands the task prints. The replica URL is `s3://uneton-litestream/production`. Legal, Sign in with Apple and APNs values are inherited from the default Fnox secrets.
+
+4. **Image (Uneton).** From a clean commit, `mise run release:ghcr -- --publish`, then record the printed index digest. Make the `uneton-backend` GHCR package public (the source is AGPL and public), or the host cannot pull it.
+
+5. **Shared host (maku).** `mise run //platform/infra:vps:ansible:shared:apply` creates `shared-edge`, attaches Caddy, renders the `api.uneton.app` site from `tenant.yml` and reloads Caddy. Caddy requests the certificate once DNS resolves to the host.
+
+6. **Uneton.** `mise run deploy:shared -- ghcr.io/villeheikkila/uneton-backend@sha256:<digest>`. It renders `.env` on the controller from the `production` profile, validates Compose, pulls, starts with `--wait`, checks readiness from inside maku's Caddy over `shared-edge`, and waits for the first Litestream snapshot.
+
+7. **Verify publicly.** `curl https://api.uneton.app/health/ready`, open `/privacy` and `/terms`, sign in from a TestFlight build, and confirm new objects under `production/` in the `uneton-litestream` storage zone.
+
+8. **Apple.** In the developer account, set the Sign in with Apple server-to-server notification endpoint for the App ID to `https://api.uneton.app/apple/server-notifications`.
+
+Later releases repeat steps 4 and 6 only.
+
+## Porkbun delegation
+
+Porkbun currently serves only its parking defaults for `uneton.app` (apex and wildcard to `pixie.porkbun.com`), with no mail or verification records, so nothing needs copying.
+
+1. Apply `tenant-uneton-dns` first and confirm Bunny answers: `dig +short A api.uneton.app @<first Bunny nameserver>` returns `77.42.74.51`.
+2. In Porkbun, open **Domain Management**, then **Details** for `uneton.app`, then **Authoritative Nameservers**. Replace the four `*.ns.porkbun.com` entries with the two Bunny nameservers from the `nameservers` output, and save.
+3. In the same domain's details, leave **DNSSEC** empty for now. A stale DS record would make the domain unresolvable after delegation.
+4. Wait for `dig +short NS uneton.app` to return the Bunny nameservers and `dig +short A api.uneton.app` to return `77.42.74.51`. This is usually done within an hour but can take up to 48 hours. `.app` is HSTS-preloaded, so the API only works once Caddy has its certificate.
+5. Optional, once delegation is stable: set `dnssec_enabled = true` in maku's `tenants/uneton/dns.tfvars`, apply, read the sensitive `dnssec` output, and add that DS record in Porkbun's **DNSSEC** section (key tag, algorithm, digest type, digest).
+
+Keep URL forwarding and Porkbun's email forwarding off for the domain; Bunny now owns every record.
+
+## Restore
+
+Stop both services before replacing the database. Restore with the same pinned Litestream image and its mounted config, which supplies the replica URL, endpoint and credentials:
+
+```sh
+cd /srv/uneton
+docker compose stop api litestream
+docker compose run --rm --no-deps litestream \
+  restore -config /etc/litestream.yml -integrity-check full -o /data/uneton.sqlite.restored /data/uneton.sqlite
+```
+
+Move the restored file over `uneton.sqlite` (keep the old file), delete `uneton.sqlite-wal`, `uneton.sqlite-shm` and `uneton.sqlite.sync-generation`, make sure the files are owned by UID 10001, then `docker compose up -d --wait`. Deleting the sync-generation sidecar is mandatory: it tells every client that a restored lineage needs a snapshot and acknowledged-command replay. Never restore a point older than the backend's seven-day `JournalRetention`. Rehearse this against the real storage zone before relying on it; the OrbStack rehearsal only covers a file replica.
+
+## Capacity
+
+The CX23 has 4 GB RAM and 2 GB swap. Uneton's budget (API 512 MB with `GOMEMLIMIT=400MiB`, Litestream 256 MB) is recorded in maku's tenant README beside Traceway 2 GB, OTel Collector 128 MB and Caddy 128 MB. Update both when limits change. The shared-services stack pins the server type, so upsizing is a deliberate Terraform change.

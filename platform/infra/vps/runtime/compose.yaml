@@ -72,8 +72,11 @@ services:
       retries: 6
     logging: *logging
 
+  # Standalone hosts only (COMPOSE_PROFILES=standalone). On the shared maku host
+  # the existing Caddy routes to the API through compose.shared.yaml instead.
   caddy:
     image: caddy:2.11.6-alpine@sha256:c776e0c6413b544d0459665e54ec7b8b2a15000c0cbee8b254da0067b1d184ff
+    profiles: [standalone]
     restart: unless-stopped
     mem_limit: 256m
     pids_limit: 128
@@ -84,7 +87,7 @@ services:
     cap_drop: [ALL]
     cap_add: [NET_BIND_SERVICE]
     environment:
-      CADDY_PUBLIC_HOST: ${CADDY_PUBLIC_HOST:?set CADDY_PUBLIC_HOST}
+      CADDY_PUBLIC_HOST: ${CADDY_PUBLIC_HOST:-api.uneton.app}
     depends_on:
       api:
         condition: service_healthy
