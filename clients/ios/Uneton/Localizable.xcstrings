@@ -4230,6 +4230,132 @@
           }
         }
       }
+    },
+    "locImportHuckleberry": {
+      "comment": "Choose a Huckleberry sleep-history CSV for this baby",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import from Huckleberry"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuo Huckleberrystä"
+          }
+        }
+      }
+    },
+    "locImportExplanation": {
+      "comment": "Explains sleep-only CSV import and time zone selection",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the CSV exported from Huckleberry. Only completed sleep records are imported. Times without an offset use this baby’s time zone. Existing imported records are kept."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valitse Huckleberrystä viety CSV-tiedosto. Vain päättyneet unijaksot tuodaan. Ajat ilman aikavyöhykettä tulkitaan vauvan aikavyöhykkeellä. Aiemmin tuodut tiedot säilytetään."
+          }
+        }
+      }
+    },
+    "locImportPreview": {
+      "comment": "CSV preview: first value is sleep count; second is ignored activity or duplicate row count",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep records to import: %@. Skipped rows: %@."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuotavia unijaksoja: %@. Ohitettuja rivejä: %@."
+          }
+        }
+      }
+    },
+    "locImportSleepRecords": {
+      "comment": "Confirm importing the previewed CSV into this baby’s diary",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import sleep records"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuo unijaksot"
+          }
+        }
+      }
+    },
+    "locImportQueued": {
+      "comment": "Import result: value is newly queued sleep record count; zero means all were already imported",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep records added: %@. They will sync with your family when connected."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lisättyjä unijaksoja: %@. Ne synkronoidaan perheelle, kun yhteys on käytettävissä."
+          }
+        }
+      }
+    },
+    "locImportNoSleep": {
+      "comment": "The selected CSV has no sleep records to import",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This export contains no completed sleep records."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tämä tiedosto ei sisällä päättyneitä unijaksoja."
+          }
+        }
+      }
+    },
+    "locImportReadError": {
+      "comment": "File selection or CSV validation failed",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not read this file. Choose a Huckleberry CSV export."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiedostoa ei voitu lukea. Valitse Huckleberrystä viety CSV-tiedosto."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

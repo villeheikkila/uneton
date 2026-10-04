@@ -225,6 +225,9 @@ struct FamilyManagement {
 struct ChildEditor {
     struct State {
         var child: Child
+        var isPickingImport = false
+        var importPreview: HuckleberryImport?
+        var importMessage: String?
         var errorMessage: String?
         var isFinished = false
         var isConfirmingDeletion = false
@@ -244,12 +247,62 @@ struct ChildEditor {
         }
     }
 
-    enum Action { case save, delete, promptDelete }
+    enum Action {
+        case save, delete, promptDelete, chooseImport, confirmImport
+        case importFileSelected(Result<URL, any Error>)
+    }
     @FeatureEnvironment(\.sessionFamilyManagement) private var management
 
     var body: some Feature {
         Update { state, action in
+            guard !state.request.isRunning else { return }
             switch action {
+            case .chooseImport:
+                state.importPreview = nil
+                state.importMessage = nil
+                state.errorMessage = nil
+                state.isPickingImport = true
+            case let .importFileSelected(result):
+                state.isPickingImport = false
+                guard case let .success(url) = result else {
+                    if case let .failure(error) = result, (error as NSError).code != NSUserCancelledError {
+                        state.errorMessage = String(localized: LocalizedStringResource("locImportReadError", defaultValue: "Could not read this file. Choose a Huckleberry CSV export.", comment: "File selection or CSV validation failed"))
+                    }
+                    return
+                }
+                guard let zone = TimeZone(identifier: state.child.timeZone) else { return }
+                store.addTask(id: state.request) {
+                    do {
+                        let history = try await Task.detached {
+                            let scoped = url.startAccessingSecurityScopedResource()
+                            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+                            let handle = try FileHandle(forReadingFrom: url)
+                            defer { try? handle.close() }
+                            let data = try handle.read(upToCount: HuckleberryImport.maximumBytes + 1) ?? Data()
+                            return try HuckleberryImport.parse(data: data, timeZone: zone)
+                        }.value
+                        try store.modify {
+                            if history.sleeps.isEmpty {
+                                $0.errorMessage = String(localized: LocalizedStringResource("locImportNoSleep", defaultValue: "This export contains no completed sleep records.", comment: "The selected CSV has no sleep records to import"))
+                            } else { $0.importPreview = history }
+                        }
+                    } catch {
+                        try store.modify { $0.errorMessage = String(localized: LocalizedStringResource("locImportReadError", defaultValue: "Could not read this file. Choose a Huckleberry CSV export.", comment: "File selection or CSV validation failed")) }
+                    }
+                }
+            case .confirmImport:
+                guard let history = state.importPreview else { return }
+                let child = state.child
+                store.addTask(id: state.request) {
+                    do {
+                        let count = try await management.importHuckleberry(child, history)
+                        try store.modify {
+                            $0.importPreview = nil
+                            $0.errorMessage = nil
+                            $0.importMessage = String(localized: .locImportQueued(String(count)))
+                        }
+                    } catch { try store.modify { $0.errorMessage = String(localized: LocalizedStringResource("locUnexpectedError", defaultValue: "Something went wrong. Try again.", comment: "Generic fallback for an unexpected error whose technical details may be untranslated")) } }
+                }
             case .save:
                 if let error = state.validationMessage {
                     state.errorMessage = error
@@ -273,6 +326,9 @@ struct ChildEditor {
             case .promptDelete:
                 state.isConfirmingDeletion = true
             }
+        }
+        .onChange(of: store.child.timeZone) { state in
+            state.importPreview = nil
         }
     }
 }

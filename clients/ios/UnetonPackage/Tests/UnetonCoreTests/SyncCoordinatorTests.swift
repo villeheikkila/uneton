@@ -21,6 +21,82 @@ struct SyncCoordinatorTests {
     Projection.verifiesIncrementalRefresh = true
   }
 
+  @Test func huckleberryImportIsDurableAndRepeatableWithoutOverwritingEdits() async throws {
+    let familyID = Family.ID()
+    let childID = Child.ID()
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    let history = try HuckleberryImport.parse(data: Data("Type,Start,End,Start Location\nSleep,2026-01-01 08:00,2026-01-01 09:00,Swing\nSleep,2026-01-01 12:00,2026-01-01 13:00,Nursing\n".utf8), timeZone: .gmt)
+    let coordinator = SyncCoordinator(deviceID: DeviceID(), accessToken: { nil })
+    #expect(try await coordinator.importHuckleberry(familyID: familyID, childID: childID, history: history) == 2)
+    #expect(try await coordinator.importHuckleberry(familyID: familyID, childID: childID, history: history) == 0)
+    let id = history.sleeps[0].sessionID(familyID: familyID, childID: childID)
+    try await coordinator.upsertSleep(familyID: familyID, childID: childID, sessionID: id,
+      startedAt: history.sleeps[0].startedAt, endedAt: history.sleeps[0].endedAt.addingTimeInterval(60))
+    #expect(try await coordinator.importHuckleberry(familyID: familyID, childID: childID, history: history) == 0)
+    let state = try await database.read { db in
+      (try SleepSession.find(id).fetchOne(db), try PendingCommand.fetchAll(db))
+    }
+    #expect(state.0?.sleepLocation == "motion")
+    #expect(state.0?.source == "history_import")
+    #expect(state.0?.endedAt == history.sleeps[0].endedAt.addingTimeInterval(60))
+    #expect(state.1.count == 3)
+    #expect(state.1.filter { $0.expectedRevision == nil }.count == 2)
+  }
+
+  @Test func huckleberryBacklogRetriesLostResponseInBoundedBatches() async throws {
+    let familyID = Family.ID()
+    let childID = Child.ID()
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    let iso = ISO8601DateFormatter()
+    var csv = "Type,Start,End\n"
+    for index in 0..<101 {
+      let start = date(Double(index * 7_200 + 1_000))
+      csv += "Sleep,\(iso.string(from: start)),\(iso.string(from: start.addingTimeInterval(3_600)))\n"
+    }
+    let history = try HuckleberryImport.parse(data: Data(csv.utf8), timeZone: .gmt)
+    let responder = ImportRetryResponder(familyID: familyID)
+    var api = APIClient.testValue
+    api.sync = { _, _, request in try await responder.response(for: request) }
+    try await withDependencies { $0.apiClient = api } operation: {
+      let coordinator = SyncCoordinator(deviceID: DeviceID(), accessToken: { "token" })
+      #expect(try await coordinator.importHuckleberry(familyID: familyID, childID: childID, history: history) == 101)
+      await #expect(throws: TestTransportError.self) { try await coordinator.synchronize(familyID: familyID) }
+      #expect(try await database.read { try PendingCommand.fetchCount($0) } == 101)
+      _ = try await coordinator.synchronize(familyID: familyID)
+      #expect(try await coordinator.importHuckleberry(familyID: familyID, childID: childID, history: history) == 0)
+      let id = history.sleeps[0].sessionID(familyID: familyID, childID: childID)
+      try await database.write { db in
+        let cached = try AuthoritativeRecord.find(AuthoritativeRecord.ID(rawValue: "sleepSession:\(id.uuidString)")).fetchOne(db)
+        var record = try #require(cached)
+        var payload = try JSONDecoder.uneton.decode(ServerSleepPayload.self, from: record.payloadJSON)
+        payload.deletedAt = date(20_000)
+        payload.revision = 2
+        record.payloadJSON = try JSONEncoder.uneton.encode(payload)
+        record.revision = 2
+        record.operation = "delete"
+        try AuthoritativeRecord.upsert { record }.execute(db)
+        try Projection.rebuild(familyID: familyID, database: db)
+      }
+      // An authoritative tombstone prevents reimport from resurrecting a deleted sleep.
+      #expect(try await coordinator.importHuckleberry(familyID: familyID, childID: childID, history: history) == 0)
+    }
+    #expect(await responder.batchSizes == [100, 100, 1])
+    #expect(await responder.retriedSameCommands)
+    #expect(try await database.read { try PendingCommand.fetchCount($0) } == 0)
+  }
+
+  @Test func huckleberryImportRejectsWrongFamilyWithoutQueuingAnything() async throws {
+    let familyID = Family.ID()
+    let childID = Child.ID()
+    try await seedFamilyAndChild(familyID: familyID, childID: childID)
+    let history = try HuckleberryImport.parse(data: Data("Type,Start,End\nSleep,2026-01-01 08:00,2026-01-01 09:00\n".utf8), timeZone: .gmt)
+    let coordinator = SyncCoordinator(deviceID: DeviceID(), accessToken: { nil })
+    await #expect(throws: SyncError.self) {
+      try await coordinator.importHuckleberry(familyID: Family.ID(), childID: childID, history: history)
+    }
+    #expect(try await database.read { try PendingCommand.fetchCount($0) } == 0)
+  }
+
   @Test func watchStartUsesTheSessionIdentityRetainedAcrossRetries() async throws {
     let familyID = Family.ID()
     let childID = Child.ID()
@@ -1514,6 +1590,31 @@ private actor PausedResponder {
       )],
       nextCursor: 1, hasMore: false, serverTime: date(6_001)
     )
+  }
+}
+
+private actor ImportRetryResponder {
+  let familyID: Family.ID
+  init(familyID: Family.ID) { self.familyID = familyID }
+  private(set) var batchSizes: [Int] = []
+  private(set) var retriedSameCommands = false
+  private var firstCommands: [APICommand] = []
+
+  func response(for request: SyncRequest) throws -> SyncResponse {
+    batchSizes.append(request.commands.count)
+    if batchSizes.count == 1 {
+      firstCommands = request.commands
+      throw TestTransportError.offline
+    }
+    if batchSizes.count == 2 { retriedSameCommands = request.commands == firstCommands }
+    return SyncResponse(commandResults: try request.commands.map { command in
+      let input = try JSONDecoder.uneton.decode(SleepCommandPayload.self, from: JSONEncoder.uneton.encode(command.payload))
+      let payload = ServerSleepPayload(id: input.id, familyID: familyID, childID: input.childID,
+        startedAt: input.startedAt, endedAt: input.endedAt, revision: 1, authorID: ModelFixtures.authorID,
+        source: input.source, startCondition: input.startCondition, sleepLocation: input.sleepLocation,
+        endCondition: input.endCondition, updatedAt: date(6_000))
+      return APICommandResult(id: command.id, status: "accepted", entityID: EntityID(rawValue: input.id.rawValue), payload: try jsonValue(payload))
+    }, events: [], nextCursor: request.cursor, hasMore: false, serverTime: date(6_000))
   }
 }
 

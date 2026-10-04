@@ -41,6 +41,53 @@ struct AppRootTests {
         await store.dismount()
     }
 
+    @Test func `history import waits for confirmation and uses the selected baby`() async throws {
+        let child = ModelFixtures.child()
+        let history = try HuckleberryImport.parse(data: Data("Type,Start,End\nSleep,2026-01-01 08:00,2026-01-01 09:00\n".utf8), timeZone: .gmt)
+        var management = SessionFamilyManagementClient.unimplemented
+        management.importHuckleberry = { receivedChild, receivedHistory in
+            #expect(receivedChild == child)
+            #expect(receivedHistory == history)
+            return 1
+        }
+        var state = ChildEditor.State(child: child)
+        state.importPreview = history
+        let store = TestStore(initialState: state) {
+            ChildEditor().environment(\.sessionFamilyManagement, management)
+        }
+        let task = store.send(.confirmImport) {
+            $0.importPreview = nil
+            $0.importMessage = "Sleep records added: 1. They will sync with your family when connected."
+        }
+        await task?.value
+        #expect(!store.isFinished)
+        await store.dismount()
+    }
+
+    @Test func `changing the time zone invalidates parsed import times`() async throws {
+        var state = ChildEditor.State(child: ModelFixtures.child())
+        state.importPreview = try HuckleberryImport.parse(data: Data("Type,Start,End\nSleep,2026-01-01 08:00,2026-01-01 09:00\n".utf8), timeZone: .gmt)
+        let store = TestStore(initialState: state) { ChildEditor() }
+        store.modify({ $0.child.timeZone = "America/New_York" }, changes: {
+            $0.importPreview = nil
+        })
+        #expect(store.importPreview == nil)
+        await store.dismount()
+    }
+
+    @Test func `choosing another import clears the prior preview`() async {
+        var state = ChildEditor.State(child: ModelFixtures.child())
+        state.importMessage = "Previous import"
+        state.errorMessage = "Previous error"
+        let store = TestStore(initialState: state) { ChildEditor() }
+        store.send(.chooseImport) {
+            $0.importMessage = nil
+            $0.errorMessage = nil
+            $0.isPickingImport = true
+        }
+        await store.dismount()
+    }
+
     @Test func `manual prediction requires an interval before saving`() async {
         var child = ModelFixtures.child()
         child.predictionMode = "manual"

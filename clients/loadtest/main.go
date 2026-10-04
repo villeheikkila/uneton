@@ -362,7 +362,9 @@ func (s scenario) run(ctx context.Context) error {
 		}
 	}
 	offlineSessionID := newID()
-	offlineStart := time.Now().UTC().Add(-2 * time.Hour)
+	// The offline start must follow every acknowledged closed session: an open
+	// historical start would overlap and consolidate those sessions before its wake.
+	offlineStart := baseTime.Add(time.Duration(s.cycles*2)*time.Hour - 45*time.Minute)
 	offlineRevision := int64(1)
 	offlineCommands := []*unetonv1.Command{
 		{Id: newID(), Payload: &unetonv1.Command_StartSleep{StartSleep: &unetonv1.StartSleep{Sleep: &unetonv1.SleepInput{Id: offlineSessionID, ChildId: childID, StartedAt: timestamppb.New(offlineStart), Source: "phone"}}}},
@@ -398,6 +400,48 @@ func (s scenario) run(ctx context.Context) error {
 	}
 	if !offlineFound {
 		return errors.New("caregiver missed the offline start/wake batch")
+	}
+	// History imports are ordinary completed-sleep upserts with a stable command identity.
+	importID := newID()
+	importStart := time.Now().UTC().Add(-7 * 24 * time.Hour)
+	importEnd := importStart.Add(time.Hour)
+	importCommand := &unetonv1.Command{Id: importID, Payload: &unetonv1.Command_UpsertSleep{UpsertSleep: &unetonv1.UpsertSleep{Sleep: &unetonv1.SleepInput{
+		Id: importID, ChildId: childID, StartedAt: timestamppb.New(importStart), EndedAt: timestamppb.New(importEnd), Source: "history_import", SleepLocation: "crib",
+	}}}}
+	importResponse, err := s.sync(ctx, owner, []*unetonv1.Command{importCommand})
+	if err != nil {
+		return fmt.Errorf("history import: %w", err)
+	}
+	if err := accepted(importResponse, 1); err != nil {
+		return err
+	}
+	// Another caregiver selecting the same export must get the original stored result.
+	importRetry, err := s.sync(ctx, caregiver, []*unetonv1.Command{importCommand})
+	if err != nil {
+		return fmt.Errorf("history import retry: %w", err)
+	}
+	if err := accepted(importRetry, 1); err != nil {
+		return err
+	}
+	importFound := false
+	for _, event := range importRetry.GetEvents() {
+		sleep := event.GetEntity().GetSleepSession()
+		if event.GetEntityId() == importID && sleep.GetSource() == "history_import" && sleep.GetSleepLocation() == "crib" {
+			importFound = true
+		}
+	}
+	if !importFound {
+		return errors.New("caregiver missed history import")
+	}
+	importRepeat, err := s.sync(ctx, owner, []*unetonv1.Command{importCommand})
+	if err != nil {
+		return err
+	}
+	if err := accepted(importRepeat, 1); err != nil {
+		return err
+	}
+	if len(importRepeat.GetEvents()) != 0 {
+		return errors.New("history reimport changed diary")
 	}
 	childRevision := int64(1)
 	manualInterval := int32(150)

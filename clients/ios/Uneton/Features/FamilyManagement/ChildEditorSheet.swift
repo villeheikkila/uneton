@@ -1,5 +1,6 @@
 import ComposableArchitecture2
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ChildEditorSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -11,7 +12,7 @@ struct ChildEditorSheet: View {
                 .navigationTitle(store.child.nickname)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button(LocalizedStringResource("locCancel", defaultValue: "Cancel", comment: "Button title in FamilyManagement: Cancel")) { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(LocalizedStringResource("locCancel", defaultValue: "Cancel", comment: "Button title in FamilyManagement: Cancel")) { dismiss() }.disabled(store.request.isRunning) }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(LocalizedStringResource("locSave", defaultValue: "Save", comment: "Button title in FamilyManagement: Save")) { store.send(.save) }
                         .disabled(store.request.isRunning || store.validationMessage != nil)
@@ -22,6 +23,10 @@ struct ChildEditorSheet: View {
                 Button(LocalizedStringResource("locCancel", defaultValue: "Cancel", comment: "Button title in FamilyManagement: Cancel"), role: .cancel) {}
             } message: { Text("locThisRemovesThisBabySSleepGrowthAndTemperatureRecordsForEveryoneInTheFamily", comment: "Text in FamilyManagement: This removes this baby’s sleep, growth and temperature records for everyone in the family.") }
         }
+        .fileImporter(isPresented: $store.isPickingImport, allowedContentTypes: [.commaSeparatedText, .plainText]) { result in
+            store.send(.importFileSelected(result))
+        }
+        .interactiveDismissDisabled(store.request.isRunning)
         .onChange(of: store.isFinished) { _, finished in if finished { dismiss() } }
     }
 }

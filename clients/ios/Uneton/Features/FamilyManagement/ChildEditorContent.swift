@@ -45,6 +45,27 @@ struct ChildEditorContent: View {
                 }
             }
             Section {
+                Button(LocalizedStringResource("locImportHuckleberry", defaultValue: "Import from Huckleberry", comment: "Choose a Huckleberry sleep-history CSV for this baby"), systemImage: "square.and.arrow.down") { store.send(.chooseImport) }
+                    .disabled(store.request.isRunning || store.validationMessage != nil)
+                Text("locImportExplanation", comment: "Explains sleep-only CSV import and time zone selection")
+                    .font(.footnote).foregroundStyle(.secondary)
+                Text(store.child.timeZone).font(.footnote).foregroundStyle(.secondary)
+                if let preview = store.importPreview {
+                    Text(.locImportPreview(String(preview.sleeps.count), String(preview.ignoredRows)))
+                    if let first = preview.sleeps.first, let last = preview.sleeps.last {
+                        HStack {
+                            Text(first.startedAt, format: .dateTime.year().month().day())
+                            Text("–")
+                            Text(last.endedAt, format: .dateTime.year().month().day())
+                        }.font(.footnote).environment(\.timeZone, TimeZone(identifier: store.child.timeZone) ?? .current)
+                    }
+                    Button(LocalizedStringResource("locImportSleepRecords", defaultValue: "Import sleep records", comment: "Confirm importing the previewed CSV into this baby's diary")) { store.send(.confirmImport) }
+                        .disabled(store.request.isRunning)
+                }
+                if store.request.isRunning { ProgressView() }
+                if let message = store.importMessage { Text(message).foregroundStyle(.secondary) }
+            }
+            Section {
                 Button(LocalizedStringResource("locDeleteBabyAndRecords", defaultValue: "Delete baby and records", comment: "Button title in FamilyManagement: Delete baby and records"), role: .destructive) { store.send(.promptDelete) }
             }
             if let validation = store.validationMessage {
@@ -52,5 +73,6 @@ struct ChildEditorContent: View {
             }
             if let error = store.errorMessage { Section { Text(error).foregroundStyle(.red) } }
         }
+        .disabled(store.request.isRunning)
     }
 }

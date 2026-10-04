@@ -17,6 +17,8 @@ struct SessionFamilyManagementClient: Sendable {
     var updateChild: @MainActor @Sendable (Child) async throws -> Void
     var deleteChild: @MainActor @Sendable (Child) async throws -> Void
 
+    var importHuckleberry: @MainActor @Sendable (Child, HuckleberryImport) async throws -> Int = { _, _ in fatalError("History import is not configured") }
+
     @MainActor
     static func live(session: SessionStore) -> Self {
         Self(
@@ -37,7 +39,8 @@ struct SessionFamilyManagementClient: Sendable {
             addChild: { try await session.addChild($0, name: $1, birthDate: $2, reference: $3) },
             createFamily: { try await session.createFamily($0, name: $1) },
             updateChild: { try await session.updateChild($0) },
-            deleteChild: { try await session.deleteChild($0) }
+            deleteChild: { try await session.deleteChild($0) },
+            importHuckleberry: { try await session.importHuckleberry(child: $0, history: $1) }
         )
     }
 

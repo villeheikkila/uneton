@@ -131,6 +131,38 @@ public actor SyncCoordinator {
     }
   }
 
+  /// Enqueue the entire import atomically. Stable identities make reselecting an export safe.
+  @discardableResult
+  public func importHuckleberry(familyID: Family.ID, childID: Child.ID, history: HuckleberryImport) async throws -> Int {
+    let commands = try history.sleeps.map { sleep in
+      let id = sleep.sessionID(familyID: familyID, childID: childID)
+      let payload = try jsonValue(SleepCommandPayload(id: id, childID: childID,
+        startedAt: sleep.startedAt, endedAt: sleep.endedAt, source: "history_import",
+        startCondition: sleep.startCondition, sleepLocation: sleep.sleepLocation,
+        endCondition: sleep.endCondition))
+      return try pendingCommand(id: PendingCommand.ID(rawValue: id.rawValue), familyID: familyID,
+        kind: "upsertSleep", payload: payload)
+    }
+    return try await database.write { database in
+      guard let child = try Child.find(childID).fetchOne(database), child.familyID == familyID else { throw SyncError.missingChild }
+      var keys: Set<Projection.Key> = []
+      for command in commands {
+        let key = try Projection.key(for: command)
+        let id = SleepSession.ID(rawValue: command.id.rawValue)
+        if try SleepSession.find(id).fetchOne(database) != nil
+          || PendingCommand.find(command.id).fetchOne(database) != nil
+          || AcknowledgedCommand.find(command.id).fetchOne(database) != nil
+          || AuthoritativeRecord.find(AuthoritativeRecord.ID(rawValue: "sleepSession:\(id.uuidString)")).fetchOne(database) != nil {
+          continue
+        }
+        try Self.enqueue(command, database: database)
+        keys.insert(key)
+      }
+      try Projection.refresh(familyID: familyID, keys: keys, database: database)
+      return keys.count
+    }
+  }
+
   public func upsertGrowthMeasurement(
     familyID: Family.ID,
     childID: Child.ID,

@@ -211,6 +211,24 @@ final class DemoRuntime {
             },
             deleteChild: { [self] child in
                 try await database.write { db in try Child.find(child.id).delete().execute(db) }
+            },
+            importHuckleberry: { [self] child, history in
+                let updatedAt = now
+                return try await database.write { db in
+                    var count = 0
+                    for sleep in history.sleeps {
+                        let id = sleep.sessionID(familyID: child.familyID, childID: child.id)
+                        guard try SleepSession.find(id).fetchOne(db) == nil else { continue }
+                        let record = SleepSession(id: id, familyID: child.familyID, childID: child.id,
+                            startedAt: sleep.startedAt, endedAt: sleep.endedAt, revision: 1,
+                            authorID: demoUserID, source: "history_import",
+                            startCondition: sleep.startCondition, sleepLocation: sleep.sleepLocation,
+                            endCondition: sleep.endCondition, updatedAt: updatedAt)
+                        try SleepSession.insert { record }.execute(db)
+                        count += 1
+                    }
+                    return count
+                }
             }
         )
     }

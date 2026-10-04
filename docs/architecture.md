@@ -108,6 +108,12 @@ The digital neuvola card stores dated caregiver-recorded weight in grams and hei
 
 Digitized reference points are private local development material. They are read from ignored `tmp/growth-reference.json` and imported with `mise run backend:growth-reference:seed` into `growth_reference_points`. The authoritative server includes this static bootstrap payload in `SyncResponse`; the app replaces its local reference cache transactionally before advancing the family cursor. Reference points are not family data, commands, or events, and the cache remains available when the app is offline.
 
+### Huckleberry import
+
+Baby settings accepts a UTF-8 Huckleberry CSV with `Type`, `Start`, and `End` columns and optional sleep context columns. Parsing occurs on-device, with a preview before confirmation; offset-free timestamps use the baby's configured time zone. Only completed sleep rows are retained. Exact duplicate intervals are skipped, while distinct raw intervals are preserved. The file is bounded to 10 MiB and 10,000 activity rows and is never uploaded or persisted.
+
+Confirmation atomically queues ordinary `upsertSleep` commands and refreshes the optimistic projection. Family, child, and interval determine stable session and command UUIDs. Local records, authoritative tombstones, pending commands, and acknowledged commands prevent reimport from overwriting edits or recreating deleted records. The server's command-result journal makes concurrent-device imports and lost-response retries idempotent. These commands use the existing revisions, events, delivery outbox, pagination, snapshots, conflict UI, and restore replay. Offline acceptance succeeds independently of the immediate best-effort `Sync` attempt.
+
 ### Temperature readings
 
 Caregivers can log an individual body-temperature observation with a time, centi-Celsius value, and optional note. Readings use revision-checked upsert and delete commands, the same idempotent event and invalidation transaction as other diary records, and the shared offline projection. They are included in snapshots and restore replay. The diary does not interpret readings as a diagnosis or change sleep prediction.

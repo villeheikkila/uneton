@@ -313,6 +313,15 @@ final class SessionStore {
         }
     }
 
+    func importHuckleberry(child: Child, history: HuckleberryImport) async throws -> Int {
+        let count = try await coordinator.importHuckleberry(familyID: child.familyID, childID: child.id, history: history)
+        // Local acceptance is durable even when synchronization cannot reach the server.
+        if let prediction = try? await synchronizeWithRefresh(familyID: child.familyID) {
+            await setPrediction(prediction)
+        }
+        return count
+    }
+
     func deleteChild(_ child: Child) async throws {
         let hasActiveSleep = try await database.read { db in
             try SleepSession.where {
