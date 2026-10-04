@@ -17,9 +17,23 @@ extension View {
     }
 }
 
-/// The animated sky behind every main screen.
+extension View {
+    /// Puts the shared sky behind a full screen. Sheets keep their system glass.
+    /// Forms and lists drop their grouped background so the sky shows through.
+    func skyBackground() -> some View {
+        scrollContentBackground(.hidden)
+            .background { SkyBackground() }
+    }
+}
+
+/// The animated sky behind every full screen and tab.
+///
+/// Colors follow the palette and the local time of day. Motion is derived from the
+/// wall clock, so separate instances on different tabs and screens always
+/// draw the same frame and switching between them never jumps.
 struct SkyBackground: View {
     @Environment(\.palette) private var palette
+    @Environment(\.calendar) private var calendar
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.unetonDisplayNow) private var displayNowOverride
 
@@ -27,55 +41,101 @@ struct SkyBackground: View {
     private var isStill: Bool { reduceMotion || palette.mode == .nightLight || displayNowOverride != nil }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1 / 30, paused: isStill)) { timeline in
-            GeometryReader { proxy in
-                Rectangle()
-                    .fill(.white)
-                    .colorEffect(
-                        ShaderLibrary.sleepClouds(
-                            .float(isStill ? 0 : Float(timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 600))),
-                            .float2(proxy.size),
-                            .color(palette.skyTop.color),
-                            .color(palette.skyMiddle.color),
-                            .color(palette.skyBottom.color),
-                            .color(palette.cloud.color),
-                            .color(palette.cloudShade.color),
-                            .float(palette.mode == .nightLight ? 0 : 1)
-                        )
-                    )
-                    .overlay(alignment: .topTrailing) { celestial(width: proxy.size.width) }
+        // A still sky still refreshes once a minute so the time of day moves on.
+        TimelineView(.animation(minimumInterval: isStill ? 60 : 1 / 60, paused: displayNowOverride != nil)) { timeline in
+            let now = displayNowOverride ?? timeline.date
+            ZStack {
+                SkyCanvas(
+                    palette: palette,
+                    phase: DayPhase(date: now, calendar: calendar),
+                    time: isStill ? 0 : now.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3600)
+                )
+                .id(palette.mode)
+                .transition(.opacity)
             }
         }
+        .animation(.easeInOut(duration: 1.2), value: palette.mode)
         .ignoresSafeArea()
         .accessibilityHidden(true)
     }
+}
 
-    @ViewBuilder
-    private func celestial(width: CGFloat) -> some View {
-        switch palette.mode {
-        case .day:
-            Circle()
-                .fill(palette.celestial.color)
-                .frame(width: 104, height: 104)
-                .blur(radius: 1)
-                .padding(.top, 118)
-                .padding(.trailing, 36)
-        case .night:
-            Circle()
-                .fill(palette.celestial.color)
-                .frame(width: 70, height: 70)
-                .overlay(alignment: .topLeading) {
-                    Circle()
-                        .fill(palette.skyTop.color)
-                        .frame(width: 62, height: 62)
-                        .offset(x: -18, y: -14)
-                }
-                .clipShape(.circle)
-                .padding(.top, 122)
-                .padding(.trailing, 52)
-        case .nightLight:
-            EmptyView()
+private struct SkyCanvas: View {
+    let palette: Palette
+    let phase: DayPhase
+    /// Seconds into the current hour; the shader loops seamlessly at 3600.
+    let time: Double
+
+    var body: some View {
+        let sky = palette.sky(at: phase)
+        let celestialAmount = palette.mode == .nightLight ? 0.0 : 1.0
+        let daylight = Self.sunVisibility(phase.hour)
+        // The night palette always shows the moon: a pale sun on a dark sky would sit
+        // behind light text with too little contrast.
+        let isNight = palette.mode == .night
+        let sunAmount = isNight ? 0 : daylight * celestialAmount
+        let moonAmount = isNight ? celestialAmount : (1 - daylight) * celestialAmount
+        GeometryReader { proxy in
+            let sunPoint = Self.arcPoint(Self.sunProgress(phase.hour), in: proxy.size)
+            let nightMoonPoint = Self.arcPoint(Self.moonProgress(phase.hour), in: proxy.size)
+            let moonPoint = isNight ? Self.mix(nightMoonPoint, sunPoint, daylight) : nightMoonPoint
+            Rectangle()
+                .fill(.white)
+                .colorEffect(
+                    ShaderLibrary.sleepClouds(
+                        .float(time),
+                        .float2(proxy.size),
+                        .color(sky.top.color),
+                        .color(sky.middle.color),
+                        .color(sky.bottom.color),
+                        .color(sky.cloud.color),
+                        .color(sky.cloudShade.color),
+                        .float(palette.mode == .nightLight ? 0 : 1),
+                        .float(sky.stars),
+                        .color(palette.celestial.color),
+                        .float2(sunPoint),
+                        .float(sunAmount),
+                        .float2(moonPoint),
+                        .float(moonAmount)
+                    )
+                )
         }
+    }
+
+    /// The sun is up from about 06:00 to 20:00 and the moon the rest of the time.
+    private static func sunVisibility(_ hour: Double) -> Double {
+        smoothstep(5.5, 7, hour) * (1 - smoothstep(19.5, 21, hour))
+    }
+
+    /// The sun crosses from left to right between 06:00 and 20:00.
+    private static func sunProgress(_ hour: Double) -> Double {
+        ((hour - 6) / 14).clamped(to: 0...1)
+    }
+
+    /// The moon crosses from left to right between 19:00 and 06:00.
+    private static func moonProgress(_ hour: Double) -> Double {
+        (((hour < 12 ? hour + 24 : hour) - 19) / 11).clamped(to: 0...1)
+    }
+
+    /// A low arc over the top trailing corner, clear of the leading screen titles,
+    /// highest at the middle of the crossing.
+    private static func arcPoint(_ progress: Double, in size: CGSize) -> CGPoint {
+        CGPoint(x: size.width * (0.62 + 0.3 * progress), y: 215 - 60 * sin(.pi * progress))
+    }
+
+    private static func mix(_ a: CGPoint, _ b: CGPoint, _ amount: Double) -> CGPoint {
+        CGPoint(x: a.x + (b.x - a.x) * amount, y: a.y + (b.y - a.y) * amount)
+    }
+
+    private static func smoothstep(_ edge0: Double, _ edge1: Double, _ x: Double) -> Double {
+        let t = ((x - edge0) / (edge1 - edge0)).clamped(to: 0...1)
+        return t * t * (3 - 2 * t)
+    }
+}
+
+private extension Double {
+    func clamped(to range: ClosedRange<Double>) -> Double {
+        Swift.min(Swift.max(self, range.lowerBound), range.upperBound)
     }
 }
 

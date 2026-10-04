@@ -8,7 +8,7 @@ struct FamilySetupScreen: View {
     var body: some View {
         NavigationStack {
             FamilySetupContent(store: store)
-                .background(SkyBackground())
+                .skyBackground()
                 .scrollDismissesKeyboard(.interactively)
                 .safeAreaBar(edge: .bottom) {
                 HStack(spacing: 12) {

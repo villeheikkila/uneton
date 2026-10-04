@@ -48,7 +48,7 @@ public struct Palette: Equatable, Sendable {
   public let seed: PaletteSeed
   public let mode: PaletteMode
 
-  /// Background gradient, top to bottom.
+  /// Background gradient at noon, top to bottom. `sky(at:)` gives other hours.
   public let skyTop: RGBColor
   public let skyMiddle: RGBColor
   public let skyBottom: RGBColor
@@ -79,6 +79,9 @@ public struct Palette: Equatable, Sendable {
   /// Text and symbols on `wake`, at least 4.5:1.
   public let onWake: RGBColor
 
+  /// Noon, midnight, dawn and dusk skies that `sky(at:)` blends between.
+  let skyAnchors: SkyAnchors
+
   public static func make(seed: PaletteSeed = .sky, mode: PaletteMode) -> Palette {
     switch mode {
     case .day: day(seed)
@@ -96,14 +99,49 @@ public struct Palette: Equatable, Sendable {
     let skyTop = OKLCH(lightness: 0.875, chroma: c * 0.45, hue: h).rgb
     let cloud = OKLCH(lightness: 0.995, chroma: 0.006, hue: h).rgb
     let cloudShade = OKLCH(lightness: 0.84, chroma: c * 0.35, hue: h).rgb
-    let backgrounds = [skyTop, cloud, cloudShade]
+    let noon = Sky(
+      top: skyTop,
+      middle: OKLCH(lightness: 0.92, chroma: c * 0.32, hue: h).rgb,
+      bottom: OKLCH(lightness: 0.96, chroma: c * 0.18, hue: h).rgb,
+      cloud: cloud, cloudShade: cloudShade, stars: 0
+    )
+    // Every anchor keeps noon's lightness steps, so only hue and chroma move and the
+    // dark text stays readable through the day.
+    let anchors = SkyAnchors(
+      noon: noon,
+      midnight: Sky(
+        top: OKLCH(lightness: 0.875, chroma: c * 0.55, hue: h + 15).rgb,
+        middle: OKLCH(lightness: 0.92, chroma: c * 0.4, hue: h + 15).rgb,
+        bottom: OKLCH(lightness: 0.96, chroma: c * 0.22, hue: h + 20).rgb,
+        cloud: cloud,
+        cloudShade: OKLCH(lightness: 0.84, chroma: c * 0.4, hue: h + 15).rgb,
+        stars: 0
+      ),
+      dawn: Sky(
+        top: skyTop,
+        middle: OKLCH(lightness: 0.92, chroma: 0.035, hue: 20).rgb,
+        bottom: OKLCH(lightness: 0.96, chroma: 0.045, hue: 70).rgb,
+        cloud: OKLCH(lightness: 0.995, chroma: 0.01, hue: 70).rgb,
+        cloudShade: OKLCH(lightness: 0.84, chroma: 0.035, hue: 15).rgb,
+        stars: 0
+      ),
+      dusk: Sky(
+        top: OKLCH(lightness: 0.875, chroma: max(c * 0.5, 0.04), hue: h + 45).rgb,
+        middle: OKLCH(lightness: 0.92, chroma: 0.04, hue: 350).rgb,
+        bottom: OKLCH(lightness: 0.96, chroma: 0.05, hue: 50).rgb,
+        cloud: OKLCH(lightness: 0.99, chroma: 0.012, hue: 40).rgb,
+        cloudShade: OKLCH(lightness: 0.84, chroma: 0.04, hue: 330).rgb,
+        stars: 0
+      )
+    )
+    let backgrounds = anchors.backgrounds
     let ink = solve(OKLCH(lightness: 0.34, chroma: c * 0.55, hue: h), against: backgrounds, ratio: 7, darker: true)
     let wake = OKLCH(lightness: 0.93, chroma: 0.07, hue: warmHue).rgb
     return Palette(
       seed: seed, mode: .day,
       skyTop: skyTop,
-      skyMiddle: OKLCH(lightness: 0.92, chroma: c * 0.32, hue: h).rgb,
-      skyBottom: OKLCH(lightness: 0.96, chroma: c * 0.18, hue: h).rgb,
+      skyMiddle: noon.middle,
+      skyBottom: noon.bottom,
       cloud: cloud,
       cloudShade: cloudShade,
       celestial: OKLCH(lightness: 0.92, chroma: 0.085, hue: warmHue).rgb,
@@ -115,7 +153,8 @@ public struct Palette: Equatable, Sendable {
       track: OKLCH(lightness: 0.90, chroma: c * 0.30, hue: h).rgb,
       surface: OKLCH(lightness: 0.99, chroma: c * 0.06, hue: h).rgb,
       wake: wake,
-      onWake: solve(OKLCH(ink), against: [wake], ratio: 4.5, darker: true)
+      onWake: solve(OKLCH(ink), against: [wake], ratio: 4.5, darker: true),
+      skyAnchors: anchors
     )
   }
 
@@ -125,25 +164,63 @@ public struct Palette: Equatable, Sendable {
     let skyTop = OKLCH(lightness: 0.27, chroma: c * 0.6, hue: h).rgb
     let skyBottom = OKLCH(lightness: 0.40, chroma: c * 0.55, hue: h).rgb
     let cloud = OKLCH(lightness: 0.43, chroma: c * 0.5, hue: h).rgb
-    let backgrounds = [skyBottom, cloud]
+    let noon = Sky(
+      top: skyTop,
+      middle: OKLCH(lightness: 0.33, chroma: c * 0.62, hue: h).rgb,
+      bottom: skyBottom,
+      cloud: cloud,
+      cloudShade: OKLCH(lightness: 0.39, chroma: c * 0.5, hue: h).rgb,
+      stars: 0.55
+    )
+    // Midnight only gets darker, and dawn and dusk keep noon's lightness, so the
+    // light text stays readable through the night.
+    let anchors = SkyAnchors(
+      noon: noon,
+      midnight: Sky(
+        top: OKLCH(lightness: 0.22, chroma: c * 0.6, hue: h).rgb,
+        middle: OKLCH(lightness: 0.28, chroma: c * 0.6, hue: h).rgb,
+        bottom: OKLCH(lightness: 0.35, chroma: c * 0.55, hue: h).rgb,
+        cloud: OKLCH(lightness: 0.38, chroma: c * 0.5, hue: h).rgb,
+        cloudShade: OKLCH(lightness: 0.34, chroma: c * 0.5, hue: h).rgb,
+        stars: 1
+      ),
+      dawn: Sky(
+        top: skyTop,
+        middle: OKLCH(lightness: 0.33, chroma: 0.05, hue: 330).rgb,
+        bottom: OKLCH(lightness: 0.40, chroma: 0.06, hue: 40).rgb,
+        cloud: OKLCH(lightness: 0.43, chroma: 0.04, hue: 20).rgb,
+        cloudShade: OKLCH(lightness: 0.39, chroma: 0.04, hue: 340).rgb,
+        stars: 0.25
+      ),
+      dusk: Sky(
+        top: OKLCH(lightness: 0.27, chroma: c * 0.7, hue: h + 30).rgb,
+        middle: OKLCH(lightness: 0.33, chroma: 0.06, hue: 320).rgb,
+        bottom: OKLCH(lightness: 0.40, chroma: 0.07, hue: 25).rgb,
+        cloud: OKLCH(lightness: 0.43, chroma: 0.045, hue: 350).rgb,
+        cloudShade: OKLCH(lightness: 0.39, chroma: 0.045, hue: 320).rgb,
+        stars: 0.3
+      )
+    )
+    let backgrounds = anchors.backgrounds
     let wake = OKLCH(lightness: 0.90, chroma: 0.08, hue: warmHue).rgb
     return Palette(
       seed: seed, mode: .night,
       skyTop: skyTop,
-      skyMiddle: OKLCH(lightness: 0.33, chroma: c * 0.62, hue: h).rgb,
+      skyMiddle: noon.middle,
       skyBottom: skyBottom,
       cloud: cloud,
-      cloudShade: OKLCH(lightness: 0.39, chroma: c * 0.5, hue: h).rgb,
+      cloudShade: noon.cloudShade,
       celestial: OKLCH(lightness: 0.95, chroma: 0.05, hue: 90).rgb,
       ink: solve(OKLCH(lightness: 0.97, chroma: 0.012, hue: h), against: backgrounds, ratio: 7, darker: false),
       inkSecondary: solve(OKLCH(lightness: 0.86, chroma: c * 0.3, hue: h), against: backgrounds, ratio: 4.5, darker: false),
-      accent: solve(OKLCH(lightness: 0.80, chroma: c * 0.8, hue: h), against: [skyTop], ratio: 4.5, darker: false),
+      accent: solve(OKLCH(lightness: 0.80, chroma: c * 0.8, hue: h), against: anchors.tops, ratio: 4.5, darker: false),
       onAccent: skyTop,
       accentSoft: OKLCH(lightness: 0.66, chroma: c * 0.7, hue: h).rgb,
       track: OKLCH(lightness: 0.40, chroma: c * 0.35, hue: h).rgb,
       surface: OKLCH(lightness: 0.38, chroma: c * 0.4, hue: h).rgb,
       wake: wake,
-      onWake: solve(OKLCH(skyTop), against: [wake], ratio: 4.5, darker: true)
+      onWake: solve(OKLCH(skyTop), against: [wake], ratio: 4.5, darker: true),
+      skyAnchors: anchors
     )
   }
 
@@ -155,6 +232,8 @@ public struct Palette: Equatable, Sendable {
     let skyBottom = OKLCH(lightness: 0.16, chroma: 0.014, hue: h).rgb
     let wake = OKLCH(lightness: 0.28, chroma: 0.05, hue: h).rgb
     let ink = solve(OKLCH(lightness: 0.72, chroma: 0.10, hue: h), against: [skyBottom, wake], ratio: 7, darker: false)
+    // No time of day and no stars: night light exists to stay dim and still.
+    let sky = Sky(top: skyTop, middle: skyTop, bottom: skyBottom, cloud: skyBottom, cloudShade: skyTop, stars: 0)
     return Palette(
       seed: seed, mode: .nightLight,
       skyTop: skyTop,
@@ -171,7 +250,8 @@ public struct Palette: Equatable, Sendable {
       track: OKLCH(lightness: 0.22, chroma: 0.02, hue: h).rgb,
       surface: OKLCH(lightness: 0.20, chroma: 0.02, hue: h).rgb,
       wake: wake,
-      onWake: ink
+      onWake: ink,
+      skyAnchors: SkyAnchors(noon: sky, midnight: sky, dawn: sky, dusk: sky)
     )
   }
 

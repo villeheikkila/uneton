@@ -16,7 +16,13 @@ Two roles ignore the seed on purpose: `wake` is always warm so "woke up" reads a
 
 ## Using it in the app
 
-`View.palette(_:)` installs a palette for a subtree: the environment value, the native control tint, and the matching light or dark appearance. `TimelineScreen` resolves the mode from the active sleep, system appearance and the night light toggle. `SkyBackground` draws the animated sky from the palette; `GlassCard`, `StatTile`, `TabHeader` and `DiaryRow` are the shared building blocks. Inputs, toolbars, sheets and tab bars stay native (`glassProminent`, segmented pickers, forms) and pick up the tint.
+`View.palette(_:)` installs a palette for a subtree: the environment value, the native control tint, and the matching light or dark appearance. `TimelineScreen` resolves the mode from the active sleep, system appearance and the night light toggle. `SkyBackground` (via `View.skyBackground()`) draws the animated sky from the palette behind every tab and full screen, including loading states; sheets keep their system Liquid Glass; `GlassCard`, `StatTile`, `TabHeader` and `DiaryRow` are the shared building blocks. Inputs, toolbars, sheets and tab bars stay native (`glassProminent`, segmented pickers, forms) and pick up the tint.
+
+## Time of day
+
+`Palette.sky(at: DayPhase)` gives the sky for the current local time. Each palette stores four anchor skies (noon, midnight, dawn, dusk) and blends them in linear light, so a blended sky's luminance always lies between the anchors'. Text roles are solved against every anchor, which keeps them readable at any hour; `PaletteTests` sweeps the day in 15 minute steps. Day anchors keep noon's lightness and only move hue and chroma (peach dawn, rose dusk). Night anchors only darken toward midnight and add stars. Night light has no time of day. `DayPhase` uses the clock (dawn peaks 06:30, dusk 19:00), not the real sun, because the app has no location.
+
+In the app the sun and moon move along an arc in the top trailing corner, clear of the leading screen titles. The night palette always shows the moon. Clouds and star twinkles complete whole cycles per hour, so the shader loops at 3600 seconds without a jump. Every `SkyBackground` derives motion from the wall clock, so tabs and screens show the same frame. Palette mode changes crossfade over 1.2 seconds. Reduce Motion and night light hold the clouds still but still refresh the colors each minute.
 
 ## Live Activity and Watch
 

@@ -37,6 +37,8 @@ struct ContentView: View {
                         .id(family.id)
                 } else {
                     ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .skyBackground()
                 }
             } else {
                 FamilySetupScreen(store: store.scope(\.familySetup))

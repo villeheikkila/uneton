@@ -50,6 +50,19 @@ public struct RGBColor: Equatable, Hashable, Sendable {
     return (lighter + 0.05) / (darker + 0.05)
   }
 
+  /// Mixes in linear light, so the result's luminance lies between the two inputs
+  /// and contrast checked against both ends holds for every step in between.
+  public func mixed(with other: RGBColor, by amount: Double) -> RGBColor {
+    let t = amount.clamped(to: 0...1)
+    let a = clamped.linear
+    let b = other.clamped.linear
+    return RGBColor(
+      red: Self.encode(a.red + (b.red - a.red) * t),
+      green: Self.encode(a.green + (b.green - a.green) * t),
+      blue: Self.encode(a.blue + (b.blue - a.blue) * t)
+    )
+  }
+
   fileprivate var linear: (red: Double, green: Double, blue: Double) {
     (Self.decode(red), Self.decode(green), Self.decode(blue))
   }

@@ -24,9 +24,13 @@ struct FamilyHomeContent: View {
                         .id(child.id)
                 } else {
                     ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .skyBackground()
                 }
             } else if homeStore.isLoadingChildren {
                 ProgressView(LocalizedStringResource("locLoadingBabies", defaultValue: "Loading babies…", comment: "Text in FamilyHome: Loading babies…"))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .skyBackground()
             } else {
                 emptyFamily
             }
@@ -43,6 +47,8 @@ struct FamilyHomeContent: View {
         NavigationStack {
             ContentUnavailableView(LocalizedStringResource("locNoBabiesYet", defaultValue: "No babies yet", comment: "Text in FamilyHome: No babies yet"), systemImage: "figure.child",
                 description: Text("locAddABabyToStartTrackingSleepGrowthAndTemperature", comment: "Text in FamilyHome: Add a baby to start tracking sleep, growth and temperature."))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .skyBackground()
                 .navigationTitle(family.name)
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {

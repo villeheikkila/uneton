@@ -56,6 +56,44 @@ struct PaletteTests {
     }
   }
 
+  @Test("Text keeps contrast at every hour", arguments: PaletteMode.allCases)
+  func textContrastThroughTheDay(mode: PaletteMode) {
+    for seed in Self.seeds {
+      let palette = Palette.make(seed: seed, mode: mode)
+      for minute in stride(from: 0, to: 24 * 60, by: 15) {
+        let sky = palette.sky(at: DayPhase(hour: Double(minute) / 60))
+        let label = "\(mode) hue \(seed.hue) chroma \(seed.chroma) minute \(minute)"
+        for background in [sky.top, sky.middle, sky.bottom, sky.cloud] {
+          #expect(palette.ink.contrast(with: background) >= 7, "\(label): ink")
+          #expect(palette.inkSecondary.contrast(with: background) >= 4.5, "\(label): secondary ink")
+        }
+      }
+    }
+  }
+
+  @Test func noonSkyIsThePaletteSky() {
+    let palette = Palette.make(seed: .sky, mode: .day)
+    let sky = palette.sky(at: .noon)
+    #expect(sky.top.contrast(with: palette.skyTop) < 1.01)
+    #expect(sky.bottom.contrast(with: palette.skyBottom) < 1.01)
+  }
+
+  @Test func dayPhaseGlowsAtDawnAndDuskAndDarkensAtMidnight() {
+    #expect(DayPhase(hour: 6.5).dawn == 1)
+    #expect(DayPhase(hour: 19).dusk == 1)
+    #expect(DayPhase(hour: 12).dawn == 0 && DayPhase(hour: 12).dusk == 0)
+    #expect(abs(DayPhase(hour: 0).darkness - 1) < 0.001)
+    #expect(abs(DayPhase(hour: 12).darkness) < 0.001)
+    #expect(DayPhase(hour: 25) == DayPhase(hour: 1))
+  }
+
+  @Test func starsOnlyShowInTheNightSky() {
+    let midnight = DayPhase(hour: 0)
+    #expect(Palette.make(seed: .sky, mode: .day).sky(at: midnight).stars == 0)
+    #expect(Palette.make(seed: .sky, mode: .night).sky(at: midnight).stars > 0.9)
+    #expect(Palette.make(seed: .sky, mode: .nightLight).sky(at: midnight).stars == 0)
+  }
+
   @Test("Night light stays amber whatever the seed")
   func nightLightIgnoresSeed() {
     let sky = Palette.make(seed: .sky, mode: .nightLight)
