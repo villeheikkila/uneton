@@ -28,11 +28,21 @@ args=(
 )
 
 if [[ "$mode" == --publish ]]; then
+  # Log in with the GHCR credential from the production Fnox profile inside a
+  # throwaway Docker config, so no registry token is saved on this machine.
+  DOCKER_CONFIG="$(mktemp -d)"
+  export DOCKER_CONFIG
+  builder="uneton-release-$$"
+  cleanup() {
+    docker buildx rm "$builder" >/dev/null 2>&1 || true
+    rm -rf "$DOCKER_CONFIG"
+  }
+  trap cleanup EXIT
+  fnox_get() { fnox --config "$repo_root/fnox.toml" --no-daemon --profile production get "$1"; }
+  fnox_get UNETON_GHCR_TOKEN | docker login ghcr.io --username "$(fnox_get UNETON_GHCR_USERNAME)" --password-stdin >/dev/null
   # SBOM and provenance attestations need a docker-container builder; the
   # default docker driver rejects them.
-  builder="uneton-release"
-  docker buildx inspect "$builder" >/dev/null 2>&1 ||
-    docker buildx create --name "$builder" --driver docker-container >/dev/null
+  docker buildx create --name "$builder" --driver docker-container >/dev/null
   # Attach an SBOM and build provenance so the published digest can be audited.
   args+=(--builder "$builder" --platform "linux/amd64,linux/arm64" --sbom=true --provenance=mode=max --push)
 else
