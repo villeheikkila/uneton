@@ -45,3 +45,6 @@ xcuserdata/
 
 # Private growth-chart reference files and digitization scratch space.
 /tmp/
+
+# Apple private keys (.p8) belong in Fnox, never in Git.
+*.p8
